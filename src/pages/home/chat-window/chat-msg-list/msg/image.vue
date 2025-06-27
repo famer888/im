@@ -1,0 +1,278 @@
+<template>
+    <div
+        :class="{ comMsgImage: true, bg: msgInfo.quoteMessage !== undefined }"
+        @click.right="
+            (e) =>
+                $emit('rightClick', {
+                    e,
+                    info: msgInfo,
+                    imgErrorText:
+                        !msgInfo.local && !msgInfo.localThumbUrl
+                            ? 'loading'
+                            : handleErrorTipsGet(),
+            })">
+        <slot></slot>
+        <div class="content">
+            <template v-if="msgInfo.local || msgInfo.localThumbUrl">
+                <i v-if="handleErrorTipsGet()">
+                    {{ handleErrorTipsGet() }}
+                </i>
+                <template v-else>
+                    <img
+                        v-if="msgInfo.chatType === 3"
+                        src="@/assets/images/message/vedios-icon.png"
+                        class="btnPay"
+                        @click="handleOpenFile"
+                    />
+                    <img              
+                        :src="
+                          msgInfo.localThumbUrl  || msgInfo.local
+                        "
+                        class="picture"
+                        @error="handleFileDownload()"
+                        @load="isSuccess = true"
+                        @click="handleOpenFile"
+                    />
+                    <!-- <img
+                        v-else
+                        src="@/assets/images/file/icon_fail_picture_big.png"
+                        class="picture fail-img"
+                        @click="handleOpenFile"
+                    /> -->
+                </template>
+            </template>
+            <i v-else class="file-loading">
+                <img
+                    class="file-img"
+                    src="@/assets/images/file/file-loading.gif"
+                />
+            </i>
+        </div>
+    </div>
+</template>
+<script>
+import { remote, ipcRenderer } from "@/platform";
+
+// 工具
+import { getFileSuffix } from "@/utils/base";
+import { getNewFileDownUrl } from "@/utils/trendsDomain/manageOssDownUpload";
+
+// 事件
+import eventFile from "@/event/file";
+import eventCommon from "@/event/common";
+
+export default {
+    props: ["msgInfo", "chatContent"],
+    data() {
+        return {
+            noticeArr: [],
+            imgSrc: "",
+            isSuccess: true,
+            localSrc: "",
+        };
+    },
+    created() {
+        // 图片文件下载
+        const { local, localThumbUrl } = this.msgInfo;
+        if (!(local || localThumbUrl)) {
+            // 下载文件
+            this.handleFileDownload("default");
+        }
+    },
+    methods: {
+        /**
+         * 打开文件
+         */
+        handleOpenFile() {
+          eventFile.fnOperatorFile({
+              id: this.chatContent.id,
+              type: this.chatContent.type,
+              info: this.msgInfo.local && this.msgInfo.local.indexOf('http') === 0 ? {...this.msgInfo, local: null} : this.msgInfo,
+          });
+        },
+        /**
+         * 下载文件
+         */
+        async handleFileDownload(status) {
+            if (status == "error") {
+                this.isSuccess = false;
+                this.imgSrc = require("@/assets/images/file/icon_fail_picture_big.png");
+                return;
+            }
+            const loginId = eventCommon.fnCommonInfoRU({
+                getId: "loginId",
+            });
+
+            const { content, chatType, MsgID, fileKey, customMsgId } =
+                this.msgInfo;
+
+            // 文件路径
+            let fileUrl = content.split("||")[0];
+            if (chatType === 3) {
+                fileUrl = content.split("*P")[1];
+            }
+            if( !fileUrl && this.msgInfo.thumbUrl ){
+                fileUrl = this.msgInfo.thumbUrl
+            }
+
+            // 如果是不需要解密的图片，直接用网图
+            if (!fileKey && chatType !== 3) {
+                const params = {
+                    customMsgId,
+                    fileLocalPath: fileUrl,
+                    chatType,
+                };
+
+                if ( this.chatContent.type === "group") {
+                    params.groupId = this.chatContent.id;
+                } else {
+                    params.userId = this.chatContent.id;
+                }
+
+                eventFile.fnDownloadFileInfoUpdate(params);
+                return;
+            }
+
+            // 后缀名
+            const suffix = getFileSuffix(chatType, fileUrl);
+
+            // 文件名
+            const fileName =
+                fileUrl.slice(fileUrl.lastIndexOf("/") + 1) + suffix;
+
+             // 优先使用动态域名    
+            let trendsFileUrl = await getNewFileDownUrl(fileUrl, 0, 0);
+
+            // 文件下载
+            ipcRenderer.send("fileDownload", {
+                fileUrl,
+                trendsFileUrl,
+                fileName,
+                uid: loginId,
+                userId:
+                    this.chatContent.type === "friend"
+                        ? this.chatContent.id
+                        : null,
+                groupId:
+                    this.chatContent.type === "group"
+                        ? this.chatContent.id
+                        : null,
+                windowId: remote.getCurrentWindow().getMediaSourceId(),
+                msgId: MsgID,
+                fileKey,
+                chatType,
+                customMsgId,
+                isOpen: false,
+            });
+        },
+        /**
+         * 错误提示获取
+         */
+        handleErrorTipsGet() {
+            const { local, localThumbUrl, chatType } = this.msgInfo;
+            const fileUrl = local || localThumbUrl;
+
+            // 错误类型也是记录在地址上
+            switch (fileUrl) {
+                case "downloadError": {
+                    // 下载报错
+                    if (chatType === 3) {
+                        return this.$t("视频文件已过期");
+                    }
+                    return this.$t("图片文件已过期");
+                }
+                case "decryptionError": {
+                    // 解密报错
+                    if (chatType === 3) {
+                        return this.$t("视频文件解密失败");
+                    }
+                    return this.$t("图片文件解密失败");
+                }
+                default: {
+                    // 正常的url
+                }
+            }
+
+            return null;
+        },
+        //
+        handleContent(content) {
+            let contents = content.split("||");
+            return contents[0];
+        },
+        handleSuffix(msgInfo) {
+            if (msgInfo.chatType == 3) {
+                if (msgInfo.local && [".mp4", "WebM", ".Ogg"].includes(msgInfo.local.slice(-4))) {
+                    return msgInfo.localThumbUrl
+                } else {
+                    return msgInfo.local || msgInfo.localThumbUrl
+                }
+            } 
+            return msgInfo.local || msgInfo.localThumbUrl 
+        }
+    },
+};
+</script>
+<style scoped lang="scss">
+.comMsgImage {
+    position: relative;
+    padding-bottom: 25px;
+    max-width: 400px;
+    cursor: pointer;
+
+    &.bg {
+        background: #fff;
+        border: 1px solid #f2efef;
+        padding: 10px 10px 25px;
+        border-radius: 10px;
+    }
+
+    &:hover {
+        opacity: 0.8;
+    }
+
+    > .content {
+        height: 150px;
+
+        > .btnPay {
+            position: absolute;
+            top: 75px;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 1px solid #fff;
+            border-radius: 50%;
+            width: 40px;
+        }
+
+        .picture {
+            height: 150px;
+            display: block;
+            -webkit-user-drag: unset;
+        }
+
+        > i {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            padding: 0 15px;
+            background: #fdebeb;
+            width: 150px;
+            line-height: 25px;
+            border-radius: 5px;
+        }
+    }
+    .file-loading {
+        display: flex;
+        width: 150px;
+        height: 150px;
+        justify-content: center;
+        align-items: center;
+        background-color: #f2efef;
+        img {
+            width: 100px;
+            height: 100px;
+        }
+    }
+}
+</style>

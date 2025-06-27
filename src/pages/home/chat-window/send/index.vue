@@ -1,0 +1,117 @@
+<template>
+  <div class="comSend">
+    <div class="shutupTip disable channel-disable"
+     v-if="chatContent.type === 'channel' && !chatContent.adminPrivacy"
+     @click="channelDisturbSet"
+     >
+      {{ chatContent.isDisturb ? '永久静音' : '接收通知' }} 
+    </div>
+    <div
+      v-else-if="(chatContent.bfShutup && chatContent.memberType > 1) || chatContent.isDisable"
+      class="shutupTip disable"
+    >
+     <img class="disabled-icon" src="@/assets/images/chat/disabled-1.png" alt=""> {{chatContent.isDisable ? $t("该群已禁用") : $t("全员禁言中")}}
+    </div>
+    <ComEditor
+      v-else
+      inputId="sendMessageInput"
+      :key="groupMemberUpdateNum"
+      :isLeader="chatContent.memberType < 2"
+      :chatContent="chatContent"
+      :quoteInfo="quoteInfo"
+      :editInfo="editInfo"
+    />
+    <ComForwardInfo
+      v-if="
+        chatContent.forwardMessageList &&
+        chatContent.forwardMessageList.length > 0
+      "
+      :forwardMessageList="chatContent.forwardMessageList"
+    />
+    <ComReplyInfo v-if="quoteInfo" :msgInfo="quoteInfo" />
+  </div>
+</template>
+<script>
+
+// 事件
+import eventBase from "@/event/base";
+
+// 控件
+import ComEditor from "./editor.vue";
+
+// api
+import { updateMember } from "@/api/imChannel.js"
+
+export default {
+  components: {
+    ComEditor,
+    ComForwardInfo: () => import("./forward-info.vue"),
+    ComReplyInfo: () => import("./quote-info.vue"),
+  },
+  props: ["chatContent", "quoteInfo", "groupMemberUpdateNum", "editInfo"],
+  beforeDestroy() {
+    eventBase.fnCommunicationMonitoring("comSend", null);
+  },
+  mounted() {
+    // console.log(this.getRandomColor(), '>>>>>>>>>> getRandomColor')
+  },
+  methods: {
+    channelDisturbSet() {
+      const { channelId, isDisturb } = this.chatContent
+      const params = {
+        channelId,
+        isDisturb: Number(!isDisturb),
+      }
+      updateMember(params).then(res => {
+        if(res?.code === 200) {
+           eventBase.fnCommunicationSendMsg({
+            operator: "channelDisturbSet",
+            data: {
+              id: channelId,
+              isDisturb: params.isDisturb,
+              type: "channel"
+            },
+          });
+        }
+      })
+    },
+    // 取限定范围随机数
+    getRandomNum(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    },
+    // 获取随机颜色
+    getRandomColor() {
+      const r = this.getRandomNum(0, 255);
+      const g = this.getRandomNum(0, 255);
+      const b = this.getRandomNum(0, 255);
+      return `rgb(${r}, ${g}, ${b})`;
+    },
+  },
+};
+</script>
+<style scoped lang="scss">
+.comSend {
+  position: relative;
+
+  .shutupTip {
+    display: flex;
+    justify-content: center;
+    padding: 10px 0;
+    color: #da2e2e;
+    background: #ffffff;
+  }
+  .disable{
+    color: #000;
+  }
+  .disabled-icon{
+    width: 16px;
+    height: 16px;
+    margin-right: 5px;
+    margin-top: 1px;
+  }
+  .channel-disable {
+    color: #178AFF;
+    cursor: pointer;
+  }
+}
+</style>

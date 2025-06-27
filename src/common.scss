@@ -1,0 +1,218 @@
+@import "~vue-context/dist/css/vue-context.css";
+
+body,
+div,
+p,
+dt,
+dd,
+span {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-size: 14px;
+  color: #333;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin: 0;
+  font-weight: normal;
+}
+
+img {
+  -webkit-user-drag: none;
+}
+
+.avatar {
+  user-select: text;
+}
+
+.move {
+  left: 30px !important;
+  top: 36px !important;
+  transform: scale(0.1);
+}
+
+a {
+  text-decoration: none;
+  color: #3369fe;
+}
+
+i,
+em {
+  font-style: normal;
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+div,
+button,
+img,
+video {
+  outline: none;
+}
+
+img {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+p,
+div {
+  user-select: text;
+}
+
+::-webkit-scrollbar {
+  /*滚动条整体样式*/
+  width: 6px;
+  /*高宽分别对应横竖滚动条的尺寸*/
+  height: 1px;
+}
+
+::-webkit-scrollbar-thumb {
+  /*滚动条里面小方块*/
+  border-radius: 10px;
+  background: #e5e5e5;
+}
+
+::-webkit-scrollbar-track {
+  /*滚动条里面轨道*/
+  background: transparent;
+}
+
+:root {
+  --main-border-radius: 4px;
+  --main-margin-left: 80px;
+  --main-margin-right: 80px;
+  --main-margin-top: 50px;
+  --main-margin-bottom: 50px;
+  --tippy-right: 0px;
+  --home-menu-padding-top: 60px;
+  --composite-message-page-width: 100%;
+  --composite-message-page-height: 100% !important;
+}
+
+#app {
+  position: relative;
+}
+
+input,
+textarea {
+  /*去除阴影*/
+  box-shadow: none !important;
+
+  /*去除边框*/
+  border: none !important;
+
+  /*去除聚焦input的蓝色边框*/
+  outline: none !important;
+
+  /*禁止拖拽*/
+  resize: none !important;
+
+  /*去除iOS默认样式*/
+  appearance: none !important;
+
+  /*去除点击时背景高亮样式*/
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0) !important;
+}
+
+.tribute-container li .atImg {
+  object-fit: cover;
+  border-radius: 100%;
+}
+
+.vm--modal {
+  border-radius: 8px !important;
+}
+
+@font-face {
+  font-family: Roboto-Regular;
+  src: url("./assets/fonts/Roboto-Regular.ttf");
+}
+@font-face {
+  font-family: NotoSansSC-Regular;
+  src: url("./assets/fonts/NotoSansSC-Regular.otf");
+}
+
+@font-face {
+  font-family: PingFangSC-Regular;
+  src: url("./assets/fonts/PingFangSC-Regular.ttf");
+}
+
+.primaryBtn {
+  color: #fff;
+  background-color: #3369fe;
+  height: 48px;
+  line-height: 48px;
+  text-align: center;
+  font-size: 16px;
+  border-radius: 8px;
+  border: 1px solid #3369fe;
+  cursor: pointer;
+  padding: 0 28px;
+  display: inline-block;
+  height: 32px;
+  line-height: 32px;
+  font-size: 12px;
+  border-radius: 4px;
+
+  &.disabled {
+    background-color: rgba(51, 105, 254, 0.5);
+    border: unset;
+
+    &:hover {
+      background-color: rgba(51, 105, 254, 0.5);
+    }
+  }
+
+  &:hover {
+    background-color: rgba(51, 105, 254, 0.9);
+  }
+
+  &.blur {
+    background-color: rgba(51, 105, 254, 0.1);
+    color: #3369fe;
+    border: unset;
+
+    &:hover {
+      background-color: #3369fe;
+      color: #fff;
+    }
+  }
+
+  &.error {
+    background-color: red;
+    border-color: red;
+  }
+  &.mini {
+    padding: 0 13px;
+    display: inline-block;
+    height: 24px;
+    line-height: 24px;
+    font-size: 12px;
+    border-radius: 4px;
+  }
+
+  &.cancel {
+    background-color: #fff;
+    border: 1px solid #eeeeee;
+    color: #666666;
+
+    &:hover {
+      background-color: rgba(51, 105, 254, 0.1);
+      // color: #fff;
+    }
+  }
+}
+
+.v-context a {
+  user-select: none;
+}

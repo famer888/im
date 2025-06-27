@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <link rel="icon" href="<%= BASE_URL %>favicon.ico" />
+    <title></title>
+  </head>
+
+  <body>
+    <noscript>
+      <strong>We're sorry but <%= htmlWebpackPlugin.options.title %> doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
+    </noscript>
+    <div id="app"></div>
+    <!-- built files will be auto injected -->
+  </body>
+  <script type="module">
+    // Import the functions you need from the SDKs you need
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js';
+    import { getAnalytics, logEvent } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-analytics.js';
+    // TODO: Add SDKs for Firebase products that you want to use
+    // https://firebase.google.com/docs/web/setup#available-libraries
+
+    // Your web app's Firebase configuration
+    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+    const firebaseConfig = {
+      apiKey: 'AIzaSyAURQYoCKCBKtLDsY97DuT3QJc38SbCDz8',
+      authDomain: 'airy-task-99702.firebaseapp.com',
+      databaseURL: 'https://airy-task-99702.firebaseio.com',
+      projectId: 'airy-task-99702',
+      storageBucket: 'airy-task-99702.appspot.com',
+      messagingSenderId: '893754626953',
+      appId: '1:893754626953:web:68c619c0fa81d993e58758',
+      measurementId: 'G-WBJTK877PJ',
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    // logEvent(analytics, 'login_pc', {user_id: 12345})
+    logEvent(analytics, 'crashlytics_pcs', {
+      user_name: 333,
+      userid: '1231231',
+      platm: 'mac',
+    });
+    // logEvent(analytics, 'envent_pc', {user_name: 12345, user_id: 123, platm: 'mac'})
+  </script>
+</html>
