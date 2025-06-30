@@ -43,7 +43,7 @@
       <li @click="handlePasteClick">
         {{ $t("粘贴") }}
       </li>
-      <li @click="handleCreatTextLink">
+      <li @click.prevent="handleCreatTextLink">
         创建链接
       </li>
     </vue-context>
@@ -77,6 +77,7 @@
     />
     <ComCreateLink 
       v-if="createLinkVisible"
+      :selectText="selectText"
       @cancel="createLinkVisible = false"
       @confirm="createLink"
      />
@@ -131,6 +132,8 @@ export default {
       isEnter: true,
       draftInfos: {},
       rcheduleDeletionConfigDialogVisible: false,
+      selectText: "", // 选中的文字
+      createLinkOpts: {}, // 创建链接的选项信息
     };
   },
   inject: ["provideMemberList"],
@@ -242,8 +245,22 @@ export default {
     handleBaseMouseDown(e) {
       console.log({ e });
     },
-    createLink() {
+    createLink(opts) {
+      const { selectText, linkText } = opts;
+      let inputValue = this.$refs.input.innerHTML 
+       inputValue =inputValue.replace(selectText, linkText)
+
+      console.log("createLink---", inputValue)
+
+      this.$refs.input.innerHTML = inputValue
+      this.createLinkOpts = opts;
       this.createLinkVisible = false;
+    },
+    // 获取选中的文本
+    getSelectText() {
+      const selection = window.getSelection();
+      const data = selection.toString();
+      return data;
     },
     handleCreatTextLink() {
       this.createLinkVisible = true;
@@ -841,6 +858,7 @@ export default {
      * @param {*} e
      */
     handleContextmenu(e) {
+      this.selectText = this.getSelectText();
       this.$refs.rightClickMenu && this.$refs.rightClickMenu.open(e);
 
       const selection = window.getSelection();
@@ -939,6 +957,7 @@ export default {
           list: textListSend,
           quoteInfo: this.quoteInfo,
           editInfo: this.editInfo,
+          createLinkOpts: this.createLinkOpts,
           mute,
         },
       });

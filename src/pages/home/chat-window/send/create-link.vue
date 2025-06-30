@@ -18,16 +18,20 @@
 <script>
 export default {
   name: 'createLink',
+  props: ['selectText'],
   data() {
     return {
       linkText: '文本内容',
       linkValue: '',
     }
   },
+  created() {
+    this.linkText = this.selectText;
+  },
   methods: {
     confirm() {
-      const { linkText, linkValue} = this;
-      this.$emit('confirm', {linkText, linkValue});
+      const { linkText, linkValue, selectText} = this;
+      this.$emit('confirm', {linkText, linkValue, selectText});
     },
     cancel() {
       this.$emit('cancel');

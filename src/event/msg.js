@@ -746,7 +746,7 @@ let sendingInfoList = [];
  * 消息发送，此方法是pc端操作，发送信息才会进入
  */
 const fnMsgSend = async (info) => {
-    let { id, type, list, quoteInfo, editInfo } = info;
+    let { id, type, list, quoteInfo, editInfo, createLinkOpts } = info;
     // console.log(info, 'fnMsgSend -------------> 663')
     const loginInfo = eventCommon.fnCommonInfoRU({
         getId: "loginInfo",
@@ -867,6 +867,21 @@ const fnMsgSend = async (info) => {
             item.values.content = textToEmojiText(content);
         }
 
+
+        // 处理文本链接
+        let linkObj = null;
+        const { linkText, linkValue } = createLinkOpts || {};
+        if(linkValue && linkText) {
+            const location = content.indexOf(linkText);
+            if(location > -1) {
+                linkObj = {
+                    link: linkValue,
+                    location,
+                    length: linkText.length
+                }
+            }
+        }
+
         // 到数据库 的数据
         let dataDb = {
             ...values,
@@ -882,6 +897,7 @@ const fnMsgSend = async (info) => {
             atUsers: values.atUsers,
             mute: info.mute,
             channelId: type === "channel" ? id : null,
+            linkObj,
         };
         // 文件信息
         let fileLocalInfos = {};
@@ -916,6 +932,7 @@ const fnMsgSend = async (info) => {
                 pic: loginInfo.icon,
                 uid: loginInfo.id,
             },
+            linkObj,
             ...fileLocalInfos,
         };
         if (quoteInfo) {
@@ -982,6 +999,7 @@ const fnMsgSend = async (info) => {
                     ...fileLocalInfos,
                     mute: info.mute,
                     ...saveFileInfo,
+                    linkObj,
                 },
             });
         }

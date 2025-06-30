@@ -71,6 +71,8 @@ message OneToOneMessage {
     UploadChannelType channelType = 18; // OSS上传通道类型
     int32 msgFrom = 19; // 消息来源 0-68,1-机器人
     int32 edit    = 20; // 消息是否编辑 0未编辑，1已编辑
+    repeated LinkObj links = 21; // links 文本消息中带的链接数组
+    int64 oldSendTime = 22; // 转发对应的原发送时间 只有转发时才传值
 }
 
 // 群消息
@@ -92,6 +94,8 @@ message GroupMessage {
     UploadChannelType channelType = 16; // OSS上传通道类型
     int32 msgFrom = 17; // 消息来源 0-68,1-机器人
     int32 edit    = 18; // 消息是否编辑 0未编辑，1已编辑
+    repeated LinkObj links = 19; // links 文本消息中带的链接数组
+    int64 oldSendTime = 20; // 转发对应的原发送时间 只有转发时才传值
 }
 
 message AtUser {
@@ -100,7 +104,11 @@ message AtUser {
     FriendRelation  friendRelation  = 5; // 好友关系
 }
 
-
+message LinkObj {
+    string      link        = 1;
+    int32       location    = 2;
+    int32       length      = 3;
+}
 
 // 撤回的消息
 message RecallMessage {
