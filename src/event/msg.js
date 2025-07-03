@@ -746,7 +746,7 @@ let sendingInfoList = [];
  * 消息发送，此方法是pc端操作，发送信息才会进入
  */
 const fnMsgSend = async (info) => {
-    let { id, type, list, quoteInfo, editInfo, createLinkOpts } = info;
+    let { id, type, list, quoteInfo, editInfo, createLinkOpts = [] } = info;
     // console.log(info, 'fnMsgSend -------------> 663')
     const loginInfo = eventCommon.fnCommonInfoRU({
         getId: "loginInfo",
@@ -869,18 +869,20 @@ const fnMsgSend = async (info) => {
 
 
         // 处理文本链接
-        let links = null;
-        const { linkText, linkValue } = createLinkOpts || {};
-        if(linkValue && linkText) {
-            const location = content.indexOf(linkText);
-            if(location > -1) {
-                links = [{
-                    link: linkValue,
-                    location,
-                    length: linkText.length
-                }]
+        let links = [];
+        createLinkOpts.forEach(createLinkOpt => {
+            const { linkText, linkValue } = createLinkOpt || {};
+            if(linkValue && linkText) {
+                const location = content.indexOf(linkText);
+                if(location > -1) {
+                    links.push({
+                        link: linkValue,
+                        location,
+                        length: linkText.length
+                    })
+                }
             }
-        }
+        })
 
         // 到数据库 的数据
         let dataDb = {

@@ -133,7 +133,7 @@ export default {
       draftInfos: {},
       rcheduleDeletionConfigDialogVisible: false,
       selectText: "", // 选中的文字
-      createLinkOpts: {}, // 创建链接的选项信息
+      createLinkOpts: [], // 创建链接的选项信息
     };
   },
   inject: ["provideMemberList"],
@@ -254,7 +254,7 @@ export default {
       console.log("createLink---", inputValue)
 
       this.$refs.input.innerHTML = inputValue
-      this.createLinkOpts = opts;
+      this.createLinkOpts.push(opts);
       this.createLinkVisible = false;
     },
     // 获取选中的文本

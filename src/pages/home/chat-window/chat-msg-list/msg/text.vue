@@ -84,12 +84,18 @@ export default {
         },
       });
     },
-    handelCustomLink(htmlString, links) {
-      const { location, length, link } = (Array.isArray(links) ? links[0] : links) || {};
-      let source = htmlString.substring(location, location+length);
-      const result = `<a href="${link}">${source}</a>`
-
-      return htmlString.replace(source, result)
+    handelCustomLink(htmlStr, links) {
+      if(!links?.length) return htmlStr;
+      let htmlString = htmlStr;
+      links.forEach(item => {
+        const { location, length, link } = item || {};
+        if(link && location >= 0 && length > 0) {
+          let source = htmlStr.substring(location, location + length);
+          const result = `<a href="${link}">${source}</a>`
+          htmlString = htmlString.replace(source, result)
+        }
+      })
+      return htmlString
     },
     /**
      * 设置信息
