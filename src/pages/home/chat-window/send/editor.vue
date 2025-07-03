@@ -246,9 +246,10 @@ export default {
       console.log({ e });
     },
     createLink(opts) {
-      const { selectText, linkText } = opts;
+      const { selectText, linkText, linkValue } = opts;
       let inputValue = this.$refs.input.innerHTML 
-       inputValue =inputValue.replace(selectText, linkText)
+      let linkData = `<a href="${linkValue}">${linkText}</a>`
+       inputValue =inputValue.replace(selectText, linkData)
 
       console.log("createLink---", inputValue)
 
@@ -875,6 +876,8 @@ export default {
       // 因此使用replaceAll 把它们替换回来
 
       let msgText = value || this.$refs["input"].innerHTML.replaceAll('&amp;', '&')
+          // 去掉a标签
+          msgText = msgText.replace(/<a\b[^>]*>(.*?)<\/a>/gi, '$1');
 
       // 发送的内容为空
       if (msgText === "") {

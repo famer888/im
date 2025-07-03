@@ -88,7 +88,6 @@ export default {
       const { location, length, link } = (Array.isArray(links) ? links[0] : links) || {};
       let source = htmlString.substring(location, location+length);
       const result = `<a href="${link}">${source}</a>`
-      console.log("handelCustomLink--", htmlString, links, source, result)
 
       return htmlString.replace(source, result)
     },
