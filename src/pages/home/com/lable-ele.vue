@@ -22,6 +22,7 @@
 <script>
 import { filterSensitiveWords } from "@/utils/tools";
 import { isChannelLink } from "@/api/imChannel.js";
+import { completionUrl } from "@/utils/base";
 
 // 事件
 import eventBase from "@/event/base";
@@ -45,8 +46,10 @@ export default {
       }
     },
     async handleGoLink(info) {
+      console.log("handleGoLink--", info)
       try {
-        const hrefData = new URL(info.href);
+        let href = completionUrl(info.href)
+        const hrefData = new URL(href);
         const searchParams = hrefData.searchParams;
         // 判断 如果点的是群链接，则进入入群操作等相关逻辑，未入群则申请入群，已入群，则跳转过去
         if (
@@ -84,6 +87,7 @@ export default {
         }
       } catch (error) {
         console.log(error);
+        window.open(info.href);
       }
     },
   },

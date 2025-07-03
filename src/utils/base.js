@@ -562,3 +562,16 @@ export const getRemainingUrl = (url) => {
     );
     return remainingUrl;
 }
+
+// 补全url的协议
+export const completionUrl = (url) => {
+  // 如果 URL 没有协议，但有 www.，默认补上 https://
+  if (!url.match(/^(http|https):\/\//i)) {
+    if (url.startsWith("www.")) {
+      url = "https://" + url;
+    } else if (!url.includes("://")) {
+      url = "https://" + url;
+    }
+  }
+  return url
+}

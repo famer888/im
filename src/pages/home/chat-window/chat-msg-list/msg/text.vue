@@ -85,7 +85,7 @@ export default {
       });
     },
     handelCustomLink(htmlStr, links) {
-      if(!links?.length) return htmlStr;
+      if(!Array.isArray(links)) return htmlStr;
       let htmlString = htmlStr;
       links.forEach(item => {
         const { location, length, link } = item || {};
