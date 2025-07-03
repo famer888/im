@@ -59,18 +59,19 @@ export default {
     min-height: 280px;
     display: flex;
     flex-direction: column;
-    background: #17212b;
+    background: #ffffff;
     padding: 20px;
     box-sizing: border-box;
+    border-radius: 6px;
 
     h6 {
-      color: #5b98bd;
+      color: #333333;
       font-size: 14px;
       margin-bottom: 10px;
     }
 
     .title {
-      color: #6f8398;
+      color: #333333;
       font-weight: 600;
       font-size: 14px;
       margin-top: 16px;
@@ -79,8 +80,8 @@ export default {
     input {
       margin-top: 10px;
       background: rgba(0, 0, 0, 0);
-      color: #5b98bd;
-      border-bottom: 1px solid #6f8398 !important;
+      color: #333333;
+      border-bottom: 1px solid #333333 !important;
       padding-bottom: 4px;
     }
   }
@@ -93,7 +94,7 @@ export default {
 
     .button {
       font-size: 14px;
-      color: #5b98bd;
+      color: #333333;
       margin-left: 20px;
       cursor: pointer;
     }
