@@ -101,6 +101,7 @@
                   :content="n.content"
                   :atUsers="n.atUsers"
                   :currentGuoupId="chatContent.id"
+                  :links="n.links"
                   @rightClick="
                     (e) =>
                       handleEmitInfo({ e, info: n }, 'rightClickMenuDisplay')

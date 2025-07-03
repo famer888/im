@@ -869,16 +869,16 @@ const fnMsgSend = async (info) => {
 
 
         // 处理文本链接
-        let linkObj = null;
+        let links = null;
         const { linkText, linkValue } = createLinkOpts || {};
         if(linkValue && linkText) {
             const location = content.indexOf(linkText);
             if(location > -1) {
-                linkObj = {
+                links = [{
                     link: linkValue,
                     location,
                     length: linkText.length
-                }
+                }]
             }
         }
 
@@ -897,7 +897,7 @@ const fnMsgSend = async (info) => {
             atUsers: values.atUsers,
             mute: info.mute,
             channelId: type === "channel" ? id : null,
-            linkObj,
+            links,
         };
         // 文件信息
         let fileLocalInfos = {};
@@ -932,7 +932,7 @@ const fnMsgSend = async (info) => {
                 pic: loginInfo.icon,
                 uid: loginInfo.id,
             },
-            linkObj,
+            links,
             ...fileLocalInfos,
         };
         if (quoteInfo) {
@@ -999,7 +999,7 @@ const fnMsgSend = async (info) => {
                     ...fileLocalInfos,
                     mute: info.mute,
                     ...saveFileInfo,
-                    linkObj,
+                    links,
                 },
             });
         }

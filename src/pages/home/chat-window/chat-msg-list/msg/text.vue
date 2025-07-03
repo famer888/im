@@ -34,7 +34,7 @@ export default {
   components: {
     ComLableEle,
   },
-  props: ["isSelf", "content", "atUsers", "currentGuoupId"],
+  props: ["isSelf", "content", "atUsers", "currentGuoupId", "links"],
   watch: {
     info: {
       handler(newVal, oldVal) {
@@ -84,6 +84,14 @@ export default {
         },
       });
     },
+    handelCustomLink(htmlString, links) {
+      const { location, length, link } = (Array.isArray(links) ? links[0] : links) || {};
+      let source = htmlString.substring(location, location+length);
+      const result = `<a href="${link}">${source}</a>`
+      console.log("handelCustomLink--", htmlString, links, source, result)
+
+      return htmlString.replace(source, result)
+    },
     /**
      * 设置信息
      */
@@ -95,6 +103,10 @@ export default {
 
       // 连接处理
       htmlString = repalceLink(htmlString);
+
+      if(this.links) {
+        htmlString = this.handelCustomLink(htmlString, this.links)
+      }
 
       // 拆分html
       const tagList = splitHtmlStringToObjects(htmlString);
