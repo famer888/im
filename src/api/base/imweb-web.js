@@ -369,6 +369,9 @@ export const OneToOneMessage = $root.OneToOneMessage = (() => {
      * @property {boolean|null} [groupSend] OneToOneMessage groupSend
      * @property {UploadChannelType|null} [channelType] OneToOneMessage channelType
      * @property {number|null} [msgFrom] OneToOneMessage msgFrom
+     * @property {number|null} [edit] OneToOneMessage edit
+     * @property {Array.<ILinkObj>|null} [links] OneToOneMessage links
+     * @property {number|Long|null} [oldSendTime] OneToOneMessage oldSendTime
      */
 
     /**
@@ -380,6 +383,7 @@ export const OneToOneMessage = $root.OneToOneMessage = (() => {
      * @param {IOneToOneMessage=} [properties] Properties to set
      */
     function OneToOneMessage(properties) {
+        this.links = [];
         if (properties)
             for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
                 if (properties[keys[i]] != null)
@@ -539,6 +543,30 @@ export const OneToOneMessage = $root.OneToOneMessage = (() => {
     OneToOneMessage.prototype.msgFrom = 0;
 
     /**
+     * OneToOneMessage edit.
+     * @member {number} edit
+     * @memberof OneToOneMessage
+     * @instance
+     */
+    OneToOneMessage.prototype.edit = 0;
+
+    /**
+     * OneToOneMessage links.
+     * @member {Array.<ILinkObj>} links
+     * @memberof OneToOneMessage
+     * @instance
+     */
+    OneToOneMessage.prototype.links = $util.emptyArray;
+
+    /**
+     * OneToOneMessage oldSendTime.
+     * @member {number|Long} oldSendTime
+     * @memberof OneToOneMessage
+     * @instance
+     */
+    OneToOneMessage.prototype.oldSendTime = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+
+    /**
      * Creates a new OneToOneMessage instance using the specified properties.
      * @function create
      * @memberof OneToOneMessage
@@ -600,6 +628,13 @@ export const OneToOneMessage = $root.OneToOneMessage = (() => {
             writer.uint32(/* id 18, wireType 0 =*/144).int32(message.channelType);
         if (message.msgFrom != null && Object.hasOwnProperty.call(message, "msgFrom"))
             writer.uint32(/* id 19, wireType 0 =*/152).int32(message.msgFrom);
+        if (message.edit != null && Object.hasOwnProperty.call(message, "edit"))
+            writer.uint32(/* id 20, wireType 0 =*/160).int32(message.edit);
+        if (message.links != null && message.links.length)
+            for (let i = 0; i < message.links.length; ++i)
+                $root.LinkObj.encode(message.links[i], writer.uint32(/* id 21, wireType 2 =*/170).fork()).ldelim();
+        if (message.oldSendTime != null && Object.hasOwnProperty.call(message, "oldSendTime"))
+            writer.uint32(/* id 22, wireType 0 =*/176).int64(message.oldSendTime);
         return writer;
     };
 
@@ -710,6 +745,20 @@ export const OneToOneMessage = $root.OneToOneMessage = (() => {
                 }
             case 19: {
                     message.msgFrom = reader.int32();
+                    break;
+                }
+            case 20: {
+                    message.edit = reader.int32();
+                    break;
+                }
+            case 21: {
+                    if (!(message.links && message.links.length))
+                        message.links = [];
+                    message.links.push($root.LinkObj.decode(reader, reader.uint32()));
+                    break;
+                }
+            case 22: {
+                    message.oldSendTime = reader.int64();
                     break;
                 }
             default:
@@ -847,6 +896,21 @@ export const OneToOneMessage = $root.OneToOneMessage = (() => {
         if (message.msgFrom != null && message.hasOwnProperty("msgFrom"))
             if (!$util.isInteger(message.msgFrom))
                 return "msgFrom: integer expected";
+        if (message.edit != null && message.hasOwnProperty("edit"))
+            if (!$util.isInteger(message.edit))
+                return "edit: integer expected";
+        if (message.links != null && message.hasOwnProperty("links")) {
+            if (!Array.isArray(message.links))
+                return "links: array expected";
+            for (let i = 0; i < message.links.length; ++i) {
+                let error = $root.LinkObj.verify(message.links[i]);
+                if (error)
+                    return "links." + error;
+            }
+        }
+        if (message.oldSendTime != null && message.hasOwnProperty("oldSendTime"))
+            if (!$util.isInteger(message.oldSendTime) && !(message.oldSendTime && $util.isInteger(message.oldSendTime.low) && $util.isInteger(message.oldSendTime.high)))
+                return "oldSendTime: integer|Long expected";
         return null;
     };
 
@@ -1060,6 +1124,27 @@ export const OneToOneMessage = $root.OneToOneMessage = (() => {
         }
         if (object.msgFrom != null)
             message.msgFrom = object.msgFrom | 0;
+        if (object.edit != null)
+            message.edit = object.edit | 0;
+        if (object.links) {
+            if (!Array.isArray(object.links))
+                throw TypeError(".OneToOneMessage.links: array expected");
+            message.links = [];
+            for (let i = 0; i < object.links.length; ++i) {
+                if (typeof object.links[i] !== "object")
+                    throw TypeError(".OneToOneMessage.links: object expected");
+                message.links[i] = $root.LinkObj.fromObject(object.links[i]);
+            }
+        }
+        if (object.oldSendTime != null)
+            if ($util.Long)
+                (message.oldSendTime = $util.Long.fromValue(object.oldSendTime)).unsigned = false;
+            else if (typeof object.oldSendTime === "string")
+                message.oldSendTime = parseInt(object.oldSendTime, 10);
+            else if (typeof object.oldSendTime === "number")
+                message.oldSendTime = object.oldSendTime;
+            else if (typeof object.oldSendTime === "object")
+                message.oldSendTime = new $util.LongBits(object.oldSendTime.low >>> 0, object.oldSendTime.high >>> 0).toNumber();
         return message;
     };
 
@@ -1076,6 +1161,8 @@ export const OneToOneMessage = $root.OneToOneMessage = (() => {
         if (!options)
             options = {};
         let object = {};
+        if (options.arrays || options.defaults)
+            object.links = [];
         if (options.defaults) {
             if ($util.Long) {
                 let long = new $util.Long(0, 0, false);
@@ -1118,6 +1205,12 @@ export const OneToOneMessage = $root.OneToOneMessage = (() => {
             object.groupSend = false;
             object.channelType = options.enums === String ? "OSS_DEFAULT" : 0;
             object.msgFrom = 0;
+            object.edit = 0;
+            if ($util.Long) {
+                let long = new $util.Long(0, 0, false);
+                object.oldSendTime = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+            } else
+                object.oldSendTime = options.longs === String ? "0" : 0;
         }
         if (message.msgId != null && message.hasOwnProperty("msgId"))
             if (typeof message.msgId === "number")
@@ -1169,6 +1262,18 @@ export const OneToOneMessage = $root.OneToOneMessage = (() => {
             object.channelType = options.enums === String ? $root.UploadChannelType[message.channelType] === undefined ? message.channelType : $root.UploadChannelType[message.channelType] : message.channelType;
         if (message.msgFrom != null && message.hasOwnProperty("msgFrom"))
             object.msgFrom = message.msgFrom;
+        if (message.edit != null && message.hasOwnProperty("edit"))
+            object.edit = message.edit;
+        if (message.links && message.links.length) {
+            object.links = [];
+            for (let j = 0; j < message.links.length; ++j)
+                object.links[j] = $root.LinkObj.toObject(message.links[j], options);
+        }
+        if (message.oldSendTime != null && message.hasOwnProperty("oldSendTime"))
+            if (typeof message.oldSendTime === "number")
+                object.oldSendTime = options.longs === String ? String(message.oldSendTime) : message.oldSendTime;
+            else
+                object.oldSendTime = options.longs === String ? $util.Long.prototype.toString.call(message.oldSendTime) : options.longs === Number ? new $util.LongBits(message.oldSendTime.low >>> 0, message.oldSendTime.high >>> 0).toNumber() : message.oldSendTime;
         return object;
     };
 
@@ -1223,6 +1328,9 @@ export const GroupMessage = $root.GroupMessage = (() => {
      * @property {Array.<IAtUser>|null} [atUsers] GroupMessage atUsers
      * @property {UploadChannelType|null} [channelType] GroupMessage channelType
      * @property {number|null} [msgFrom] GroupMessage msgFrom
+     * @property {number|null} [edit] GroupMessage edit
+     * @property {Array.<ILinkObj>|null} [links] GroupMessage links
+     * @property {number|Long|null} [oldSendTime] GroupMessage oldSendTime
      */
 
     /**
@@ -1236,6 +1344,7 @@ export const GroupMessage = $root.GroupMessage = (() => {
     function GroupMessage(properties) {
         this.atUids = [];
         this.atUsers = [];
+        this.links = [];
         if (properties)
             for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
                 if (properties[keys[i]] != null)
@@ -1371,6 +1480,30 @@ export const GroupMessage = $root.GroupMessage = (() => {
     GroupMessage.prototype.msgFrom = 0;
 
     /**
+     * GroupMessage edit.
+     * @member {number} edit
+     * @memberof GroupMessage
+     * @instance
+     */
+    GroupMessage.prototype.edit = 0;
+
+    /**
+     * GroupMessage links.
+     * @member {Array.<ILinkObj>} links
+     * @memberof GroupMessage
+     * @instance
+     */
+    GroupMessage.prototype.links = $util.emptyArray;
+
+    /**
+     * GroupMessage oldSendTime.
+     * @member {number|Long} oldSendTime
+     * @memberof GroupMessage
+     * @instance
+     */
+    GroupMessage.prototype.oldSendTime = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+
+    /**
      * Creates a new GroupMessage instance using the specified properties.
      * @function create
      * @memberof GroupMessage
@@ -1431,6 +1564,13 @@ export const GroupMessage = $root.GroupMessage = (() => {
             writer.uint32(/* id 16, wireType 0 =*/128).int32(message.channelType);
         if (message.msgFrom != null && Object.hasOwnProperty.call(message, "msgFrom"))
             writer.uint32(/* id 17, wireType 0 =*/136).int32(message.msgFrom);
+        if (message.edit != null && Object.hasOwnProperty.call(message, "edit"))
+            writer.uint32(/* id 18, wireType 0 =*/144).int32(message.edit);
+        if (message.links != null && message.links.length)
+            for (let i = 0; i < message.links.length; ++i)
+                $root.LinkObj.encode(message.links[i], writer.uint32(/* id 19, wireType 2 =*/154).fork()).ldelim();
+        if (message.oldSendTime != null && Object.hasOwnProperty.call(message, "oldSendTime"))
+            writer.uint32(/* id 20, wireType 0 =*/160).int64(message.oldSendTime);
         return writer;
     };
 
@@ -1538,6 +1678,20 @@ export const GroupMessage = $root.GroupMessage = (() => {
                 }
             case 17: {
                     message.msgFrom = reader.int32();
+                    break;
+                }
+            case 18: {
+                    message.edit = reader.int32();
+                    break;
+                }
+            case 19: {
+                    if (!(message.links && message.links.length))
+                        message.links = [];
+                    message.links.push($root.LinkObj.decode(reader, reader.uint32()));
+                    break;
+                }
+            case 20: {
+                    message.oldSendTime = reader.int64();
                     break;
                 }
             default:
@@ -1663,6 +1817,21 @@ export const GroupMessage = $root.GroupMessage = (() => {
         if (message.msgFrom != null && message.hasOwnProperty("msgFrom"))
             if (!$util.isInteger(message.msgFrom))
                 return "msgFrom: integer expected";
+        if (message.edit != null && message.hasOwnProperty("edit"))
+            if (!$util.isInteger(message.edit))
+                return "edit: integer expected";
+        if (message.links != null && message.hasOwnProperty("links")) {
+            if (!Array.isArray(message.links))
+                return "links: array expected";
+            for (let i = 0; i < message.links.length; ++i) {
+                let error = $root.LinkObj.verify(message.links[i]);
+                if (error)
+                    return "links." + error;
+            }
+        }
+        if (message.oldSendTime != null && message.hasOwnProperty("oldSendTime"))
+            if (!$util.isInteger(message.oldSendTime) && !(message.oldSendTime && $util.isInteger(message.oldSendTime.low) && $util.isInteger(message.oldSendTime.high)))
+                return "oldSendTime: integer|Long expected";
         return null;
     };
 
@@ -1864,6 +2033,27 @@ export const GroupMessage = $root.GroupMessage = (() => {
         }
         if (object.msgFrom != null)
             message.msgFrom = object.msgFrom | 0;
+        if (object.edit != null)
+            message.edit = object.edit | 0;
+        if (object.links) {
+            if (!Array.isArray(object.links))
+                throw TypeError(".GroupMessage.links: array expected");
+            message.links = [];
+            for (let i = 0; i < object.links.length; ++i) {
+                if (typeof object.links[i] !== "object")
+                    throw TypeError(".GroupMessage.links: object expected");
+                message.links[i] = $root.LinkObj.fromObject(object.links[i]);
+            }
+        }
+        if (object.oldSendTime != null)
+            if ($util.Long)
+                (message.oldSendTime = $util.Long.fromValue(object.oldSendTime)).unsigned = false;
+            else if (typeof object.oldSendTime === "string")
+                message.oldSendTime = parseInt(object.oldSendTime, 10);
+            else if (typeof object.oldSendTime === "number")
+                message.oldSendTime = object.oldSendTime;
+            else if (typeof object.oldSendTime === "object")
+                message.oldSendTime = new $util.LongBits(object.oldSendTime.low >>> 0, object.oldSendTime.high >>> 0).toNumber();
         return message;
     };
 
@@ -1883,6 +2073,7 @@ export const GroupMessage = $root.GroupMessage = (() => {
         if (options.arrays || options.defaults) {
             object.atUids = [];
             object.atUsers = [];
+            object.links = [];
         }
         if (options.defaults) {
             if ($util.Long) {
@@ -1921,6 +2112,12 @@ export const GroupMessage = $root.GroupMessage = (() => {
             object.snapchatTime = 0;
             object.channelType = options.enums === String ? "OSS_DEFAULT" : 0;
             object.msgFrom = 0;
+            object.edit = 0;
+            if ($util.Long) {
+                let long = new $util.Long(0, 0, false);
+                object.oldSendTime = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+            } else
+                object.oldSendTime = options.longs === String ? "0" : 0;
         }
         if (message.sendUid != null && message.hasOwnProperty("sendUid"))
             if (typeof message.sendUid === "number")
@@ -1975,6 +2172,18 @@ export const GroupMessage = $root.GroupMessage = (() => {
             object.channelType = options.enums === String ? $root.UploadChannelType[message.channelType] === undefined ? message.channelType : $root.UploadChannelType[message.channelType] : message.channelType;
         if (message.msgFrom != null && message.hasOwnProperty("msgFrom"))
             object.msgFrom = message.msgFrom;
+        if (message.edit != null && message.hasOwnProperty("edit"))
+            object.edit = message.edit;
+        if (message.links && message.links.length) {
+            object.links = [];
+            for (let j = 0; j < message.links.length; ++j)
+                object.links[j] = $root.LinkObj.toObject(message.links[j], options);
+        }
+        if (message.oldSendTime != null && message.hasOwnProperty("oldSendTime"))
+            if (typeof message.oldSendTime === "number")
+                object.oldSendTime = options.longs === String ? String(message.oldSendTime) : message.oldSendTime;
+            else
+                object.oldSendTime = options.longs === String ? $util.Long.prototype.toString.call(message.oldSendTime) : options.longs === Number ? new $util.LongBits(message.oldSendTime.low >>> 0, message.oldSendTime.high >>> 0).toNumber() : message.oldSendTime;
         return object;
     };
 
@@ -2276,6 +2485,259 @@ export const AtUser = $root.AtUser = (() => {
     };
 
     return AtUser;
+})();
+
+export const LinkObj = $root.LinkObj = (() => {
+
+    /**
+     * Properties of a LinkObj.
+     * @exports ILinkObj
+     * @interface ILinkObj
+     * @property {string|null} [link] LinkObj link
+     * @property {number|null} [location] LinkObj location
+     * @property {number|null} [length] LinkObj length
+     */
+
+    /**
+     * Constructs a new LinkObj.
+     * @exports LinkObj
+     * @classdesc Represents a LinkObj.
+     * @implements ILinkObj
+     * @constructor
+     * @param {ILinkObj=} [properties] Properties to set
+     */
+    function LinkObj(properties) {
+        if (properties)
+            for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                if (properties[keys[i]] != null)
+                    this[keys[i]] = properties[keys[i]];
+    }
+
+    /**
+     * LinkObj link.
+     * @member {string} link
+     * @memberof LinkObj
+     * @instance
+     */
+    LinkObj.prototype.link = "";
+
+    /**
+     * LinkObj location.
+     * @member {number} location
+     * @memberof LinkObj
+     * @instance
+     */
+    LinkObj.prototype.location = 0;
+
+    /**
+     * LinkObj length.
+     * @member {number} length
+     * @memberof LinkObj
+     * @instance
+     */
+    LinkObj.prototype.length = 0;
+
+    /**
+     * Creates a new LinkObj instance using the specified properties.
+     * @function create
+     * @memberof LinkObj
+     * @static
+     * @param {ILinkObj=} [properties] Properties to set
+     * @returns {LinkObj} LinkObj instance
+     */
+    LinkObj.create = function create(properties) {
+        return new LinkObj(properties);
+    };
+
+    /**
+     * Encodes the specified LinkObj message. Does not implicitly {@link LinkObj.verify|verify} messages.
+     * @function encode
+     * @memberof LinkObj
+     * @static
+     * @param {ILinkObj} message LinkObj message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    LinkObj.encode = function encode(message, writer) {
+        console.log("LinkObj--e", message)
+        if (!writer)
+            writer = $Writer.create();
+        if (message.link != null && Object.hasOwnProperty.call(message, "link"))
+            writer.uint32(/* id 1, wireType 2 =*/10).string(message.link);
+        if (message.location != null && Object.hasOwnProperty.call(message, "location"))
+            writer.uint32(/* id 2, wireType 0 =*/16).int32(message.location);
+        if (message.length != null && Object.hasOwnProperty.call(message, "length"))
+            writer.uint32(/* id 3, wireType 0 =*/24).int32(message.length);
+        return writer;
+    };
+
+    /**
+     * Encodes the specified LinkObj message, length delimited. Does not implicitly {@link LinkObj.verify|verify} messages.
+     * @function encodeDelimited
+     * @memberof LinkObj
+     * @static
+     * @param {ILinkObj} message LinkObj message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    LinkObj.encodeDelimited = function encodeDelimited(message, writer) {
+        return this.encode(message, writer).ldelim();
+    };
+
+    /**
+     * Decodes a LinkObj message from the specified reader or buffer.
+     * @function decode
+     * @memberof LinkObj
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @param {number} [length] Message length if known beforehand
+     * @returns {LinkObj} LinkObj
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    LinkObj.decode = function decode(reader, length, error) {
+        if (!(reader instanceof $Reader))
+            reader = $Reader.create(reader);
+        let end = length === undefined ? reader.len : reader.pos + length, message = new $root.LinkObj();
+        while (reader.pos < end) {
+            let tag = reader.uint32();
+            if (tag === error)
+                break;
+            switch (tag >>> 3) {
+            case 1: {
+                    message.link = reader.string();
+                    break;
+                }
+            case 2: {
+                    message.location = reader.int32();
+                    break;
+                }
+            case 3: {
+                    message.length = reader.int32();
+                    break;
+                }
+            default:
+                reader.skipType(tag & 7);
+                break;
+            }
+        }
+        return message;
+    };
+
+    /**
+     * Decodes a LinkObj message from the specified reader or buffer, length delimited.
+     * @function decodeDelimited
+     * @memberof LinkObj
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @returns {LinkObj} LinkObj
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    LinkObj.decodeDelimited = function decodeDelimited(reader) {
+        if (!(reader instanceof $Reader))
+            reader = new $Reader(reader);
+        return this.decode(reader, reader.uint32());
+    };
+
+    /**
+     * Verifies a LinkObj message.
+     * @function verify
+     * @memberof LinkObj
+     * @static
+     * @param {Object.<string,*>} message Plain object to verify
+     * @returns {string|null} `null` if valid, otherwise the reason why it is not
+     */
+    LinkObj.verify = function verify(message) {
+        if (typeof message !== "object" || message === null)
+            return "object expected";
+        if (message.link != null && message.hasOwnProperty("link"))
+            if (!$util.isString(message.link))
+                return "link: string expected";
+        if (message.location != null && message.hasOwnProperty("location"))
+            if (!$util.isInteger(message.location))
+                return "location: integer expected";
+        if (message.length != null && message.hasOwnProperty("length"))
+            if (!$util.isInteger(message.length))
+                return "length: integer expected";
+        return null;
+    };
+
+    /**
+     * Creates a LinkObj message from a plain object. Also converts values to their respective internal types.
+     * @function fromObject
+     * @memberof LinkObj
+     * @static
+     * @param {Object.<string,*>} object Plain object
+     * @returns {LinkObj} LinkObj
+     */
+    LinkObj.fromObject = function fromObject(object) {
+        if (object instanceof $root.LinkObj)
+            return object;
+        let message = new $root.LinkObj();
+        if (object.link != null)
+            message.link = String(object.link);
+        if (object.location != null)
+            message.location = object.location | 0;
+        if (object.length != null)
+            message.length = object.length | 0;
+        return message;
+    };
+
+    /**
+     * Creates a plain object from a LinkObj message. Also converts values to other types if specified.
+     * @function toObject
+     * @memberof LinkObj
+     * @static
+     * @param {LinkObj} message LinkObj
+     * @param {$protobuf.IConversionOptions} [options] Conversion options
+     * @returns {Object.<string,*>} Plain object
+     */
+    LinkObj.toObject = function toObject(message, options) {
+        if (!options)
+            options = {};
+        let object = {};
+        if (options.defaults) {
+            object.link = "";
+            object.location = 0;
+            object.length = 0;
+        }
+        if (message.link != null && message.hasOwnProperty("link"))
+            object.link = message.link;
+        if (message.location != null && message.hasOwnProperty("location"))
+            object.location = message.location;
+        if (message.length != null && message.hasOwnProperty("length"))
+            object.length = message.length;
+        return object;
+    };
+
+    /**
+     * Converts this LinkObj to JSON.
+     * @function toJSON
+     * @memberof LinkObj
+     * @instance
+     * @returns {Object.<string,*>} JSON object
+     */
+    LinkObj.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+    };
+
+    /**
+     * Gets the default type url for LinkObj
+     * @function getTypeUrl
+     * @memberof LinkObj
+     * @static
+     * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+     * @returns {string} The default type url
+     */
+    LinkObj.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === undefined) {
+            typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/LinkObj";
+    };
+
+    return LinkObj;
 })();
 
 export const RecallMessage = $root.RecallMessage = (() => {
