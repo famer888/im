@@ -47,6 +47,12 @@ export default {
     },
     async handleGoLink(info) {
       console.log("handleGoLink--", info)
+      const confirmState = await window.$confirm({
+        title: this.$t("打开链接"),
+          remark: info.href
+        })
+      if(!confirmState) return;
+        
       try {
         let href = completionUrl(info.href)
         const hrefData = new URL(href);

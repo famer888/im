@@ -90,7 +90,6 @@ export default {
 
     > h1 {
       display: flex;
-      justify-content: center;
       align-items: center;
       font-size: 12px;
       font-weight: 400;
