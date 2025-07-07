@@ -12,7 +12,7 @@
         spellcheck="false"
       ></div>
       <span class="title">URL</span>
-      <input v-model="linkValue" />
+      <input v-model="linkValue" maxlength="100"  />
 
       <div class="buttons">
         <div class="button" @click="cancel">取消</div>
@@ -47,7 +47,6 @@ export default {
       if(!linkText) return window.$toast(this.$t("请输入链接文本"));
       if(!linkValue) return window.$toast(this.$t("请输入链接地址"));
       if(!this.isHttpOrHttps(linkValue))  return window.$toast(this.$t("链接地址需http/https开头"));
-      // if(linkValue.includs()) return window.$toast(this.$t("请输入链接地址"));
       this.$emit('confirm', {linkText, linkValue, selectText});
     },
     cancel() {
