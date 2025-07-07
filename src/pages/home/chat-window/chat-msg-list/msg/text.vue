@@ -84,6 +84,9 @@ export default {
         },
       });
     },
+    /**
+     * 处理自定义文本链接增加a标签包裹
+     */
     handelCustomLink(htmlStr, links) {
       if(!Array.isArray(links)) return htmlStr;
       let htmlString = htmlStr;
@@ -91,7 +94,8 @@ export default {
         const { location, length, link } = item || {};
         if(link && location >= 0 && length > 0) {
           let source = htmlStr.substring(location, location + length);
-          const result = `<a href="${link}" type="customLink">${source}</a>`
+          let href = link.replace('http', 'ht#customLink#tp'); // 替换http防污染
+          const result = `<a href="${href}" type="customLink">${source}</a>`
           htmlString = htmlString.replace(source, result)
         }
       })
@@ -104,7 +108,7 @@ export default {
       let htmlString = this.content;
       
       if(this.links) {
-        htmlString = this.handelCustomLink(htmlString, this.links)
+        htmlString = this.handelCustomLink(htmlString, this.links);
       }
 
       // 字符串替换为表情图片标签
@@ -112,7 +116,8 @@ export default {
 
       // 连接处理
       htmlString = repalceLink(htmlString);
-
+      // 替换回链接防污染
+      htmlString = htmlString.replace('ht#customLink#tp', 'http');
       // 拆分html
       const tagList = splitHtmlStringToObjects(htmlString);
       // at的名称列表

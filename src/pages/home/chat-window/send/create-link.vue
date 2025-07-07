@@ -29,7 +29,7 @@ export default {
   props: ['selectText', 'chatContent'],
   data() {
     return {
-      linkValue: '',
+      linkValue: 'https://',
     }
   },
   created() {
