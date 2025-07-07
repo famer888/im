@@ -3,7 +3,14 @@
     <div class="content">
       <h6>创建链接</h6>
       <span class="title">Text</span>
-      <input v-model="linkText" />
+      <div
+        ref="linkTextInput"
+        class="create-link-input"
+        draggable="false"
+        autofocus
+        contenteditable="true"
+        spellcheck="false"
+      ></div>
       <span class="title">URL</span>
       <input v-model="linkValue" />
 
@@ -16,21 +23,24 @@
 </template>
 
 <script>
+import { textToEmojiImage } from "@/utils/base";
 export default {
   name: 'createLink',
-  props: ['selectText'],
+  props: ['selectText', 'chatContent'],
   data() {
     return {
-      linkText: '文本内容',
       linkValue: '',
     }
   },
   created() {
-    this.linkText = this.selectText;
+    this.$nextTick(() => {
+      this.$refs.linkTextInput.innerHTML = textToEmojiImage(this.selectText)
+    })
   },
   methods: {
     confirm() {
-      const { linkText, linkValue, selectText} = this;
+      const { linkValue, selectText } = this;
+      const linkText = this.$refs.linkTextInput.innerHTML;
       this.$emit('confirm', {linkText, linkValue, selectText});
     },
     cancel() {
@@ -100,4 +110,12 @@ export default {
     }
   }
 }
+</style>
+
+<style lang="scss">
+ .create-link-input {
+   img {
+     height: 18px;
+   }
+ }
 </style>

@@ -78,6 +78,7 @@
     <ComCreateLink 
       v-if="createLinkVisible"
       :selectText="selectText"
+      :chatContent="chatContent"
       @cancel="createLinkVisible = false"
       @confirm="createLink"
      />
@@ -103,6 +104,8 @@ import {
   fnStrLastCousorIndexGet,
   fnEmojiToText,
   fnMoveCursorAfterImage,
+  fnGetSelectContent,
+  fnGetSelectInnerHTML,
 } from "@/utils/widget/editor";
 
 // 事件
@@ -246,24 +249,23 @@ export default {
       console.log({ e });
     },
     createLink(opts) {
-      const { selectText, linkText, linkValue } = opts;
+      const { linkText, linkValue } = opts;
+      this.handleInputFocus();
+      let selectText = fnGetSelectInnerHTML();
       let inputValue = this.$refs.input.innerHTML 
       let linkData = `<a href="${linkValue}">${linkText}</a>`
        inputValue =inputValue.replace(selectText, linkData)
 
-      console.log("createLink---", inputValue)
 
       this.$refs.input.innerHTML = inputValue
       this.createLinkOpts.push(opts);
       this.createLinkVisible = false;
+      this.handlePlaceholderVisibleSet()
     },
-    // 获取选中的文本
-    getSelectText() {
-      const selection = window.getSelection();
-      const data = selection.toString();
-      return data;
-    },
+   
     handleCreatTextLink() {
+       this.handleInputFocus();
+      this.selectText = fnGetSelectContent();
       this.createLinkVisible = true;
     },
     /**
@@ -859,7 +861,6 @@ export default {
      * @param {*} e
      */
     handleContextmenu(e) {
-      this.selectText = this.getSelectText();
       this.$refs.rightClickMenu && this.$refs.rightClickMenu.open(e);
 
       const selection = window.getSelection();
@@ -1231,7 +1232,8 @@ export default {
     position: relative;
     z-index: 1;
 
-    > img {
+
+    > img, > a img {
       vertical-align: middle;
       width: 18px;
     }

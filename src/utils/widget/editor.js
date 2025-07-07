@@ -171,19 +171,29 @@ export const fnTextGetAt = (str, atList, isLeader) => {
               });
 };
 
-/**
- * 复制当前选中的内容
- */
-export const fnCopyEditorContent = () => {
+// 获取选中的内容
+export const fnGetSelectContent = () => {
+    const innerHTML = fnGetSelectInnerHTML()
+    return textToEmojiText(innerHTML.replace(/<br class="[0-9]*">/g, "\n"))
+}
+
+// 获取输入框选择内容的innerHTML
+export const fnGetSelectInnerHTML = () => {
     const selection = window.getSelection();
     const range = selection.getRangeAt(0);
     const selectedNodes = range.cloneContents();
     const div = document.createElement("div");
     div.appendChild(selectedNodes);
+    return div.innerHTML;
+}
 
+/**
+ * 复制当前选中的内容
+ */
+export const fnCopyEditorContent = () => {
     // 处理换行, 表情处理
     copyText(
-        textToEmojiText(div.innerHTML.replace(/<br class="[0-9]*">/g, "\n"))
+        fnGetSelectContent()
     );
 };
 

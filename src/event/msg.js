@@ -871,14 +871,14 @@ const fnMsgSend = async (info) => {
         // 处理文本链接
         let links = [];
         createLinkOpts.forEach(createLinkOpt => {
-            const { linkText, linkValue } = createLinkOpt || {};
-            if(linkValue && linkText) {
-                const location = content.indexOf(linkText);
+            const { selectText, linkValue } = createLinkOpt || {};
+            if(linkValue && selectText) {
+                const location = content.indexOf(selectText);
                 if(location > -1) {
                     links.push({
                         link: linkValue,
                         location,
-                        length: linkText.length
+                        length: selectText.length
                     })
                 }
             }
