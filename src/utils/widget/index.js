@@ -1,5 +1,6 @@
 import i18n from "@/assets/lang/i18n";
 import { emojiObj } from "@/utils/emoji";
+import { strIsSafe } from "@/utils/base";
 
 /**
  * html字符串 按文本，换行，图片，a标签，h4标签 拆分为对象数组
@@ -34,8 +35,16 @@ export const splitHtmlStringToObjects = (htmlString) => {
             } else if (node.tagName === "A") {
                 // 如果是链接，添加对象包含 href 和文本内容
                 const href = node.getAttribute("href");
+                const type = node.getAttribute("type");
                 const linkText = node.textContent.trim();
-                if (linkText) {
+                if(type === 'customLink' && strIsSafe(linkText)) {
+                    const linkText = node.innerHTML.trim();
+                    result.push({
+                        type: "customLink",
+                        href: href,
+                        content: linkText,
+                    });
+                } else if(linkText) {
                     result.push({
                         type: "link",
                         href: href,

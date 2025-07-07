@@ -91,7 +91,7 @@ export default {
         const { location, length, link } = item || {};
         if(link && location >= 0 && length > 0) {
           let source = htmlStr.substring(location, location + length);
-          const result = `<a href="${link}">${source}</a>`
+          const result = `<a href="${link}" type="customLink">${source}</a>`
           htmlString = htmlString.replace(source, result)
         }
       })
@@ -102,16 +102,16 @@ export default {
      */
     handleInfoSet() {
       let htmlString = this.content;
+      
+      if(this.links) {
+        htmlString = this.handelCustomLink(htmlString, this.links)
+      }
 
       // 字符串替换为表情图片标签
       htmlString = strReplaceEmojiImgLabel(htmlString);
 
       // 连接处理
       htmlString = repalceLink(htmlString);
-
-      if(this.links) {
-        htmlString = this.handelCustomLink(htmlString, this.links)
-      }
 
       // 拆分html
       const tagList = splitHtmlStringToObjects(htmlString);
@@ -198,5 +198,17 @@ export default {
       top: 4px;
     }
   }
+}
+</style>
+
+<style lang="scss">
+.contentText {
+  > a img {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      position: relative;
+      top: 4px;
+    }
 }
 </style>
