@@ -246,7 +246,7 @@
               {{ $t("回复") }}
             </a>
           </li>
-          <li
+          <!-- <li
             v-if="
               rightClickSelectedInfo &&
               [0].includes(rightClickSelectedInfo.chatType) &&
@@ -256,7 +256,7 @@
             <a @click="handleEditMsg">
               编辑
             </a>
-          </li>
+          </li> -->
           <li
             v-if="
               ![5, 8, 50, 51, 52].includes(rightClickSelectedInfo?.chatType) &&

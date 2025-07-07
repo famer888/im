@@ -218,5 +218,8 @@
   "视频文件已过期": "Tệp video đã hết hạn",
   "扑克牌": "Vietnã",
   "富文本": "Văn bản giàu",
-  "打开链接": "Mở liên kết"
+  "打开链接": "Mở liên kết",
+  "请输入链接文本": "Vui lòng nhập văn bản liên kết",
+  "请输入链接地址": "Vui lòng nhập địa chỉ liên kết",
+  "链接地址需http/https开头": "Địa chỉ liên kết bắt đầu bằng http/https"
 }

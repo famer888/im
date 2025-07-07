@@ -38,9 +38,16 @@ export default {
     })
   },
   methods: {
+    isHttpOrHttps(url) {
+       return url.startsWith('http://') || url.startsWith('https://');
+    },  
     confirm() {
       const { linkValue, selectText } = this;
       const linkText = this.$refs.linkTextInput.innerHTML;
+      if(!linkText) return window.$toast(this.$t("请输入链接文本"));
+      if(!linkValue) return window.$toast(this.$t("请输入链接地址"));
+      if(!this.isHttpOrHttps(linkValue))  return window.$toast(this.$t("链接地址需http/https开头"));
+      // if(linkValue.includs()) return window.$toast(this.$t("请输入链接地址"));
       this.$emit('confirm', {linkText, linkValue, selectText});
     },
     cancel() {

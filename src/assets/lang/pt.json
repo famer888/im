@@ -218,5 +218,8 @@
   "视频文件已过期": "O ficheiro de vídeo expirou",
   "扑克牌": "póquer",
   "富文本": "Texto rico",
-  "打开链接": "Abrir ligação"
+  "打开链接": "Abrir ligação",
+  "请输入链接文本": "Por favor, introduza o texto do link",
+  "请输入链接地址": "Por favor, introduz o endereço do link",
+  "链接地址需http/https开头": "O endereço de ligação precisa começar com http/https"
 }
