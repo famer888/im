@@ -1134,9 +1134,17 @@ const fnMsgSend = async (info) => {
  * 消息发送成功
  */
 const fnMsgSendSuccess = (msg, type) => {
-    const { flag, msgId, groupId, receiveUid } = msg;
+    const { flag, msgId, groupId, receiveUid, sentOverTime } = msg;
     const id = type === "group" ? Number(groupId) : Number(receiveUid);
     const customMsgId = Number(flag).toString();
+    let updated = {
+        MsgID: Number(msgId),
+        readStatus: 1,
+    }
+    if(sentOverTime) {
+        updated.time = String(sentOverTime);
+        updated.sendTime = String(sentOverTime);
+    }
 
     // 数据库内查找该消息，并修改状态 及 msgId
     window.$db
@@ -1146,10 +1154,7 @@ const fnMsgSendSuccess = (msg, type) => {
             list: [
                 {
                     customMsgId,
-                    updated: {
-                        MsgID: Number(msgId),
-                        readStatus: 1,
-                    },
+                    updated,
                 },
             ],
         })
@@ -1169,10 +1174,7 @@ const fnMsgSendSuccess = (msg, type) => {
                         list: [
                             {
                                 customMsgId,
-                                updated: {
-                                    readStatus: 1,
-                                    MsgID: Number(msgId),
-                                },
+                                updated,
                             },
                         ],
                         readStatus: 1,

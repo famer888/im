@@ -72,7 +72,7 @@ message OneToOneMessage {
     int32 msgFrom = 19; // 消息来源 0-68,1-机器人
     int32 edit    = 20; // 消息是否编辑 0未编辑，1已编辑
     repeated LinkObj links = 21; // links 文本消息中带的链接数组
-    int64 oldSendTime = 22; // 转发对应的原发送时间 只有转发时才传值
+    int64 sentOverTime = 22; // 转发对应的原发送完成时间 只有转发时才传值
 }
 
 // 群消息
@@ -95,19 +95,13 @@ message GroupMessage {
     int32 msgFrom = 17; // 消息来源 0-68,1-机器人
     int32 edit    = 18; // 消息是否编辑 0未编辑，1已编辑
     repeated LinkObj links = 19; // links 文本消息中带的链接数组
-    int64 oldSendTime = 20; // 转发对应的原发送时间 只有转发时才传值
+    int64 sentOverTime = 20; // 转发对应的原发送完成时间 只有转发时才传值
 }
 
 message AtUser {
     int64      uid          = 1;    // 用户ID
     string     nickName     = 2;    // 昵称
     FriendRelation  friendRelation  = 5; // 好友关系
-}
-
-message LinkObj {
-    string      link        = 1;
-    int32       location    = 2;
-    int32       length      = 3;
 }
 
 // 撤回的消息
@@ -254,6 +248,7 @@ message OneToOneMessageResp {
     int64 msgId = 2; //消息ID
     int64 receiveUid = 3; //接收UID
     int32 snapchatTime = 4; // 阅后即焚设置时间 5秒， 10秒 v1.1.0
+    int64 sentOverTime = 5; // 发送完成时间
 }
 // 推送接收私聊消息 messageId 20102
 message PushOneToOneMessageResp {
@@ -283,6 +278,7 @@ message SendGroupMessageResp {
     int64 msgId = 2; //消息ID
     int64 groupId = 3; // 群聊ID
     int32 snapchatTime = 4; // 阅后即焚设置时间 5秒， 10秒 v1.1.0
+    int64 sentOverTime = 5; // 发送完成时间
 }
 // 推送群聊消息 响应 20202
 message PushGroupMessageResp {

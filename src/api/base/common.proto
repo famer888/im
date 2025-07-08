@@ -257,7 +257,11 @@ enum InviteLinkType {
     LINK_USER     = 0; // 用户
     LINK_GROUP    = 1; // 群组
 }
-
+//消息是否编辑
+enum EditType {
+    UNMODIFIED  = 0; // 未修改
+    MODIFIED    = 1; // 已修改
+}
 // 群成员搜索过滤类型 add v1.8.0
 enum FilterType {
     BE_DEFAULT         = 0; // 全部
@@ -523,4 +527,10 @@ enum UploadChannelType {
     OSS_DEFAULT    = 0; // 上传下载默认通道
     OSS_CHAT       = 1; // 聊天上传下载专属通道
     OSS_LOW_RATE   = 2; // 上传下载低费率通道
+}
+
+message LinkObj {
+    string      link        = 1;
+    int32       location    = 2;
+    int32       length      = 3;
 }
