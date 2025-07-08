@@ -869,7 +869,7 @@ const fnMsgSend = async (info) => {
 
 
         // 处理文本链接
-        let links = [];
+        let links = item.values?.links || [];
         createLinkOpts.forEach(createLinkOpt => {
             const { selectText, linkValue } = createLinkOpt || {};
             if(linkValue && selectText) {
