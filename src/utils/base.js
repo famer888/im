@@ -1,6 +1,6 @@
 import _ from "lodash";
 import i18n from "@/assets/lang/i18n";
-import { emojiObj, emojiTextList } from "@/utils/emoji";
+import { emojiObj, emojiTextList } from "/public/emoji";
 
 // icon
 import doc from "@/assets/images/message/file-doc.png";
@@ -97,7 +97,7 @@ export const textToEmojiImage = (str) => {
         if (emojiTextList.includes(item)) {
             value = value.replaceAll(
                 item,
-                `<img src="${require(`@/assets/images/emoji/${emojiObj[item]}.png`)}" data-key="${item}" class="uuid">`
+                `<img src="${require(`/public/images/emoji/${emojiObj[item]}.png`)}" data-key="${item}" class="uuid">`
             );
         }
     }

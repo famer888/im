@@ -191,6 +191,7 @@
     <ul id="list-container"></ul>
   </div>
   <script type="module">
+     console.log("showList-1-")
     const groupIcon = "./images/default_chat_icon.png";
     const friendIcon = "./images/logo-58.png";
     const closeIcon = "./images/notification/close.png";
@@ -207,6 +208,7 @@
       9: "msg_image",
       10: "msg_red_pack",
       12: "msg_dice",
+      18: "msg_dice",
     };
     const msgTypeName = {
       1: "图片",
@@ -217,8 +219,9 @@
       9: "动图",
       10: "红包",
       12: "骰子",
+      18: "扑克牌",
     }
-
+      console.log("showList-1-")
     let debounceTimeout;
     function debounce(func, wait) {
       return function (...args) {
@@ -226,19 +229,21 @@
         debounceTimeout = setTimeout(() => func.apply(this, args), wait);
       };
     }
-
+      console.log("showList-2-")
     window.onload = () => {
       console.log("onload---");
       htmlAndWindowHeightSync()
     };
-    
+      console.log("showList-3-")
     ipcRenderer.on('showList', (event, listData) => {
+      console.log("showList--", listData)
       initAutoClose();
       const listContainer = document.getElementById('list-container');
       if(existsInReply()) return;
 
       let html = '';
       const msglist = listData.slice(-3)
+      // 生成通知列表Html模版
       msglist.forEach(item => {
         const isGroup = item.type === 'group';
         const defaultIcon = isGroup ? groupIcon : friendIcon;

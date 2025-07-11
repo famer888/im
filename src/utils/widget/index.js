@@ -1,5 +1,5 @@
 import i18n from "@/assets/lang/i18n";
-import { emojiObj } from "@/utils/emoji";
+import { emojiObj } from "/public/emoji";
 import { strIsSafe } from "@/utils/base";
 
 /**
@@ -252,7 +252,7 @@ export const strReplaceEmojiImgLabel = (inputString) => {
             if (emojiObj[item]) {
                 htmlString = htmlString.replaceAll(
                     item,
-                    `<img src="${require("@/assets/images/emoji/" +
+                    `<img src="${require("/public/images/emoji/" +
                         emojiObj[item] +
                         ".png")}" data-key="${item}" >`
                 );

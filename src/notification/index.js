@@ -55,7 +55,7 @@ export const createNoticeWindow = async (mainWindow) => {
     // 监听窗口关闭事件  
     childWindow.on('closed', () => {  
       // 清理引用  
-      childWindow = null;  
+      // childWindow = null;  
     });  
 
 
@@ -102,7 +102,7 @@ export const showNotification = async (mainWin, data) => {
       noticeWindow.send('showList', prams);
     }, 1000);
   } else {
-     console.log("showNotification-7-")
+     console.log("showNotification-7-",noticeWindow, prams)
     noticeWindow.send('showList', prams);
   }
 

@@ -18,7 +18,7 @@
         :key="index"
         @click.stop="choice(1, item.value, item.key)"
       >
-        <img :src="require('@/assets/images/emoji/' + item.value + '.png')" />
+        <img :src="require('/public/images/emoji/' + item.value + '.png')" />
       </li>
     </ul>
     <ul v-else class="imgList">
@@ -34,7 +34,7 @@
   </div>
 </template>
 <script>
-import { emojiObj } from "@/utils/emoji";
+import { emojiObj } from "/public/emoji";
 import touzi from "@/assets/images/message/touz_6.jpg";
 import poker from "@/assets/images/message/poker.png";
 
@@ -73,7 +73,7 @@ export default {
      * 1: emoji  2: 自定义图片
      */
     choice(type, value, key) {
-      let values = type == 1 ? require("@/assets/images/emoji/" + value + ".png") : "1";
+      let values = type == 1 ? require("/public/images/emoji/" + value + ".png") : "1";
       this.$emit("choice", { type, value: values, key });
     },
   },
