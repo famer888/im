@@ -221,5 +221,6 @@
   "打开链接": "Mở liên kết",
   "请输入链接文本": "Vui lòng nhập văn bản liên kết",
   "请输入链接地址": "Vui lòng nhập địa chỉ liên kết",
-  "链接地址需http/https开头": "Địa chỉ liên kết bắt đầu bằng http/https"
+  "链接地址需http/https开头": "Địa chỉ liên kết bắt đầu bằng http/https",
+  "数据已载入": "Dữ liệu đã được tải"
 }

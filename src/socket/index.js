@@ -41,7 +41,6 @@ export const websocketCreate = (url) => {
     }
 
     isContact = true;
-    console.log("wsUrl ---------->", url);
 
     webSocket = new WebSocket(url || wsUrl);
 
@@ -155,9 +154,9 @@ const reconnect = () => {
 
         // 没连接上会一直重连，设置延迟避免请求过多
         clearTimeout(timer);
-        timer = setTimeout( async () => {
+        timer = setTimeout(async () => {
             if (isContact) {
-                let url = await getNewWebSocketUrl()
+                let url = await getNewWebSocketUrl();
                 websocketCreate(url);
             }
         }, 4000);
@@ -165,24 +164,24 @@ const reconnect = () => {
 };
 
 const getNewWebSocketUrl = async () => {
-    let newUrl  = await getNewNormalDomain("session") || ""
-    if(!newUrl) {
-        newUrl = wsUrl
+    let newUrl = (await getNewNormalDomain("session")) || "";
+    if (!newUrl) {
+        newUrl = wsUrl;
     }
-    newUrl = ensureWsPrefix(newUrl)
-    return newUrl
-}
+    newUrl = ensureWsPrefix(newUrl);
+    return newUrl;
+};
 
-function ensureWsPrefix(url) {  
-    if(!url) return url;
-    // 检查字符串是否包含 "ws"  
+function ensureWsPrefix(url) {
+    if (!url) return url;
+    // 检查字符串是否包含 "ws"
     // console.log("ensureWsPrefix--", url)
-    if (!url.startsWith('ws://') && !url.startsWith('wss://')) {  
-        // 如果没有以 "ws://" 或 "wss://" 开头，则添加 "ws://"  
-        url = 'ws://' + url;  
-    }  
-    return url;  
-}  
+    if (!url.startsWith("ws://") && !url.startsWith("wss://")) {
+        // 如果没有以 "ws://" 或 "wss://" 开头，则添加 "ws://"
+        url = "ws://" + url;
+    }
+    return url;
+}
 
 window.addEventListener("online", function () {
     console.log("网络连接已恢复!");
