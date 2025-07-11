@@ -217,11 +217,18 @@ const requestApi = async (opt, errCallback) => {
                     : handleDecode({ data, protoType, type, aesKey });
 
                 const errCode = message?.commonResult?.errCode;
+
+                // 该群聊因违反相关规定，已被限制使用。
+                if (errCode == 1021) {
+                    resolve(errCode);
+                }
+
                 if (errCode != 200) {
                     console.error(
                         `接口报错：${message?.commonResult?.errMsg}。接口地址：${url}，`,
                         message
                     );
+
                     reject({
                         errorCode: errCode,
                         errorDesc: message?.commonResult?.errMsg,

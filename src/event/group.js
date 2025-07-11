@@ -67,8 +67,10 @@ const fnRnGroupEvent = async (data, isGroupInitEvent) => {
     if (data.groupUpdateEventMsgDto && data.groupUpdateEventMsgDto.length > 0) {
         // 如果群更新事件来了，则检查是否有创群事件等事件msgId,如果不存在，则表示丢失了事件，则不需要处理
         // 直接提示收到
-        groupId = Number(data.groupUpdateEventMsgDto[0].commonMsgDto.groupBaseInfo.groupId);
-        if (!groupEventExecIdObj[groupId + 'broadcast']) {
+        groupId = Number(
+            data.groupUpdateEventMsgDto[0].commonMsgDto.groupBaseInfo.groupId
+        );
+        if (!groupEventExecIdObj[groupId + "broadcast"]) {
             const isInit = await fnCheckGroupMemberList(groupId);
             // console.log('groupEventExecIdObj 事件id不存在 》》1')
             if (!isInit) {
@@ -77,29 +79,36 @@ const fnRnGroupEvent = async (data, isGroupInitEvent) => {
                     // 如果当前群存在初始化等待队列中，就不在push进去了
                     groupInitInfoList.push({
                         id: groupId,
-                        msgId: Number(data.groupUpdateEventMsgDto.at(-1).commonMsgDto.msgId),
-                        msgType: data.groupUpdateEventMsgDto.at(-1).commonMsgDto.msgType,
+                        msgId: Number(
+                            data.groupUpdateEventMsgDto.at(-1).commonMsgDto
+                                .msgId
+                        ),
+                        msgType:
+                            data.groupUpdateEventMsgDto.at(-1).commonMsgDto
+                                .msgType,
                     });
-        
+
                     groupInitDetailsGetList.push(groupId);
                     // console.log('丢失创群事件，进入初始化 》》1')
                 }
                 // 确认收到
-                data.groupUpdateEventMsgDto.forEach(item => {
+                data.groupUpdateEventMsgDto.forEach((item) => {
                     receiveGroupEvent({
                         groupId,
                         receiptStatus: 0,
                         msgType: item.commonMsgDto.msgType,
                         msgId: [Number(item.commonMsgDto.msgId)],
                     });
-                })
+                });
                 return;
             }
         }
     }
 
-    if (data.groupReqEventMsgDto && data.groupReqEventMsgDto.length > 0) {   
-        groupId = Number(data.groupReqEventMsgDto[0].commonMsgDto.groupBaseInfo.groupId);
+    if (data.groupReqEventMsgDto && data.groupReqEventMsgDto.length > 0) {
+        groupId = Number(
+            data.groupReqEventMsgDto[0].commonMsgDto.groupBaseInfo.groupId
+        );
         let groupReqEventInfo = data.groupReqEventMsgDto.at(-1);
         let msgId = Number(groupReqEventInfo.commonMsgDto.msgId);
         switch (data.groupReqEventMsgDto[0].commonMsgDto.evenType) {
@@ -109,7 +118,11 @@ const fnRnGroupEvent = async (data, isGroupInitEvent) => {
             }
             case 1: {
                 let msg = groupReqEventInfo.commonMsgDto.msg;
-                let msgs = ['邀请你加入群聊', '你通过扫描二维码加入了群聊', '你通过群别名加入了群聊'] // 这些消息是其它进群得创群事件
+                let msgs = [
+                    "邀请你加入群聊",
+                    "你通过扫描二维码加入了群聊",
+                    "你通过群别名加入了群聊",
+                ]; // 这些消息是其它进群得创群事件
                 let isHas = false;
                 for (let i = 0; i < msgs.length; i++) {
                     let itemMsg = msgs[i];
@@ -118,7 +131,12 @@ const fnRnGroupEvent = async (data, isGroupInitEvent) => {
                         break;
                     }
                 }
-                if (!groupEventExecIdObj[groupId + 'broadcast'] && !groupEventExecIdObj[groupId + 'unicast'] && msgId > 1 && !isHas) {
+                if (
+                    !groupEventExecIdObj[groupId + "broadcast"] &&
+                    !groupEventExecIdObj[groupId + "unicast"] &&
+                    msgId > 1 &&
+                    !isHas
+                ) {
                     // 收到群事件，但是发现丢失创群事件，则把当前所有群事件都丢弃，直接进入初始化流程
                     const isInit = await fnCheckGroupMemberList(groupId);
                     // console.log('groupEventExecIdObj 事件id不存在 》》2', groupEventExecIdObj, isInit)
@@ -131,19 +149,19 @@ const fnRnGroupEvent = async (data, isGroupInitEvent) => {
                                 msgId: msgId,
                                 msgType: groupReqEventInfo.commonMsgDto.msgType,
                             });
-                
+
                             groupInitDetailsGetList.push(groupId);
                             // console.log('丢失创群事件，进入初始化 》》2', {msgId})
                         }
                         // 确认收到
-                        data.groupReqEventMsgDto.forEach(item => {
+                        data.groupReqEventMsgDto.forEach((item) => {
                             receiveGroupEvent({
                                 groupId,
                                 receiptStatus: 0,
                                 msgType: item.commonMsgDto.msgType,
                                 msgId: [Number(item.commonMsgDto.msgId)],
                             });
-                        })
+                        });
                         return;
                     }
                 }
@@ -363,14 +381,13 @@ const fnRnGroupEvent = async (data, isGroupInitEvent) => {
         }
     }
 
-
     if (listNew.length > 0) {
         // 因为后续事件逻辑处在异步中，担心服务端会推送新得事件来，当前得事件id还没有存储，所以在进入异步执行前，先存储事件id
         // 设置事件执行的最后的id信息
-        listNew.forEach(item => {
+        listNew.forEach((item) => {
             const msgId = Number(item.commonMsgDto.msgId);
             groupEventExecIdObj[groupId + typeStr] = msgId;
-        })
+        });
     }
 
     // console.log(listNew);
@@ -591,13 +608,19 @@ const fnGroupMsgEvent = async (data, loginId) => {
                         maxGroupMember = [...groupMember];
                     }
 
-                    let membersStr = maxGroupMember.filter((item) =>
+                    let membersStr = maxGroupMember
+                        .filter(
+                            (item) =>
                                 Number(item.user.uid) !== hostId &&
-                                Number(item.user.uid) !== loginId).map((item) =>
+                                Number(item.user.uid) !== loginId
+                        )
+                        .map(
+                            (item) =>
                                 eventFriend.fnFriendRemarkNameObjRU({
                                     getId: Number(item.user.uid),
                                 }) || item.user.nickName
-                        ).join("，");
+                        )
+                        .join("，");
 
                     membersStr +=
                         groupMember.length > 31
@@ -630,7 +653,8 @@ const fnGroupMsgEvent = async (data, loginId) => {
                     }
 
                     // 初始化成员列表
-                    Cache(`${loginId}_${info.groupId}_groupMemberList`,
+                    Cache(
+                        `${loginId}_${info.groupId}_groupMemberList`,
                         groupMember.map((item) => {
                             return {
                                 bfShow: true,
@@ -1192,9 +1216,9 @@ const fnGroupMsgEvent = async (data, loginId) => {
             // 群主变更
             if (!groupReqType) {
                 info.type = "hostChange";
-  
-                let groupOwner = groupMember[0].user
-                let mange = groupMember[1].user
+
+                let groupOwner = groupMember[0].user;
+                let mange = groupMember[1].user;
 
                 const groupMemberList =
                     (await Cache(
@@ -1586,44 +1610,67 @@ const fnGroupDetailGet = (groupId) => {
         }
     });
 };
-const fnIntoGroup = (groupId) => { // 进群就调用，获取最新的msgId
+const fnIntoGroup = (groupId) => {
+    // 进群就调用，获取最新的msgId
     return new Promise((resolve, reject) => {
         getGroupEventLatest({ groupId }, () => {}).then((lastInfo) => {
-            if(lastInfo) {
-                resolve(lastInfo)
-                    // console.log('groupEventExecIdObj---1500: ----------->3分钟后进行比较', {groupEventExecIdObj, groupId, lastInfo})
-                    const keys = Object.keys(lastInfo)
-                    const keysArr = ['updateMaxMsgId', 'unicastMaxMsgId', 'broadcastMaxMsgId']
-                    let curKey = null;
-                    for (let i = 0; i < keys.length; i++) {
-                        let key = keys[i];
-                        if (keysArr.includes(key)){
-                            curKey = keysArr.find((item) => item === key)
-                            break;
-                        }
+            if (lastInfo) {
+                resolve(lastInfo);
+                // console.log(
+                //     "groupEventExecIdObj---1500: ----------->3分钟后进行比较",
+                //     { groupEventExecIdObj, groupId, lastInfo }
+                // );
+                const keys = Object.keys(lastInfo);
+                const keysArr = [
+                    "updateMaxMsgId",
+                    "unicastMaxMsgId",
+                    "broadcastMaxMsgId",
+                ];
+                let curKey = null;
+                for (let i = 0; i < keys.length; i++) {
+                    let key = keys[i];
+                    if (keysArr.includes(key)) {
+                        curKey = keysArr.find((item) => item === key);
+                        break;
                     }
-                    let localId = null; // 本地数据库id
-                    let lastId = Number(lastInfo[curKey]); // 拉取的最大id
-                    switch(curKey) {
-                        case 'updateMaxMsgId':
-                            localId = groupEventExecIdObj[groupId + "update"];
-                            fnCompareMsgId({localId, type:'update', lastId, groupId})
-                            break;
-                        case 'unicastMaxMsgId':
-                            localId = groupEventExecIdObj[groupId + "unicast"];
-                            fnCompareMsgId({localId, type:'unicast', lastId, groupId})
-                            break;
-                        case 'broadcastMaxMsgId':
-                            localId = groupEventExecIdObj[groupId + "broadcast"];
-                            fnCompareMsgId({localId, type:'broadcast', lastId, groupId})
-                            break; 
-                    }
+                }
+                let localId = null; // 本地数据库id
+                let lastId = Number(lastInfo[curKey]); // 拉取的最大id
+                switch (curKey) {
+                    case "updateMaxMsgId":
+                        localId = groupEventExecIdObj[groupId + "update"];
+                        fnCompareMsgId({
+                            localId,
+                            type: "update",
+                            lastId,
+                            groupId,
+                        });
+                        break;
+                    case "unicastMaxMsgId":
+                        localId = groupEventExecIdObj[groupId + "unicast"];
+                        fnCompareMsgId({
+                            localId,
+                            type: "unicast",
+                            lastId,
+                            groupId,
+                        });
+                        break;
+                    case "broadcastMaxMsgId":
+                        localId = groupEventExecIdObj[groupId + "broadcast"];
+                        fnCompareMsgId({
+                            localId,
+                            type: "broadcast",
+                            lastId,
+                            groupId,
+                        });
+                        break;
+                }
             }
-        })
-    })   
-}
-function fnCompareMsgId({localId, type, lastId, groupId}) {
-    const eventType = { broadcast: 1, unicast: 2, update: 3}
+        });
+    });
+};
+function fnCompareMsgId({ localId, type, lastId, groupId }) {
+    const eventType = { broadcast: 1, unicast: 2, update: 3 };
     // 如果拉取的最大id还是大于本地id,则请求补偿接口
     if (lastId > localId) {
         const params = {
@@ -1631,37 +1678,45 @@ function fnCompareMsgId({localId, type, lastId, groupId}) {
             eventType: eventType[type],
             maxMsgId: lastId + 1,
             minMsgId: localId,
-        }
+        };
         let index = 0;
         let timerGroupEvent = null;
         // console.log('补偿接口开始', {params})
         function groupEventList() {
-            getGroupEventList(params).then(res => {
-                // console.log('存在丢失事件，补偿更新开始', {res, params})
-                if (res.commonResult.errCode == 200) {
-                    // isCompensate这个字段表示已经补偿了
-                    fnRnGroupEvent({groupReqEventMsgDto: res.groupReqEventMsgDto, groupUpdateEventMsgDto: res.groupUpdateEventMsgDto})
+            getGroupEventList(params).then(
+                (res) => {
+                    // console.log("存在丢失事件，补偿更新开始", { res, params });
+                    if (res.commonResult.errCode == 200) {
+                        // isCompensate这个字段表示已经补偿了
+                        fnRnGroupEvent({
+                            groupReqEventMsgDto: res.groupReqEventMsgDto,
+                            groupUpdateEventMsgDto: res.groupUpdateEventMsgDto,
+                        });
+                    }
+                    if (res.commonResult.errCode == 1098 && index < 3) {
+                        // 返回1098状态码 则继续请求补偿，请求3次后则停止
+                        index++;
+                        clearTimeout(timerGroupEvent);
+                        timerGroupEvent = setTimeout(() => {
+                            groupEventList();
+                        }, 500);
+                    }
+                    if (res.commonResult.errCode == 1099) {
+                        // 服务端返回1099 则停止，服务端会推强制初始化
+                        console.log(
+                            "服务端返回1099 则停止，服务端会推强制初始化",
+                            { res }
+                        );
+                        return;
+                    }
+                },
+                (err) => {
+                    console.log("补偿接口报错", { err });
                 }
-                if (res.commonResult.errCode == 1098 && index < 3){
-                    // 返回1098状态码 则继续请求补偿，请求3次后则停止
-                    index++;
-                    clearTimeout(timerGroupEvent);
-                    timerGroupEvent = setTimeout(() => {
-                        groupEventList()
-                    }, 500)
-                }
-                if (res.commonResult.errCode == 1099){
-                    // 服务端返回1099 则停止，服务端会推强制初始化
-                    console.log('服务端返回1099 则停止，服务端会推强制初始化', {res})
-                    return
-                }
-                
-            }, err => {
-                console.log('补偿接口报错', {err})
-            })
+            );
         }
-        
-        groupEventList()
+
+        groupEventList();
     }
 }
 /**
@@ -1693,6 +1748,42 @@ const fnGroupDetailInit = (groupId) => {
             getGroupDetail({ groupId }, () => {
                 fnInitDelayedAdd(groupId);
             }).then((res) => {
+                // 如果该群聊因违反相关规定，已被限制使用
+                if (res === 1021) {
+                    // 移除详情获取
+                    groupInitDetailsGetList = groupInitDetailsGetList.filter(
+                        (item) => item !== groupId
+                    );
+
+                    // 从队列移除
+                    groupInitInterfaceGetueue =
+                        groupInitInterfaceGetueue.filter(
+                            (item) => item.id !== groupId
+                        );
+
+                    // 确认初始化完成
+                    const initInfo = groupInitInfoList.find(
+                        (item) => item.id === groupId
+                    );
+
+                    // 如果是推送过来的，则需要推送完成
+                    if (initInfo) {
+                        // 确认完成
+                        receiveGroupEvent({
+                            groupId,
+                            receiptStatus: 3,
+                            msgType: initInfo.msgType,
+                            msgId: [initInfo.msgId],
+                        });
+                    }
+
+                    // 清理初始化信息
+                    groupInitInfoList = groupInitInfoList.filter(
+                        (item) => item.id !== groupId
+                    );
+                    return;
+                }
+
                 if (res && res.group) {
                     const info = fnGroupDataFormat([
                         {
@@ -2082,7 +2173,10 @@ const fnEventReplenish = () => {
                     maxMsgId,
                     minMsgId,
                 };
-                if (JSON.stringify(params) == JSON.stringify(compensateParams[params.groupId])) {
+                if (
+                    JSON.stringify(params) ==
+                    JSON.stringify(compensateParams[params.groupId])
+                ) {
                     // 相同补偿参数，则不再补偿
                     return;
                 }
@@ -2090,9 +2184,9 @@ const fnEventReplenish = () => {
                 compensateParams[params.groupId] = params;
                 // console.log('补偿参数 >>>>>>>>>>>>> 2049', params)
                 let index = 0;
-                let timerGroupEvent = null;   
+                let timerGroupEvent = null;
 
-                fnGroupEventList(params)
+                fnGroupEventList(params);
                 // 补偿接口调用
                 function fnGroupEventList(params) {
                     // 拉取补偿接口
@@ -2110,7 +2204,7 @@ const fnEventReplenish = () => {
                                 (item) => item !== key
                             );
                     }).then((res) => {
-                        if (res.commonResult.errCode == 200){
+                        if (res.commonResult.errCode == 200) {
                             let isSuccess = false;
                             if (res) {
                                 let list = [];
@@ -2136,17 +2230,17 @@ const fnEventReplenish = () => {
                                     fnRnGroupEvent(
                                         key.includes("update")
                                             ? {
-                                                groupUpdateEventMsgDto: [
-                                                    ...list,
-                                                    ...events,
-                                                ],
-                                            }
+                                                  groupUpdateEventMsgDto: [
+                                                      ...list,
+                                                      ...events,
+                                                  ],
+                                              }
                                             : {
-                                                groupReqEventMsgDto: [
-                                                    ...list,
-                                                    ...events,
-                                                ],
-                                            }
+                                                  groupReqEventMsgDto: [
+                                                      ...list,
+                                                      ...events,
+                                                  ],
+                                              }
                                     );
 
                                     delete groupEventObj[key];
@@ -2167,14 +2261,14 @@ const fnEventReplenish = () => {
                                     (item) => item !== key
                                 );
                         }
-                        
+
                         if (res.commonResult.errCode == 1098 && index < 3) {
                             // 服务端返回1098，则重试，请求3次后则停止
                             index++;
                             clearTimeout(timerGroupEvent);
                             timerGroupEvent = setTimeout(() => {
                                 fnGroupEventList(params);
-                            }, 500)
+                            }, 500);
                         }
 
                         if (res.commonResult.errCode == 1099) {
@@ -2407,16 +2501,18 @@ async function fnCheckGroupMemberList(groupId) {
     const loginId = eventCommon.fnCommonInfoRU({
         getId: "loginId",
     });
-    const groupMemberList = await Cache(`${loginId}_${groupId}_groupMemberList`);
+    const groupMemberList = await Cache(
+        `${loginId}_${groupId}_groupMemberList`
+    );
     if (groupMemberList && groupMemberList.length > 0) {
         return true;
     }
     return false;
 }
 
-    /**
-     * 串型更新群成员
-     */
+/**
+ * 串型更新群成员
+ */
 const fnGroupMembersUpdateInSequence = async ({ groupIdList, id, name }) => {
     const loginId = eventCommon.fnCommonInfoRU({
         getId: "loginId",
@@ -2536,5 +2632,5 @@ export default {
     bfJoinFriendSet,
     fnNoticeSet,
     groupEventHandleMsg,
-    fnIntoGroup
+    fnIntoGroup,
 };
