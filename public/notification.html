@@ -221,7 +221,6 @@
       12: "骰子",
       18: "扑克牌",
     }
-      console.log("showList-1-")
     let debounceTimeout;
     function debounce(func, wait) {
       return function (...args) {
@@ -229,14 +228,11 @@
         debounceTimeout = setTimeout(() => func.apply(this, args), wait);
       };
     }
-      console.log("showList-2-")
     window.onload = () => {
       console.log("onload---");
       htmlAndWindowHeightSync()
     };
-      console.log("showList-3-")
     ipcRenderer.on('showList', (event, listData) => {
-      console.log("showList--", listData)
       initAutoClose();
       const listContainer = document.getElementById('list-container');
       if(existsInReply()) return;

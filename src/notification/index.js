@@ -80,10 +80,8 @@ const updateShowLocation = (boxH) => {
 }
 
 export const showNotification = async (mainWin, data) => {
-  console.log("showNotification--", mainWin, data)
   mainWindow = mainWin;
   if(data) {
-      console.log("showNotification-2-")
     const oldIndex = listData.findIndex(item => item.id === data.id);
     if(oldIndex !== -1) {
       listData.splice(oldIndex, 1);
@@ -92,21 +90,15 @@ export const showNotification = async (mainWin, data) => {
   }
   const prams = listData.slice(-3)
   if(!noticeWindow) {
-     console.log("showNotification-3-")
     noticeWindow = await createNoticeWindow();
-     console.log("showNotification-4-")
     setTimeout(() => {
-       console.log("showNotification-5-")
       updateShowLocation(noticeItemConfig.height)
-       console.log("showNotification-6-")
       noticeWindow.send('showList', prams);
     }, 1000);
   } else {
-     console.log("showNotification-7-",noticeWindow, prams)
     noticeWindow.send('showList', prams);
   }
 
-console.log("showNotification-8-")
   mainWindow.on("focus", function (event) {
     if (mainWindow.isFocused()) {
       closeNotice()
