@@ -101,7 +101,7 @@ export const fnGroupRelKeyGet = async (id) => {
             Cache(`${loginId}-group-key-objs`, groupKeyObjs);
         } else {
             // 解密错误
-            console.log("获取密钥失败");
+            console.error("解密-获取密钥失败-3-", keyInfos);
             return null;
         }
     }
@@ -113,9 +113,20 @@ export const fnGroupRelKeyGet = async (id) => {
     const { privateKey } = accountConfig;
 
     // 解密出真实的密钥
-    const key = secret(privateKey, keyInfos.publicKey).toUpperCase();
+    let key = null;
+    try {
+         key = secret(privateKey, keyInfos.publicKey).toUpperCase();
+    } catch (error) {
+        console.error('解密-生成秘钥异常-2-',privateKey, keyInfos)
+    }
+   
     const msgKeyBuffer = Uint8Array.from(Buffer.from(keyInfos.msgKey, "hex"));
-    const msgkey = _decrypt(msgKeyBuffer, key);
+    let msgkey = null; 
+    try {
+      msgkey = _decrypt(msgKeyBuffer, key);
+    } catch (error) {
+        console.error('解密异常-msgkey-', privateKey, keyInfos)
+    }
     const buffer = ConcatInt8([
         Uint8Array.from([10]),
         Uint8Array.from([msgkey.byteLength]),
@@ -147,15 +158,20 @@ export const fnFriendRelKeyGet = async ({
     // 如果是助手
     if (msgEncryptionVersion === -1 && id === 10002) {
         // 同账户的 app 密钥
-        return {
-            appOwn: {
-                relKey: secret(
-                    privateKey,
-                    appKeyPairOwn.publicKey
-                ).toUpperCase(),
-                keyVersion: appKeyPairOwn.keyVersion,
-            },
-        };
+        try {
+            return {
+                appOwn: {
+                    relKey: secret(
+                        privateKey,
+                        appKeyPairOwn.publicKey
+                    ).toUpperCase(),
+                    keyVersion: appKeyPairOwn.keyVersion,
+                },
+            };
+        } catch (error) {
+            console.error("解密-生成秘钥异常-1-", accountConfig)
+        }
+       
     }
 
     // 旧的密钥信息
@@ -272,12 +288,12 @@ export const fnFriendRelKeyGet = async ({
                 Cache(`${loginId}-friend-key-objs`, friendKeyObjs);
             } else {
                 // 解密错误
-                console.log("获取密钥失败");
+                console.error("解密-获取密钥失败-1-", keyPair, params);
                 return null;
             }
         } else {
             // 解密错误
-            console.log("获取密钥失败");
+            console.error("解密-获取密钥失败-2-", keyPair, params );
             return null;
         }
     }
@@ -285,46 +301,55 @@ export const fnFriendRelKeyGet = async ({
     const { appKeyPair, webKeyPair } = keyInfosActive || {};
 
     if (msgEncryptionVersion === -1) {
-        // 发送消息加密用
-        const data = {
-            appOwn: {
-                relKey: secret(
-                    privateKey,
-                    appKeyPairOwn.publicKey
-                ).toUpperCase(),
-                keyVersion: appKeyPairOwn.keyVersion,
-            },
-        };
-
-        if (webKeyPair) {
-            data.pc = {
-                relKey: secret(privateKey, webKeyPair.publicKey).toUpperCase(),
-                keyVersion: webKeyPair.keyVersion,
+        try {
+             // 发送消息加密用
+            const data = {
+                appOwn: {
+                    relKey: secret(
+                        privateKey,
+                        appKeyPairOwn.publicKey
+                    ).toUpperCase(),
+                    keyVersion: appKeyPairOwn.keyVersion,
+                },
             };
-        }
 
-        if (appKeyPair) {
-            data.app = {
-                relKey: secret(privateKey, appKeyPair.publicKey).toUpperCase(),
-                keyVersion: appKeyPair.keyVersion,
-            };
-        }
+            if (webKeyPair) {
+                data.pc = {
+                    relKey: secret(privateKey, webKeyPair.publicKey).toUpperCase(),
+                    keyVersion: webKeyPair.keyVersion,
+                };
+            }
 
-        return data;
+            if (appKeyPair) {
+                data.app = {
+                    relKey: secret(privateKey, appKeyPair.publicKey).toUpperCase(),
+                    keyVersion: appKeyPair.keyVersion,
+                };
+            }
+
+            return data;
+        } catch (error) {
+            console.error('解密-生成秘钥异常-3-',privateKey, appKeyPairOwn, webKeyPair, appKeyPair)
+        }
     } else {
-        // 收到消息解密用
-        if (isSelf) {
-            // 同账户的 app 密钥
-            return secret(privateKey, appKeyPairOwn.publicKey).toUpperCase();
-        }
+        try {
+             // 收到消息解密用
+            if (isSelf) {
+                // 同账户的 app 密钥
+                return secret(privateKey, appKeyPairOwn.publicKey).toUpperCase();
+            }
 
-        if (source === 1) {
-            // 好友的 pc 密钥
-            return secret(privateKey, webKeyPair.publicKey).toUpperCase();
-        }
+            if (source === 1) {
+                // 好友的 pc 密钥
+                return secret(privateKey, webKeyPair.publicKey).toUpperCase();
+            }
 
-        // 好友的 app 密钥
-        return secret(privateKey, appKeyPair.publicKey).toUpperCase();
+            // 好友的 app 密钥
+            return secret(privateKey, appKeyPair.publicKey).toUpperCase();
+        } catch (error) {
+            console.error('解密-生成秘钥异常-4-',privateKey, appKeyPairOwn, webKeyPair, appKeyPair)
+        }
+       
     }
 };
 
@@ -356,7 +381,7 @@ export const fnMsgDecryption = async ({
 
             // 如果群密钥没获取到，则直接结束
             if (!relKey) {
-                console.error("群消息 解密失败");
+                console.error("群消息 解密失败-1-");
                 return {};
             }
 
@@ -366,7 +391,7 @@ export const fnMsgDecryption = async ({
                 console.log({ contentNew });
             } catch (err) {
                 // 消息解密失败
-                console.error("群消息 解密失败");
+                console.error("群消息 解密失败-2-");
                 return {};
             }
         } else {
@@ -440,7 +465,7 @@ const fnUtf8ArrayToStr = (buffer, type) => {
             )}||${imgObj.sizeType}`;
 
             if (imgObj.ref) {
-                txt = formartMsgToStr(imgObj.ref, txt);
+                txt = fnFormartMsgToStr(imgObj.ref, txt);
             }
             return txt;
         }
@@ -449,7 +474,7 @@ const fnUtf8ArrayToStr = (buffer, type) => {
             const dynamicImageObj = DynamicImageObj.decode(UnitBuffer);
             let txt = `${dynamicImageObj.url}||${dynamicImageObj.url}`;
             if (dynamicImageObj.ref) {
-                txt = formartMsgToStr(dynamicImageObj.ref, txt);
+                txt = fnFormartMsgToStr(dynamicImageObj.ref, txt);
             }
             return txt;
         }
@@ -458,7 +483,7 @@ const fnUtf8ArrayToStr = (buffer, type) => {
             const { size, fileUrl, name, ref } = FileObj.decode(UnitBuffer);
             let txt = `${fileUrl}||${name}||${String(size)}`;
             if (ref) {
-                txt = formartMsgToStr(ref, txt);
+                txt = fnFormartMsgToStr(ref, txt);
             }
             return txt;
         }
@@ -467,7 +492,7 @@ const fnUtf8ArrayToStr = (buffer, type) => {
             const videoObj = VideoObj.decode(UnitBuffer);
             let txt = `${videoObj.url}*P${videoObj.thumbUrl}`;
             if (videoObj.ref) {
-                txt = formartMsgToStr(videoObj.ref, txt);
+                txt = fnFormartMsgToStr(videoObj.ref, txt);
             }
             return txt;
         }
@@ -476,7 +501,7 @@ const fnUtf8ArrayToStr = (buffer, type) => {
             const audioObj = AudioObj.decode(UnitBuffer);
             let txt = `${audioObj.url}||${audioObj.duration}`;
             if (audioObj.ref) {
-                txt = formartMsgToStr(audioObj.ref, txt);
+                txt = fnFormartMsgToStr(audioObj.ref, txt);
             }
             return txt;
         }
@@ -489,7 +514,7 @@ const fnUtf8ArrayToStr = (buffer, type) => {
                 : `${nickName}*|*|*${String(uid)}`;
 
             if (ref) {
-                txt = formartMsgToStr(ref, txt);
+                txt = fnFormartMsgToStr(ref, txt);
             }
             return txt;
         }

@@ -49,10 +49,15 @@ let RandomUintArray = (len = 32) => {
 	return array;
 }
 let secret = (A, B) => {
-	const alicePriv = Uint8Array.from(Buffer.from(A, 'hex'));
-	const bobPub = Uint8Array.from(Buffer.from(B, 'hex'));
-	const secret = sharedKey(alicePriv, bobPub);
-	return Buffer.from(secret).toString('hex');
+	try {
+		const alicePriv = Uint8Array.from(Buffer.from(A, 'hex'));
+		const bobPub = Uint8Array.from(Buffer.from(B, 'hex'));
+		const secret = sharedKey(alicePriv, bobPub);
+		return Buffer.from(secret).toString('hex');
+	} catch (error) {
+		console.error("解密-生成秘钥异常",A, B)
+		throw new Error("解密-生成秘钥异常-throw-");
+	}
 }
 // decrypt arraybuffer form file
 let _decrypt = (u8array, key) => {
