@@ -1325,39 +1325,79 @@ const getQuoteContent = (quoteInfo) => {
 /**
  * 弹出提示
  */
+// const fnAlertNotification = async (data, chatList) => {
+//     const { deviceConfig } = eventCommon.fnConfigRU();
+//     // 最小化时消息提醒, 只有不是自己的信息，并且没有开启免打扰
+//     // console.log(
+//     //     {isMessageReminderWhenMinimized: deviceConfig.isMessageReminderWhenMinimized,
+//     //     isSelf: !data.isSelf,
+//     //     idStrIsExist: !eventCommon.fnDisturbIdStrListRU({ idStrIsExist: data.id + data.type })
+//     // }, '为什么开启了免打扰还会进来 --------> 1096')
+//     if (
+//         deviceConfig.isMessageReminderWhenMinimized &&
+//         !data.isSelf &&
+//         !eventCommon.fnDisturbIdStrListRU({ idStrIsExist: data.id + data.type })
+//     ) {
+//         const info = chatList.find(
+//             (item) => item.id === data.id && item.type === data.type
+//         );
+
+//         if (info) {
+//             const text = fnMsgTypeToText(data);
+//             const content = data.chatType === 16 ? handleRichTextToText(data.content) : data.content
+//             const icon = await handleNotificationIcon(info.pic, data.id);
+//             const params = {
+//                 id: data.id,
+//                 type: data.type,
+//                 icon,
+//                 content: text ? "[" + text + "]" : content,
+//                 name:
+//                     info.name ||
+//                     info.nickName ||
+//                     info.sendUser.name ||
+//                     info.sendUser.nickName,
+//             };
+
+//             ipcRenderer.send("alertNotification", {
+//                 windowId: remote.getCurrentWindow().getMediaSourceId(),
+//                 ...params,
+//             });
+//         }
+//     }
+// };
+
+
+
+/**
+ * 弹出提示
+ */
 const fnAlertNotification = async (data, chatList) => {
+    console.log("fnAlertNotification--", data, chatList)
     const { deviceConfig } = eventCommon.fnConfigRU();
-    // 最小化时消息提醒, 只有不是自己的信息，并且没有开启免打扰
-    // console.log(
-    //     {isMessageReminderWhenMinimized: deviceConfig.isMessageReminderWhenMinimized,
-    //     isSelf: !data.isSelf,
-    //     idStrIsExist: !eventCommon.fnDisturbIdStrListRU({ idStrIsExist: data.id + data.type })
-    // }, '为什么开启了免打扰还会进来 --------> 1096')
+    const { id, type } = data;
+    const { msgType, avatar, content, nickName, remarkName, sendUid } = data;
+    const loginId = eventCommon.fnCommonInfoRU({getId: "loginId"});
+
+    const isSelf = Number(sendUid) === loginId || !sendUid;
+    console.log("fnAlertNotification--", deviceConfig.isMessageReminderWhenMinimized, !isSelf, !eventCommon.fnDisturbIdStrListRU({ idStrIsExist: id + type }), ![51].includes(msgType))
     if (
         deviceConfig.isMessageReminderWhenMinimized &&
-        !data.isSelf &&
-        !eventCommon.fnDisturbIdStrListRU({ idStrIsExist: data.id + data.type })
+        !isSelf &&
+        !eventCommon.fnDisturbIdStrListRU({ idStrIsExist: id + type }) &&
+        ![51, 6].includes(msgType)
     ) {
-        const info = chatList.find(
-            (item) => item.id === data.id && item.type === data.type
-        );
-
+        const info = chatList.find(item => item.id === id && item.type === type);
         if (info) {
-            const text = fnMsgTypeToText(data);
-            const content = data.chatType === 16 ? handleRichTextToText(data.content) : data.content
-            const icon = await handleNotificationIcon(info.pic, data.id);
             const params = {
-                id: data.id,
-                type: data.type,
-                icon,
-                content: text ? "[" + text + "]" : content,
-                name:
-                    info.name ||
-                    info.nickName ||
-                    info.sendUser.name ||
-                    info.sendUser.nickName,
+                id,
+                type,
+                msgType,
+                icon: type === "group" ? info.avatar : avatar,
+                content: msgType === 8 ? `[${i18n.t("群公告")}]${content}` : content,
+                userName: remarkName || nickName || "",
+                name: info.name || info.nickName,
             };
-
+            console.log("alertNotification--", params)
             ipcRenderer.send("alertNotification", {
                 windowId: remote.getCurrentWindow().getMediaSourceId(),
                 ...params,

@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en" style="position: fixed; bottom: 0; right: 0;">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Child Window</title>
+  <style>
+    body {
+      margin: 0;
+    }
+
+    #list-container {
+      list-style-type: none;
+      padding: 0;
+      margin: 0;
+      overflow: hidden;
+    }
+
+    #list-container li {
+      margin-top: 10px;
+      padding: 10px 9px;
+      background-color: #fff;
+      box-sizing: border-box;
+      position: relative;
+      width: 278px;
+      cursor: default;
+      border: 1px solid #e5e5e5;
+      border-radius: 10px 0 10px 10px;
+    }
+
+    #list-container li .avatar {
+      border-radius: 50%;
+      margin-right: 10px;
+      height: 44px;
+      width: 44px;
+    }
+
+    .info-box {
+      display: flex;
+      align-items: center;
+      width: 100%;
+    }
+
+    #list-container li .info {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .nickname-box {
+      display: flex;
+      align-items: center;
+      margin-bottom: 5px;
+    }
+    
+    .nickname {
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      width: 180px;
+      font-size: 14px;
+      display: block;
+    }
+
+    .group-chat-icon {
+      height: 16px;
+      margin-right: 4px;
+    }
+
+    #list-container li .info .text-content {
+      font-size: 12px;
+      line-height: 16px;
+      color: #999999;
+      width: 210px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      word-break: break-all;
+    }
+
+    .close-item {
+      position: absolute;
+      right: 10px;
+      top: 12px;
+      width: 12px;
+      height: 12px;
+      cursor: pointer;
+    }
+
+    .hid-all {
+      width: 100%;
+      height: 30px;
+      line-height: 30px;
+      color: #008DFF;
+      font-size: 12px;
+      text-align: center;
+      background-color: #fff;
+      display: none;
+      cursor: pointer;
+      border: 1px solid #e5e5e5;
+      box-sizing: border-box;
+    }
+
+    .hid-all:hover {
+      background-color: #DEECF5;
+      border-color: #DEECF5;
+    }
+
+    .user-name {
+      color: #FB9E3E;
+      font-size: 12px;
+    }
+
+    .emoji-item {
+      height: 18px;
+      position: relative;
+      top: 4px;
+    }
+
+    .reply-button {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      display: none;
+      cursor: pointer;
+      background: #008DFF;
+      color: #fff;
+      border-radius: 99px;
+      border: none;
+      width: 50px;
+      height: 24px;
+      font-size: 12px;
+      box-shadow: 1px 0px 10px rgb(0 0 0 / 28%);
+    }
+
+    #list-container li:hover .reply-button {
+      display: block;
+    }
+
+    .reply-form {
+      width: 100%;
+      display: none;
+      align-items: center;
+    }
+
+    .reply-form-button {
+      margin-right: 10px;
+      background: #008DFF;
+      color: #fff;
+      border-radius: 99px;
+      border: none;
+      cursor: pointer;
+      width: 50px;
+      height: 24px;
+      font-size: 12px;
+      box-shadow: 1px 0px 10px rgb(0 0 0 / 28%);
+    }
+
+    .reply-input {
+      width: 100%;
+      min-height: 20px;
+      max-height: 50px;
+      overflow-y: hidden;
+      box-sizing: border-box;
+      resize: none;
+      margin: 5px 10px 0;
+      border-color: #e5e5e5;
+      /* outline-color: #FB9E3E !important; */
+      outline: none !important;
+    }
+
+    .msg-type-icon {
+      height: 16px;
+      position: relative;
+      top: 2px;
+    }
+
+    .msg-type-name {
+      color: #000;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="notice-main">
+    <div class="hid-all" id="hidAll">隐藏全部</div>
+    <ul id="list-container"></ul>
+  </div>
+  <script type="module">
+    const groupIcon = "./images/default_chat_icon.png";
+    const friendIcon = "./images/logo-58.png";
+    const closeIcon = "./images/notification/close.png";
+    const groupChatIcon = "./images/notification/group_chat_icon.png";
+    const {ipcRenderer} = require('electron');
+    import {emojiObj, emojiTextList} from "./emoji.js";
+
+    const msgTypeIcon = {
+      1: "msg_image",
+      2: "msg_voice",
+      3: "msg_video",
+      5: "msg_name_card",
+      7: "msg_file",
+      9: "msg_image",
+      10: "msg_red_pack",
+      12: "msg_dice",
+    };
+    const msgTypeName = {
+      1: "图片",
+      2: "语音",
+      3: "视频",
+      5: "名片",
+      7: "文件",
+      9: "动图",
+      10: "红包",
+      12: "骰子",
+    }
+
+    let debounceTimeout;
+    function debounce(func, wait) {
+      return function (...args) {
+        clearTimeout(debounceTimeout);
+        debounceTimeout = setTimeout(() => func.apply(this, args), wait);
+      };
+    }
+
+    window.onload = () => {
+      console.log("onload---");
+      htmlAndWindowHeightSync()
+    };
+    
+    ipcRenderer.on('showList', (event, listData) => {
+      initAutoClose();
+      const listContainer = document.getElementById('list-container');
+      if(existsInReply()) return;
+
+      let html = '';
+      const msglist = listData.slice(-3)
+      msglist.forEach(item => {
+        const isGroup = item.type === 'group';
+        const defaultIcon = isGroup ? groupIcon : friendIcon;
+        const iconSrc = `./images/notification/${msgTypeIcon[item.msgType]}.png`;
+
+        html += `<li id="notice-item-${item.id}" class="list-item">
+                  <div class="info-box">
+                    <img src="${item.icon || defaultIcon}" class="avatar" onerror="this.src='${defaultIcon}';" />
+                    <div class="info">
+                      <div class="nickname-box">
+                        ${isGroup ? `<img class="group-chat-icon" src="${groupChatIcon}" />` : ''}
+                        <span class="nickname">${item.name}</span>
+                      </div>
+                      <div class="text-content">
+                        ${
+                          item.msgType in msgTypeIcon ?
+                            `
+                              <span class="user-name">${item.userName ? item.userName + ':' : ""}</span>
+                              <img class="msg-type-icon" src="${iconSrc}" />
+                              <span class="msg-type-name">${msgTypeName[item.msgType]}</span>
+                            `
+                          : 
+                            `
+                             ${isGroup && item.userName ? `<span class="user-name">${item.userName}:</span>` : ''}
+                             <span class="msg-value">${handleMsgContent(item.content)}</span>
+                            `
+                        }
+                      </div>
+                    </div>
+                    <img src="${closeIcon}" class="close-item"/>
+                    <button class="reply-button">回复</button>
+                  </div>
+                  <div class="reply-form">
+                    <textarea class="reply-input" name="myTextarea" placeholder="Ctrl+Enter发送" rows="1"></textarea>
+                    <button class="reply-form-button">发送</button>
+                  </div>
+                </li>`;
+      });
+
+      listContainer.innerHTML = html;
+
+      // 添加事件监听器（需要在innerHTML设置之后进行）
+      msglist.forEach(item => {
+        const listItem = document.getElementById(`notice-item-${item.id}`);
+        if(!listItem) return;
+
+        listItem.addEventListener('click', (event) => goChat(item));
+
+        const closeItem = listItem.querySelector('.close-item');
+        closeItem.addEventListener('click', (event) => {
+          event.stopPropagation();
+          closeNotice(item); 
+        });
+
+        const replyForm = listItem.querySelector('.reply-form');
+        replyForm.addEventListener('click', (event) => {
+          event.stopPropagation();
+        });
+    
+        const replyButton = listItem.querySelector('.reply-button');
+        const replyInput = listItem.querySelector('.reply-input');
+        replyButton.addEventListener('click', (event) => {
+          event.stopPropagation();
+          replyForm.style.display = "flex";
+          replyButton.style.display = "none";
+          setTimeout(() => {
+            replyInput.focus();
+          }, 100)
+        });
+
+
+        //输入框自动调整高度
+        replyInput.addEventListener('input', () => {
+          const style = window.getComputedStyle(replyInput);
+          const hiddenHeight = replyInput.scrollHeight;
+          replyInput.style.height = 'auto';
+          replyInput.style.height = (replyInput.scrollHeight) + 'px';
+        });
+
+        replyInput.addEventListener('keydown', function (event) {
+          if (event.ctrlKey && event.key === 'Enter') {
+            event.preventDefault();
+            const replyText = replyInput.value;
+            sendMsg(item, replyText)
+          }
+        });
+
+        const sendButton = listItem.querySelector('.reply-form-button');
+        sendButton.addEventListener('click', () => {
+          const replyText = replyInput.value;
+          sendMsg(item, replyText)
+        });
+    
+      });
+   
+      updateHidAllShow(listData.length >= 2);
+    });
+
+    // 检测是否回复中
+    function existsInReply(className) {
+        const elements = document.querySelectorAll(`.reply-form`);
+        for (let element of elements) {
+            const computedStyle = window.getComputedStyle(element);
+            if (computedStyle.display !== 'none') {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    // html界面和窗口的高度同步
+    function htmlAndWindowHeightSync() {
+      const sendPageHeightChange = debounce((height) => {
+        ipcRenderer.send("noticePageHeightChange", {height});
+      }, 20);
+
+      const element = document.getElementById('notice-main');
+      const resizeObserver = new ResizeObserver(entries => {
+          for (let entry of entries) {
+            const newHeight = entry.contentRect.height
+              console.log('Element height changed:', newHeight);
+              sendPageHeightChange(newHeight);
+          }
+      });
+      resizeObserver.observe(element);
+    }
+    
+    function initAutoClose() {
+      const noticeMainDom = document.getElementById('notice-main');
+
+      const clearTimer = () => {
+        clearTimeout(window.timerAutoClose);
+        window.timerAutoClose = null;
+      }
+
+      const pollingClose = () => {
+        clearTimer()
+        if(existsInReply()) return;
+        window.timerAutoClose = setTimeout(() => {
+          let opacity = noticeMainDom.style.opacity
+          opacity -= 0.2; 
+          noticeMainDom.style.opacity = opacity;
+          if(opacity <= 0) {
+            hideAllNotice();
+          } else {
+            pollingClose();
+          }
+        }, 1000);
+      }
+
+      clearTimer();
+      noticeMainDom.style.opacity = 1;
+      setTimeout(() => {
+        pollingClose()
+      }, 2000)
+
+      // 添加鼠标移入事件监听器
+      noticeMainDom.addEventListener('mouseenter', function(event) {
+        console.log("mouseenter--")
+        noticeMainDom.style.opacity = 1;
+        clearTimer();
+      });
+
+      // 添加鼠标移出事件监听器
+      noticeMainDom.addEventListener('mouseleave', function(event) {
+        console.log("mouseleave--")
+          pollingClose();
+      });
+    }
+    
+    // 回复消息
+    function sendMsg(item, value) {
+      ipcRenderer.send("notificationReply", {
+        ...item,
+        value,
+      });
+      closeNotice(item)
+    }
+
+    // 关闭单个通知
+    function closeNotice(item) {
+      var liToRemove = document.getElementById(`notice-item-${item.id}`);
+
+      if (liToRemove) {
+        liToRemove.parentNode.removeChild(liToRemove);
+      }
+      console.log("closeClick--", item)
+      ipcRenderer.send("noticeCloseItem", {id: item.id});
+    }
+
+    // 隐藏全部通知
+    function hideAllNotice() {
+      const listContainer = document.getElementById('list-container');
+      listContainer.innerHTML = ''; // 清空现有的列表项
+      updateHidAllShow(false);
+      ipcRenderer.send("hidAll");
+    }
+
+    // 更新隐藏全部按钮显示状态
+    function updateHidAllShow(state) {
+      const hidAllDom = document.getElementById('hidAll');
+      hidAllDom.style.display = state ? 'block' : 'none';
+      if (state) {
+        hidAllDom.addEventListener('click', (event) => hideAllNotice())
+      }
+    }
+
+    // 跳转到聊天界面
+    function goChat(item) {
+      console.log("goChat--4-", item)
+      ipcRenderer.send("noticeGoChat", item);
+      hideAllNotice();
+    }
+
+    function handleMsgContent(contentStr) {
+     if (typeof contentStr !== "string") return contentStr;
+     let str = contentStr.replaceAll("!@#", "")
+     return textToEmojiImage(str)
+    }
+
+    // 解析文本emoji表情为img
+    function textToEmojiImage(str) {
+      let value = str;
+      let arr = str.match(/\[(.+?)\]/g);
+      arr = Array.from(new Set(arr));
+
+      for (const item of arr) {
+        if (emojiTextList.includes(item)) {
+          value = value.replaceAll(
+            item,
+            `<img class="emoji-item" src="${`./images/emoji/${emojiObj[item]}.png`}">`
+          );
+        }
+      }
+      return value;
+    }
+
+  </script>
+</body>
+
+</html>

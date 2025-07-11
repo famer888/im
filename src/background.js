@@ -24,6 +24,7 @@ import pkg from "../package.json";
 import { createProtocol } from "vue-cli-plugin-electron-builder/lib";
 import nodePath from "path";
 import { openFile } from "@/utils/server";
+import { showNotification, closeNotification } from  "@/notification";
 
 app.on("gpu-process-crashed", (event, kill) => {
     // console.warn("app:gpu-process-crashed", event, kill);
@@ -83,6 +84,7 @@ let baseIndexList = [];
 let userData = app.getPath("userData");
 let imagesCacheDir = `${userData}/images`;
 let voicesCacheDir = `${userData}/voices`;
+let mainWindowIsFocused = true;
 
 ipcMain.handle("get-user-data-path", () => {
     return userData;
@@ -661,11 +663,12 @@ const setMainWin = async () => {
     mainWindow.on("minimize", function (event) {
         mainWindow && mainWindow.send("visibilitychange", false);
     });
-
     mainWindow.on("focus", function (event) {
+        mainWindowIsFocused = true;
         mainWindow && mainWindow.send("visibilitychange", true);
     });
     mainWindow.on("blur", function (event) {
+        mainWindowIsFocused = false;
         mainWindow && mainWindow.send("visibilitychange", false);
     });
 
@@ -932,36 +935,50 @@ const createMainWindow = async () => {
     });
 
     // 监听 通知显示
+    // ipcMain.on("alertNotification", (event, args) => {
+    //     const { windowId, content, icon, name } = args;
+
+    //     const win = BrowserWindow.getAllWindows()[0];
+
+    //     // console.log(`is: ${win.isMinimized()}, alertNotification -----> 939`, args);
+
+    //     const notification = new Notification({
+    //         title: name,
+    //         body: content,
+    //         icon: icon,
+    //     });
+    //     // 只有窗口缩小了才会提示信息通知
+    //     if (win.isMinimized()) {
+    //         notification.show();
+    //     }
+    //     // 监听通知点击事件
+    //     /**
+    //              * notification.on('click') 事件来响应通知的点击。当点击通知时：
+    //                 通过 mainWindow.restore() 恢复最小化的窗口。
+    //                 通过 mainWindow.show() 显示窗口（如果它被隐藏）。
+    //                 调用 mainWindow.focus() 确保窗口在前台
+    //              * **/
+    //     notification.on("click", () => {
+    //         if (win.isMinimized()) win.restore();
+    //         if (!win.isVisible()) win.show();
+    //         win.focus();
+    //         win.webContents.send("notification-clicked", args);
+    //         console.log("点击了通知组件 ---------------> background 957");
+    //     });
+    // });
+
+      // 监听 通知显示
     ipcMain.on("alertNotification", (event, args) => {
-        const { windowId, content, icon, name } = args;
-
-        const win = BrowserWindow.getAllWindows()[0];
-
-        // console.log(`is: ${win.isMinimized()}, alertNotification -----> 939`, args);
-
-        const notification = new Notification({
-            title: name,
-            body: content,
-            icon: icon,
-        });
-        // 只有窗口缩小了才会提示信息通知
-        if (win.isMinimized()) {
-            notification.show();
+        console.log('alertNotification-1-', mainWindow.isMinimized(), !mainWindowIsFocused)
+        if (mainWindow.isMinimized() || !mainWindowIsFocused) {
+                  console.log('alertNotification-2-')
+           showNotification(mainWindow, args)
         }
-        // 监听通知点击事件
-        /**
-                 * notification.on('click') 事件来响应通知的点击。当点击通知时：
-                    通过 mainWindow.restore() 恢复最小化的窗口。
-                    通过 mainWindow.show() 显示窗口（如果它被隐藏）。
-                    调用 mainWindow.focus() 确保窗口在前台
-                 * **/
-        notification.on("click", () => {
-            if (win.isMinimized()) win.restore();
-            if (!win.isVisible()) win.show();
-            win.focus();
-            win.webContents.send("notification-clicked", args);
-            console.log("点击了通知组件 ---------------> background 957");
-        });
+    });
+
+    // 监听 通知显示
+    ipcMain.on("notificationClose", (event, args) => {
+        closeNotification(args)
     });
 
     powerMonitor.on("suspend", () => {
