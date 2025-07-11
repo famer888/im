@@ -13,7 +13,10 @@
       class="comList"
       :style="{ width: listWidth + 'px', maxWidth: listWidthMax + 'px' }"
     >
-      <div class="search" :style="{'padding-top': archiveListShow ? '7px' : '45px'}">
+      <div
+        class="search"
+        :style="{ 'padding-top': archiveListShow ? '7px' : '45px' }"
+      >
         <ComSearch
           :searchText="searchText"
           :unreadObj="unreadObj"
@@ -124,13 +127,13 @@ export default {
       listWidthMax: 261, // 列表的最大宽度
       groupDialogInfo: null, //打开的群dialog 信息
       archiveListShow: false, // 是否显示归档
-      archiveIdStrList: []
+      archiveIdStrList: [],
     };
   },
   provide() {
     return {
-      provideSearchText: this.handleSearchText
-    }
+      provideSearchText: this.handleSearchText,
+    };
   },
   computed: {
     /**
@@ -164,7 +167,7 @@ export default {
       this.searchText = data.searchText;
     },
     handleArchiveIdStrList(list) {
-      this.archiveIdStrList = list
+      this.archiveIdStrList = list;
     },
     /**
      * 获取聊天窗口列表
@@ -181,7 +184,7 @@ export default {
           ...groupChats,
           ...friendChats,
         ]);
-         console.log("chats-2-")
+
         this.chats = info.list;
         chatTopSize = info.chatTopSize;
       });
@@ -211,7 +214,7 @@ export default {
           "clearAll", // 清除全部信息
           "openGroupDialog",
           "bfAddressSet", // 保存到通讯录
-          "msgListPropertyUpdate" // 信息发送成功状态更新
+          "msgListPropertyUpdate", // 信息发送成功状态更新
         ],
         this.eventHandling
       );
@@ -220,7 +223,7 @@ export default {
      * 处理事件
      */
     eventHandling(info, operator, operatorType) {
-     console.log({info, operator, operatorType}, 'homeLeft --------> 220')
+      console.log({ info, operator, operatorType }, "homeLeft --------> 220");
       if (!info) {
         return;
       }
@@ -300,7 +303,7 @@ export default {
         }
         case "deleteFriend": {
           // 删除好友
-          this.eventHandDeleteFriend(info)
+          this.eventHandDeleteFriend(info);
           break;
         }
         case "cheduledDeletionConfig": {
@@ -326,7 +329,7 @@ export default {
           break;
         case "msgListPropertyUpdate":
           // /信息发送成功还是失败状态
-          this.eventUpdateMsgStatus(info)
+          this.eventUpdateMsgStatus(info);
           break;
         default:
       }
@@ -335,18 +338,18 @@ export default {
       // 信息发送成功还是失败更新会话列表里的readStatus
       const chats = _.cloneDeep(this.chats);
       for (let i = 0; i < chats.length; i++) {
-        let item = chats[i]
+        let item = chats[i];
         if (item.id == info.id) {
           item.readStatus = info.readStatus;
           break;
         }
       }
-       console.log("chats-3-")
+      console.log("chats-3-");
       this.chats = chats;
       Cache(
-          `${loginId}MessageGroupList`,
-           chats.filter((item) => item.type === "group")
-        );
+        `${loginId}MessageGroupList`,
+        chats.filter((item) => item.type === "group")
+      );
     },
     eventUpdateReadCancel(info) {
       // 开启阅后即焚或者关闭，更新当前窗口的信息
@@ -360,7 +363,7 @@ export default {
 
         // 即时渲染
         if (this.navType === 0) {
-           console.log("chats-4-")
+          console.log("chats-4-");
           this.chats = _.cloneDeep(this.chats);
         }
 
@@ -377,7 +380,6 @@ export default {
         this.groups[groupsIndex].bfGroupReadCancel = info.bfReadCancel;
         this.groups[groupsIndex].groupMsgCancelTime = info.msgCancelTime;
 
-
         Cache(`${loginId}-GroupList`, this.groups);
       }
     },
@@ -389,7 +391,7 @@ export default {
 
       if (values) {
         this.chatTopSize = values.chatTopSize;
-         console.log("chats-5-")
+        console.log("chats-5-");
         this.chats = values.list;
 
         // 保存到本地
@@ -420,7 +422,7 @@ export default {
           break;
         }
       }
-       console.log("chats-6-")
+      console.log("chats-6-");
       this.chats = chats;
       // 更新本地会话列表文件
       Cache(
@@ -448,15 +450,15 @@ export default {
     async eventHandgroupShutupAll(info) {
       // 全员禁言
       let chats = _.cloneDeep(this.chats);
-      let groups = _.cloneDeep(this.groups)
+      let groups = _.cloneDeep(this.groups);
       const index = chats.findIndex(
         (item) => item.id === info.id && item.type === "group"
       );
-    
+
       if (index !== -1) {
         chats[index].bfShutup = info.bfShutup;
         // 即时渲染
-         console.log("chats-7-")
+        console.log("chats-7-");
         this.chats = chats;
         Cache(
           `${loginId}MessageGroupList`,
@@ -465,9 +467,9 @@ export default {
       }
 
       // 更新群列表群的禁言状态信息
-      const curGroup = groups.find(item => item.id == info.id)
+      const curGroup = groups.find((item) => item.id == info.id);
       if (curGroup) {
-        curGroup.bfShutup = info.bfShutup
+        curGroup.bfShutup = info.bfShutup;
         this.groups = groups;
         Cache(`${loginId}-GroupList`, groups);
       }
@@ -494,7 +496,7 @@ export default {
           });
 
           // 即时渲染
-           console.log("chats-8-")
+          console.log("chats-8-");
           this.chats = chats;
         }
       }
@@ -511,19 +513,19 @@ export default {
       }
     },
     eventHandAddFriend(info) {
-
       let chats = _.cloneDeep(this.chats);
-      let friends = _.cloneDeep(this.friendList)
-      let friendIndex = chats.findIndex(item => item.id == info.id)
+      let friends = _.cloneDeep(this.friendList);
+      let friendIndex = chats.findIndex((item) => item.id == info.id);
       // 如果是删除得好友，重新加回来，会话列表里还有好友得聊天窗，则直接覆盖原来得好友信息就好
       if (friendIndex !== -1) {
-        chats[friendIndex] = {...info}
+        chats[friendIndex] = { ...info };
       } else {
         chats.unshift(info);
 
         friends.push(info);
 
-        const { letters, letterIndexs, friendList } = eventFriend.fnFriendListFormat(friends);
+        const { letters, letterIndexs, friendList } =
+          eventFriend.fnFriendListFormat(friends);
 
         this.letters = letters;
         this.letterIndexs = letterIndexs;
@@ -534,40 +536,40 @@ export default {
           chats.filter((item) => item.type === "friend")
         );
       }
-       console.log("chats-9-")
+      console.log("chats-9-");
       this.chats = chats;
     },
     // 删除好友处理
     eventHandDeleteFriend(info) {
       let chats = _.cloneDeep(this.chats);
-      let friends = _.cloneDeep(this.friendList)
-      friends = friends.filter(item => item.id !== info.id)
-      chats = chats.filter(item => item.id !== info.id)
+      let friends = _.cloneDeep(this.friendList);
+      friends = friends.filter((item) => item.id !== info.id);
+      chats = chats.filter((item) => item.id !== info.id);
       // 删除本地数据
-      Cache(`${loginId}-ContactList`, friends)
+      Cache(`${loginId}-ContactList`, friends);
       Cache(
-          `${loginId}MessageUserList`,
-          chats.filter((item) => item.type === "friend")
-        );
+        `${loginId}MessageUserList`,
+        chats.filter((item) => item.type === "friend")
+      );
       this.friendList = friends;
-       console.log("chats-10-")
+      console.log("chats-10-");
       this.chats = chats;
       // 删除所有好友聊天信息
       eventBase.fnCommunicationSendMsg({
-              operator: "msgDelete",
-              data: {
-                id: info.id,
-                type: 'friend',
-                idsDelete: [],
-                isRemoteDeletion: false,
-                isDeleteChatWindow: false,
-              },
-            });
+        operator: "msgDelete",
+        data: {
+          id: info.id,
+          type: "friend",
+          idsDelete: [],
+          isRemoteDeletion: false,
+          isDeleteChatWindow: false,
+        },
+      });
     },
     /**
      * 处理事件 群详情数据同步
      */
-     eventHandlingGroupUpdate(info) {
+    eventHandlingGroupUpdate(info) {
       const dataNew = eventGroup.fuGroupUpdate({
         info: { ...info.values, id: info.id, type: info.type },
         groups: this.groups,
@@ -576,7 +578,7 @@ export default {
       this.groups = _.cloneDeep(dataNew.groups);
       // 聊天列表更新
       if (dataNew.chats) {
-         console.log("chats-11-")
+        console.log("chats-11-");
         this.chats = _.cloneDeep(dataNew.chats);
       }
     },
@@ -599,7 +601,7 @@ export default {
 
       // 聊天列表更新
       if (dataNew.chats) {
-         console.log("chats-12-")
+        console.log("chats-12-");
         this.chats = _.cloneDeep(dataNew.chats);
       }
     },
@@ -630,7 +632,7 @@ export default {
       let chats = this.chats.filter(
         (item) => item.id !== id || item.type !== type
       );
-       console.log("chats-13-")
+      console.log("chats-13-");
       this.chats = chats;
       if (info.isDeleteLocal) {
         // 清除会话列表
@@ -682,7 +684,7 @@ export default {
 
       // 聊天列表有变更，则更新聊天列表
       if (updateInfos.chatList) {
-         console.log("chats-14-")
+        console.log("chats-14-");
         this.chats = _.cloneDeep(updateInfos.chatList);
         chatTopSize = updateInfos.chatTopSize;
         eventMsg.fnAlertNotification(info, this.chats);
@@ -737,7 +739,8 @@ export default {
      */
     eventHandlingMsgDelete(info) {
       // // 更新会话列表对应会话框的content
-      const { id, type, lastInfo, isOtherPlatformOperate, unreadMsgCount } = info;
+      const { id, type, lastInfo, isOtherPlatformOperate, unreadMsgCount } =
+        info;
 
       let chats = _.cloneDeep(this.chats);
       let isUpdate = false;
@@ -772,7 +775,7 @@ export default {
 
       if (isUpdate) {
         // 更新会话列表和会话列表本地文件
-         console.log("chats-15-")
+        console.log("chats-15-");
         this.chats = chats;
 
         Cache(
@@ -951,19 +954,23 @@ export default {
           chats.splice(chatTopSize, 0, chatInfo);
         }
       }
-      if (['groupRemoveMember', 'groupAddMember', 'memberExit'].includes(operatorType)) {
+      if (
+        ["groupRemoveMember", "groupAddMember", "memberExit"].includes(
+          operatorType
+        )
+      ) {
         // 新增或删除群成员，更新群成员数量
-         for (let i = 0; i < chats.length; i++) {
-            let curChat = chats[i];
-            if (curChat.type === "group" && curChat.id === info.groupId) {
-              curChat.memberCount = info.memberCount;
-              break;
-            }
-         }
+        for (let i = 0; i < chats.length; i++) {
+          let curChat = chats[i];
+          if (curChat.type === "group" && curChat.id === info.groupId) {
+            curChat.memberCount = info.memberCount;
+            break;
+          }
+        }
       }
 
       // 列表更新
-      console.log("chats-1-")
+      console.log("chats-1-");
       this.chats = chats;
       Cache(
         `${loginId}MessageGroupList`,
@@ -1051,47 +1058,50 @@ export default {
     },
     // 格式化拿到的数据的content如果是 1||5 这样格式的数据
     fnFormatmsgLast(msgLast) {
-        const loginId = eventCommon.fnCommonInfoRU({
-            getId: "loginId",
-        });
-        const isSelf = msgLast.sendUid === loginId;
+      const loginId = eventCommon.fnCommonInfoRU({
+        getId: "loginId",
+      });
+      const isSelf = msgLast.sendUid === loginId;
 
-        let friendInfo = null;
+      let friendInfo = null;
 
-        if (!isSelf) {
-            friendInfo = this.friendList.find(item => item.id === msgLast.sendUid);
+      if (!isSelf) {
+        friendInfo = this.friendList.find(
+          (item) => item.id === msgLast.sendUid
+        );
+      }
+
+      if (msgLast.chatType === 51 && msgLast.content.includes("||")) {
+        let arr = msgLast.content.split("||");
+        let str = i18n.t("设置了消息已读XX后销毁");
+
+        let timeStr = "";
+        const second = arr[1];
+        if (second < 60) {
+          timeStr = second + i18n.t("秒");
+        } else if (second < 60 * 60) {
+          timeStr = second / 60 + i18n.t("分钟");
+        } else if (second < 60 * 60 * 24) {
+          timeStr = second / (60 * 60) + i18n.t("小时");
+        } else {
+          timeStr = second / (60 * 60 * 24) + i18n.t("天");
         }
-
-        if (msgLast.chatType === 51 && msgLast.content.includes('||')) {
-            let arr = msgLast.content.split('||');
-            let str = i18n.t("设置了消息已读XX后销毁");
-
-            let timeStr = "";
-            const second = arr[1];
-            if (second < 60) {
-                timeStr = second + i18n.t("秒");
-            } else if (second < 60 * 60) {
-                timeStr = second / 60 + i18n.t("分钟");
-            } else if (second < 60 * 60 * 24) {
-                timeStr = second / (60 * 60) + i18n.t("小时");
-            } else {
-                timeStr = second / (60 * 60 * 24) + i18n.t("天");
-            }
-            str = str.replace("XX", timeStr);
-            return isSelf ? '你' + str : (friendInfo.name || friendInfo.nickName) + " " + str
-        }
-        return msgLast.content;
-    }
+        str = str.replace("XX", timeStr);
+        return isSelf
+          ? "你" + str
+          : (friendInfo.name || friendInfo.nickName) + " " + str;
+      }
+      return msgLast.content;
+    },
   },
   watch: {
     groups: {
       handler(newGroups, oldGroups) {
-
-        this.$emit('setGroups', newGroups)
+        this.$emit("setGroups", newGroups);
       },
       immediate: false,
-      deep: true
-    }
+      deep: true,
+    },
   },
   created() {
     // 监听点击通知
@@ -1103,7 +1113,6 @@ export default {
         data: { ...chatInfo, comType: "chat" },
       });
     });
-
   },
   mounted() {
     // 事件 处理监听

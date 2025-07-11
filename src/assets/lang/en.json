@@ -221,5 +221,6 @@
   "打开链接": "Open link",
   "请输入链接文本": "Please enter the link text",
   "请输入链接地址": "Please enter the link address",
-  "链接地址需http/https开头": "The link address needs to start with http/https"
+  "链接地址需http/https开头": "The link address needs to start with http/https",
+  "数据已载入": "Data loaded"
 }
