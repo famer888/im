@@ -93,7 +93,6 @@ const checkFileCorrect = (url) => {
  * 下载失败
  */
 const handleDownloadFileFailed = (_$, data) => {
-    console.log("handleDownloadFileFail-1-", JSON.stringify(data))
     setTimeout( async() => {
         let { channelType = 0 } = data || {};
         let moduleCode = {0: "ossDefaultUrl", 1: "ossChatUrl", 2: "ossLowRateUrl"}[channelType] || "ossDefaultUrl"
@@ -102,12 +101,9 @@ const handleDownloadFileFailed = (_$, data) => {
         let downFailNum = data.downFailNum || 0
         if(downFailNum <=3 ) {
             data.downFailNum = downFailNum + 1
-            console.log("handleDownloadFileFail-2-",data, downFailNum)
             data.trendsFileUrl = await getNewFileDownUrl(url, channelType, data.downFailNum-1) || "";
-            console.log("handleDownloadFileFail-3-",data)
             ipcRenderer.send("fileDownload", data)
         }else {
-            console.log("handleDownloadFileFail-4-",data)
             fnDownloadFileInfoUpdate(data, "downloadError");
         }
     }, 100);

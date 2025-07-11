@@ -33,7 +33,7 @@ import eventCommon from "./common";
  * 消息 添加
  */
 const fnMsgAdd = async ({ msg, contentStr, fileKey, type }) => {
-    console.log("fnMsgAdd--", { msg, contentStr, fileKey, type })
+    // console.log("fnMsgAdd--", { msg, contentStr, fileKey, type })
     let msgNew = { msgType: 0, ...msg, content: contentStr };
     delete msgNew.attachmentKey;
     fnLongToNumInObj(msgNew);
@@ -215,9 +215,7 @@ const fnGroupMsgAdd = async (msg) => {
  * 好友消息 添加
  */
 const fnFriendMsgAdd = async (msg) => {
-    console.log("fnFriendMsgAdd--", msg)
     const type = "friend";
-    console.log('fnFriendMsgAdd 》》208', msg)
     // 登录id
     const loginId = eventCommon.fnCommonInfoRU({
         getId: "loginId",

@@ -177,7 +177,7 @@ export default {
         if (res && Number(res.uid)) {
           const { sessionId, nickName, icon, uploadFileSize, urls } = res;
           const loginId = Number(res.uid);
-          console.log("登录成功", res);
+          // console.log("登录成功", res);
           // 初始化所有群的key
           fnInitAllGroupKey(loginId);
           // 同步

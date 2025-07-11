@@ -75,7 +75,7 @@ const postAxios = async (url, data, opts) => {
     try {
         result = await requestAxios(url, prams, opts);
     } catch (error) {
-        console.log("postAxios-3-", error);
+        console.error("postAxios-3-", error);
     }
 
     if (secretKey && result) {

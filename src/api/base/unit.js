@@ -86,7 +86,7 @@ function getByte(text) {
     const encoder = new TextEncoder(); // 创建一个 TextEncoder 实例
     const bytes = encoder.encode(text); // 将字符串编码为 UTF-8 字节数组
 
-    console.log(bytes); // 输出 Uint8Array 类型的字节数组
+    // console.log(bytes); // 输出 Uint8Array 类型的字节数组
     return bytes;
 }
 
@@ -157,12 +157,9 @@ export const getUrl = async (opts, errCallback) => {
 const replaceNewDomain = async (url) => {
     //  console.log("replaceNewDomain-1-", url)
     let moduleCode = getModuleType(url).name || "webBiz";
-    console.log("replaceNewDomain-2-", moduleCode);
     let newDomain = (await getNewNormalDomain(moduleCode)) || "";
-    console.log("replaceNewDomain-3-", newDomain);
     if (!newDomain) return "";
     let newUrl = newDomain.replace(/\/$/, "") + getRemainingUrl(url);
-    console.log("replaceNewDomain-4-", newUrl);
     store.commit("user/setDomainsAttrib", {
         key: moduleCode,
         value: newDomain,

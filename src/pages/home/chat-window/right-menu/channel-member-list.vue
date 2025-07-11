@@ -126,7 +126,6 @@ export default {
   },
   methods: {
     handleChannelMemberGet() {
-      console.log("handleChannelMemberGet--", this.chatContent)
       const { channelId } = this.chatContent;
       if( !channelId ) return
       const prams = {
@@ -135,7 +134,6 @@ export default {
         channelId
       }
       getChannelUsers(prams).then(res => {
-        console.log("getChannelUsers--", res)
         // channelUserList = res.data?.rowList ||[]
       })
     },

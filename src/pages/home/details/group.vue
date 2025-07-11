@@ -96,7 +96,7 @@ export default {
 
       delete data.bfGroupReadCancel;
       delete data.groupMsgCancelTime;
-      console.log('>>>>>>>>>>>>>>>>> 99 detail/group data', data)
+      // console.log('>>>>>>>>>>>>>>>>> 99 detail/group data', data)
       eventBase.fnCommunicationSendMsg({
         operator: "activeChange",
         data,

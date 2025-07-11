@@ -106,7 +106,7 @@ const fnSocketMessage = (arrayBuffer) => {
         //
     }
 
-    console.log({ data });
+    // console.log({ data });
 
     // 确认接收
     if (code !== 20701) {

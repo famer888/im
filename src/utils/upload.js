@@ -342,7 +342,6 @@ export const uploadFile = async (file, { chatType, fileKey }, suffix) => {
         fileSize: fileNew.size,
         suffix,
     });
-    console.log("getUploadUrl--", keyData)
     const channelType = keyData.channelType || 0;
 
     if (!keyData || !keyData.fileId) {
@@ -361,15 +360,12 @@ export const uploadFile = async (file, { chatType, fileKey }, suffix) => {
     // 优先使用动态域名上传
     let trendsOssDomains = await getOssDomains(9);
     trendsOssDomains.push({domainUrl: ossData.ossEndpoint})
-    console.log("trendsOssDomains--", trendsOssDomains)
     let res = {};
     for(let i = 0; i<= trendsOssDomains.length; i++) {
         const item = trendsOssDomains[i];
-        console.log("trendsOssDomains-2-", item)
         try {
           if(!item?.domainUrl) continue;
           const result = await ossUpload(keyData.fileId, encodeFile, item.domainUrl);
-          console.log("ossUpload--r-",item.domainUrl, result)
           if(result) {
             res = result;
             break;
@@ -429,7 +425,6 @@ const ossUpload = async (fileId, File, endpoint) => {
         ossOption.cname = true;
         delete ossOption.region;
     }
-    console.log(ossOption, ' ossData ---------------> 354')
     // 创建 OSS 客户端实例
     let ALIclient = new OSS(ossOption);
     return ALIclient.multipartUpload(fileId, File, {

@@ -622,7 +622,7 @@ export default {
           // 群更新
           this.isGroupUpdate = true;
           this.keyComRightMenu++;
-          console.log('groupUpdate >>>>>>>>>> 585', info)
+          // console.log('groupUpdate >>>>>>>>>> 585', info)
           if (info.values){
             if (info.values.memberCount && info.values.memberCount !== this.memberCount) {
               // 群成员数量发生变化，则重新获取群成员列表
@@ -690,7 +690,7 @@ export default {
       // 设置引用信息
       this.quoteInfo = this.rightClickSelectedInfo;
       this.editInfo = this.rightClickSelectedInfo;
-      console.log("editInfo-1-", this.editInfo)
+      // console.log("editInfo-1-", this.editInfo)
 
       // 通讯 焦点到发送编辑栏
       eventBase.fnCommunicationSendMsg({
@@ -1016,7 +1016,6 @@ export default {
       this.memberInfos = memberInfos;
     },
     handleChannelMemberGet() {
-      console.log("handleChannelMemberGet--", this.chatContent)
       const { channelId } = this.chatContent;
       if( !channelId ) return
       const prams = {
@@ -1025,7 +1024,6 @@ export default {
         channelId
       }
       getChannelUsers(prams).then(res => {
-        console.log("getChannelUsers--", res)
         channelUserList = res.data?.rowList ||[]
       })
     },

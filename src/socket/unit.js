@@ -69,7 +69,6 @@ export function getFloat64Bytes(num) {
 
 export function getU32(num) {
     return getUint8Array(4, function (view) {
-        console.log(view.getUint32(0, num));
         return view.getUint32(0, num);
     });
 }

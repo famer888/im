@@ -53,7 +53,7 @@ export default {
   },
   methods: {
     handleClick(item) {
-      console.log('>>>>>>>>>>>>>>>>> 56 groups', item)
+      // console.log('>>>>>>>>>>>>>>>>> 56 groups', item)
       eventBase.fnCommunicationSendMsg({
         operator: "activeChange",
         data: { ...item, comType: "detailsGroup" },

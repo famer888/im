@@ -17,10 +17,6 @@ import eventCommon from "@/event/common.js";
 
 // 设置当前使用的域名
 export const setCurrentUseDomain = (domainList) => {
-    console.log(
-        "setCurrentUseDomain-1-",
-        JSON.parse(JSON.stringify(domainList))
-    );
     let domains = eventCommon.fnDomainsGet();
     for (let moduleCode in domains) {
         let moduleUrls = domainList.filter(
@@ -30,7 +26,6 @@ export const setCurrentUseDomain = (domainList) => {
             domains[moduleCode] = moduleUrls[0]?.domainUrl || "";
         }
     }
-    console.log("setCurrentUseDomain-2-", domains);
     eventCommon.fnDomainsSet(domains);
 };
 

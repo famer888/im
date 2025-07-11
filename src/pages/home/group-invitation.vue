@@ -106,7 +106,7 @@ export default {
             };
             groupInfoList.push(row);
           });
-          console.log('>>>>>>>>>>>>>>>>> 108 handleUpdateList', res)
+          // console.log('>>>>>>>>>>>>>>>>> 108 handleUpdateList', res)
           this.list = groupInfoList;
         }
       });

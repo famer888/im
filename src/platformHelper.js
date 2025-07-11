@@ -58,7 +58,6 @@ export const outFileFun = (filePath, key, opt = { hideTip: false }) => {
         }
 
         const buffer = Buffer.from(JSON.stringify({ uid, history }));
-        console.log("61 --------------导出数据>", filePath, buffer, history);
         const decodeFile = (arrayBuffer, fileKey) => {
             if (!fileKey) return;
             return new Promise(async (resolve) => {

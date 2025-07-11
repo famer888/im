@@ -42,13 +42,11 @@ export default {
      */
    handleJoinChannel() {
       const { channelId, link, channelName, logoColor } = this.info
-      console.log("handleJoinChannel--", this.info)
 
       subscribeChannel({
         channelId,
         link,
       }).then(async (res) => {
-        console.log("subscribeChannel--2-", res)
         if (res?.code != 200) {
           window.$toast(res?.msg || "加入频道失败");
         } else {

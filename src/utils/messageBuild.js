@@ -65,7 +65,7 @@ setInterval(() => {
                 type: "group",
             }).then((res) => {
                 if (res) {
-                    console.log("CReqSendChatGroup--", res)
+                    // console.log("CReqSendChatGroup--", res)
                     CReqSendChatGroup(res, flag);
                 }
             });
@@ -77,7 +77,7 @@ setInterval(() => {
                 type: "friend",
             }).then((res) => {
                 if (res) {
-                    console.log("CReqChatSendPrivate--", res)
+                    // console.log("CReqChatSendPrivate--", res)
                     CReqChatSendPrivate(res, flag);
                 }
             });

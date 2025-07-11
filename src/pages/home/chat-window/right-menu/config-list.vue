@@ -212,13 +212,11 @@ export default {
       });
     },
     channelReceiveChange(state) {
-      console.log("handelReceiveChange--", this.chatContent, state)
       const { channelId } = this.chatContent
       const params = {
         channelId,
         isDisturb: Number(!state),
       }
-      console.log("updateMember--", params)
       updateMember(params).then(res => {
         if(res?.code === 200) {
           this.bfChannelReceive = state
@@ -231,7 +229,6 @@ export default {
             },
           });
         }
-        console.log("updateMember--", res)
       })
     },
     /**

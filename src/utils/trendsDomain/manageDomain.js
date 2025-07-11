@@ -105,7 +105,6 @@ export const getDomainListByApi = throttle(
             }
             
             getDomainListApi(pra).then(res => {
-                console.log("getDomainListApi", res)
                 resolve(res)
             })
         })

@@ -56,7 +56,6 @@ export const websocketCreate = (url) => {
         }
 
         if (!webSocket) {
-            console.log({ isContact, is: !webSocket });
             reconnect();
         }
     }, 3000);

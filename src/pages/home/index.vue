@@ -175,7 +175,7 @@ export default {
     );
 
     ipcRenderer.on("eventLogout", (e, args) => {
-      console.log(args, 148888);
+      // console.log(args, 148888);
       // 退出程序并注销必须登出
       eventCommon.fnLoginout();
     });
@@ -276,7 +276,6 @@ export default {
         if (info?.type === "channel" || info?.comType === "detailsChannel") {
           const res = await getChannelDetail({ channelId: info.channelId });
           channelDetail = res.data;
-          console.log("channelDetail--", res);
         }
 
         this.infoActive = {
@@ -317,7 +316,6 @@ export default {
 
         switch (operator) {
           case "channelDisturbSet": {
-            console.log("channelDisturbSet--", info);
             this.infoActive = {
               ...this.infoActive,
               isDisturb: info.isDisturb,

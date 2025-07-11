@@ -104,7 +104,7 @@ JSEncrypt.prototype.encryptLong = function(string) {
 
 // 使用公钥加密数据
 export const encryptedData = (publicKey,data) => {
-  console.log('JSEncrypt',JSEncrypt)
+//   console.log('JSEncrypt',JSEncrypt)
   // var encrypt = new JSEncrypt();
   // encrypt.setPublicKey(publicKey);
   // var encrypted = encrypt.encrypt(data);
@@ -113,7 +113,7 @@ export const encryptedData = (publicKey,data) => {
   let encrypt = new JSEncrypt();
   encrypt.setPublicKey(publicKey);
   let encryptPwd = encrypt.encryptLong(data);
-  console.log('encryptedData-',encryptPwd)
+//   console.log('encryptedData-',encryptPwd)
   return encryptPwd;
 
 // const wordArrayData = CryptoJS.enc.Utf8.parse(data);

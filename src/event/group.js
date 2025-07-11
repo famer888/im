@@ -62,7 +62,7 @@ const fnRnGroupEvent = async (data, isGroupInitEvent) => {
     });
 
     let typeStr = "update";
-    console.log("=================收到群事件", data, isGroupInitEvent, _.cloneDeep(groupEventExecIdObj));
+    // console.log("=================收到群事件", data, isGroupInitEvent, _.cloneDeep(groupEventExecIdObj));
     let groupId = null;
     if (data.groupUpdateEventMsgDto && data.groupUpdateEventMsgDto.length > 0) {
         // 如果群更新事件来了，则检查是否有创群事件等事件msgId,如果不存在，则表示丢失了事件，则不需要处理
@@ -70,7 +70,7 @@ const fnRnGroupEvent = async (data, isGroupInitEvent) => {
         groupId = Number(data.groupUpdateEventMsgDto[0].commonMsgDto.groupBaseInfo.groupId);
         if (!groupEventExecIdObj[groupId + 'broadcast']) {
             const isInit = await fnCheckGroupMemberList(groupId);
-            console.log('groupEventExecIdObj 事件id不存在 》》1')
+            // console.log('groupEventExecIdObj 事件id不存在 》》1')
             if (!isInit) {
                 // 当前群更新信息丢失创群事件信息，则把信息推入到群初始化队列去
                 if (!groupInitDetailsGetList.includes(groupId)) {
@@ -82,7 +82,7 @@ const fnRnGroupEvent = async (data, isGroupInitEvent) => {
                     });
         
                     groupInitDetailsGetList.push(groupId);
-                    console.log('丢失创群事件，进入初始化 》》1')
+                    // console.log('丢失创群事件，进入初始化 》》1')
                 }
                 // 确认收到
                 data.groupUpdateEventMsgDto.forEach(item => {
@@ -121,7 +121,7 @@ const fnRnGroupEvent = async (data, isGroupInitEvent) => {
                 if (!groupEventExecIdObj[groupId + 'broadcast'] && !groupEventExecIdObj[groupId + 'unicast'] && msgId > 1 && !isHas) {
                     // 收到群事件，但是发现丢失创群事件，则把当前所有群事件都丢弃，直接进入初始化流程
                     const isInit = await fnCheckGroupMemberList(groupId);
-                    console.log('groupEventExecIdObj 事件id不存在 》》2', groupEventExecIdObj, isInit)
+                    // console.log('groupEventExecIdObj 事件id不存在 》》2', groupEventExecIdObj, isInit)
                     if (!isInit) {
                         // 如果群成员列表不存在，则把当前所有群事件都丢弃，直接进入初始化流程
                         if (!groupInitDetailsGetList.includes(groupId)) {
@@ -133,7 +133,7 @@ const fnRnGroupEvent = async (data, isGroupInitEvent) => {
                             });
                 
                             groupInitDetailsGetList.push(groupId);
-                            console.log('丢失创群事件，进入初始化 》》2', {msgId})
+                            // console.log('丢失创群事件，进入初始化 》》2', {msgId})
                         }
                         // 确认收到
                         data.groupReqEventMsgDto.forEach(item => {
@@ -373,8 +373,8 @@ const fnRnGroupEvent = async (data, isGroupInitEvent) => {
         })
     }
 
-    console.log(listNew);
-    console.log("=================循环执行", {typeStr, groupEventExecIdObj});
+    // console.log(listNew);
+    // console.log("=================循环执行", {typeStr, groupEventExecIdObj});
 
     // 如果有多个事件则依次处理
     for (let i = 0; i < listNew.length; i++) {
@@ -396,7 +396,7 @@ const fnRnGroupEvent = async (data, isGroupInitEvent) => {
 const fnGroupUpdataEvent = async (data, loginId) => {
     // 群名，群头像，禁言， 阅后即焚 变更
     const { commonMsgDto, fromUid, handleType } = data;
-    console.log('群更新事件 >>>>>>>>>>>>', data)
+    // console.log('群更新事件 >>>>>>>>>>>>', data)
     if (commonMsgDto && commonMsgDto.groupBaseInfo) {
         const { groupBaseInfo, updateTime, msgType, msgId, msg } = commonMsgDto;
         const groupId = Number(groupBaseInfo.groupId);
@@ -1027,7 +1027,7 @@ const fnGroupMsgEvent = async (data, loginId) => {
                     groupMemberList[i].type = 1;
                 }
             }
-            console.log('>>>>>>>>>>>>>>>>> 1015 groupMemberList', groupMemberList)
+            // console.log('>>>>>>>>>>>>>>>>> 1015 groupMemberList', groupMemberList)
             // 更新到列表
             await Cache(
                 `${loginId}_${info.groupId}_groupMemberList`,
@@ -1282,7 +1282,7 @@ const fnGroupMsgEvent = async (data, loginId) => {
         params.newGroupOwner = info.newGroupOwner;
         params.oldGroupOwner = info.oldGroupOwner;
     }
-    console.log('params >>>>>>>>>>>>>>> 1252', params, info.type)
+    // console.log('params >>>>>>>>>>>>>>> 1252', params, info.type)
     // 添加信息
     if (
         info.content !== "" ||
@@ -1591,7 +1591,7 @@ const fnIntoGroup = (groupId) => { // 进群就调用，获取最新的msgId
         getGroupEventLatest({ groupId }, () => {}).then((lastInfo) => {
             if(lastInfo) {
                 resolve(lastInfo)
-                    console.log('groupEventExecIdObj---1500: ----------->3分钟后进行比较', {groupEventExecIdObj, groupId, lastInfo})
+                    // console.log('groupEventExecIdObj---1500: ----------->3分钟后进行比较', {groupEventExecIdObj, groupId, lastInfo})
                     const keys = Object.keys(lastInfo)
                     const keysArr = ['updateMaxMsgId', 'unicastMaxMsgId', 'broadcastMaxMsgId']
                     let curKey = null;
@@ -1634,10 +1634,10 @@ function fnCompareMsgId({localId, type, lastId, groupId}) {
         }
         let index = 0;
         let timerGroupEvent = null;
-        console.log('补偿接口开始', {params})
+        // console.log('补偿接口开始', {params})
         function groupEventList() {
             getGroupEventList(params).then(res => {
-                console.log('存在丢失事件，补偿更新开始', {res, params})
+                // console.log('存在丢失事件，补偿更新开始', {res, params})
                 if (res.commonResult.errCode == 200) {
                     // isCompensate这个字段表示已经补偿了
                     fnRnGroupEvent({groupReqEventMsgDto: res.groupReqEventMsgDto, groupUpdateEventMsgDto: res.groupUpdateEventMsgDto})
@@ -1668,12 +1668,12 @@ function fnCompareMsgId({localId, type, lastId, groupId}) {
  * 群详情初始化
  */
 const fnGroupDetailInit = (groupId) => {
-    console.log("fnGroupDetailInit >>>>>>>>>>>>>>>> 1494", groupId)
+    // console.log("fnGroupDetailInit >>>>>>>>>>>>>>>> 1494", groupId)
     getGroupEventLatest({ groupId }, () => {
         fnInitDelayedAdd(groupId);
     }).then((latestInfo) => {
         if (latestInfo) {
-            console.log('>>>>>>>>>>>>>>> 1659', {latestInfo,groupId})
+            // console.log('>>>>>>>>>>>>>>> 1659', {latestInfo,groupId})
             // 设置事件执行的最后的id信息
             groupEventExecIdObj[groupId + "broadcast"] = Number(
                 latestInfo.broadcastMaxMsgId || 0
@@ -2088,7 +2088,7 @@ const fnEventReplenish = () => {
                 }
                 // 存储补偿参数
                 compensateParams[params.groupId] = params;
-                console.log('补偿参数 >>>>>>>>>>>>> 2049', params)
+                // console.log('补偿参数 >>>>>>>>>>>>> 2049', params)
                 let index = 0;
                 let timerGroupEvent = null;   
 

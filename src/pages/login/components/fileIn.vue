@@ -31,17 +31,14 @@ export default {
   methods: {
     async fileChange(e) {
       if (e.target.files) {
-        console.log(e.target.files);
         const data = await inFileFun(e.target.files[0], this.key);
         document.getElementById("file-in").value = "";
         if (data) {
-          console.log(data);
           const { uid, history } = data;
 
           const db = new BDBase(Number(uid));
 
           if (uid && history) {
-            console.log(history);
 
             for (const key of Object.keys(history)) {
               db.addDB(key, history[key]);

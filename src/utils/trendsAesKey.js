@@ -109,7 +109,7 @@ export const getAesKey = async () => {
                 aesKey = aesKeyConfig.aesKey;
             } catch (error) {
                 setPublicCache("aesKeyData", {});
-                console.error("获取动态aesKey失败", error);
+                // console.error("获取动态aesKey失败", error);
                 reject();
             }
         }
@@ -154,12 +154,9 @@ function getCurrentTenDigitTimestamp() {
 
 const createTrendsAesKey = (version) => {
     return new Promise(async (resolve, reject) => {
-        console.log("createTrendsAesKey-1-");
         const obj = await getPublicKey();
-        console.log("createTrendsAesKey-2-");
         const { publicKey, keySecret } = obj?.data || {};
         const aesKeyConfig = createAesKeyConfig(version);
-        console.log("createTrendsAesKey-3-");
         if (!aesKeyConfig.encryptedText) {
             console.error("生成AesKey失败，获取encryptedText失败！");
             return;
@@ -173,13 +170,11 @@ const createTrendsAesKey = (version) => {
             return;
         }
         let result = null;
-        console.log("createTrendsAesKey-4-");
         try {
             result = await applyAesKey({
                 encryptedText: encryptedTextEncry,
                 keySecret,
             });
-            console.log("createTrendsAesKey-5-", result);
             let isSuccess = result.data;
             if (isSuccess) {
                 resolve(aesKeyConfig);

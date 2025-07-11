@@ -190,7 +190,6 @@ function requestAxios(url, params, opts) {
         };
         axios(httpDefault)
         .then((res) => {
-            console.log('axios',res)
             if(res.code === 200) {
                 resolve(res.data);
             }else {

@@ -521,7 +521,7 @@ export default {
         });
         return;
       }
-      console.log(item, 'chats ---------> 506')
+      // console.log(item, 'chats ---------> 506')
       // 通讯
       eventBase.fnCommunicationSendMsg({
         operator: "activeChange",

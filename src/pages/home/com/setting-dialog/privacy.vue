@@ -51,7 +51,6 @@ export default {
         },
         ops: [4],
       }).then((rt) => {
-        console.log({ rt });
         if (rt.commonResult.errCode == 200) {
           // 记录到本地
           eventCommon.fnConfigRU({

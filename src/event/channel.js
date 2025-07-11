@@ -73,17 +73,14 @@ const fnGetChannelInfo = async (channelId) => {
  * 添加成员
  */
 const fnChannelAdd = async (info) => {
-    console.log("fnChannelAdd-1-",info)
     if(!info?.channelId) return
     const loginId = eventCommon.fnCommonInfoRU({
         getId: "loginId",
     });
     const ChannelLists = await Cache(`${loginId}-ChannelList`);
     let list = ChannelLists.filter(item => item.channelId !== info.channelId)
-    console.log("fnChannelAdd-2-",ChannelLists)
     const channelInfo = fnChannelFormat(info)
     list.unshift(channelInfo)
-         console.log("fnChannelAdd-3-",list)
     Cache(`${loginId}-ChannelList`, list);
 }
 
@@ -109,7 +106,6 @@ const fnGetAllChannel = () => {
         let resultList = [];
         async function getChannelPolling() {
             const res = await getChannelList({pageSize, pageNum})
-            console.log("getChannelList--", res)
             const list = res.data?.rowList || []
             resultList = [...resultList, ...list];
             if(list.length >= 10) {
