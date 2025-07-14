@@ -150,7 +150,7 @@ const fnCommunicationProcessing = (values) => {
         }
         case "groupNotification": {
             // 删除群 删除对应聊天窗 在列表中进行
-            console.log({ values });
+            // console.log({ values });
             // operatorType === "exit"
             break;
         }

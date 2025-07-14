@@ -64,29 +64,25 @@ export default {
   },
   methods: {
     nextPage() {
-      console.log("nextPage--", this.pageNum)
       this.loading = true;
       this.pageNum += 1;
       this.getListData()
     },
     async getListData() {
-      console.log('getChannelList-1-')
       this.loading = true;
       getChannelList({ pageNum: this.pageNum, pageSize: this.pageSize }).then(
         (res) => {
           const list = res.data?.rowList || []
-          console.log('getChannelList--', res)
           this.listData = [...this.listData, ...list]
           this.loading = false;
           if (list?.length < this.pageSize) {
             this.noMore = true;
           }
-          console.log('getChannelList--', res)
         }
       )
     },
     handleClick(item) {
-      console.log('>>>>>>>>>>>>>>>>> 56 Channel', item)
+      // console.log('>>>>>>>>>>>>>>>>> 56 Channel', item)
       this.handleToChat(item)
       // 跳转频道详情页
       // eventBase.fnCommunicationSendMsg({
@@ -106,7 +102,7 @@ export default {
         comType: 'detailsChannel',
       }
 
-      console.log('>>>>>>>>>>>>>>>>> 99 detail/chanel', data)
+      // console.log('>>>>>>>>>>>>>>>>> 99 detail/chanel', data)
       eventBase.fnCommunicationSendMsg({
         operator: 'activeChange',
         data,

@@ -388,7 +388,6 @@ export const fnMsgDecryption = async ({
             // 群消息解密
             try {
                 contentNew = _decrypt(content, relKey);
-                console.log({ contentNew });
             } catch (err) {
                 // 消息解密失败
                 console.error("群消息 解密失败-2-");

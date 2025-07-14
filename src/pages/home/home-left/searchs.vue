@@ -247,9 +247,9 @@ export default {
                   if (item.type === "group") {
                     const groupInfo = this.groups.find((n) => n.id === item.id);
 
-                    console.log("///////");
-                    console.log(item.id);
-                    console.log(this.groups);
+                    // console.log("///////");
+                    // console.log(item.id);
+                    // console.log(this.groups);
 
                     if (groupInfo) {
                       name = groupInfo.name;

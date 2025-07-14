@@ -446,7 +446,7 @@ export default {
     eventBase.fnCommunicationMonitoring("chatWindow", null);
     if (this.runTime < 180000) {
       // 如果小于三分钟离开群了，则不执行三分钟补偿机制
-      console.log('小于三分钟')
+      // console.log('小于三分钟')
       clearInterval(this.isRun)
     }
   },
@@ -622,7 +622,7 @@ export default {
           // 群更新
           this.isGroupUpdate = true;
           this.keyComRightMenu++;
-          console.log('groupUpdate >>>>>>>>>> 585', info)
+          // console.log('groupUpdate >>>>>>>>>> 585', info)
           if (info.values){
             if (info.values.memberCount && info.values.memberCount !== this.memberCount) {
               // 群成员数量发生变化，则重新获取群成员列表
@@ -690,7 +690,7 @@ export default {
       // 设置引用信息
       this.quoteInfo = this.rightClickSelectedInfo;
       this.editInfo = this.rightClickSelectedInfo;
-      console.log("editInfo-1-", this.editInfo)
+      // console.log("editInfo-1-", this.editInfo)
 
       // 通讯 焦点到发送编辑栏
       eventBase.fnCommunicationSendMsg({
@@ -1016,7 +1016,6 @@ export default {
       this.memberInfos = memberInfos;
     },
     handleChannelMemberGet() {
-      console.log("handleChannelMemberGet--", this.chatContent)
       const { channelId } = this.chatContent;
       if( !channelId ) return
       const prams = {
@@ -1025,7 +1024,6 @@ export default {
         channelId
       }
       getChannelUsers(prams).then(res => {
-        console.log("getChannelUsers--", res)
         channelUserList = res.data?.rowList ||[]
       })
     },

@@ -488,7 +488,6 @@ ipcMain.on("select-dir", async (e, args) => {
 });
 
 ipcMain.on("auto-export-db", async (e, args) => {
-    console.log("auto-export-db", args);
     await autoExportDb();
     mainWindow.webContents.send("cache-db-success", args);
 });

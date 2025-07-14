@@ -13,6 +13,7 @@ import {
     getApiMacAddressSync,
     getAesKeySync,
 } from "@/utils/trendsAesKey";
+import { getRemainingUrl } from "@/utils/base";
 import { getNewNormalDomain } from "@/utils/trendsDomain";
 import { getModuleType } from "@/utils/trendsDomain/workTools";
 import { getMacAddress } from "@/utils/trendsDomain/tools";
@@ -86,7 +87,7 @@ function getByte(text) {
     const encoder = new TextEncoder(); // 创建一个 TextEncoder 实例
     const bytes = encoder.encode(text); // 将字符串编码为 UTF-8 字节数组
 
-    console.log(bytes); // 输出 Uint8Array 类型的字节数组
+    // console.log(bytes); // 输出 Uint8Array 类型的字节数组
     return bytes;
 }
 
@@ -157,12 +158,9 @@ export const getUrl = async (opts, errCallback) => {
 const replaceNewDomain = async (url) => {
     //  console.log("replaceNewDomain-1-", url)
     let moduleCode = getModuleType(url).name || "webBiz";
-    console.log("replaceNewDomain-2-", moduleCode);
     let newDomain = (await getNewNormalDomain(moduleCode)) || "";
-    console.log("replaceNewDomain-3-", newDomain);
     if (!newDomain) return "";
     let newUrl = newDomain.replace(/\/$/, "") + getRemainingUrl(url);
-    console.log("replaceNewDomain-4-", newUrl);
     store.commit("user/setDomainsAttrib", {
         key: moduleCode,
         value: newDomain,
@@ -220,11 +218,18 @@ const requestApi = async (opt, errCallback) => {
                     : handleDecode({ data, protoType, type, aesKey });
 
                 const errCode = message?.commonResult?.errCode;
+
+                // 该群聊因违反相关规定，已被限制使用。
+                if (errCode == 1021) {
+                    resolve(errCode);
+                }
+
                 if (errCode != 200) {
                     console.error(
                         `接口报错：${message?.commonResult?.errMsg}。接口地址：${url}，`,
                         message
                     );
+
                     reject({
                         errorCode: errCode,
                         errorDesc: message?.commonResult?.errMsg,

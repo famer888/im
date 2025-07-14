@@ -142,7 +142,6 @@ const fnCheduledDeletionMsgAdd = (msg) => {
 
     if (msg.type === "friend") {
         autoDeleteMsgList.push(msg);
-        console.log({filePath, autoDeleteMsgList})
         Cache(filePath, autoDeleteMsgList);
     } else {
         autoDeleteMsgListGroup.push(msg);

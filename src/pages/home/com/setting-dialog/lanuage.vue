@@ -37,7 +37,6 @@ export default {
   },
   mounted() {
     this.languageIndex = this.languageValueList.indexOf(i18n.locale);
-    console.log(this.languageIndex);
   },
   methods: {
     /**

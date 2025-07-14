@@ -91,7 +91,7 @@ export default {
         channelId
       }
       getChannelUsers(prams).then(res => {
-        console.log("getChannelUsers--", res)
+        // console.log("getChannelUsers--", res)
       })
     },
     /**
@@ -105,7 +105,7 @@ export default {
         comType: "chat",
       };
 
-      console.log('>>>>>>>>>>>>>>>>> 99 detail/chanel', data)
+      // console.log('>>>>>>>>>>>>>>>>> 99 detail/chanel', data)
       eventBase.fnCommunicationSendMsg({
         operator: "activeChange",
         data,

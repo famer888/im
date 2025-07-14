@@ -20,7 +20,7 @@ export default {
             return item + 1
         })
         let sortArr = [...arr, ...ary].sort((a, b) => {return b - a})
-        console.log(sortArr, 20000)
+        // console.log(sortArr, 20000)
     },
     methods: {
         goback() {

@@ -67,7 +67,7 @@ const createHash = (hashLength) => {
  */
 const getEnvType =() => {
     const env = process.env.VUE_APP_ENV;
-    console.log("getEnvType--", env)
+    // console.log("getEnvType--", env)
     return env || ""
 }
 

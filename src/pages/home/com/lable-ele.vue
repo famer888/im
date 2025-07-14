@@ -52,7 +52,6 @@ export default {
       }
     },
     async handleGoLink(info) {
-      console.log("handleGoLink--", info)
       const confirmState = await window.$confirm({
         title: this.$t("打开链接"),
           remark: info.href
@@ -69,12 +68,12 @@ export default {
           searchParams.has("qrCode") &&
           searchParams.has("IdCode")
         ) {
-          console.log(
-            hrefData,
-            searchParams.get("qrCode"),
-            searchParams.get("IdCode"),
-            "点击群链接"
-          );
+          // console.log(
+          //   hrefData,
+          //   searchParams.get("qrCode"),
+          //   searchParams.get("IdCode"),
+          //   "点击群链接"
+          // );
           return;
           // 现在调用此接口暂时报404，暂且先注释，此功能暂时也不是群增量功能
           // queryGroupLink({qrCode: searchParams.get('qrCode'), IdCode: searchParams.get('IdCode')}).then(res => {
@@ -82,7 +81,6 @@ export default {
           // })
         }
         let channelInfo = await this.validChannelLink(info.href);
-        console.log("isChannelLink--", channelInfo);
         if (channelInfo) {
           eventBase.fnCommunicationSendMsg({
             operator: "openChannelDialog",

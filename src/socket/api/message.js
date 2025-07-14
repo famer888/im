@@ -28,7 +28,7 @@ export function CReqChatSendPrivate(data, flag) {
     });
     const buffer = OneToOneMessageReq.encode(message).finish();
     const rb = initHeader(buffer, 10101);
-    console.log("webSocketSend-10101-")
+    console.log("发出推送-10101-")
     webSocketSend(rb);
 }
 
@@ -37,7 +37,7 @@ export function ReceiveServerToClient(id) {
     const message = ReceiveServerToClientReq.create({ ids: [parseInt(id)] });
     const buffer = ReceiveServerToClientReq.encode(message).finish();
     const rb = initHeader(buffer, 19902);
-    console.log("webSocketSend-19902-")
+    console.log("发出推送-19902-")
     webSocketSend(rb);
 }
 
@@ -45,7 +45,7 @@ export function receiveGroupEvent(value) {
     const message = ReceiveGroupEventReceiptMessage.create(value);
     const buffer = ReceiveGroupEventReceiptMessage.encode(message).finish();
     const rb = initHeader(buffer, 10210);
-    console.log("webSocketSend-10210-")
+    console.log("发出推送-10210-")
     webSocketSend(rb);
 }
 
@@ -54,7 +54,7 @@ export function ReceiveKeyPairMessage(data) {
     const message = ReceiveKeyPairMessageReq.create(data);
     const buffer = ReceiveKeyPairMessageReq.encode(message).finish();
     const rb = initHeader(buffer, 10501);
-    console.log("webSocketSend-10501-")
+    console.log("发出推送-10501-")
     webSocketSend(rb);
 }
 
@@ -75,7 +75,7 @@ export function CReqMessageReceipt(receipts) {
     const message = SendReceiptMessageReq.create({ receipts });
     const buffer = SendReceiptMessageReq.encode(message).finish();
     const rb = initHeader(buffer, 10106);
-    console.log("webSocketSend-10106-")
+    console.log("发出推送-10106-")
     webSocketSend(rb);
 }
 
@@ -98,7 +98,7 @@ export function CReqSendChatGroup(data, flag) {
     const message = SendGroupMessageReq.create({ groupMsg: data, flag });
     const buffer = SendGroupMessageReq.encode(message).finish();
     const rb = initHeader(buffer, 10201);
-    console.log("webSocketSend-10201-")
+    console.log("发出推送-10201-")
     webSocketSend(rb);
 }
 
@@ -127,6 +127,6 @@ export function CReqRemoveMessage(data) {
     const message = method.create(params);
     const buffer = method.encode(message).finish();
     const rb = initHeader(buffer, msg);
-    console.log("webSocketSend--"+ msg)
+    console.log("发出推送--"+ msg)
     webSocketSend(rb);
 }

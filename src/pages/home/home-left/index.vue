@@ -223,7 +223,7 @@ export default {
      * 处理事件
      */
     eventHandling(info, operator, operatorType) {
-      console.log({ info, operator, operatorType }, "homeLeft --------> 220");
+      // console.log({ info, operator, operatorType }, "homeLeft --------> 220");
       if (!info) {
         return;
       }
@@ -344,7 +344,6 @@ export default {
           break;
         }
       }
-      console.log("chats-3-");
       this.chats = chats;
       Cache(
         `${loginId}MessageGroupList`,
@@ -363,7 +362,6 @@ export default {
 
         // 即时渲染
         if (this.navType === 0) {
-          console.log("chats-4-");
           this.chats = _.cloneDeep(this.chats);
         }
 
@@ -391,7 +389,6 @@ export default {
 
       if (values) {
         this.chatTopSize = values.chatTopSize;
-        console.log("chats-5-");
         this.chats = values.list;
 
         // 保存到本地
@@ -422,7 +419,6 @@ export default {
           break;
         }
       }
-      console.log("chats-6-");
       this.chats = chats;
       // 更新本地会话列表文件
       Cache(
@@ -458,7 +454,6 @@ export default {
       if (index !== -1) {
         chats[index].bfShutup = info.bfShutup;
         // 即时渲染
-        console.log("chats-7-");
         this.chats = chats;
         Cache(
           `${loginId}MessageGroupList`,
@@ -496,7 +491,6 @@ export default {
           });
 
           // 即时渲染
-          console.log("chats-8-");
           this.chats = chats;
         }
       }
@@ -536,7 +530,6 @@ export default {
           chats.filter((item) => item.type === "friend")
         );
       }
-      console.log("chats-9-");
       this.chats = chats;
     },
     // 删除好友处理
@@ -552,7 +545,6 @@ export default {
         chats.filter((item) => item.type === "friend")
       );
       this.friendList = friends;
-      console.log("chats-10-");
       this.chats = chats;
       // 删除所有好友聊天信息
       eventBase.fnCommunicationSendMsg({
@@ -578,7 +570,6 @@ export default {
       this.groups = _.cloneDeep(dataNew.groups);
       // 聊天列表更新
       if (dataNew.chats) {
-        console.log("chats-11-");
         this.chats = _.cloneDeep(dataNew.chats);
       }
     },
@@ -601,7 +592,6 @@ export default {
 
       // 聊天列表更新
       if (dataNew.chats) {
-        console.log("chats-12-");
         this.chats = _.cloneDeep(dataNew.chats);
       }
     },
@@ -632,7 +622,6 @@ export default {
       let chats = this.chats.filter(
         (item) => item.id !== id || item.type !== type
       );
-      console.log("chats-13-");
       this.chats = chats;
       if (info.isDeleteLocal) {
         // 清除会话列表
@@ -684,7 +673,6 @@ export default {
 
       // 聊天列表有变更，则更新聊天列表
       if (updateInfos.chatList) {
-        console.log("chats-14-");
         this.chats = _.cloneDeep(updateInfos.chatList);
         chatTopSize = updateInfos.chatTopSize;
         eventMsg.fnAlertNotification(info, this.chats);
@@ -775,7 +763,6 @@ export default {
 
       if (isUpdate) {
         // 更新会话列表和会话列表本地文件
-        console.log("chats-15-");
         this.chats = chats;
 
         Cache(
@@ -970,7 +957,6 @@ export default {
       }
 
       // 列表更新
-      console.log("chats-1-");
       this.chats = chats;
       Cache(
         `${loginId}MessageGroupList`,
@@ -1016,7 +1002,7 @@ export default {
           this.infoActive.id === info.groupId &&
           this.infoActive.type === "group"
         ) {
-          console.log("当前窗口退出 ------------> 931");
+          // console.log("当前窗口退出 ------------> 931");
           eventBase.fnCommunicationSendMsg({
             operator: "activeChange",
             data: null,

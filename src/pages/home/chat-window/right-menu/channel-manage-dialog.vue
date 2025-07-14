@@ -96,7 +96,6 @@ export default {
      * 群主信息设置
      */
     handelHostInfoSet() {
-      console.log("memberInfoList--", this.memberInfoList)
       // 设置群主信息
       this.hostInfo = this.memberInfoList.find(
         (item) => item.memberType == 1 
@@ -119,7 +118,6 @@ export default {
       }
 
       deleteManage({ channelId, uid }).then((res) => {
-        console.log("deleteManage--", res)
         if (res?.code == 200) {
           window.$toast(`移除成功`);
           this.$set(item, "memberType", 3);

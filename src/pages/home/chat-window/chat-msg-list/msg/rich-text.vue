@@ -39,7 +39,6 @@ export default {
         });
       },
       imgClick(imgSrc) {
-        console.log('图片被点击:', imgSrc);
         // 在这里执行你的逻辑，例如打开大图或跳转
         const loginId = eventCommon.fnCommonInfoRU({
         getId: "loginId",

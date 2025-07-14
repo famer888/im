@@ -68,7 +68,7 @@ const fnSocketMessage = (arrayBuffer) => {
     }
 
     if (![29901, 20001].includes(code)) {
-        console.log(code);
+        console.log('收到推送--', code);
     }
 
     // 推送敏感词更新事件及内容消息
@@ -106,7 +106,7 @@ const fnSocketMessage = (arrayBuffer) => {
         //
     }
 
-    console.log({ data });
+    // console.log({ data });
 
     // 确认接收
     if (code !== 20701) {

@@ -72,7 +72,7 @@ export default {
     },
   },
   mounted() {
-    console.log(this.forwardMessageList);
+    // console.log(this.forwardMessageList);
   },
   methods: {
     messageTypeToText(value) {

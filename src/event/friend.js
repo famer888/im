@@ -373,7 +373,6 @@ const fnFriendDetailsGet = (id) => {
 
     // 获取联系人详情
     getContactsDetail({ targetUid: id }).then((res) => {
-        console.log("getContactsDetail--", res)
         // 阅后即焚 是否开启
         const bfReadCancel =
             _.get(res, "contactsDetailBase.bfReadCancel") || false;

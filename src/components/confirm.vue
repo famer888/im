@@ -101,6 +101,7 @@ export default {
       color: #333;
       text-align: center;
       line-height: 20px;
+      word-wrap: break-word;
     }
 
     > div {
