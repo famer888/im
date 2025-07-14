@@ -28,7 +28,7 @@ export const CReqChatLogin = () => {
     });
     const buffer = LoginReq.encode(message).finish();
     const rb = initHeader(buffer, 10001);
-    console.log("webSocketSend-10001-")
+    console.log("发出推送-10001-")
     webSocketSend(rb);
 };
 
