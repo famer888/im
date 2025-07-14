@@ -2,7 +2,6 @@ import Vue from "vue";
 import { getUrl, baseUrl } from "./base/unit";
 import axios from "axios";
 import { reportErrorDomain } from "@/utils/trendsDomain/manageReport";
-import { getRemainingUrl } from "@/utils/index.js";
 import {
     _encrypt,
     _decrypt,

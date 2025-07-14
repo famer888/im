@@ -13,6 +13,7 @@ import {
     getApiMacAddressSync,
     getAesKeySync,
 } from "@/utils/trendsAesKey";
+import { getRemainingUrl } from "@/utils/base";
 import { getNewNormalDomain } from "@/utils/trendsDomain";
 import { getModuleType } from "@/utils/trendsDomain/workTools";
 import { getMacAddress } from "@/utils/trendsDomain/tools";
