@@ -23,12 +23,21 @@
           :archiveIdStrList="archiveIdStrList"
           :unreadCount="unreadCount"
           :archiveListShow="archiveListShow"
+          :placeholder="addAction ? '搜索手机号/ID/群别名' : $t('搜索')"
           @onChange="(value) => (searchText = value)"
           @handleBack="handleBack"
           key="all-search"
-        />
+        > 
+          <template #right>
+            <img class="add-btn" @click="addAction = !addAction" src="@/assets/images/headNav/add.png" />
+          </template>
+        </ComSearch>
       </div>
-      <section>
+      <ComSearchAddContacts 
+        v-if="addAction"
+        :searchText="searchText"
+      />
+      <section v-else>
         <template v-if="searchText === ''">
           <ComChats
             v-if="navType === 0"
@@ -84,6 +93,7 @@ import iconGroupNotification from "@/assets/images/logo/group-icon.png";
 import ComSearch from "../com/search.vue";
 import ComChats from "./chats";
 import ComNav from "./nav/index";
+import ComSearchAddContacts from "../com/add-contacts/search-add-contacts";
 
 // 事件
 import eventBase from "@/event/base";
@@ -106,6 +116,7 @@ export default {
     ComNav,
     ComSearch,
     ComChats,
+    ComSearchAddContacts,
     SendHelper: () => import("./send-helper"),
     ComSearchs: () => import("./searchs"),
     ComAddressBook: () => import("./address-book"),
@@ -128,6 +139,7 @@ export default {
       groupDialogInfo: null, //打开的群dialog 信息
       archiveListShow: false, // 是否显示归档
       archiveIdStrList: [],
+      addAction: false,
     };
   },
   provide() {

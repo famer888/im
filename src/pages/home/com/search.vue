@@ -1,4 +1,3 @@
-import { Cache } from '@/cache';
 <template>
   <div class="comSearch">
     <div v-show="archiveListShow" class="archive-title">{{ $t("归档会话") }}
@@ -10,7 +9,7 @@ import { Cache } from '@/cache';
         <input
           :value="searchText"
           ref="search"
-          :placeholder="placeholder || $t('搜索')"
+          :placeholder="addAction ? '搜索手机号/ID/群别名' : placeholder || $t('搜索')"
           type="text"
           @input="handleChange"
           @focus="(e) => $emit('focus', e)"
@@ -21,11 +20,12 @@ import { Cache } from '@/cache';
           src="@/assets/images/headNav/search-close-icon.png"
           @click="() => $emit('onChange', '')"
         />
-    </div>
-    <span v-if="archiveListShow" class="back" @click="handleBack">
-      <img class="back-icon" src="@/assets/images/setting/back.png" />
-      
-    </span>
+      </div>
+      <span v-if="archiveListShow" class="back" @click="handleBack">
+        <img class="back-icon" src="@/assets/images/setting/back.png" />
+        
+      </span>
+       <slot name="right"></slot>
     </div>
   </div>
 </template>
@@ -34,7 +34,7 @@ export default {
   props: ["value", "searchText", "placeholder", "archiveListShow", "unreadCount", "unreadObj", "archiveIdStrList"],
   data() {
     return {
-
+      addAction: false,
     }
   },
   computed: {
@@ -62,6 +62,10 @@ export default {
 
 <style scoped lang="scss">
 .comSearch {
+  .add-btn {
+    width: 26px;
+    margin-left: 10px;
+  }
   .add-icon {
     &:hover {
       opacity: 0.5;

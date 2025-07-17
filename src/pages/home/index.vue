@@ -21,6 +21,10 @@
               :key="infoActive.id"
               :info="infoActive"
             />
+            <AddContactsDetail
+              v-else-if="infoActive.comType === 'addContact'"
+              :info="infoActive"
+            />
             <!-- <DetailsChannel
               v-else-if="infoActive.comType === 'detailsChannel'"
               :key="infoActive.id"
@@ -94,6 +98,7 @@ export default {
     DetailsFriend: () => import("./details/friend.vue"),
     DetailsChannel: () => import("./details/channel.vue"),
     GroupNotification: () => import("./group-invitation.vue"),
+    AddContactsDetail: () => import("./com/add-contacts/add-contacts-detail.vue"),
   },
   data() {
     return {
