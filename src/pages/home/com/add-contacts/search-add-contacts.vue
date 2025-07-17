@@ -1,8 +1,11 @@
 <template>
     <div class="search-add-contacts">
-        <div class="add-tip" v-if="searchText" @click="searchContacts">
-            <img class="icon" src="@/assets/images/headNav/search-icon.png" alt="" />
-            <span> {{ $t('搜索') + searchText }} </span>
+        <div class="add-tip" v-if="searchText && !searchResult" @click="searchContacts">
+            <div class="left">
+                <img class="icon-search" src="@/assets/images/headNav/search-blue.png" alt="" />
+                <span> {{ $t('搜索') + searchText }} </span>
+            </div>
+            <img class="arrow" src="@/assets/images/headNav/arrow-right.png" alt="" />
         </div>
         <div class="tabs" v-if="searchResult">
             <div class="tab-item" :class="{ 'tab-action': item.key === tabAction }" v-for="(item, key) in tabList"
@@ -10,7 +13,8 @@
                 {{ item.name }}
             </div>
         </div>
-        <div class="contact-item" v-if="tabAction === 1 && searchResult?.targetUser" @click="handleClick(targetUserInfo)">
+        <div class="contact-item" v-if="tabAction === 1 && searchResult?.targetUser"
+            @click="handleClick(targetUserInfo)">
             <ComImage :src="targetUserInfo.icon" type="friend" class="icon" />
             <span class="name">{{ targetUserInfo.nickName }}</span>
         </div>
@@ -18,7 +22,10 @@
             <ComImage :src="targetGroupInfo.pic" type="group" class="icon" />
             <span class="name">{{ targetGroupInfo.name }}</span>
         </div>
-        <div v-else>无数据</div>
+        <div class="no-data" v-else-if="searchResultNone">
+            <img class="icon-no-data" src="@/assets/images/common/search-no-data.png" alt="" />
+            <span class="tip">搜索无结果</span>
+        </div>
     </div>
 </template>
 
@@ -39,6 +46,7 @@ export default {
             ],
             tabAction: 1,
             searchResult: null,
+            searchResultNone: false,
         }
     },
     computed: {
@@ -73,9 +81,14 @@ export default {
             console.log("searchContacts-1-", pars)
             groupOrUserDetail(pars).then(res => {
                 console.log("groupOrUserDetail--", res)
-                this.searchResult = res || {};
-                this.tabAction = res?.groupOrUserType;
+                if(!res?.groupDetail && !res?.targetUser) {
+                    this.searchResultNone = true
+                } else {
+                    this.searchResult = res || {};
+                    this.tabAction = res?.groupOrUserType;
+                }
             }).catch(err => {
+                 this.searchResultNone = true
                 console.log("groupOrUserDetail-2-", err)
             })
         }
@@ -87,17 +100,22 @@ export default {
 <style scoped lang="scss">
 .add-tip {
     width: 100%;
-    height: 28px;
     display: flex;
     align-items: center;
+    justify-content: space-between;
     border: 1px solid #e5e5e5;
     cursor: pointer;
-    padding: 0 10px;
+    padding: 16px;
     border-radius: 4px;
     margin-top: 4px;
 
-    .icon {
-        height: 16px;
+    .left {
+        display: flex;
+        align-items: center;
+    }
+
+    .icon-search {
+        height: 24px;
     }
 
     span {
@@ -138,6 +156,23 @@ export default {
     .name {
         font-size: 14px;
         margin-left: 10px;
+    }
+}
+
+.no-data {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    .icon-no-data {
+        margin-top: 20px;
+    }
+
+    .tip {
+        font-size: 14px;
+        color: #B9BABE;
+        margin-top: 18px;
     }
 }
 </style>
