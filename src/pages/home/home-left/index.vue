@@ -29,7 +29,8 @@
           key="all-search"
         > 
           <template #right>
-            <img class="add-btn" @click="addAction = !addAction" src="@/assets/images/headNav/add.png" />
+            <span class="add-cancel" v-if="addAction" @click="addAction = false">取消</span>
+            <img class="add-btn" v-else @click="addAction = true" src="@/assets/images/headNav/add_blue.png" />
           </template>
         </ComSearch>
       </div>
@@ -1201,6 +1202,21 @@ export default {
 <style lang="scss">
 .homeLeft {
   display: flex;
+}
+
+.add-btn {
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+}
+
+.add-cancel {
+  font-size: 12px;
+  color: #000;
+  margin-left: 10px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
 }
 
 .comList {
