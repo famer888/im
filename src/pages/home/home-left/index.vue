@@ -34,6 +34,11 @@
           </template>
         </ComSearch>
       </div>
+      <div class="new-friend" @click="goNewFriendExamine">
+        <img class="icon" src="@/assets/images/headNav/add-new-icon.png" />
+        <span class="title">新的好友</span>
+      </div>
+      <!-- 搜索加好友或群 -->
       <ComSearchAddContacts 
         v-if="addAction && searchText"
         :searchText="searchText"
@@ -172,6 +177,12 @@ export default {
     },
   },
   methods: {
+    goNewFriendExamine() {
+        eventBase.fnCommunicationSendMsg({
+            operator: "activeChange",
+            data: { comType: "newFriendExamine"},
+        });
+    },
     handleArchiveListShow(bool) {
       this.archiveListShow = bool;
     },
@@ -1211,6 +1222,20 @@ export default {
   width: 24px;
   height: 24px;
   cursor: pointer;
+}
+
+.new-friend {
+  display: flex;
+  align-items: center;
+  padding: 10px 20px !important;
+  box-sizing: border-box;
+  cursor: pointer;
+
+  .title {
+    margin-left: 10px;
+    font-size: 14px;
+    color: #000;
+  }
 }
 
 .add-cancel {
