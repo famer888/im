@@ -1,10 +1,18 @@
 <template>
     <div class="new-friend-examine">
         <div class="title">新的朋友</div>
-        <div class="list-title">待处理</div>
-        <newFriendExamineList :listData="unRecordList" type="unRecord"></newFriendExamineList>
-        <div class="list-title">近期请求</div>
-        <newFriendExamineList :listData="recordList"></newFriendExamineList>
+        <div v-if="loadState === 1" class="loading">loading..</div>
+        <div v-else-if="loadState === 2" class="loading">数据获取失败</div>
+        <div v-else-if="loadState === 3" class="loading">
+            <img class="icon-no-data" src="@/assets/images/common/search-no-data.png"/>
+            <div>无数据</div>
+        </div>
+        <template v-else>
+            <div class="list-title">待处理</div>
+            <newFriendExamineList :listData="unRecordList" type="unRecord"></newFriendExamineList>
+            <div class="list-title">近期请求</div>
+            <newFriendExamineList :listData="recordList"></newFriendExamineList>
+        </template>
     </div>
 </template>
 
@@ -18,6 +26,7 @@ export default {
         return {
             recordList: [],
             unRecordList: [],
+            loadState: 1, //0：成功，1：加载中，2：加载失败，3：空的
         }
     },
     mounted() {
@@ -26,8 +35,18 @@ export default {
     methods: {
         getList() {
             getContactsApplyList().then(res => {
+                const { errCode } = res?.commonResult || {}
+                if(errCode != 200) {
+                      this.loadState = 2;
+                      return;
+                }
                 this.recordList = res?.recordList || [];
                 this.unRecordList = res?.unRecordList || [];
+                if (this.recordList.length || this.unRecordList.length) {
+                    this.loadState = 0
+                } else {
+                    this.loadState = 3
+                }
                 console.log('getContactsApplyList--', res)
             })
         }
@@ -58,5 +77,10 @@ export default {
         padding: 0 10px;
         box-sizing: border-box;
     }
+}
+
+.loading {
+    text-align: center;
+    margin-top: 100px;
 }
 </style>
