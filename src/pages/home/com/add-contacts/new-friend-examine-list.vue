@@ -1,35 +1,48 @@
 <template>
-    <ul class="new-friend-list">
-        <li class="new-friend-item" v-for="(item, index) in listData" :key="index">
-            <div class="left">
-                <ComImage :src="item.icon" type="friend" class="head-icon" />
-                <div class="info">
-                    <div class="row1">
-                        <span class="name">{{ item.userInfo?.nickName }}</span>
-                        <span class="time">{{ chatTime(item.modifyTime) }}</span>
+    <div class="new-friend-list-box">
+        <ul class="new-friend-list">
+            <li class="new-friend-item" v-for="(item, index) in listData" :key="index">
+                <div class="left">
+                    <ComImage :src="item.icon" type="friend" class="head-icon" />
+                    <div class="info">
+                        <div class="row1">
+                            <span class="name">{{ item.userInfo?.nickName }}</span>
+                            <span class="time">{{ chatTime(item.modifyTime) }}</span>
+                        </div>
+                        <div class="msg">{{ item.msg }}</div>
                     </div>
-                    <div class="msg">{{ item.msg }}</div>
                 </div>
-            </div>
-            <div class="right">
-                <div class="primaryBtn small" v-if="type === 'unRecord'">验证</div>
-                <div class="cancelBtn" v-else>已同意</div>
-            </div>
-        </li>
-    </ul>
+                <div class="right">
+                    <div class="primaryBtn small" v-if="type === 'unRecord'" @click="showVerify(item)">验证</div>
+                    <div class="cancelBtn" v-else>已同意</div>
+                </div>
+            </li>
+        </ul>
+
+        <NewFriendVerify v-if="verifyVisible" :info="verifyInfo"></NewFriendVerify>
+    </div>
 </template>
 
 <script>
 import { chatTime } from "@/utils/base";
+import NewFriendVerify from "./new-friend-verify";
 export default {
     name: "newFriendExamine",
     props: ['listData', 'type'],
+    components: { NewFriendVerify },
     data() {
         return {
             chatTime,
+            verifyVisible: false,
+            verifyInfo: {},
+        }
+    },
+    methods: {
+        showVerify(info) {
+            this.verifyInfo = info;
+            this.verifyVisible = true;
         }
     }
-
 }
 </script>
 
