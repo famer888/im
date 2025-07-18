@@ -19,7 +19,7 @@
         </template>
 
         <addVerifyDialog v-if="verifierVisble" :defalutValue="verifyValue" @close="verifierVisble = false"
-            @confirm="verifyConfirm" /> 
+            @confirm="verifyConfirm" />
     </div>
 </template>
 
@@ -80,7 +80,7 @@ export default {
         verifyConfirm(msg) {
             console.log('verifyConfirm--', msg)
             this.verifyValue = msg
-            if(this.info.groupOrUserType == 1) {
+            if (this.info.groupOrUserType == 1) {
                 this.addFriend()
             } else {
                 this.addGroup()
@@ -96,7 +96,14 @@ export default {
             }
             console.log("contactsRelation--", pra)
             contactsRelation(pra).then(res => {
-                console.log('contactsRelation--', res)
+                const { errCode } = res?.commonResult || {}
+                if (errCode == 200) {
+                    window.$toast('申请成功')
+                    this.verifierVisble = false;
+                } else {
+                    window.$toast('申请失败')
+                }
+                console.log('contactsRelation--', res, errCode)
             })
         },
         addGroup() {
@@ -107,7 +114,7 @@ export default {
                 op: 0,
                 addToken: this.targetGroup.addToken
             }
-            contactsRelation(pra) 
+            contactsRelation(pra)
         }
     }
 }

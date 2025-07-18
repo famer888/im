@@ -213,6 +213,7 @@ const fnSocketMessage = (arrayBuffer) => {
             break;
         }
         case 20302: {
+            // 好友申请
             break;
         }
         case 20501: {
