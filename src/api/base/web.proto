@@ -343,6 +343,8 @@ enum ContactsAddType {
     CROWD   = 2; //群聊
     CARD    = 3; //名片
     REQ_MSG = 4; //朋友申请信息
+    LINK    = 5; //链接 v1.4.0
+    IDENTIFY = 6; //68号 v1.4.0
 }
 
 // 投诉类型(原因)
@@ -381,6 +383,8 @@ message ContactsRecordBase {
     int64               modifyTime          = 4; //最后更新时间
     ContactsAddType     type                = 5; //添加方式
     string              signature           = 6; //个性签名
+    string              groupName           = 7; //群名称
+    bool                bfIdSearch          = 8; //是否显示68号
 }
 
 // 联系人列表req [/contacts/contactsList]
@@ -455,6 +459,7 @@ message ContactsRelationReq {
     ContactsAddType     type                    = 4; // 添加方式
     ContactsOperator    op                      = 6; // 操作（添加、删除）
     int64               groupId                 = 7; // 群组id（添加方式为群聊时）add v1.1.0
+    string              addToken                = 8; // //搜索陌生人时下发的令牌，添加好友时需要
 }
 //更新联系人关系resp
 message ContactsRelationResp {
@@ -913,7 +918,7 @@ enum GroupOrUserType {
 message GroupOrUserReq {
     ClientInfo          clientInfo       = 1; // 客户端信息
     int64               fromUid          = 2; // 来源用户
-    string              context          = 3; // 群别名或68号
+    string              context          = 3; // 群别名或68号或者手机号
 }
 
 message GroupOrUserResp {
@@ -957,3 +962,18 @@ message ClientTokenResp {
     int32 mchId = 5; // 商户ID
 }
 
+
+//查找联系人req [friendUrl/contacts/findContactsList] add v1.0.5
+message FindContactsListReq {
+    ClientInfo  clientInfo      = 1; // 客户端信息
+    string      phoneNum        = 2; // 手机号
+    string      findSign        = 3; // md5
+    int64       targetUid       = 4; // 對方uid
+    int64       findType        = 5; // 查找类型 0.旧版本不传 1.消息/通讯录的添加好友手动搜索(只有这一种会限制次数) 2.好友删除后的添加好友 3.搜索好友页面 4.点击名片 5.三方服务搜索
+}
+
+//查找联系人resp add v1.1.0
+message FindContactsListResp {
+    CommonResult        commonResult    = 1; // 结果信息
+    repeated ContactsDetailBase  detailList  = 2; //联系人详情列表
+}

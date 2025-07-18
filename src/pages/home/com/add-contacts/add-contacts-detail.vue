@@ -19,7 +19,7 @@
         </template>
 
         <addVerifyDialog v-if="verifierVisble" :defalutValue="verifyValue" @close="verifierVisble = false"
-            @confirm="verifyConfirm" />
+            @confirm="verifyConfirm" /> 
     </div>
 </template>
 
@@ -53,6 +53,12 @@ export default {
         },
         targetUserInfo() {
             return this.info?.targetUser?.userInfo || {}
+        },
+        targetUser() {
+            return this.info?.targetUser || {}
+        },
+        targetGroup() {
+            return this.info?.groupDetail || {}
         }
     },
     mounted() {
@@ -63,7 +69,7 @@ export default {
     },
     methods: {
         showVerify(info) {
-            console.log(info, this.loginInfo)
+            console.log(info, this.loginInfo, this.info)
 
 
             this.verifyValue = '我是' + this.loginInfo?.name || '';
@@ -86,8 +92,12 @@ export default {
                 msg: this.verifyValue,
                 type: 0,
                 op: 0,
+                addToken: this.targetUser.addToken
             }
-            contactsRelation(pra)
+            console.log("contactsRelation--", pra)
+            contactsRelation(pra).then(res => {
+                console.log('contactsRelation--', res)
+            })
         },
         addGroup() {
             const pra = {
@@ -95,6 +105,7 @@ export default {
                 msg: this.verifyValue,
                 type: 0,
                 op: 0,
+                addToken: this.targetGroup.addToken
             }
             contactsRelation(pra) 
         }
