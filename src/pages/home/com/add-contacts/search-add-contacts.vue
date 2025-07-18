@@ -7,24 +7,26 @@
             </div>
             <img class="arrow" src="@/assets/images/headNav/arrow-right.png" alt="" />
         </div>
-        <div class="tabs" v-if="searchResult">
-            <div class="tab-item" :class="{ 'tab-action': item.key === tabAction }" v-for="(item, key) in tabList"
-                :key="key" @click="tabSelect(item)">
-                {{ item.name }}
+        <div class="search-result">
+            <div class="tabs" v-if="searchResult">
+                <div class="tab-item" :class="{ 'tab-action': item.key === tabAction }" v-for="(item, key) in tabList"
+                    :key="key" @click="tabSelect(item)">
+                    {{ item.name }}
+                </div>
             </div>
-        </div>
-        <div class="contact-item" v-if="tabAction === 1 && searchResult?.targetUser"
-            @click="handleClick(targetUserInfo)">
-            <ComImage :src="targetUserInfo.icon" type="friend" class="icon" />
-            <span class="name">{{ targetUserInfo.nickName }}</span>
-        </div>
-        <div class="contact-item" v-else-if="searchResult?.groupDetail" @click="handleClick(targetGroupInfo)">
-            <ComImage :src="targetGroupInfo.pic" type="group" class="icon" />
-            <span class="name">{{ targetGroupInfo.name }}</span>
-        </div>
-        <div class="no-data" v-else-if="searchResultNone">
-            <img class="icon-no-data" src="@/assets/images/common/search-no-data.png" alt="" />
-            <span class="tip">搜索无结果</span>
+            <div class="contact-item" v-if="tabAction === 1 && searchResult?.targetUser"
+                @click="handleClick(targetUserInfo)">
+                <ComImage :src="targetUserInfo.icon" type="friend" class="icon" />
+                <span class="name">{{ targetUserInfo.nickName }}</span>
+            </div>
+            <div class="contact-item" v-else-if="searchResult?.groupDetail" @click="handleClick(targetGroupInfo)">
+                <ComImage :src="targetGroupInfo.pic" type="group" class="icon" />
+                <span class="name">{{ targetGroupInfo.name }}</span>
+            </div>
+            <div class="search-no-data" v-else-if="searchResultNone">
+                <img class="icon-no-data" src="@/assets/images/common/search-no-data.png" alt="" />
+                <span class="tip">搜索无结果</span>
+            </div>
         </div>
     </div>
 </template>
@@ -37,7 +39,7 @@ import eventBase from "@/event/base";
 
 export default {
     name: "searchAddContacts",
-    props: ['searchText'],
+    props: ['searchText', 'searchAddContactsIng'],
     data() {
         return {
             tabList: [
@@ -57,6 +59,9 @@ export default {
             return this.searchResult?.targetUser?.userInfo || {}
         }
     },
+    beforeDestroy() {
+        this.$emit("update:searchAddContactsIng", false)
+    },
     methods: {
         handleClick() {
             // const data = this.tabAction === 1 ?  this.searchResult?.targetUser :  this.searchResult?.groupDetail
@@ -71,6 +76,7 @@ export default {
         searchContacts() {
             console.log("searchContacts-1-", this.searchText)
             if (!this.searchText) return;
+            this.$emit("update:searchAddContactsIng", true)
             const fromUid = eventCommon.fnCommonInfoRU({
                 getId: "loginId",
             });
@@ -81,14 +87,14 @@ export default {
             console.log("searchContacts-1-", pars)
             groupOrUserDetail(pars).then(res => {
                 console.log("groupOrUserDetail--", res)
-                if(!res?.groupDetail && !res?.targetUser) {
+                if (!res?.groupDetail && !res?.targetUser) {
                     this.searchResultNone = true
                 } else {
                     this.searchResult = res || {};
                     this.tabAction = res?.groupOrUserType;
                 }
             }).catch(err => {
-                 this.searchResultNone = true
+                this.searchResultNone = true
                 console.log("groupOrUserDetail-2-", err)
             })
         }
@@ -98,6 +104,7 @@ export default {
 </script>
 
 <style scoped lang="scss">
+
 .add-tip {
     width: 100%;
     display: flex;
@@ -159,11 +166,12 @@ export default {
     }
 }
 
-.no-data {
+.search-no-data {
     width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
+    margin-top: 50px;
 
     .icon-no-data {
         margin-top: 20px;

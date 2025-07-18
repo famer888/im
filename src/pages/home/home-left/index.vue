@@ -35,10 +35,11 @@
         </ComSearch>
       </div>
       <ComSearchAddContacts 
-        v-if="addAction"
+        v-if="addAction && searchText"
         :searchText="searchText"
+        :searchAddContactsIng.sync="searchAddContactsIng"
       />
-      <section v-else>
+      <section v-if="!searchAddContactsIng">
         <template v-if="searchText === ''">
           <ComChats
             v-if="navType === 0"
@@ -76,6 +77,7 @@
           :searchText="searchText"
           :groups="groups"
           :friendList="friendList"
+          :noSearchMsg="addAction"
           @clearSearch="searchText = ''"
         />
       </section>
@@ -141,6 +143,7 @@ export default {
       archiveListShow: false, // 是否显示归档
       archiveIdStrList: [],
       addAction: false,
+      searchAddContactsIng: false, // 搜索添加联系人中
     };
   },
   provide() {

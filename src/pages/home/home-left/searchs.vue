@@ -41,6 +41,7 @@
             {{ $t("通讯号") }}：<span>{{ item.identify }}</span>
           </div>
         </li>
+      <div style="height: 100px;"></div>
       </ul>
     </template>
     <p v-else>
@@ -59,7 +60,7 @@ import eventBase from "@/event/base";
 let timer = null;
 
 export default {
-  props: ["searchText", "groups", "friendList"],
+  props: ["searchText", "groups", "friendList", "noSearchMsg"],
   data() {
     return {
       idActive: "",
@@ -226,6 +227,7 @@ export default {
      * 搜索消息
      */
     handleSearchMessage() {
+      if(this.noSearchMsg) return;
       if (timer) {
         clearTimeout(timer);
       }
