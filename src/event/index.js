@@ -3,6 +3,7 @@ import packet from "@/api/base/imweb-web";
 import { decrypt } from "@/socket/api/request";
 import { ReceiveServerToClient } from "@/socket/api/message";
 import { fnUpdateKeyFriend } from "@/utils/encryption-decryption";
+import { Cache } from "@/cache";
 
 // 事件
 import eventBase from "./base";
@@ -214,6 +215,19 @@ const fnSocketMessage = (arrayBuffer) => {
         }
         case 20302: {
             // 好友申请
+            const loginId = eventCommon.fnCommonInfoRU({
+                getId: "loginId",
+            });
+             Cache(`${loginId}-newFriendReqTotal`).then(res => {
+                let newTotal = (res?.total || 0) + 1;
+                Cache(`${loginId}-newFriendReqTotal`, newTotal)
+                eventBase.fnCommunicationSendMsg({
+                    operator: "updateNewFriendReqTotal",
+                    data: {
+                        total: newTotal,
+                    }
+                });
+             });
             break;
         }
         case 20501: {

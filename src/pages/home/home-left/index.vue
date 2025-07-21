@@ -3,6 +3,7 @@
     <ComNav
       :navType="navType"
       :unreadCount="unreadCount"
+      :contactsUnreadCount="contactsUnreadCount"
       @change="
         (value) => {
           navType = value;
@@ -43,6 +44,7 @@
       <div class="new-friend" v-if="navType === 1 && !searchAddContactsIng" @click="goNewFriendExamine">
         <img class="icon" src="@/assets/images/headNav/add-new-icon.png" />
         <span class="title">新的好友</span>
+        <span class="unread" v-if="contactsUnreadCount">{{ contactsUnreadCount }}</span>
       </div>
       <section v-if="!searchAddContactsIng">
         <template v-if="searchText === ''">
@@ -149,6 +151,7 @@ export default {
       archiveIdStrList: [],
       addAction: false,
       searchAddContactsIng: false, // 搜索添加联系人中
+      contactsUnreadCount: 0,
     };
   },
   provide() {
@@ -178,6 +181,9 @@ export default {
   },
   methods: {
     goNewFriendExamine() {
+        Cache(`${loginId}-newFriendReqTotal`, {total: 0});
+        this.contactsUnreadCount = 0;
+
         eventBase.fnCommunicationSendMsg({
             operator: "activeChange",
             data: { comType: "newFriendExamine"},
@@ -242,6 +248,7 @@ export default {
           "openGroupDialog",
           "bfAddressSet", // 保存到通讯录
           "msgListPropertyUpdate", // 信息发送成功状态更新
+          "updateNewFriendReqTotal", // 新朋友申请待处理总数更新
         ],
         this.eventHandling
       );
@@ -357,6 +364,10 @@ export default {
         case "msgListPropertyUpdate":
           // /信息发送成功还是失败状态
           this.eventUpdateMsgStatus(info);
+          break;
+        case "updateNewFriendReqTotal":
+          // 新好友申请待处理总数
+          this.contactsUnreadCount = info?.total || 0;
           break;
         default:
       }
@@ -1170,6 +1181,10 @@ export default {
       // console.log('ChannelList ------------>', res)
     });
 
+    Cache(`${loginId}-newFriendReqTotal`).then(res => {
+      this.contactsUnreadCount = res?.total || 0;
+    })
+
     // 获取聊天窗口列表
     this.handleChatsGet();
 
@@ -1230,11 +1245,30 @@ export default {
   padding: 10px 20px !important;
   box-sizing: border-box;
   cursor: pointer;
+  position: relative;
 
   .title {
     margin-left: 10px;
     font-size: 14px;
     color: #000;
+  }
+
+  .unread {
+      position: absolute;
+      left: 36px;
+      top: 2px;
+      margin-top: 4px;
+      padding: 1px 7px;
+      display: inline-block;
+      font-size: 12px;
+      background: #f44e5a;
+      font-weight: 400;
+      border-radius: 10px;
+      transform: scale(0.86);
+      color: #fff;
+      text-align: center;
+      white-space: nowrap;
+      z-index: 2;
   }
 }
 

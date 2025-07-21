@@ -18,6 +18,9 @@
         <span v-if="index === 0 && unreadCount !== 0" class="unread">
           {{ unreadCount > 99 ? '99+' : unreadCount }}
         </span>
+        <span v-else-if="index === 1 && contactsUnreadCount !== 0" class="unread">
+          {{ contactsUnreadCount > 99 ? '99+' : contactsUnreadCount }}
+        </span>
       </li>
     </ul>
     <ComSettingBtn />
@@ -32,7 +35,7 @@ import ComSettingBtn from "./setting-btn.vue";
 import eventBase from "@/event/base";
 
 export default {
-  props: ["navType", "unreadCount"],
+  props: ["navType", "unreadCount", "contactsUnreadCount"],
   data() {
     return {
       navList: ["message", "contacts", "cszs"],
