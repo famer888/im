@@ -44,3 +44,10 @@ export const updateContactsApply = (data) =>
         url: `${baseUrl()}/contacts/updateContactsApply`,
         data,
     });
+// 加入黑名单
+export const updateBlackContacts = (data) =>
+    getUrl({
+        type: "UpdateBlackContacts",
+        url: `${baseUrl()}/contacts/updateBlackContacts`,
+        data,
+    });

@@ -1,6 +1,6 @@
 <template>
     <div class="new-friend-verify">
-        <div class="head-title">新的朋友</div>
+        <div class="head-title"> <img class="icon-back" src="@/assets/images/setting/back.png"  @click="$emit('back')"/> 新的朋友</div>
         <div class="content">
             <div class="info-head">
                 <ComImage :src="userInfo.icon" type="friend" class="head-icon" />
@@ -16,11 +16,11 @@
                 </div>
                 <div class="info-item">
                     <span class="title">性别</span>
-                    <span class="value">{{['保密', '男', '女'][userInfo.gender]}}</span>
+                    <span class="value">{{ ['保密', '男', '女'][userInfo.gender] }}</span>
                 </div>
                 <div class="info-item">
                     <span class="title">个性签名</span>
-                    <span class="value">{{userInfo.depict || '对方什么都没写'}}</span>
+                    <span class="value">{{ userInfo.depict || '对方什么都没写' }}</span>
                 </div>
             </div>
             <div class="info-msg">
@@ -28,15 +28,17 @@
                 <p class="msg">{{ info.msg }}</p>
             </div>
             <div class="footer">
-                <div class="primaryBtn blacklist-btn">加入黑名单</div>
-                <div class="primaryBtn">通过验证</div>
+                <div class="primaryBtn blacklist-btn remove" v-if="bfMyBlack" @click="joinBlackList(7)">移除黑名单</div>
+                <div class="primaryBtn blacklist-btn"  v-else @click="joinBlackList(6)">加入黑名单</div>
+
+                <div class="primaryBtn" @click="passVerify()">通过验证</div>
             </div>
         </div>
     </div>
 </template>
 
 <script>
-import { groupOrUserDetail } from "@/api/imGroup.js";
+import { updateContactsApply, updateBlackContacts } from "@/api/imContacation";
 import eventCommon from "@/event/common";
 
 export default {
@@ -44,6 +46,7 @@ export default {
     props: ['info'],
     data() {
         return {
+            bfMyBlack: false, // 是否黑名单用户
             userDetail: {},
         }
     },
@@ -53,10 +56,42 @@ export default {
         }
     },
     mounted() {
+        this.bfMyBlack = this.info?.bfMyBlack
         console.log(this.info)
     },
     methods: {
-      
+        joinBlackList(op) {
+            const pra = {
+                targetUid: Number(this.userInfo.uid),
+                op,
+            }
+            updateBlackContacts(pra).then(res => {
+                console.log('updateBlackContacts--', res)
+                    const { errCode } = res?.commonResult || {}
+                if (errCode == 200) {
+                    this.bfMyBlack = op === 6;
+                    window.$toast(this.$t("操作成功"));
+                } else {
+                    res?.errorDesc && window.$toast(res.errorDesc);
+                }
+            })
+        },
+        passVerify() {
+            const pra = {
+                applyUid: Number(this.userInfo.uid),
+                op: 8,
+            }
+            updateContactsApply(pra).then(res => {
+                console.log('updateContactsApply-', res)
+                const { errCode, errorDesc } = res?.commonResult || {}
+                if (errCode == 200) {
+                    window.$toast(this.$t("操作成功"));
+                   this.$emit("close")
+                } else {
+                    res?.errorDesc && window.$toast(res.errorDesc);
+                }
+            })
+        }
     }
 }
 </script>
@@ -72,12 +107,20 @@ export default {
     z-index: 9;
     background: #F6F6F6;
 
+    .icon-back {
+        height: 14px;
+        margin-right: 10px;
+        cursor: pointer;
+    }
+
     .head-title {
         font-size: 14px;
         color: #000;
         padding: 20px;
         box-sizing: border-box;
         background: #fff;
+        display: flex;
+        align-items: center;
     }
 
     .content {
@@ -176,6 +219,10 @@ export default {
         background: #FB2826;
         border: none;
         margin-right: 10px;
+    }
+
+    .remove {
+         background: #1DA949;
     }
 
     .primaryBtn {
