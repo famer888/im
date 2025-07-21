@@ -43,6 +43,7 @@
         {{ $t("管理员") }}
       </li>
     </ul>
+    <div class="invite-friend" @click="inviteFriendDialogVisible = true">邀请好友</div>
     <ComMemberList
       v-if="isGroup"
       :chatContent="chatContent"
@@ -66,6 +67,12 @@
       :radioTextList="clearMsgTypeList"
       @submit="handleDialogMsgClearSet"
     />
+    <ComInviteFriendJoinGroup
+      v-if="inviteFriendDialogVisible"
+       :groupId="chatContent.id"
+       :memberInfoList="memberInfoList"
+      @close="inviteFriendDialogVisible = false"
+    />
     </div>
   </div>
 </template>
@@ -80,6 +87,7 @@ import ComConfigList from "./config-list.vue";
 import ComGroupAliasQrcode from "./group-alias-qrcode.vue";
 import ComGroupNotice from "./group-notice/index.vue";
 import ChannelLink from "./channel-link.vue";
+import ComInviteFriendJoinGroup  from "./invite-friend-join-group";
 
 // 工具
 import { rcheduleDeletionTimeList } from "@/utils/widget";
@@ -94,6 +102,7 @@ export default {
     ComGroupAliasQrcode,
     ComGroupNotice,
     ChannelLink,
+    ComInviteFriendJoinGroup,
     ComGroupQrcode: () => import("./group-qrcode.vue"),
     ComChannelQrcode: () => import("./channel-qrcode.vue"),
     ComFriendInfo: () => import("./friend-info.vue"),
@@ -121,6 +130,7 @@ export default {
       memberInfoList: [], // 群成员列表
       friendList: [],
       channelUserList: [], // 频道成员列表
+      inviteFriendDialogVisible: false, // 邀请好友入群会话框 是否显示
     };
   },
   created() {
@@ -415,6 +425,21 @@ export default {
     display: flex;
     align-items: center;
     flex-shrink: 0;
+  }
+
+  .invite-friend {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    width: 270px;
+    height: 40px;
+    color: #178AFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9;
+    background: #fff;
+    cursor: pointer;
   }
 }
 </style>
