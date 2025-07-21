@@ -9,9 +9,9 @@
         </div>
         <template v-else>
             <div class="list-title">待处理</div>
-            <newFriendExamineList :listData="unRecordList" type="unRecord"></newFriendExamineList>
+            <newFriendExamineList :listData="unRecordList" type="unRecord" @reloadData="getList"></newFriendExamineList>
             <div class="list-title">近期请求</div>
-            <newFriendExamineList :listData="recordList"></newFriendExamineList>
+            <newFriendExamineList :listData="recordList" @reloadData="getList"></newFriendExamineList>
         </template>
     </div>
 </template>

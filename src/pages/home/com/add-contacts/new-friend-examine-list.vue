@@ -19,7 +19,8 @@
             </li>
         </ul>
 
-        <NewFriendVerify v-if="verifyVisible" :info="verifyInfo"></NewFriendVerify>
+        <NewFriendVerify v-if="verifyVisible" :info="verifyInfo" @close="verifyClose" @back="verifyVisible = false">
+        </NewFriendVerify>
     </div>
 </template>
 
@@ -41,6 +42,10 @@ export default {
         showVerify(info) {
             this.verifyInfo = info;
             this.verifyVisible = true;
+        },
+        verifyClose() {
+            this.verifyVisible = false;
+            this.$emit("reloadData")
         }
     }
 }

@@ -28,22 +28,22 @@
           @handleBack="handleBack"
           key="all-search"
         > 
-          <template #right>
+          <template #right v-if="navType === 1">
             <span class="add-cancel" v-if="addAction" @click="addAction = false">取消</span>
             <img class="add-btn" v-else @click="addAction = true" src="@/assets/images/headNav/add_blue.png" />
           </template>
         </ComSearch>
       </div>
-      <div class="new-friend" @click="goNewFriendExamine">
-        <img class="icon" src="@/assets/images/headNav/add-new-icon.png" />
-        <span class="title">新的好友</span>
-      </div>
       <!-- 搜索加好友或群 -->
       <ComSearchAddContacts 
-        v-if="addAction && searchText"
+        v-if="addAction && searchText && navType === 1"
         :searchText="searchText"
         :searchAddContactsIng.sync="searchAddContactsIng"
       />
+      <div class="new-friend" v-if="navType === 1 && !searchAddContactsIng" @click="goNewFriendExamine">
+        <img class="icon" src="@/assets/images/headNav/add-new-icon.png" />
+        <span class="title">新的好友</span>
+      </div>
       <section v-if="!searchAddContactsIng">
         <template v-if="searchText === ''">
           <ComChats
