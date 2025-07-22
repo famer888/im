@@ -21,7 +21,7 @@
     </dl>
     <h3>{{ $t("关于我们") }}</h3>
     <dl>
-      <dt>{{ $t("版本信息") }} v1.6.3</dt>
+      <dt>{{ $t("版本信息") }} v1.8.0</dt>
       <dd>
         <button @click="handleVisionUpdate">{{ $t("版本更新") }}</button>
       </dd>
