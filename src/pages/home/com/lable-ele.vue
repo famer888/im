@@ -52,14 +52,15 @@ export default {
       }
     },
     async handleGoLink(info) {
+      const linkUrl = (info?.href || "").replace("<br>", "")
       const confirmState = await window.$confirm({
         title: this.$t("打开链接"),
-          remark: info.href
+          remark: linkUrl
         })
       if(!confirmState) return;
         
       try {
-        let href = completionUrl(info.href)
+        let href = completionUrl(linkUrl)
         const hrefData = new URL(href);
         const searchParams = hrefData.searchParams;
         // 判断 如果点的是群链接，则进入入群操作等相关逻辑，未入群则申请入群，已入群，则跳转过去
@@ -80,14 +81,14 @@ export default {
           //   console.log(res, '查看群信息')
           // })
         }
-        let channelInfo = await this.validChannelLink(info.href);
+        let channelInfo = await this.validChannelLink(linkUrl);
         if (channelInfo) {
           eventBase.fnCommunicationSendMsg({
             operator: "openChannelDialog",
             data: {
               values: {
                 ...channelInfo,
-                link: info.href,
+                link: linkUrl,
               },
             },
           });
@@ -97,7 +98,7 @@ export default {
         }
       } catch (error) {
         console.log(error);
-        window.open(info.href);
+        window.open(linkUrl);
       }
     },
   },
