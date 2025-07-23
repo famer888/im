@@ -91,7 +91,7 @@ export default {
      */
     handleVisionUpdate() {
       checkVersion().then((res) => {
-        if (res && res.version === Number("1.9.0".replace(/\./, ""))) {
+        if (res && res.version === Number("1.6.6".replace(/\./, ""))) {
           window.$toast(i18n.t("已是最新版本"));
           return;
         }

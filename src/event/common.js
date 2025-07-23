@@ -488,7 +488,7 @@ const fnClientInfoGet = () => {
 
     return {
         sessionId,
-        appVer: "1.9.0".replaceAll(".", ""),
+        appVer: "1.6.6".replaceAll(".", ""),
         packageCode: 1000,
         language: languageIndex + 1, // 默认简体中文
         plat: process.platform === "darwin" ? 3 : 4,
