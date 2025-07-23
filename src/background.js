@@ -403,9 +403,9 @@ function createMenu() {
 
 function regShortcut() {
     // if(isWin) {
-    globalShortcut.register("CommandOrControl+G", () => {
-        mainWindow.webContents.toggleDevTools();
-    });
+    // globalShortcut.register("CommandOrControl+G", () => {
+    //     mainWindow.webContents.toggleDevTools();
+    // });
     // }
 }
 // 打开下载框
@@ -969,7 +969,10 @@ const createMainWindow = async () => {
       // 监听 通知显示
     ipcMain.on("alertNotification", (event, args) => {
         console.log('alertNotification-1-', mainWindow.isMinimized(), !mainWindowIsFocused)
-        if (mainWindow.isMinimized() || !mainWindowIsFocused) {
+        if (
+            mainWindow.isMinimized() 
+            // || !mainWindowIsFocused
+        ) {
                   console.log('alertNotification-2-')
            showNotification(mainWindow, args)
         }
