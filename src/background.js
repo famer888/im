@@ -538,7 +538,7 @@ const downloadHandler = (event, item, webContents) => {
         }
         item.setSavePath(data.fileLocalPath);
         item.once("done", (event, state) => {
-            webContents.send(
+            mainWindow.send(
                 state === "completed"
                     ? "downloadFileDone"
                     : "downloadFileFailed",
