@@ -364,6 +364,7 @@ export default {
   .right-menu-content{
     position: relative;
     flex-direction: column;
+    padding-bottom: 60px;
     .mask{
     position: absolute;
     top: 0;
