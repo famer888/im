@@ -237,10 +237,8 @@ export default {
     }
 
     .disable {
-        filter: grayscale(100%);
-        .name {
-         color: #e5e5e5;
-        }
+        opacity: 0.5;
+        pointer-events: none; 
     }
 
     .primaryBtn {
