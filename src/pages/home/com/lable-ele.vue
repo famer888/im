@@ -54,7 +54,8 @@ export default {
     async handleGoLink(info) {
       const linkUrl = (info?.href || "").replace("<br>", "")
       const confirmState = await window.$confirm({
-        title: this.$t("打开链接"),
+          title: this.$t("打开链接"),
+          btnTitleCenter: this.$t("打开"),
           remark: linkUrl
         })
       if(!confirmState) return;
