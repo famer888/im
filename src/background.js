@@ -401,9 +401,9 @@ function createMenu() {
 
 function regShortcut() {
     // if(isWin) {
-    globalShortcut.register("CommandOrControl+G", () => {
-        mainWindow.webContents.toggleDevTools();
-    });
+    // globalShortcut.register("CommandOrControl+G", () => {
+    //     mainWindow.webContents.toggleDevTools();
+    // });
     // }
 }
 // 打开下载框
