@@ -117,6 +117,7 @@
                     } 删除`
               }}
             </a>
+            <img class="icon" src="@/assets/images/menu/delete.png" alt=""/>
           </li>
         </template>
         <template v-else>
@@ -130,6 +131,7 @@
             <a @click.prevent="handleCopy(rightClickSelectedInfo)">{{
               $t("复制")
             }}</a>
+            <img class="icon" src="@/assets/images/menu/copy.png" alt=""/>
           </li>
           <li
             v-if="
@@ -150,6 +152,7 @@
             >
               {{ $t("另存为") }}
             </a>
+            <img class="icon" src="@/assets/images/menu/save.png" alt=""/>
           </li>
           <li
             v-if="
@@ -171,6 +174,7 @@
             >
               {{ $t("打开目录") }}
             </a>
+             <img class="icon" src="@/assets/images/menu/open_dir.png" alt=""/>
           </li>
           <li
             v-if="
@@ -202,6 +206,7 @@
                     } ${$t('删除')}`
               }}
             </a>
+             <img class="icon" src="@/assets/images/menu/delete.png" alt=""/>
           </li>
           <li>
             <a
@@ -219,6 +224,7 @@
             >
               {{ $t("从本地删除") }}
             </a>
+            <img class="icon" src="@/assets/images/menu/delete.png" alt=""/>
           </li>
           <li v-if="rightClickSelectedInfo">
             <a
@@ -234,6 +240,7 @@
             >
               {{ $t("选中") }}
             </a>
+            <img class="icon" src="@/assets/images/menu/select.png" alt=""/>
           </li>
           <li
             v-if="
@@ -245,6 +252,7 @@
             <a @click="handleQuoteSet">
               {{ $t("回复") }}
             </a>
+            <img class="icon" src="@/assets/images/menu/forward.png" alt=""/>
           </li>
           <!-- <li
             v-if="
@@ -266,6 +274,7 @@
             "
           >
             <a @click="handleForwardDialogShow()">{{ $t("转发") }}</a>
+            <img class="icon" src="@/assets/images/menu/share.png" alt=""/>
           </li>
         </template>
       </template>
@@ -1125,6 +1134,38 @@ export default {
         width: 16px;
         height: 16px;
         margin-right: 12px;
+      }
+    }
+  }
+
+  .contact-menu-box {
+    padding: 0 10px;
+    border-radius: 8px;
+
+    li {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-width: 180px;
+      cursor: pointer;
+      border-bottom: 1px solid #f0f0f0;
+      position: relative;
+
+      &:last-child {
+        border: none;
+      }
+
+      .icon {
+        max-height: 16px;
+      }
+
+      a {
+        width: 100%;
+        padding: 10px 0;
+
+        &:hover {
+          background: none;
+        }
       }
     }
   }
