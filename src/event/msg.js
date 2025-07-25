@@ -788,9 +788,6 @@ const fnMsgSend = async (info) => {
             if (!item.url && item.text) {
                 item.url = item.text
             }
-            if(item.sendTime) {
-              item.sentOverTime = item.sendTime;
-            }
             if (type == 'group') {
                 //  获取群群文件加密key
                 if (item.fileKey) {
