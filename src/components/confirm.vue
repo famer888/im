@@ -115,7 +115,7 @@ export default {
         padding: 0 13px;
         height: 24px;
         line-height: 24px;
-        background: #3369fe;
+        background: #178AFF;
         color: #ffffff;
         cursor: pointer;
         width: 100%;
