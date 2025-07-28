@@ -26,7 +26,7 @@
                     />
                     <img              
                         :src="
-                          msgInfo.localThumbUrl  || msgInfo.local
+                          getUrl() 
                         "
                         class="picture"
                         @error="handleFileDownload()"
@@ -54,7 +54,7 @@
 import { remote, ipcRenderer } from "@/platform";
 
 // 工具
-import { getFileSuffix } from "@/utils/base";
+import { getFileSuffix, isMac } from "@/utils/base";
 import { getNewFileDownUrl } from "@/utils/trendsDomain/manageOssDownUpload";
 
 // 事件
@@ -80,6 +80,31 @@ export default {
         }
     },
     methods: {
+        // 处理mac本地地址异常
+        macFixImagePath(url) {
+            // 1. 处理 app://./ 协议：替换为 file:// 并修正路径
+            if (url.startsWith('app://./')) {
+                const relativePath = url.replace('app://./', '');
+                const absolutePath = `/${relativePath}`; // 假设目标是根目录下的路径
+                return `file://${absolutePath}`;
+            }
+            // 2. 如果不是 file:// 开头，则自动添加 file://（适用于本地绝对路径）
+            else if (!url.startsWith('file://')) {
+                // 检查是否是绝对路径（如 /Users/... 或 C:\...）
+                if (url.startsWith('/')) {
+                    return `file://${url}`;
+                }
+            }
+            // 3. 其他情况（如已经是 file:// 或 http://），直接返回
+            return url;
+        },
+        getUrl() {
+            let url = this.msgInfo.localThumbUrl  || this.msgInfo.local
+            if(isMac) {
+              url = this.macFixImagePath(url)
+            }
+            return url
+        },
         /**
          * 打开文件
          */
