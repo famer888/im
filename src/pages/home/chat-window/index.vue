@@ -278,13 +278,21 @@
           </li>
           <li
             v-if="
+            rightClickSelectedInfo &&
+            ['test', 'uat'].includes(getEnvType())
+            "
+          >
+            <a @click="copyMsgInfo(rightClickSelectedInfo)">复制消息信息</a>
+            <img class="icon" src="@/assets/images/menu/copy.png" alt=""/>
+          </li>
+          <li
+            v-if="
               rightClickSelectedInfo
               && rightClickSelectedInfo.readUsers?.length 
             "
           >
-            <a @click="handleQuoteSet">
-             {{ readUserTotal }} 个已读
-            </a>
+            <a v-if="readUserTotal">{{ readUserTotal }} 个已读</a>
+            <a v-else>{{ rightClickSelectedInfo.readUsers?.length  }} 个送达</a>
             <img class="icon" src="@/assets/images/menu/more.png" alt=""/>
 
             <div class="menu-two-box">
@@ -311,8 +319,9 @@ import { Cache } from "@/cache";
 import { getChannelUsers } from "@/api/imChannel";
 
 // 工具
-import { setMaxLengthStr, textToEmojiText, formatTimeStamp } from "@/utils/base";
+import { setMaxLengthStr, textToEmojiText, formatTimeStamp, copyToClipboard, freeTime } from "@/utils/base";
 import { copyText, copyImg } from "@/utils/clipboard";
+import { getEnvType } from "@/utils";
 
 // 控件
 import ComTop from "./top";
@@ -487,8 +496,20 @@ export default {
     }
   },
   methods: {
+    getEnvType,
     formatTimeStamp,
     setMaxLengthStr,
+     /**
+     * 复制消息信息，只有测试环境和uat环境可用
+     */
+    copyMsgInfo(msgInfo) {
+      const env = getEnvType();
+      if(env !== 'test' && env !== 'uat') return;
+      msgInfo.sendTimeStr = freeTime(msgInfo.sendTime, 'y-m-d h:i:s');
+      const msgInfoStr = JSON.stringify(msgInfo);
+      copyToClipboard(msgInfoStr);
+      window.$toast(this.$t("复制成功"));
+    },
     getMsgReadUsersInfo(readUsers) {
       let usersInfo = [];
       readUsers.forEach(item => {
@@ -1277,6 +1298,7 @@ export default {
       a {
         width: 100%;
         padding: 10px 0;
+        color: #000;
 
         &:hover {
           background: none;

@@ -302,7 +302,7 @@ export const chatPageDateformat = (timestamp) => {
     }
 };
 
-const freeTime = (value, g = "y-m-d") => {
+export const freeTime = (value, g = "y-m-d") => {
     let time = new Date(Number(value));
     let y = time.getFullYear();
     let m = time.getMonth() + 1;
