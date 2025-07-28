@@ -350,6 +350,80 @@ const fnPokerSendUpdate = async (values, { id, type }) => {
 };
 
 /**
+ * 群聊消息已读 记录 (体量较大记录后定时处理)
+ */
+let groupMsgReads = {};
+const fnGroupMsgReadRecord = (receiptMessage) => {
+     const loginId = eventCommon.fnCommonInfoRU({
+        getId: "loginId",
+    });
+    receiptMessage.forEach(item => {
+        const groupId = Number(item.groupId);
+        const sendUid = Number(item.sendUid);
+        if(sendUid === loginId) return;
+
+        if(!groupId || !sendUid || !item.msgId) return;
+        let groupObj =  groupMsgReads[groupId] || {};
+        let groupMsgReadsOld = groupObj[item.msgId] || [];
+
+        // 已读用户信息，需要新字段属性可在这里添加
+        const readInfoNew = {userId: sendUid, readTime: Number(item.receiptStatus?.time), readState: item.receiptStatus?.status || 0};
+
+        groupMsgReadsOld =  groupMsgReadsOld.filter(item => item.userId !== readInfoNew.userId)
+        groupObj[item.msgId] = [...groupMsgReadsOld, readInfoNew];
+
+        groupMsgReads[groupId] = groupObj;
+    })
+}
+
+/**
+ * 群聊消息已读 更新
+ */
+const fnGroupMsgReadUpdate = async () => {
+    let groups = JSON.parse(JSON.stringify(groupMsgReads));
+    groupMsgReads = {};
+    for (const groupId in groups) {
+        const groupMsgObjs = groups[groupId] || [];
+        let params = {
+            id: Number(groupId),
+            type: "group",
+            list: [],
+        };
+
+        for(const msgId in groupMsgObjs) {
+            let readUsersNew = groupMsgObjs[msgId];
+            if(!readUsersNew.length) return;
+
+            const msgInfo = await window.$db.getMsgInfoForMsgId({
+                id: groupId,
+                type: "group",
+                msgId,
+            });
+            if(!msgInfo?.customMsgId) return;
+            const readUsersOld = msgInfo?.readUsers || [];
+            const readUsers = [...new Set([...readUsersOld, ...readUsersNew])];
+
+            const param = {
+                        customMsgId: msgInfo.customMsgId,
+                        updated: { readUsers },
+                    }
+            
+            params.list.push(param)
+        }
+
+      
+        // 修改消息属性
+        window.$db.updateMsgProperty(params);
+
+        // 通讯
+        eventBase.fnCommunicationSendMsg({
+            operator: "msgListPropertyUpdate",
+            data: params,
+        });
+    }
+}
+
+/**
  * 处理事件 消息删除，没有删除的id则为 清空
  * 如果操作类型是通知则为msgId，自己操作则为本地id
  */
@@ -1428,4 +1502,6 @@ export default {
     fnMsgDiceResultSet,
     fnMsgNewAdd,
     fnAlertNotification,
+    fnGroupMsgReadRecord,
+    fnGroupMsgReadUpdate,
 };

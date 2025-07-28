@@ -75,7 +75,7 @@
       />
     </template>
     <vue-context class="contact-menu-box" ref="rightClickMenu" :lazy="true">
-      <template v-if="rightClickSelectedInfo">
+      <div class="menu-content" v-if="rightClickSelectedInfo">
         <li v-if="isRightClickMenuAt">
           <a @click.prevent="handleEditorAddAt(rightClickSelectedInfo)">
             @{{ rightClickSelectedInfo.user.nickName }}
@@ -276,8 +276,33 @@
             <a @click="handleForwardDialogShow()">{{ $t("转发") }}</a>
             <img class="icon" src="@/assets/images/menu/share.png" alt=""/>
           </li>
+          <li
+            v-if="
+              rightClickSelectedInfo
+              && rightClickSelectedInfo.readUsers?.length 
+            "
+          >
+            <a @click="handleQuoteSet">
+             {{ readUserTotal }} 个已读
+            </a>
+            <img class="icon" src="@/assets/images/menu/more.png" alt=""/>
+
+            <div class="menu-two-box">
+              <div class="read-user-item" v-for="(item, index) in readUsersInfo" :key="index">
+                 <ComImage class="user-icon" :src="item.icon" type="friend" />
+                 <div class="info">
+                    <span class="user-name">{{ item.nickName }}</span>
+                    <span class="time">
+                      <img v-if="item.readState === 1" src="@/assets/images/message/has-read.png"/>
+                      <img v-else src="@/assets/images/message/has-resive.png"/>
+                      {{ formatTimeStamp(item.readTime) }}
+                    </span>
+                 </div>
+              </div>
+            </div>
+          </li>
         </template>
-      </template>
+      </div>
     </vue-context>
   </div>
 </template>
@@ -286,7 +311,7 @@ import { Cache } from "@/cache";
 import { getChannelUsers } from "@/api/imChannel";
 
 // 工具
-import { setMaxLengthStr, textToEmojiText } from "@/utils/base";
+import { setMaxLengthStr, textToEmojiText, formatTimeStamp } from "@/utils/base";
 import { copyText, copyImg } from "@/utils/clipboard";
 
 // 控件
@@ -375,6 +400,8 @@ export default {
       isGroupUpdate: false, // 是否群更新
       runTime: 0, // 运行时间
       isRun: null, // 定时器
+      readUsersInfo: [], // 消息的已读用户信息 
+      readUserTotal: 0,
     };
   },
   computed: {
@@ -460,7 +487,19 @@ export default {
     }
   },
   methods: {
+    formatTimeStamp,
     setMaxLengthStr,
+    getMsgReadUsersInfo(readUsers) {
+      let usersInfo = [];
+      readUsers.forEach(item => {
+        const userInfo = memberInfoList.find(i => i.id === item.userId);
+        if(userInfo) {
+         usersInfo.push({...userInfo, ...item});
+        }
+      })
+      this.readUsersInfo = usersInfo;
+      this.readUserTotal = usersInfo.filter(item => item.readState === 1)?.length || 0;
+    },
     /**
      * 文件操作
      */
@@ -845,6 +884,7 @@ export default {
       // console.log(data, 'chat-window -------->738', this.chatContent)
       // 选中信息
       this.rightClickSelectedInfo = data;
+      this.getMsgReadUsersInfo(data?.readUsers)
 
       // 打开右键菜单
       this.$refs.rightClickMenu && this.$refs.rightClickMenu.open(e);
@@ -1139,17 +1179,92 @@ export default {
   }
 
   .contact-menu-box {
-    padding: 0 10px;
     border-radius: 8px;
+    min-width: 320px;
+    background: none;
+    box-shadow: none;
+    border: none;
+
+    .menu-content {
+      width: 180px;
+      background: #ffffff;
+      border-radius: 8px;
+      border: 1px solid #f0f0f0;
+    }
+
+    .menu-two-box {
+      position: absolute;
+      left: 178px;
+      bottom: 0;
+      min-width: 130px;
+      opacity: 0;
+      background: #ffffff;
+      padding: 10px;
+      border-radius: 8px;
+      box-sizing: border-box;
+      border: 1px solid #f0f0f0;
+
+      .read-user-item {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        margin-top: 10px;
+
+        &:first-child {
+          margin-top: 0;
+        }
+
+        .user-icon {
+         width: 28px;
+         height: 28px;
+         border-radius: 99px;
+         overflow: hidden;
+        }
+
+        .info {
+          display: flex;
+          flex-direction: column;
+          margin-left: 10px;
+        }
+
+        .user-name {
+          font-size: 12px;
+          color: #000;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .time {
+          font-size: 12px;
+          color: #999;
+          margin-top: 4px;
+          display: flex;
+          align-items: center;
+
+          img {
+            height: 12px;
+          }
+        }
+      }
+    }
 
     li {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      min-width: 180px;
+      width: 100%;
       cursor: pointer;
       border-bottom: 1px solid #f0f0f0;
       position: relative;
+      padding: 0 10px;
+      box-sizing: border-box;
+
+      &:hover {
+        .menu-two-box {
+          opacity: 1;
+        }
+      }
+
 
       &:last-child {
         border: none;

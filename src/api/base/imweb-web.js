@@ -11746,6 +11746,232 @@ export const PushGroupReqMessageResp = $root.PushGroupReqMessageResp = (() => {
     return PushGroupReqMessageResp;
 })();
 
+export const PushGroupMsgReceiptMessage = $root.PushGroupMsgReceiptMessage = (() => {
+
+    /**
+     * Properties of a PushGroupMsgReceiptMessage.
+     * @exports IPushGroupMsgReceiptMessage
+     * @interface IPushGroupMsgReceiptMessage
+     * @property {Array.<IReceiptMessage>|null} [receiptMessage] PushGroupMsgReceiptMessage receiptMessage
+     */
+
+    /**
+     * Constructs a new PushGroupMsgReceiptMessage.
+     * @exports PushGroupMsgReceiptMessage
+     * @classdesc Represents a PushGroupMsgReceiptMessage.
+     * @implements IPushGroupMsgReceiptMessage
+     * @constructor
+     * @param {IPushGroupMsgReceiptMessage=} [properties] Properties to set
+     */
+    function PushGroupMsgReceiptMessage(properties) {
+        this.receiptMessage = [];
+        if (properties)
+            for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                if (properties[keys[i]] != null)
+                    this[keys[i]] = properties[keys[i]];
+    }
+
+    /**
+     * PushGroupMsgReceiptMessage receiptMessage.
+     * @member {Array.<IReceiptMessage>} receiptMessage
+     * @memberof PushGroupMsgReceiptMessage
+     * @instance
+     */
+    PushGroupMsgReceiptMessage.prototype.receiptMessage = $util.emptyArray;
+
+    /**
+     * Creates a new PushGroupMsgReceiptMessage instance using the specified properties.
+     * @function create
+     * @memberof PushGroupMsgReceiptMessage
+     * @static
+     * @param {IPushGroupMsgReceiptMessage=} [properties] Properties to set
+     * @returns {PushGroupMsgReceiptMessage} PushGroupMsgReceiptMessage instance
+     */
+    PushGroupMsgReceiptMessage.create = function create(properties) {
+        return new PushGroupMsgReceiptMessage(properties);
+    };
+
+    /**
+     * Encodes the specified PushGroupMsgReceiptMessage message. Does not implicitly {@link PushGroupMsgReceiptMessage.verify|verify} messages.
+     * @function encode
+     * @memberof PushGroupMsgReceiptMessage
+     * @static
+     * @param {IPushGroupMsgReceiptMessage} message PushGroupMsgReceiptMessage message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    PushGroupMsgReceiptMessage.encode = function encode(message, writer) {
+        if (!writer)
+            writer = $Writer.create();
+        if (message.receiptMessage != null && message.receiptMessage.length)
+            for (let i = 0; i < message.receiptMessage.length; ++i)
+                $root.ReceiptMessage.encode(message.receiptMessage[i], writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
+        return writer;
+    };
+
+    /**
+     * Encodes the specified PushGroupMsgReceiptMessage message, length delimited. Does not implicitly {@link PushGroupMsgReceiptMessage.verify|verify} messages.
+     * @function encodeDelimited
+     * @memberof PushGroupMsgReceiptMessage
+     * @static
+     * @param {IPushGroupMsgReceiptMessage} message PushGroupMsgReceiptMessage message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    PushGroupMsgReceiptMessage.encodeDelimited = function encodeDelimited(message, writer) {
+        return this.encode(message, writer).ldelim();
+    };
+
+    /**
+     * Decodes a PushGroupMsgReceiptMessage message from the specified reader or buffer.
+     * @function decode
+     * @memberof PushGroupMsgReceiptMessage
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @param {number} [length] Message length if known beforehand
+     * @returns {PushGroupMsgReceiptMessage} PushGroupMsgReceiptMessage
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    PushGroupMsgReceiptMessage.decode = function decode(reader, length, error) {
+        if (!(reader instanceof $Reader))
+            reader = $Reader.create(reader);
+        let end = length === undefined ? reader.len : reader.pos + length, message = new $root.PushGroupMsgReceiptMessage();
+        while (reader.pos < end) {
+            let tag = reader.uint32();
+            if (tag === error)
+                break;
+            switch (tag >>> 3) {
+            case 1: {
+                    if (!(message.receiptMessage && message.receiptMessage.length))
+                        message.receiptMessage = [];
+                    message.receiptMessage.push($root.ReceiptMessage.decode(reader, reader.uint32()));
+                    break;
+                }
+            default:
+                reader.skipType(tag & 7);
+                break;
+            }
+        }
+        return message;
+    };
+
+    /**
+     * Decodes a PushGroupMsgReceiptMessage message from the specified reader or buffer, length delimited.
+     * @function decodeDelimited
+     * @memberof PushGroupMsgReceiptMessage
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @returns {PushGroupMsgReceiptMessage} PushGroupMsgReceiptMessage
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    PushGroupMsgReceiptMessage.decodeDelimited = function decodeDelimited(reader) {
+        if (!(reader instanceof $Reader))
+            reader = new $Reader(reader);
+        return this.decode(reader, reader.uint32());
+    };
+
+    /**
+     * Verifies a PushGroupMsgReceiptMessage message.
+     * @function verify
+     * @memberof PushGroupMsgReceiptMessage
+     * @static
+     * @param {Object.<string,*>} message Plain object to verify
+     * @returns {string|null} `null` if valid, otherwise the reason why it is not
+     */
+    PushGroupMsgReceiptMessage.verify = function verify(message) {
+        if (typeof message !== "object" || message === null)
+            return "object expected";
+        if (message.receiptMessage != null && message.hasOwnProperty("receiptMessage")) {
+            if (!Array.isArray(message.receiptMessage))
+                return "receiptMessage: array expected";
+            for (let i = 0; i < message.receiptMessage.length; ++i) {
+                let error = $root.ReceiptMessage.verify(message.receiptMessage[i]);
+                if (error)
+                    return "receiptMessage." + error;
+            }
+        }
+        return null;
+    };
+
+    /**
+     * Creates a PushGroupMsgReceiptMessage message from a plain object. Also converts values to their respective internal types.
+     * @function fromObject
+     * @memberof PushGroupMsgReceiptMessage
+     * @static
+     * @param {Object.<string,*>} object Plain object
+     * @returns {PushGroupMsgReceiptMessage} PushGroupMsgReceiptMessage
+     */
+    PushGroupMsgReceiptMessage.fromObject = function fromObject(object) {
+        if (object instanceof $root.PushGroupMsgReceiptMessage)
+            return object;
+        let message = new $root.PushGroupMsgReceiptMessage();
+        if (object.receiptMessage) {
+            if (!Array.isArray(object.receiptMessage))
+                throw TypeError(".PushGroupMsgReceiptMessage.receiptMessage: array expected");
+            message.receiptMessage = [];
+            for (let i = 0; i < object.receiptMessage.length; ++i) {
+                if (typeof object.receiptMessage[i] !== "object")
+                    throw TypeError(".PushGroupMsgReceiptMessage.receiptMessage: object expected");
+                message.receiptMessage[i] = $root.ReceiptMessage.fromObject(object.receiptMessage[i]);
+            }
+        }
+        return message;
+    };
+
+    /**
+     * Creates a plain object from a PushGroupMsgReceiptMessage message. Also converts values to other types if specified.
+     * @function toObject
+     * @memberof PushGroupMsgReceiptMessage
+     * @static
+     * @param {PushGroupMsgReceiptMessage} message PushGroupMsgReceiptMessage
+     * @param {$protobuf.IConversionOptions} [options] Conversion options
+     * @returns {Object.<string,*>} Plain object
+     */
+    PushGroupMsgReceiptMessage.toObject = function toObject(message, options) {
+        if (!options)
+            options = {};
+        let object = {};
+        if (options.arrays || options.defaults)
+            object.receiptMessage = [];
+        if (message.receiptMessage && message.receiptMessage.length) {
+            object.receiptMessage = [];
+            for (let j = 0; j < message.receiptMessage.length; ++j)
+                object.receiptMessage[j] = $root.ReceiptMessage.toObject(message.receiptMessage[j], options);
+        }
+        return object;
+    };
+
+    /**
+     * Converts this PushGroupMsgReceiptMessage to JSON.
+     * @function toJSON
+     * @memberof PushGroupMsgReceiptMessage
+     * @instance
+     * @returns {Object.<string,*>} JSON object
+     */
+    PushGroupMsgReceiptMessage.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+    };
+
+    /**
+     * Gets the default type url for PushGroupMsgReceiptMessage
+     * @function getTypeUrl
+     * @memberof PushGroupMsgReceiptMessage
+     * @static
+     * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+     * @returns {string} The default type url
+     */
+    PushGroupMsgReceiptMessage.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === undefined) {
+            typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/PushGroupMsgReceiptMessage";
+    };
+
+    return PushGroupMsgReceiptMessage;
+})();
+
 export const PushKeyPairChangeMessageResp = $root.PushKeyPairChangeMessageResp = (() => {
 
     /**

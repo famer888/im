@@ -25,6 +25,7 @@
 import ComLoading from "@/components/com-loading";
 import i18n from "@/assets/lang/i18n";
 import { getFileInfo } from "@/utils/fileTools";
+import { formatTimeStamp } from "@/utils/base";
 
 // 事件
 import eventBase from "@/event/base";
@@ -45,23 +46,7 @@ export default {
     }
   },
   methods: {
-    /**
-     * 格式化时间
-     */
-    formatTimeStamp(timestamp) {
-      const date = new Date(Number(timestamp));
-      // 获取小时数（0-23）
-      const hours = date.getHours();
-      // 将小时数转换为12小时制（如果小时数大于12，则减去12）
-      const hour12 = hours % 12 || 12; // 使用逻辑或确保0小时变为12小时
-      const minutes = date.getMinutes().toString().padStart(2, "0"); // 确保分钟数是两位数
-      const isChina = ["zh", "zh-tw", "zh-cn"].includes(i18n.locale);
-      let lang = isChina ? ["上午", "下午"] : ["AM", "PM"];
-      const ampm = hours < 12 ? lang[0] : lang[1];
-      return isChina
-        ? `${ampm} ${hour12}:${minutes}`
-        : `${hour12}:${minutes} ${ampm} `;
-    },
+    formatTimeStamp,
     /**
      * 消息重新发送
      */

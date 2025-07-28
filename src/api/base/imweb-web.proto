@@ -316,6 +316,12 @@ message PushGroupReqNumResp {
 message PushGroupReqMessageResp {
     repeated GroupReqMsgDto groupReqMsg = 1; // 群请求与处理消息
 }
+
+// 推送群消息已读回执 20403
+message PushGroupMsgReceiptMessage {
+    repeated   ReceiptMessage receiptMessage = 1; // 群回执消息内容
+}
+
 // 推送用户密钥信息变化 20501
 message PushKeyPairChangeMessageResp {
     int64 uid = 1; // 更改用户ID
