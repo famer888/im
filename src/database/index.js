@@ -343,7 +343,7 @@ export default class dbBase {
             CReqRemoveMessage({
                 msgId: -1,
                 msgTargetId: id,
-                clear: 2,
+                clear: 1,
                 clearTime: new Date().getTime(),
                 isGroup: type == "group",
             });
