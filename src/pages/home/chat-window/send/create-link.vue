@@ -23,7 +23,7 @@ export default {
   props: ['selectText', 'chatContent'],
   data() {
     return {
-      linkValue: 'https://',
+      linkValue: '',
     }
   },
   created() {
@@ -32,15 +32,21 @@ export default {
     })
   },
   methods: {
-    isHttpOrHttps(url) {
-      return url.startsWith('http://') || url.startsWith('https://');
+    ensureHttpProtocol(url) {
+      if (!url) return url; // 处理空值
+    
+      // 正则匹配是否以 http:// 或 https:// 开头
+      const hasProtocol = /^(http:\/\/|https:\/\/)/i.test(url);
+      
+      // 如果没有协议，默认添加 https://
+      return hasProtocol ? url : `https://${url}`;
     },
     confirm() {
-      const { linkValue, selectText } = this;
+      let { linkValue, selectText } = this;
       const linkText = this.$refs.linkTextInput.innerHTML;
       if (!linkText) return window.$toast(this.$t("请输入链接文本"));
       if (!linkValue) return window.$toast(this.$t("请输入链接地址"));
-      if (!this.isHttpOrHttps(linkValue)) return window.$toast(this.$t("链接地址需http/https开头"));
+      linkValue = this.ensureHttpProtocol(linkValue)
       this.$emit('confirm', { linkText, linkValue, selectText });
     },
     cancel() {
@@ -98,6 +104,9 @@ export default {
       padding: 12px 16px;
       box-sizing: border-box;
       font-weight: 400;
+      outline: none; 
+      white-space: nowrap; 
+      overflow-x: auto;
     }
   }
 

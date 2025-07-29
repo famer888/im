@@ -357,11 +357,14 @@ const fnGroupMsgReadRecord = (receiptMessage) => {
      const loginId = eventCommon.fnCommonInfoRU({
         getId: "loginId",
     });
+        console.log("fnGroupMsgReadRecord-1-", receiptMessage)
     receiptMessage.forEach(item => {
         const groupId = Number(item.groupId);
         const sendUid = Number(item.sendUid);
-        if(sendUid === loginId) return;
 
+        console.log("fnGroupMsgReadRecord-2-", sendUid, loginId)
+        if(sendUid === loginId) return;
+        console.log("fnGroupMsgReadRecord-3-")
         if(!groupId || !sendUid || !item.msgId) return;
         let groupObj =  groupMsgReads[groupId] || {};
         let groupMsgReadsOld = groupObj[item.msgId] || [];
@@ -371,7 +374,7 @@ const fnGroupMsgReadRecord = (receiptMessage) => {
 
         groupMsgReadsOld =  groupMsgReadsOld.filter(item => item.userId !== readInfoNew.userId)
         groupObj[item.msgId] = [...groupMsgReadsOld, readInfoNew];
-
+        console.log("fnGroupMsgReadRecord-4-", groupObj)
         groupMsgReads[groupId] = groupObj;
     })
 }
