@@ -299,7 +299,7 @@
               <div class="read-user-item" v-for="(item, index) in readUsersInfo" :key="index">
                  <ComImage class="user-icon" :src="item.icon" type="friend" />
                  <div class="info">
-                    <span class="user-name">{{ item.nickName }}</span>
+                    <span class="user-name">{{ item.name || item.nickName }}</span>
                     <span class="time">
                       <img v-if="item.readState === 1" src="@/assets/images/message/has-read.png"/>
                       <img v-else src="@/assets/images/message/has-resive.png"/>
