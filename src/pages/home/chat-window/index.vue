@@ -1241,6 +1241,7 @@ export default {
          height: 28px;
          border-radius: 99px;
          overflow: hidden;
+         flex-shrink: 0;
         }
 
         .info {
@@ -1255,6 +1256,7 @@ export default {
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
+          width: 80px;
         }
         .time {
           font-size: 12px;
