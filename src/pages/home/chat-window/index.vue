@@ -511,6 +511,7 @@ export default {
       window.$toast(this.$t("复制成功"));
     },
     getMsgReadUsersInfo(readUsers) {
+      if(!readUsers?.length) return;
       let usersInfo = [];
       readUsers.forEach(item => {
         const userInfo = memberInfoList.find(i => i.id === item.userId);
