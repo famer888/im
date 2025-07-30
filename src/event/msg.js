@@ -405,10 +405,14 @@ const fnGroupMsgReadUpdate = async () => {
             if(!msgInfo?.customMsgId) return;
             const readUsersOld = msgInfo?.readUsers || [];
             const readUsers = [...new Set([...readUsersOld, ...readUsersNew])];
-
+            let updated = { readUsers };
+            // 更新消息显示的阅读状态
+            if(msgInfo?.readStatus < 2 && readUsers.some(i => i.readState > 0)) {
+                updated.readStatus = 2;
+            }
             const param = {
                         customMsgId: msgInfo.customMsgId,
-                        updated: { readUsers },
+                        updated,
                     }
             
             params.list.push(param)
