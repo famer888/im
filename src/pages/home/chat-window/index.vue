@@ -1011,6 +1011,7 @@ export default {
           // 聊天右键菜单改变 显示/隐藏
           this.isGroupUpdate = false;
           this.rightMenuVisible = true;
+          this.$refs.rightClickMenu && this.$refs.rightClickMenu.close();
           if (this.chatContent.isDisable) {
             window.$toast("该群已禁用");
           }
