@@ -357,24 +357,28 @@ const fnGroupMsgReadRecord = (receiptMessage) => {
      const loginId = eventCommon.fnCommonInfoRU({
         getId: "loginId",
     });
-        console.log("fnGroupMsgReadRecord-1-", receiptMessage)
+        // console.log("fnGroupMsgReadRecord-1-", receiptMessage)
     receiptMessage.forEach(item => {
         const groupId = Number(item.groupId);
         const sendUid = Number(item.sendUid);
 
-        console.log("fnGroupMsgReadRecord-2-", sendUid, loginId)
+        // console.log("fnGroupMsgReadRecord-2-", sendUid, loginId)
         if(sendUid === loginId) return;
-        console.log("fnGroupMsgReadRecord-3-")
+        // console.log("fnGroupMsgReadRecord-3-")
         if(!groupId || !sendUid || !item.msgId) return;
         let groupObj =  groupMsgReads[groupId] || {};
         let groupMsgReadsOld = groupObj[item.msgId] || [];
 
         // 已读用户信息，需要新字段属性可在这里添加
-        const readInfoNew = {userId: sendUid, readTime: Number(item.receiptStatus?.time), readState: item.receiptStatus?.status || 0};
+        const readInfoNew = { 
+            userId: sendUid, 
+            readTime: Number(item.receiptStatus?.time), 
+            readState: item.receiptStatus?.status || 0 
+        };
 
         groupMsgReadsOld =  groupMsgReadsOld.filter(item => item.userId !== readInfoNew.userId)
         groupObj[item.msgId] = [...groupMsgReadsOld, readInfoNew];
-        console.log("fnGroupMsgReadRecord-4-", groupObj)
+        // console.log("fnGroupMsgReadRecord-4-", groupObj)
         groupMsgReads[groupId] = groupObj;
     })
 }
@@ -403,8 +407,9 @@ const fnGroupMsgReadUpdate = async () => {
                 msgId,
             });
             if(!msgInfo?.customMsgId) return;
-            const readUsersOld = msgInfo?.readUsers || [];
-            const readUsers = [...new Set([...readUsersOld, ...readUsersNew])];
+            let readUsersOld = msgInfo?.readUsers || [];
+            readUsersOld = readUsersOld.filter(item => readUsersNew.some(i => i.userId !== item.userId));
+            const readUsers = [...readUsersOld, ...readUsersNew];
             let updated = { readUsers };
             // 更新消息显示的阅读状态
             if(msgInfo?.readStatus < 2 && readUsers.some(i => i.readState > 0)) {
@@ -420,6 +425,7 @@ const fnGroupMsgReadUpdate = async () => {
 
       
         // 修改消息属性
+        // console.log("updateMsgProperty--", params)
         window.$db.updateMsgProperty(params);
 
         // 通讯
