@@ -239,7 +239,7 @@ export const strReplaceEmojiImgLabel = (inputString) => {
     let htmlString = inputString;
 
     // 基本处理
-    htmlString = htmlString.replace(/\n/g, "<br>\n");
+    htmlString = htmlString.replace(/\n/g, "<br>");
     // htmlString = htmlString.replace(/ /g, "&nbsp;");
     htmlString = htmlString.replace(/<img&nbsp;/g, "<img ");
 

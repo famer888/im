@@ -889,7 +889,7 @@ export default {
 
       let msgText = value || this.$refs["input"].innerHTML.replaceAll('&amp;', '&')
           // 去掉a标签
-          msgText = msgText.replace(/<a\b[^>]*>(.*?)<\/a>/gi, '$1');
+          msgText = msgText.replace(/<a[^>]*>([\s\S]*?)<\/a>/, '$1');
 
       // 发送的内容为空
       if (msgText === "") {
