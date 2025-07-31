@@ -1524,7 +1524,7 @@ export default {
               list: diceSpinningMsgList.map((item) => {
                 return {
                   customMsgId: item.customMsgId,
-                  updated: { result: item.content.slice(0, 1) },
+                  updated: { result: String(item.content).slice(0, 1) },
                 };
               }),
             },
