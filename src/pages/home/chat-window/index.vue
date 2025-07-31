@@ -903,7 +903,7 @@ export default {
       if ([1, 3].includes(info.chatType) && info.content && info.content.startsWith('http')) {
         data = await this.handleImgAttr(data)
       }
-      // console.log(data, 'chat-window -------->738', this.chatContent)
+      console.log(data, 'chat-window -------->738', this.chatContent)
       // 选中信息
       this.rightClickSelectedInfo = data;
       this.getMsgReadUsersInfo(data?.readUsers)
@@ -1220,7 +1220,7 @@ export default {
       left: 178px;
       bottom: 0;
       min-width: 130px;
-      opacity: 0;
+      display: none;
       background: #ffffff;
       padding: 10px;
       border-radius: 8px;
@@ -1286,7 +1286,7 @@ export default {
 
       &:hover {
         .menu-two-box {
-          opacity: 1;
+          display: block;
         }
       }
 
