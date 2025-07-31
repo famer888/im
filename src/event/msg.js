@@ -832,7 +832,7 @@ let sendingInfoList = [];
  */
 const fnMsgSend = async (info) => {
     let { id, type, list, quoteInfo, editInfo, createLinkOpts = [] } = info;
-    // console.log(info, 'fnMsgSend -------------> 663')
+    console.log(info, 'fnMsgSend -------------> 663')
     const loginInfo = eventCommon.fnCommonInfoRU({
         getId: "loginInfo",
     });
@@ -843,7 +843,7 @@ const fnMsgSend = async (info) => {
 
     // 转发信息列表
     let forwardMessageList = [];
-    // console.log('infoActive -----------> 687', infoActive)
+    console.log('infoActive -----------> 687', infoActive)
     if (infoActive && infoActive.forwardMessageList) {
         forwardMessageList = infoActive.forwardMessageList;
 
@@ -869,6 +869,10 @@ const fnMsgSend = async (info) => {
 
         for (let i = 0; i < forwardMessageList.length; i++) {
             let item = forwardMessageList[i]
+            // 转发不需要引用消息
+            if(item.quoteMessage) {
+               delete item.quoteMessage
+            }
             if (!item.content && item.text) {
                 item.content = item.text
             }
