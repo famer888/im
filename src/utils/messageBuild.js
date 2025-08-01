@@ -40,7 +40,11 @@ export const sendMessage = async (params, flag) => {
         };
     }
 
-    // console.log({ info, flag });
+    if(info.content) {
+      // 替换br
+       info.content =  info.content.replace(/<br\s*\/?>|&lt;br\s*\/?&gt;/gi, '\n');
+       info.text = info.content;
+    }
 
     sendMessageList.push({ info, flag });
 };
