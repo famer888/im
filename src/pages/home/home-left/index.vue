@@ -311,10 +311,29 @@ export default {
           break;
         }
         case "clearAll": {
-          // 清除全部信息
-          for (const item of this.chats) {
-            this.eventHandlingChatDelete({ ...item, isDeleteLocal: true });
-          }
+            // 清除全部信息
+            const loginId = eventCommon.fnCommonInfoRU({
+              getId: "loginId",
+            });
+            const dbName = loginId + "-68-2.0.3"; // 替换为你的数据库名
+            const request = indexedDB.deleteDatabase(dbName);
+            request.onsuccess = function(event) {
+                console.log(`数据库 "${dbName}" 删除成功`);
+            };
+              
+            request.onerror = function(event) {
+              console.error(`删除数据库失败:`, event.target.error);
+            };
+            
+            request.onblocked = function(event) {
+              console.warn(`数据库 "${dbName}" 删除被阻塞（可能有其他连接未关闭）`);
+            };
+            Cache(`${loginId}MessageGroupList`,[]);
+            Cache(`${loginId}MessageUserList`, []);
+            this.chats = [];
+            // for (const item of this.chats) {
+            //   this.eventHandlingChatDelete({ ...item, isDeleteLocal: true });
+            // }
           break;
         }
         case "openGroupDialog":
