@@ -843,7 +843,7 @@ const fnMsgSend = async (info) => {
 
     // 转发信息列表
     let forwardMessageList = [];
-    console.log('infoActive -----------> 687', infoActive)
+    // console.log('infoActive -----------> 687', infoActive)
     if (infoActive && infoActive.forwardMessageList) {
         forwardMessageList = infoActive.forwardMessageList;
 
@@ -960,19 +960,18 @@ const fnMsgSend = async (info) => {
         // 处理文本链接
         let links = item.values?.links || [];
         createLinkOpts.forEach(createLinkOpt => {
-            const { selectText, linkValue } = createLinkOpt || {};
-            if(linkValue && selectText) {
-                const location = content.indexOf(selectText);
+            const { linkText, linkValue } = createLinkOpt || {};
+            if(linkValue && linkText) {
+                const location = content.indexOf(linkText);
                 if(location > -1) {
                     links.push({
                         link: linkValue,
                         location,
-                        length: selectText.length
+                        length: linkText.length
                     })
                 }
             }
         })
-
         // 到数据库 的数据
         let dataDb = {
             ...values,
