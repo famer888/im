@@ -442,10 +442,10 @@ export default {
     });
 
     if (type === "group") {
+       // 获取好友列表
+      this.handleFriendList();
       // 获取群成员列表
       this.handleMemberListGet();
-      // 获取好友列表
-      this.handleFriendList();
       // 获取群公告信
       Cache(`${loginId}-groupNotice`).then((res) => {
         if (res) {
@@ -483,6 +483,7 @@ export default {
         "openGroupDialog", // 打开 群会话框
         "friendRemarkUpdate", // 更新好友备注名
         "openChannelDialog", // 打开 频道对话框
+        "friendUpdate", // 好友数据更新
       ],
       this.eventHandling
     );
@@ -665,6 +666,21 @@ export default {
           if(memberInfos[info.id] && info.values.name) {
             memberInfos[info.id].name = info.values.name
             this.memberInfos = memberInfos;
+          }
+          break;
+        }
+        
+        case "friendUpdate": {
+          // 好友信息更新
+          if(info.id) {
+             const loginId = eventCommon.fnCommonInfoRU({
+              getId: "loginId",
+            });
+            const index = friendList.findIndex(item => item.id === info.id)
+            if(index >= 0) {
+              friendList[index] = {...friendList[index], ...info}
+              Cache(`${loginId}-ContactList`, friendList)
+            }
           }
           break;
         }
@@ -1087,6 +1103,31 @@ export default {
       });
       this.memberInfos = memberInfos;
     },
+    // 同步群成员和好友列表的信息
+    syncFriendAndGroupMemberInfo() {
+      let groupCountMin = memberInfoList.length < friendList.length
+      let groupMember = memberInfoList
+      if(groupCountMin) {
+        groupMember.forEach( gInfo => {
+          const fInfo = friendList.find(i => i.id === gInfo.id)
+          if(fInfo) {
+            gInfo.nickName=fInfo.nickName || gInfo.nickName
+            gInfo.name=fInfo.name || gInfo.name 
+            gInfo.icon = fInfo.pic || gInfo.icon
+          }
+        })
+      } else {
+        friendList.forEach((fInfo) => {
+          let ginfo = groupMember.find(i => i.id === fInfo.id)
+          if(ginfo) {
+            ginfo.name = fInfo.name || ginfo.name
+            ginfo.nickName = fInfo.nickName || ginfo.nickName
+            ginfo.icon = fInfo.pic || ginfo.icon
+          }
+        })
+      }
+      memberInfoList = groupMember;
+    },
     handleChannelMemberGet() {
       const { channelId } = this.chatContent;
       if( !channelId ) return
@@ -1119,7 +1160,7 @@ export default {
             this.groupOwner = memberInfoList.find((item) => item.type === 0);
             Cache(cacheName, memberInfoList);
           }
-
+          this.syncFriendAndGroupMemberInfo()
           this.updateMemberInfos();
         }
       });
