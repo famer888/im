@@ -357,8 +357,9 @@ const fnGroupMsgReadRecord = (receiptMessage) => {
      const loginId = eventCommon.fnCommonInfoRU({
         getId: "loginId",
     });
-        // console.log("fnGroupMsgReadRecord-1-", receiptMessage)
     receiptMessage.forEach(item => {
+        const readState = item.receiptStatus?.status || 0;
+        if(readState <= 0) return; // 只处理已读
         const groupId = Number(item.groupId);
         const sendUid = Number(item.sendUid);
 
@@ -373,7 +374,7 @@ const fnGroupMsgReadRecord = (receiptMessage) => {
         const readInfoNew = { 
             userId: sendUid, 
             readTime: Number(item.receiptStatus?.time), 
-            readState: item.receiptStatus?.status || 0 
+            readState,
         };
 
         groupMsgReadsOld =  groupMsgReadsOld.filter(item => item.userId !== readInfoNew.userId)
