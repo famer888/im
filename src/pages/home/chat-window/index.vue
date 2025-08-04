@@ -520,6 +520,7 @@ export default {
          usersInfo.push({...userInfo, ...item});
         }
       })
+      usersInfo = usersInfo.sort((a, b) => b.readTime - a.readTime);
       this.readUsersInfo = usersInfo;
       this.readUserTotal = usersInfo.filter(item => item.readState === 1)?.length || 0;
     },
