@@ -1268,6 +1268,8 @@ export default {
       border-radius: 8px;
       box-sizing: border-box;
       border: 1px solid #f0f0f0;
+      overflow-y: auto;
+      max-height: 300px;
 
       .read-user-item {
         width: 100%;
