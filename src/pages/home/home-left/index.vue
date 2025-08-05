@@ -79,6 +79,7 @@ import { ipcRenderer } from "@/platform";
 import { Cache } from "@/cache";
 import { cacheDB } from "@/utils/cacheDB.js";
 import iconGroupNotification from "@/assets/images/logo/group-icon.png";
+import { fnUpdateOwnKey } from "@/utils/encryption-decryption";
 
 // 控件
 import ComSearch from "../com/search.vue";
@@ -1186,6 +1187,10 @@ export default {
 
     // 获取上次的拉伸宽度
     this.listWidth = localStorage.getItem("listWidth");
+
+    setTimeout(() => {
+       fnUpdateOwnKey()
+    }, 500)
   },
   beforeDestroy() {
     // 移除通信事件的监听机制
