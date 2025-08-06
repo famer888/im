@@ -296,6 +296,7 @@
             <img class="icon" src="@/assets/images/menu/more.png" alt=""/>
 
             <div class="menu-two-box">
+              <div v-if="!readUsersInfo.length && readUserTotal">群成员加载中</div>
               <div class="read-user-item" v-for="(item, index) in readUsersInfo" :key="index">
                  <ComImage class="user-icon" :src="item.icon" type="friend" />
                  <div class="info">
