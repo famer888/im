@@ -667,6 +667,7 @@ const fnGroupMsgEvent = async (data, loginId) => {
                                 }),
                                 nickName: item.user.nickName,
                                 type: item.type || 0,
+                                joinTime: Date.now(),
                             };
                         })
                     );
@@ -761,6 +762,7 @@ const fnGroupMsgEvent = async (data, loginId) => {
                                     identify: item.user.identify,
                                     nickName: item.user.nickName,
                                     type: item.type || 0,
+                                    joinTime: Date.now(),
                                 };
                             }),
                         ];
@@ -850,6 +852,7 @@ const fnGroupMsgEvent = async (data, loginId) => {
                                 identify: item.user.identify,
                                 nickName: item.user.nickName,
                                 type: item.type || 0,
+                                joinTime: Date.now(),
                             };
                         }),
                     ];
@@ -1176,6 +1179,7 @@ const fnGroupMsgEvent = async (data, loginId) => {
                                 identify: item.user.identify,
                                 nickName: item.user.nickName,
                                 type: item.type || 0,
+                                joinTime: Date.now(),
                             };
                         }),
                     ];

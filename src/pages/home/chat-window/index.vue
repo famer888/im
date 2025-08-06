@@ -288,7 +288,7 @@
           <li
             v-if="
               rightClickSelectedInfo
-              && rightClickSelectedInfo.readUsers?.length 
+              && readUserTotal
             "
           >
             <a v-if="readUserTotal">{{ readUserTotal }} 个已读</a>
@@ -512,12 +512,14 @@ export default {
       copyToClipboard(msgInfoStr);
       window.$toast(this.$t("复制成功"));
     },
-    getMsgReadUsersInfo(readUsers) {
+    getMsgReadUsersInfo(readUsers, msgInfo) {
       if(!readUsers?.length) return;
       let usersInfo = [];
       readUsers.forEach(item => {
         const userInfo = memberInfoList.find(i => i.id === item.userId);
-        if(userInfo) {
+        const sendTime = msgInfo?.sendTime || 0;
+        const joinTime = userInfo?.joinTime || 0;
+        if(userInfo && (!joinTime || sendTime > joinTime)) {
          usersInfo.push({...userInfo, ...item});
         }
       })
@@ -924,7 +926,7 @@ export default {
       console.log(data, 'chat-window -------->738', this.chatContent)
       // 选中信息
       this.rightClickSelectedInfo = data;
-      this.getMsgReadUsersInfo(data?.readUsers)
+      this.getMsgReadUsersInfo(data?.readUsers, info)
 
       // 打开右键菜单
       this.$refs.rightClickMenu && this.$refs.rightClickMenu.open(e);
