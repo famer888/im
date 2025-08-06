@@ -47,7 +47,7 @@ export default {
       }).then((res) => {
         const { errMsg, errCode } = res?.commonResult || {};
         if (errCode != 200) {
-          window.$toast(errMsg || this.$t("加入群聊失败"));
+          window.$toast(errMsg || res?.errorDesc || this.$t("加入群聊失败"));
         } else {
           if (this.groupInfo.bfJoinCheck) {
             // 入群需要验证

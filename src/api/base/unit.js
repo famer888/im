@@ -148,6 +148,8 @@ export const getUrl = async (opts, errCallback) => {
                 opts.url = newUrl;
                 result = await requestApi(opts, errCallback);
             }
+        } else {
+            return error
         }
     }
     // console.log('requestApi--r-', result)
