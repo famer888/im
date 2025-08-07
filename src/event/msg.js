@@ -970,7 +970,7 @@ const fnMsgSend = async (info) => {
                     links.push({
                         link: linkValue,
                         location,
-                        length: linkText.length
+                        length: linkPlainText.length
                     })
                 }
             }
