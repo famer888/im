@@ -21,6 +21,7 @@ import {
 import { getUserDataDirectory, getWorkingDir } from "@/utils/tools";
 import { fnMsgDecryption } from "@/utils/encryption-decryption";
 import { getKeys } from "@/utils/upload";
+import { fnEmojiToText } from "@/utils/widget/editor";
 
 // 事件
 import eventBase from "./base";
@@ -963,7 +964,8 @@ const fnMsgSend = async (info) => {
         createLinkOpts.forEach(createLinkOpt => {
             const { linkText, linkValue } = createLinkOpt || {};
             if(linkValue && linkText) {
-                const location = content.indexOf(linkText);
+                const linkPlainText = fnEmojiToText(linkText);
+                const location = content.indexOf(linkPlainText);
                 if(location > -1) {
                     links.push({
                         link: linkValue,
