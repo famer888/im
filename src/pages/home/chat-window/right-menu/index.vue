@@ -43,7 +43,7 @@
         {{ $t("管理员") }}
       </li>
     </ul>
-    <div class="invite-friend" @click="inviteFriendDialogVisible = true">邀请好友</div>
+    <div v-if="isGroup" class="invite-friend" @click="inviteFriendDialogVisible = true">邀请好友</div>
     <ComMemberList
       v-if="isGroup"
       :chatContent="chatContent"
