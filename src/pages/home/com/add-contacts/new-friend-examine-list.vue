@@ -3,7 +3,7 @@
         <ul class="new-friend-list">
             <li class="new-friend-item" v-for="(item, index) in listData" :key="index">
                 <div class="left">
-                    <ComImage :src="item.icon" type="friend" class="head-icon" />
+                    <ComImage :src="item.userInfo?.icon" type="friend" class="head-icon" />
                     <div class="info">
                         <div class="row1">
                             <span class="name">{{ item.userInfo?.nickName }}</span>
@@ -73,6 +73,7 @@ export default {
     .head-icon {
         width: 34px;
         height: 34px;
+        border-radius: 99px;
     }
 
     .left {
