@@ -3,19 +3,13 @@
     <div class="content">
       <h6>创建链接</h6>
       <span class="title">Text</span>
-      <div
-        ref="linkTextInput"
-        class="create-link-input"
-        draggable="false"
-        autofocus
-        contenteditable="true"
-        spellcheck="false"
-      ></div>
+      <div ref="linkTextInput" class="create-link-input" draggable="false" autofocus contenteditable="true"
+        spellcheck="false"></div>
       <span class="title">URL</span>
-      <input v-model="linkValue" maxlength="100"  />
+      <input v-model="linkValue" maxlength="100" />
 
       <div class="buttons">
-        <div class="button" @click="cancel">取消</div>
+        <div class="button cancel" @click="cancel">取消</div>
         <div class="button" @click="confirm">创建</div>
       </div>
     </div>
@@ -29,7 +23,7 @@ export default {
   props: ['selectText', 'chatContent'],
   data() {
     return {
-      linkValue: 'https://',
+      linkValue: '',
     }
   },
   created() {
@@ -38,16 +32,22 @@ export default {
     })
   },
   methods: {
-    isHttpOrHttps(url) {
-       return url.startsWith('http://') || url.startsWith('https://');
-    },  
+    ensureHttpProtocol(url) {
+      if (!url) return url; // 处理空值
+    
+      // 正则匹配是否以 http:// 或 https:// 开头
+      const hasProtocol = /^(http:\/\/|https:\/\/)/i.test(url);
+      
+      // 如果没有协议，默认添加 https://
+      return hasProtocol ? url : `https://${url}`;
+    },
     confirm() {
-      const { linkValue, selectText } = this;
+      let { linkValue, selectText } = this;
       const linkText = this.$refs.linkTextInput.innerHTML;
-      if(!linkText) return window.$toast(this.$t("请输入链接文本"));
-      if(!linkValue) return window.$toast(this.$t("请输入链接地址"));
-      if(!this.isHttpOrHttps(linkValue))  return window.$toast(this.$t("链接地址需http/https开头"));
-      this.$emit('confirm', {linkText, linkValue, selectText});
+      if (!linkText) return window.$toast(this.$t("请输入链接文本"));
+      if (!linkValue) return window.$toast(this.$t("请输入链接地址"));
+      linkValue = this.ensureHttpProtocol(linkValue)
+      this.$emit('confirm', { linkText, linkValue, selectText });
     },
     cancel() {
       this.$emit('cancel');
@@ -71,8 +71,8 @@ export default {
   align-items: center;
 
   .content {
-    width: 400px;
-    min-height: 280px;
+    width: 290px;
+    min-height: 316px;
     display: flex;
     flex-direction: column;
     background: #ffffff;
@@ -81,24 +81,32 @@ export default {
     border-radius: 6px;
 
     h6 {
-      color: #333333;
-      font-size: 14px;
+      color: #000;
+      font-size: 18px;
       margin-bottom: 10px;
+      text-align: center;
     }
 
     .title {
-      color: #333333;
-      font-weight: 600;
-      font-size: 14px;
+      color: #787878;
+      font-weight: 400;
+      font-size: 12px;
       margin-top: 16px;
     }
 
-    input {
+    input,
+    .create-link-input {
       margin-top: 10px;
-      background: rgba(0, 0, 0, 0);
-      color: #333333;
-      border-bottom: 1px solid #333333 !important;
-      padding-bottom: 4px;
+      background: #DCDFE6;
+      color: #000;
+      height: 46px;
+      border-radius: 8px;
+      padding: 12px 16px;
+      box-sizing: border-box;
+      font-weight: 400;
+      outline: none; 
+      white-space: nowrap; 
+      overflow-x: auto;
     }
   }
 
@@ -110,18 +118,35 @@ export default {
 
     .button {
       font-size: 14px;
-      color: #333333;
+      color: #fff;
       margin-left: 20px;
       cursor: pointer;
+      background: #178AFF;
+      width: 100%;
+      height: 48px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: 500;
+
+      &:first-child {
+        margin-left: 0;
+      }
+    }
+
+    .cancel {
+      background: #9197AD;
     }
   }
 }
 </style>
 
 <style lang="scss">
- .create-link-input {
-   img {
-     height: 18px;
-   }
- }
+.create-link-input {
+  img {
+    height: 18px;
+  }
+}
 </style>

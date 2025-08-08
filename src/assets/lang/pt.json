@@ -222,5 +222,6 @@
   "请输入链接文本": "Por favor, introduza o texto do link",
   "请输入链接地址": "Por favor, introduz o endereço do link",
   "链接地址需http/https开头": "O endereço de ligação precisa começar com http/https",
-  "数据已载入": "Dados carregados"
+  "数据已载入": "Dados carregados",
+  "打开": "aberto"
 }

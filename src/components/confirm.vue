@@ -8,11 +8,11 @@
       <h1 v-if="title">{{ title }}</h1>
       <p v-if="remark">{{ remark }}</p>
       <div>
-        <button @click="callback(true)">
-          {{ centerBtnTitle }}
-        </button>
         <button @click="callback(false)">
           {{ cancelBtnTitle }}
+        </button>
+        <button @click="callback(true)">
+          {{ btnTitleCenter || centerBtnTitle }}
         </button>
       </div>
     </div>
@@ -25,7 +25,7 @@ import i18n from "@/assets/lang/i18n";
 import eventBase from "@/event/base";
 
 export default {
-  props: ["title", "remark", "callback"],
+  props: ["title", "remark", "callback", "btnTitleCenter"],
   data() {
     return {
       cancelBtnTitle: i18n.t("取消"),
@@ -91,9 +91,10 @@ export default {
     > h1 {
       display: flex;
       align-items: center;
-      font-size: 12px;
+      justify-content: center;
+      font-size: 18px;
       font-weight: 400;
-      color: #666666;
+      color: #000000;
     }
 
     > p {
@@ -105,7 +106,7 @@ export default {
     }
 
     > div {
-      margin-top: 0.32rem;
+      margin-top: 16px;
       display: flex;
       justify-content: center;
 
@@ -114,16 +115,16 @@ export default {
         padding: 0 13px;
         height: 24px;
         line-height: 24px;
-        border-radius: 4px;
-        background-color: #fff;
-        border: 1px solid #eeeeee;
-        color: #666666;
+        background: #178AFF;
+        color: #ffffff;
         cursor: pointer;
+        width: 100%;
+        height: 48px;
+        border-radius: 6px;
+        border: none;
 
         &:first-child {
-          background: #3369fe;
-          border: 1px solid #3369fe;
-          color: #fff;
+        background-color: #9197AD;
           margin-right: 10px;
         }
       }

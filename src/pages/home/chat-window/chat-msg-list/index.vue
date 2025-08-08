@@ -471,6 +471,7 @@
 import dayjs from "dayjs";
 
 // 工具
+import { fnUpdateGroupKey, fnUpdateFriendKey } from "@/utils/encryption-decryption.js";
 import { chatPageDateformat, chatDate } from "@/utils/base";
 import {
   fnIdsEnterVisualRangeGet,
@@ -542,6 +543,7 @@ export default {
   },
   inject: ["handleFriendList"],
   mounted() {
+    this.updateKey()
     // 添加监听 设置通信事件的监听机制
     eventBase.fnCommunicationMonitoring(
       "chatMsgList",
@@ -592,6 +594,14 @@ export default {
     }
   },
   methods: {
+    updateKey() {
+      const { type, id } = this.chatContent || {};
+      if(type === "friend") {
+        fnUpdateFriendKey({id})
+      } else if(type === "group") {
+        fnUpdateGroupKey({id})
+      }
+    },
     /**
      * 获取初始化data
      */
@@ -1524,7 +1534,7 @@ export default {
               list: diceSpinningMsgList.map((item) => {
                 return {
                   customMsgId: item.customMsgId,
-                  updated: { result: item.content.slice(0, 1) },
+                  updated: { result: String(item.content).slice(0, 1) },
                 };
               }),
             },

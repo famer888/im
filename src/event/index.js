@@ -56,6 +56,7 @@ const fnSocketMessage = (arrayBuffer) => {
         29999: "ErrrMessageResp", // 消息报错
         20601: "PushUserOnOrOffLineMessageResp", // 推送用户上下线
         20701: "PushGroupEventMessage",
+        20403: "PushGroupMsgReceiptMessage"
     };
 
     const code = new DataView(arrayBuffer.slice(2, 4)).getUint16();
@@ -260,10 +261,16 @@ const fnSocketMessage = (arrayBuffer) => {
             }
             break;
         }
+        case 20403: {
+            // 群消息已读用户
+            const { receiptMessage = [] } = data || {};
+            eventMsg.fnGroupMsgReadRecord(receiptMessage)
+        }
 
         default:
     }
 };
+
 
 // 测试方法，测试丢失群事件方法
 function handleDeleteItem(data, index, type) {
@@ -289,6 +296,7 @@ export const intervalRunEvent = () => {
         eventCheduledCeletion.fnCheduledDeletionMsgDelete();
         eventGroup.fnTimer();
         eventMsg.fnMsgSendTimeout();
+        eventMsg.fnGroupMsgReadUpdate();
     }, 200);
 };
 

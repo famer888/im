@@ -7,13 +7,14 @@ import md5 from "js-md5";
 import eventCommon from "@/event/common";
 
 // api
-import { GetKeyPair } from "@/api/imBase";
+import { GetKeyPair, UpdateKeyPair } from "@/api/imBase";
 import {
     secret,
     _encrypt,
     _decrypt,
     _encrypt2,
     _decrypt2,
+    setGenerateKeyPair,
 } from "@/api/base/index";
 import { ConcatInt8 } from "@/socket/api/request";
 import { ReceiveKeyPairMessage } from "@/socket/api/message";
@@ -887,10 +888,83 @@ export const fnFormartMsgParams = async ({ data, customMsgId, id, type }) => {
     return { atUids: [], ...data, ...params };
 };
 
+const getNewKey = async () => {
+    // 设置新的密钥
+    const keyInfo = setGenerateKeyPair();
+    // 私key
+    const privateKey = Buffer.from(keyInfo.private)
+    .toString("hex")
+    .toUpperCase();
+
+    // 公key
+    const publicKey = Buffer.from(keyInfo.public)
+    .toString("hex")
+    .toUpperCase();
+    try {
+        const res = await UpdateKeyPair({ publicKey })
+        if (res && res.keyVersion && res.commonResult.errCode === 200) {
+            console.log('getNewKey',  {
+                publicKey,
+                privateKey,
+                keyVersion: res.keyVersion,
+            })
+            return {
+                publicKey,
+                privateKey,
+                keyVersion: res.keyVersion,
+            }
+        }
+    } catch (error) {
+        console.error('获取新秘钥异常', error)
+        return {}
+    }
+}
+
+
+export const fnUpdateOwnKey = () => {
+    // 登录的id
+    const loginId = eventCommon.fnCommonInfoRU({ getId: "loginId" });
+    GetKeyPair({
+        targetId: Number(loginId),
+      }).then( async res => {
+        const { appKeyPair = null, webKeyPair = null } = res || {}
+        if(!appKeyPair && !webKeyPair) return;
+        const { accountConfig } = eventCommon.fnConfigRU();
+        let { publicKey, privateKey, keyVersion } = accountConfig;
+        
+        // 本地无秘钥则重新生成
+        if( publicKey !== webKeyPair.publicKey || keyVersion !== webKeyPair.keyVersion || !privateKey ) {
+            const newKey =  await getNewKey()
+            publicKey = newKey.publicKey;
+            privateKey = newKey.privateKey;
+            keyVersion = newKey.keyVersion
+        }
+        if(!publicKey || !privateKey || !keyVersion || !appKeyPair) return;
+
+        // 保存秘钥
+        const keyInfos = {
+            publicKey,
+            privateKey,
+            keyVersion,
+            appKeyPair,
+        };
+        // 同步信息
+        eventCommon.fnCommonInfoRU({
+            infoMerge: keyInfos,
+        });
+
+        // 保存到本地配置
+        eventCommon.fnConfigRU({
+            isAccount: true,
+            infoMerge: keyInfos,
+        });
+      })
+}
+
 /**
  * 更新好友的密钥
  */
-export const fnUpdateKeyFriend = async ({ appKeyPair, webKeyPair, uid }) => {
+export const fnUpdateKeyFriend = async ({ appKeyPair, webKeyPair, uid, noSendReceive = false }) => {
     const friendId = Number(uid);
 
     if (appKeyPair || webKeyPair) {
@@ -917,9 +991,54 @@ export const fnUpdateKeyFriend = async ({ appKeyPair, webKeyPair, uid }) => {
         Cache(`${loginId}-friend-key-objs`, friendKeyObjs);
 
         // 确认收到
-        const version =
+        if(!noSendReceive) {
+             const version =
             (appKeyPair && appKeyPair.keyVersion) ||
             (webKeyPair && webKeyPair.keyVersion);
-        ReceiveKeyPairMessage({ version, sendUid: friendId });
+            ReceiveKeyPairMessage({ version, sendUid: friendId });
+        }
     }
 };
+
+export const fnUpdateFriendKey = async ({ id }) => {
+    const keyPair = await GetKeyPair({
+        targetId: id,
+    });
+    const { appKeyPair, webKeyPair } = keyPair || {};
+    let keyPar = {
+        noSendReceive: true
+    }
+    if(appKeyPair?.keyVersion && appKeyPair?.publicKey) {
+        keyPar.appKeyPair = appKeyPair;
+    }
+    if(webKeyPair?.keyVersion && webKeyPair?.publicKey) {
+        keyPar.webKeyPair = appKeyPair;
+    }
+    if(appKeyPair) return
+    fnUpdateKeyFriend(keyPar)
+}
+
+export const fnUpdateGroupKey = async ({ id }) => {
+        // 登录的id
+    const loginId = eventCommon.fnCommonInfoRU({ getId: "loginId" });
+        // 密钥信息
+    let keyInfos = groupKeyObjs[id];
+     const keyPair = await GetKeyPair({
+            targetId: id,
+            flag: 1,
+            groupKeyVersion: 1,
+        });
+    if (keyPair && !_.isEmpty(keyPair.groupKeyPair)) {
+        keyInfos = keyPair.groupKeyPair;
+
+        // 记录
+        groupKeyObjs[id] = keyInfos;
+
+        // 保存到本地
+        Cache(`${loginId}-group-key-objs`, groupKeyObjs);
+    } else {
+        // 解密错误
+        console.error("更新群聊秘钥异常--", keyInfos);
+        return null;
+    }
+}

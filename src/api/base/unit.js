@@ -158,15 +158,14 @@ export const getUrl = async (opts, errCallback) => {
 
 // Url替换新域名
 const replaceNewDomain = async (url) => {
-    //  console.log("replaceNewDomain-1-", url)
     let moduleCode = getModuleType(url).name || "webBiz";
     let newDomain = (await getNewNormalDomain(moduleCode)) || "";
     if (!newDomain) return "";
     let newUrl = newDomain.replace(/\/$/, "") + getRemainingUrl(url);
-    store.commit("user/setDomainsAttrib", {
+    eventCommon.fnDomainsAttribSet({
         key: moduleCode,
-        value: newDomain,
-    });
+        value: newDomain, 
+    })
     return newUrl;
 };
 

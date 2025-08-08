@@ -2,7 +2,7 @@
   <div class="comEcode">
     <div class="lastBox">
       <img
-        :src="lastLoginInfo.icon || require('@/assets/images/login/dock.png')"
+        :src="lastLoginInfo.icon || require('@/assets/images/logo/logo.png')"
       />
       <div v-if="lastLoginInfo.name">{{ lastLoginInfo.name }}</div>
     </div>

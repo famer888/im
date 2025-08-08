@@ -21,6 +21,7 @@ import {
 import { getUserDataDirectory, getWorkingDir } from "@/utils/tools";
 import { fnMsgDecryption } from "@/utils/encryption-decryption";
 import { getKeys } from "@/utils/upload";
+import { fnEmojiToText } from "@/utils/widget/editor";
 
 // 事件
 import eventBase from "./base";
@@ -348,6 +349,94 @@ const fnPokerSendUpdate = async (values, { id, type }) => {
 
     return false;
 };
+
+/**
+ * 群聊消息已读 记录 (体量较大记录后定时处理)
+ */
+let groupMsgReads = {};
+const fnGroupMsgReadRecord = (receiptMessage) => {
+     const loginId = eventCommon.fnCommonInfoRU({
+        getId: "loginId",
+    });
+    receiptMessage.forEach(item => {
+        const readState = item.receiptStatus?.status || 0;
+        if(readState <= 0) return; // 只处理已读
+        const groupId = Number(item.groupId);
+        const sendUid = Number(item.sendUid);
+
+        // console.log("fnGroupMsgReadRecord-2-", sendUid, loginId)
+        if(sendUid === loginId) return;
+        // console.log("fnGroupMsgReadRecord-3-")
+        if(!groupId || !sendUid || !item.msgId) return;
+        let groupObj =  groupMsgReads[groupId] || {};
+        let groupMsgReadsOld = groupObj[item.msgId] || [];
+
+        // 已读用户信息，需要新字段属性可在这里添加
+        const readInfoNew = { 
+            userId: sendUid, 
+            readTime: Number(item.receiptStatus?.time), 
+            readState,
+        };
+
+        groupMsgReadsOld =  groupMsgReadsOld.filter(item => item.userId !== readInfoNew.userId)
+        groupObj[item.msgId] = [...groupMsgReadsOld, readInfoNew];
+        // console.log("fnGroupMsgReadRecord-4-", groupObj)
+        groupMsgReads[groupId] = groupObj;
+    })
+}
+
+/**
+ * 群聊消息已读 更新
+ */
+const fnGroupMsgReadUpdate = async () => {
+    let groups = JSON.parse(JSON.stringify(groupMsgReads));
+    groupMsgReads = {};
+    for (const groupId in groups) {
+        const groupMsgObjs = groups[groupId] || [];
+        let params = {
+            id: Number(groupId),
+            type: "group",
+            list: [],
+        };
+
+        for(const msgId in groupMsgObjs) {
+            let readUsersNew = groupMsgObjs[msgId];
+            if(!readUsersNew.length) return;
+
+            const msgInfo = await window.$db.getMsgInfoForMsgId({
+                id: groupId,
+                type: "group",
+                msgId,
+            });
+            if(!msgInfo?.customMsgId) return;
+            let readUsersOld = msgInfo?.readUsers || [];
+            readUsersOld = readUsersOld.filter(item => readUsersNew.some(i => i.userId !== item.userId));
+            const readUsers = [...readUsersOld, ...readUsersNew];
+            let updated = { readUsers };
+            // 更新消息显示的阅读状态
+            if(msgInfo?.readStatus < 2 && readUsers.some(i => i.readState > 0)) {
+                updated.readStatus = 2;
+            }
+            const param = {
+                        customMsgId: msgInfo.customMsgId,
+                        updated,
+                    }
+            
+            params.list.push(param)
+        }
+
+      
+        // 修改消息属性
+        // console.log("updateMsgProperty--", params)
+        window.$db.updateMsgProperty(params);
+
+        // 通讯
+        eventBase.fnCommunicationSendMsg({
+            operator: "msgListPropertyUpdate",
+            data: params,
+        });
+    }
+}
 
 /**
  * 处理事件 消息删除，没有删除的id则为 清空
@@ -745,7 +834,7 @@ let sendingInfoList = [];
  */
 const fnMsgSend = async (info) => {
     let { id, type, list, quoteInfo, editInfo, createLinkOpts = [] } = info;
-    // console.log(info, 'fnMsgSend -------------> 663')
+    console.log(info, 'fnMsgSend -------------> 663')
     const loginInfo = eventCommon.fnCommonInfoRU({
         getId: "loginInfo",
     });
@@ -782,6 +871,10 @@ const fnMsgSend = async (info) => {
 
         for (let i = 0; i < forwardMessageList.length; i++) {
             let item = forwardMessageList[i]
+            // 转发不需要引用消息
+            if(item.quoteMessage) {
+               delete item.quoteMessage
+            }
             if (!item.content && item.text) {
                 item.content = item.text
             }
@@ -869,19 +962,19 @@ const fnMsgSend = async (info) => {
         // 处理文本链接
         let links = item.values?.links || [];
         createLinkOpts.forEach(createLinkOpt => {
-            const { selectText, linkValue } = createLinkOpt || {};
-            if(linkValue && selectText) {
-                const location = content.indexOf(selectText);
+            const { linkText, linkValue } = createLinkOpt || {};
+            if(linkValue && linkText) {
+                const linkPlainText = fnEmojiToText(linkText);
+                const location = content.indexOf(linkPlainText);
                 if(location > -1) {
                     links.push({
                         link: linkValue,
                         location,
-                        length: selectText.length
+                        length: linkPlainText.length
                     })
                 }
             }
         })
-
         // 到数据库 的数据
         let dataDb = {
             ...values,
@@ -1468,4 +1561,6 @@ export default {
     fnMsgDiceResultSet,
     fnMsgNewAdd,
     fnAlertNotification,
+    fnGroupMsgReadRecord,
+    fnGroupMsgReadUpdate,
 };

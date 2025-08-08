@@ -119,6 +119,7 @@ export const fnDbMsgListFormat = (list, isGroup) => {
             width: item.width,
             height: item.height,
             links: item.links || null,
+            readUsers: item.readUsers || [],
         };
     });
 };

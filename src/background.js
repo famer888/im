@@ -273,7 +273,7 @@ function updateTray(unread = 0) {
                     updateTray(0);
                     mainWindow.show();
                 });
-                tray.setToolTip("【ocs 版本1.6.3】");
+                tray.setToolTip("【ocs 版本1.6.5】");
             }
 
             if (isOsx) {
@@ -540,7 +540,7 @@ const downloadHandler = (event, item, webContents) => {
         }
         item.setSavePath(data.fileLocalPath);
         item.once("done", (event, state) => {
-            webContents.send(
+            mainWindow.send(
                 state === "completed"
                     ? "downloadFileDone"
                     : "downloadFileFailed",
@@ -864,27 +864,32 @@ const createMainWindow = async () => {
             event.returnValue = args;
             return;
         }
-
-        const clipboardEx = require("electron-clipboard-ex");
-        // only support windows and mac
-        if (clipboardEx) {
-            const filePaths = clipboardEx.readFilePaths();
-            if (filePaths && filePaths.length > 0) {
-                args = {
-                    files: [],
-                };
-                filePaths.forEach((path) => {
-                    let stat = fs.statSync(path);
-                    if (stat.isFile()) {
-                        args.files.push({
-                            path: path,
-                            name: nodePath.basename(path),
-                            size: stat.size,
-                        });
-                    }
-                });
+        
+        try {
+            const clipboardEx = require("electron-clipboard-ex");
+            // only support windows and mac
+            if (clipboardEx) {
+                const filePaths = clipboardEx.readFilePaths();
+                if (filePaths && filePaths.length > 0) {
+                    args = {
+                        files: [],
+                    };
+                    filePaths.forEach((path) => {
+                        let stat = fs.statSync(path);
+                        if (stat.isFile()) {
+                            args.files.push({
+                                path: path,
+                                name: nodePath.basename(path),
+                                size: stat.size,
+                            });
+                        }
+                    });
+                }
             }
+        } catch (error) {
+            console.log(error)
         }
+        
 
         args.hasFile = args.files && args.files.length > 0;
 

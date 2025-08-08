@@ -180,6 +180,7 @@ export default {
         "bfTopSet",
         "bfDisturbSet", // 设置免打扰
         "channelDisturbSet", // 频道接收通知设置
+        "clearAll",
       ],
       this.handleEventHandling
     );
@@ -315,6 +316,8 @@ export default {
         this.infoActive = {
           ...this.infoActive,
         };
+      } else if (operator === "clearAll") {
+        this.infoActive = null;
       } else {
         // 如果不是当前窗口，直接结束
         if (
@@ -467,7 +470,7 @@ export default {
           const today = dayjs().format("YYYY-MM-DD");
 
           if (
-            (res.version > Number("1.6.6".replace(/\./g, "")) &&
+            (res.version > Number("1.6.5".replace(/\./g, "")) &&
               deviceConfig.upVersionDay !== today) ||
             res.flag === 2
           ) {

@@ -91,7 +91,7 @@ export default {
       if(!Array.isArray(links)) return htmlStr;
       let htmlString = htmlStr;
       links.forEach(item => {
-        const { location, length, link } = item || {};
+        const { location = 0, length, link } = item || {};
         if(link && location >= 0 && length > 0) {
           let source = htmlStr.substring(location, location + length);
           let href = link.replace('http', 'ht#customLink#tp'); // 替换http防污染
@@ -106,7 +106,6 @@ export default {
      */
     handleInfoSet() {
       let htmlString = this.content;
-      
       if(this.links) {
         htmlString = this.handelCustomLink(htmlString, this.links);
       }

@@ -343,7 +343,7 @@ export default class dbBase {
             CReqRemoveMessage({
                 msgId: -1,
                 msgTargetId: id,
-                clear: 2,
+                clear: 1,
                 clearTime: new Date().getTime(),
                 isGroup: type == "group",
             });
@@ -701,18 +701,33 @@ export default class dbBase {
             const offset = (pageNum - 1) * pageSize;
 
             // 查询事件并分页
-            const events = await this.db[tableName]
+            let events = await this.db[tableName]
                 .orderBy("sendTime") // 以时间排序
                 .offset(offset) // 设置偏移量
                 .limit(pageSize * (multiple || 1)) // 设置每页记录数
                 .toArray();
-
+            events = this.msgListSort(events);
             return fnDbMsgListFormat(events, tableName.includes("group"));
         } catch (e) {
             // console.log(e);
         }
 
         return [];
+    }
+
+    // 消息列表排序
+    msgListSort(events) {
+        return events.sort((a, b) => {
+            // 先按 sendTime 升序排序（如果 sendTime 是字符串或时间戳）
+            if (a.sendTime < b.sendTime) return -1;
+            if (a.sendTime > b.sendTime) return 1;
+    
+            // 如果 sendTime 相同，则按 MsgID 升序排序
+            if (a.MsgID < b.MsgID) return -1;
+            if (a.MsgID > b.MsgID) return 1;
+    
+            return 0; // 如果 sendTime 和 MsgID 都相同，则保持原顺序
+        });
     }
     /**
      * 获取消息信息 通过msgId

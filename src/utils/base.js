@@ -302,7 +302,7 @@ export const chatPageDateformat = (timestamp) => {
     }
 };
 
-const freeTime = (value, g = "y-m-d") => {
+export const freeTime = (value, g = "y-m-d") => {
     let time = new Date(Number(value));
     let y = time.getFullYear();
     let m = time.getMonth() + 1;
@@ -354,6 +354,24 @@ export const chatDate = (onlineStatusUpdateTime, text) => {
         return freeTime(onlineStatusUpdateTime, "m/d");
     }
 };
+
+/**
+ * 格式化消息显示的时间
+ */
+export const formatTimeStamp = (timestamp) => {
+    const date = new Date(Number(timestamp));
+    // 获取小时数（0-23）
+    const hours = date.getHours();
+    // 将小时数转换为12小时制（如果小时数大于12，则减去12）
+    const hour12 = hours % 12 || 12; // 使用逻辑或确保0小时变为12小时
+    const minutes = date.getMinutes().toString().padStart(2, "0"); // 确保分钟数是两位数
+    const isChina = ["zh", "zh-tw", "zh-cn"].includes(i18n.locale);
+    let lang = isChina ? ["上午", "下午"] : ["AM", "PM"];
+    const ampm = hours < 12 ? lang[0] : lang[1];
+    return isChina
+    ? `${ampm} ${hour12}:${minutes}`
+    : `${hour12}:${minutes} ${ampm} `;
+}
 
 /**
  * 替换字符串中的指定字符

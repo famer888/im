@@ -75,7 +75,7 @@
       />
     </template>
     <vue-context class="contact-menu-box" ref="rightClickMenu" :lazy="true">
-      <template v-if="rightClickSelectedInfo">
+      <div class="menu-content" v-if="rightClickSelectedInfo">
         <li v-if="isRightClickMenuAt">
           <a @click.prevent="handleEditorAddAt(rightClickSelectedInfo)">
             @{{ rightClickSelectedInfo.user.nickName }}
@@ -117,6 +117,7 @@
                     } 删除`
               }}
             </a>
+            <img class="icon" src="@/assets/images/menu/delete.png" alt=""/>
           </li>
         </template>
         <template v-else>
@@ -130,6 +131,7 @@
             <a @click.prevent="handleCopy(rightClickSelectedInfo)">{{
               $t("复制")
             }}</a>
+            <img class="icon" src="@/assets/images/menu/copy.png" alt=""/>
           </li>
           <li
             v-if="
@@ -150,6 +152,7 @@
             >
               {{ $t("另存为") }}
             </a>
+            <img class="icon" src="@/assets/images/menu/save.png" alt=""/>
           </li>
           <li
             v-if="
@@ -171,6 +174,7 @@
             >
               {{ $t("打开目录") }}
             </a>
+             <img class="icon" src="@/assets/images/menu/open_dir.png" alt=""/>
           </li>
           <li
             v-if="
@@ -202,6 +206,7 @@
                     } ${$t('删除')}`
               }}
             </a>
+             <img class="icon" src="@/assets/images/menu/delete.png" alt=""/>
           </li>
           <li>
             <a
@@ -219,6 +224,7 @@
             >
               {{ $t("从本地删除") }}
             </a>
+            <img class="icon" src="@/assets/images/menu/delete.png" alt=""/>
           </li>
           <li v-if="rightClickSelectedInfo">
             <a
@@ -234,6 +240,7 @@
             >
               {{ $t("选中") }}
             </a>
+            <img class="icon" src="@/assets/images/menu/select.png" alt=""/>
           </li>
           <li
             v-if="
@@ -245,6 +252,7 @@
             <a @click="handleQuoteSet">
               {{ $t("回复") }}
             </a>
+            <img class="icon" src="@/assets/images/menu/forward.png" alt=""/>
           </li>
           <!-- <li
             v-if="
@@ -266,9 +274,44 @@
             "
           >
             <a @click="handleForwardDialogShow()">{{ $t("转发") }}</a>
+            <img class="icon" src="@/assets/images/menu/share.png" alt=""/>
+          </li>
+          <li
+            v-if="
+            rightClickSelectedInfo &&
+            ['test', 'uat'].includes(getEnvType())
+            "
+          >
+            <a @click="copyMsgInfo(rightClickSelectedInfo)">复制消息信息</a>
+            <img class="icon" src="@/assets/images/menu/copy.png" alt=""/>
+          </li>
+          <li
+            v-if="
+              rightClickSelectedInfo
+              && readUserTotal
+            "
+          >
+            <a v-if="readUserTotal">{{ readUserTotal }} 个已读</a>
+            <a v-else>{{ rightClickSelectedInfo.readUsers?.length  }} 个送达</a>
+            <img class="icon" src="@/assets/images/menu/more.png" alt=""/>
+
+            <div class="menu-two-box">
+              <div v-if="!readUsersInfo.length && readUserTotal">群成员加载中</div>
+              <div class="read-user-item" v-for="(item, index) in readUsersInfo" :key="index">
+                 <ComImage class="user-icon" :src="item.icon" type="friend" />
+                 <div class="info">
+                    <span class="user-name">{{ item.name || item.nickName }}</span>
+                    <span class="time">
+                      <img v-if="item.readState === 1" src="@/assets/images/message/has-read.png"/>
+                      <img v-else src="@/assets/images/message/has-resive.png"/>
+                      {{ formatTimeStamp(item.readTime) }}
+                    </span>
+                 </div>
+              </div>
+            </div>
           </li>
         </template>
-      </template>
+      </div>
     </vue-context>
   </div>
 </template>
@@ -277,8 +320,9 @@ import { Cache } from "@/cache";
 import { getChannelUsers } from "@/api/imChannel";
 
 // 工具
-import { setMaxLengthStr, textToEmojiText } from "@/utils/base";
+import { setMaxLengthStr, textToEmojiText, formatTimeStamp, copyToClipboard, freeTime } from "@/utils/base";
 import { copyText, copyImg } from "@/utils/clipboard";
+import { getEnvType } from "@/utils";
 
 // 控件
 import ComTop from "./top";
@@ -366,6 +410,8 @@ export default {
       isGroupUpdate: false, // 是否群更新
       runTime: 0, // 运行时间
       isRun: null, // 定时器
+      readUsersInfo: [], // 消息的已读用户信息 
+      readUserTotal: 0,
     };
   },
   computed: {
@@ -397,10 +443,10 @@ export default {
     });
 
     if (type === "group") {
+       // 获取好友列表
+      this.handleFriendList();
       // 获取群成员列表
       this.handleMemberListGet();
-      // 获取好友列表
-      this.handleFriendList();
       // 获取群公告信
       Cache(`${loginId}-groupNotice`).then((res) => {
         if (res) {
@@ -438,6 +484,7 @@ export default {
         "openGroupDialog", // 打开 群会话框
         "friendRemarkUpdate", // 更新好友备注名
         "openChannelDialog", // 打开 频道对话框
+        "friendUpdate", // 好友数据更新
       ],
       this.eventHandling
     );
@@ -451,7 +498,35 @@ export default {
     }
   },
   methods: {
+    getEnvType,
+    formatTimeStamp,
     setMaxLengthStr,
+     /**
+     * 复制消息信息，只有测试环境和uat环境可用
+     */
+    copyMsgInfo(msgInfo) {
+      const env = getEnvType();
+      if(env !== 'test' && env !== 'uat') return;
+      msgInfo.sendTimeStr = freeTime(msgInfo.sendTime, 'y-m-d h:i:s');
+      const msgInfoStr = JSON.stringify(msgInfo);
+      copyToClipboard(msgInfoStr);
+      window.$toast(this.$t("复制成功"));
+    },
+    getMsgReadUsersInfo(readUsers, msgInfo) {
+      if(!readUsers?.length) return;
+      let usersInfo = [];
+      readUsers.forEach(item => {
+        const userInfo = memberInfoList.find(i => i.id === item.userId);
+        const sendTime = msgInfo?.sendTime || 0;
+        const joinTime = userInfo?.joinTime || 0;
+        if(userInfo && (!joinTime || sendTime > joinTime)) {
+         usersInfo.push({...userInfo, ...item});
+        }
+      })
+      usersInfo = usersInfo.sort((a, b) => b.readTime - a.readTime);
+      this.readUsersInfo = usersInfo;
+      this.readUserTotal = usersInfo.filter(item => item.readState === 1)?.length || 0;
+    },
     /**
      * 文件操作
      */
@@ -595,6 +670,21 @@ export default {
           if(memberInfos[info.id] && info.values.name) {
             memberInfos[info.id].name = info.values.name
             this.memberInfos = memberInfos;
+          }
+          break;
+        }
+        
+        case "friendUpdate": {
+          // 好友信息更新
+          if(info.id) {
+             const loginId = eventCommon.fnCommonInfoRU({
+              getId: "loginId",
+            });
+            const index = friendList.findIndex(item => item.id === info.id)
+            if(index >= 0) {
+              friendList[index] = {...friendList[index], ...info}
+              Cache(`${loginId}-ContactList`, friendList)
+            }
           }
           break;
         }
@@ -833,9 +923,10 @@ export default {
       if ([1, 3].includes(info.chatType) && info.content && info.content.startsWith('http')) {
         data = await this.handleImgAttr(data)
       }
-      // console.log(data, 'chat-window -------->738', this.chatContent)
+      console.log(data, 'chat-window -------->738', this.chatContent)
       // 选中信息
       this.rightClickSelectedInfo = data;
+      this.getMsgReadUsersInfo(data?.readUsers, info)
 
       // 打开右键菜单
       this.$refs.rightClickMenu && this.$refs.rightClickMenu.open(e);
@@ -940,6 +1031,7 @@ export default {
           // 聊天右键菜单改变 显示/隐藏
           this.isGroupUpdate = false;
           this.rightMenuVisible = true;
+          this.$refs.rightClickMenu && this.$refs.rightClickMenu.close();
           if (this.chatContent.isDisable) {
             window.$toast("该群已禁用");
           }
@@ -1015,6 +1107,31 @@ export default {
       });
       this.memberInfos = memberInfos;
     },
+    // 同步群成员和好友列表的信息
+    syncFriendAndGroupMemberInfo() {
+      let groupCountMin = memberInfoList.length < friendList.length
+      let groupMember = memberInfoList
+      if(groupCountMin) {
+        groupMember.forEach( gInfo => {
+          const fInfo = friendList.find(i => i.id === gInfo.id)
+          if(fInfo) {
+            gInfo.nickName=fInfo.nickName || gInfo.nickName
+            gInfo.name=fInfo.name || gInfo.name 
+            gInfo.icon = fInfo.pic || gInfo.icon
+          }
+        })
+      } else {
+        friendList.forEach((fInfo) => {
+          let ginfo = groupMember.find(i => i.id === fInfo.id)
+          if(ginfo) {
+            ginfo.name = fInfo.name || ginfo.name
+            ginfo.nickName = fInfo.nickName || ginfo.nickName
+            ginfo.icon = fInfo.pic || ginfo.icon
+          }
+        })
+      }
+      memberInfoList = groupMember;
+    },
     handleChannelMemberGet() {
       const { channelId } = this.chatContent;
       if( !channelId ) return
@@ -1047,7 +1164,7 @@ export default {
             this.groupOwner = memberInfoList.find((item) => item.type === 0);
             Cache(cacheName, memberInfoList);
           }
-
+          this.syncFriendAndGroupMemberInfo()
           this.updateMemberInfos();
         }
       });
@@ -1125,6 +1242,118 @@ export default {
         width: 16px;
         height: 16px;
         margin-right: 12px;
+      }
+    }
+  }
+
+  .contact-menu-box {
+    border-radius: 8px;
+    min-width: 320px;
+    background: none;
+    box-shadow: none;
+    border: none;
+
+    .menu-content {
+      width: 180px;
+      background: #ffffff;
+      border-radius: 8px;
+      border: 1px solid #f0f0f0;
+    }
+
+    .menu-two-box {
+      position: absolute;
+      left: 178px;
+      bottom: 0;
+      min-width: 130px;
+      display: none;
+      background: #ffffff;
+      padding: 10px;
+      border-radius: 8px;
+      box-sizing: border-box;
+      border: 1px solid #f0f0f0;
+      overflow-y: auto;
+      max-height: 300px;
+
+      .read-user-item {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        margin-top: 10px;
+
+        &:first-child {
+          margin-top: 0;
+        }
+
+        .user-icon {
+         width: 28px;
+         height: 28px;
+         border-radius: 99px;
+         overflow: hidden;
+         flex-shrink: 0;
+        }
+
+        .info {
+          display: flex;
+          flex-direction: column;
+          margin-left: 10px;
+        }
+
+        .user-name {
+          font-size: 12px;
+          color: #000;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          width: 80px;
+        }
+        .time {
+          font-size: 12px;
+          color: #999;
+          margin-top: 4px;
+          display: flex;
+          align-items: center;
+
+          img {
+            height: 12px;
+          }
+        }
+      }
+    }
+
+    li {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      cursor: pointer;
+      border-bottom: 1px solid #f0f0f0;
+      position: relative;
+      padding: 0 10px;
+      box-sizing: border-box;
+
+      &:hover {
+        .menu-two-box {
+          display: block;
+        }
+      }
+
+
+      &:last-child {
+        border: none;
+      }
+
+      .icon {
+        max-height: 16px;
+      }
+
+      a {
+        width: 100%;
+        padding: 10px 0;
+        color: #000;
+
+        &:hover {
+          background: none;
+        }
       }
     }
   }

@@ -39,13 +39,24 @@
       @blur="handleInputBlur"
     ></div>
     <vue-context class="menuBox" ref="rightClickMenu" :lazy="true">
-      <li @click="handleCopyClick">{{ $t("复制") }}</li>
-      <li @click="handlePasteClick">
-        {{ $t("粘贴") }}
-      </li>
-      <li @click.prevent="handleCreatTextLink">
-        创建链接
-      </li>
+      <div class="menu-content">
+        <li @click="handleCopyClick">
+          {{ $t("复制") }}
+          <img class="icon" src="@/assets/images/menu/copy.png" alt=""/>
+        </li>
+        <li @click="handlePasteClick">
+          {{ $t("粘贴") }}
+          <img class="icon" src="@/assets/images/menu/paste.png" alt=""/>
+        </li>
+        <li>
+          文本格式
+          <img class="icon" src="@/assets/images/menu/more.png" alt=""/>
+
+          <div class="menu-two-box">
+            <div class="menu-two-item"  @click.prevent="handleCreatTextLink">创建链接</div>
+          </div>
+        </li>
+      </div>
     </vue-context>
     <span v-if="placeholderVisible">
       {{ isEnter ? $t("Enter发送") : $t("CtrlEnter发送") }}
@@ -878,7 +889,7 @@ export default {
 
       let msgText = value || this.$refs["input"].innerHTML.replaceAll('&amp;', '&')
           // 去掉a标签
-          msgText = msgText.replace(/<a\b[^>]*>(.*?)<\/a>/gi, '$1');
+          msgText = msgText.replace(/<a[^>]*>([\s\S]*?)<\/a>/, '$1');
 
       // 发送的内容为空
       if (msgText === "") {
@@ -1166,18 +1177,79 @@ export default {
   }
 
   .menuBox {
-    min-width: 100px;
-    text-align: center;
-    padding: 2px 0px;
+    padding: 0 10px;
+    border-radius: 8px;
+    min-width: 360px;
+    padding: 10px 20px;
+    background: none;
+    box-shadow: none;
+    border: none;
 
-    > li {
-      margin: 5px 0px;
-      line-height: 25px;
-      cursor: pointer;
+    .menu-content {
+      width: 160px;
+      background: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
     }
 
-    > li:hover {
-      background: #f6f6f6;
+    .menu-two-box {
+      position: absolute;
+      left: 160px;
+      top: 0;
+      min-width: 160px;
+      opacity: 0;
+      background: #ffffff;
+      padding: 0 10px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+
+      .menu-two-item {
+        width: 100%;
+        padding: 10px 0;
+      }
+    }
+
+    li {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      position: relative;
+      padding: 10px;
+
+      &::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        width: calc(100% - 20px);
+        height: 1px;
+        background: #f0f0f0;
+      }
+
+      &:hover {
+        .menu-two-box {
+          opacity: 1;
+        }
+      }
+
+      &:last-child {
+        border: none;
+        &::after {
+          background: none;
+        }
+      }
+
+      .icon {
+        max-height: 16px;
+      }
+
+      a {
+        padding: 0; 
+
+        &:hover {
+          background: none;
+        }
+      }
     }
   }
 
