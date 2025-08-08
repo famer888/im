@@ -6,7 +6,7 @@
                     <span class="title">邀请好友</span>
                     <img class="close" src="@/assets/images/common/close-icon.png" @click="$emit('close')" />
                 </div>
-                <ComSearch class="search" placeholder="搜索手机号/ID/名称" :searchText="searchText" @onChange="searchChange"></ComSearch>
+                <ComSearch class="search" placeholder="ID/名称" :searchText="searchText" @onChange="searchChange"></ComSearch>
                 <!-- <div class="form-link">
                     <span class="title">通过邀请链接加入群组</span>
                     <ComCheckbox></ComCheckbox>
@@ -96,6 +96,7 @@ export default {
             this.friendList = this.friendList.filter(item =>
                 (item?.name || "").includes(value)
                 || (item?.nickName || "").includes(value)
+                || (item?.identify || "").includes(value)
             )
         },
         selectFriend(info) {
