@@ -141,7 +141,6 @@ export const getUrl = async (opts, errCallback) => {
     try {
         result = await requestApi(opts, errCallback);
     } catch (error) {
-        let code = error.errorCode;
         if (isRepairDomain && error.errorCode < 500) {
             let newUrl = await replaceNewDomain(opts.url);
             if (newUrl) {

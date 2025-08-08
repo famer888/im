@@ -108,7 +108,7 @@ const fnSocketMessage = (arrayBuffer) => {
         //
     }
 
-    // console.log({ data });
+    console.log({ data });
 
     // 确认接收
     if (code !== 20701) {
@@ -219,7 +219,7 @@ const fnSocketMessage = (arrayBuffer) => {
             const loginId = eventCommon.fnCommonInfoRU({
                 getId: "loginId",
             });
-             Cache(`${loginId}-newFriendReqTotal`).then(res => {
+            Cache(`${loginId}-newFriendReqTotal`).then(res => {
                 let newTotal = (res?.total || 0) + 1;
                 Cache(`${loginId}-newFriendReqTotal`, newTotal)
                 eventBase.fnCommunicationSendMsg({
@@ -228,7 +228,9 @@ const fnSocketMessage = (arrayBuffer) => {
                         total: newTotal,
                     }
                 });
-             });
+            });
+            eventBase.fnCommunicationSendMsg({operator: "newFriendReq"});
+            
             break;
         }
         case 20501: {

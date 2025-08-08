@@ -4,7 +4,7 @@
         <div v-if="loadState === 1" class="loading">loading..</div>
         <div v-else-if="loadState === 2" class="loading">数据获取失败</div>
         <div v-else-if="loadState === 3" class="loading">
-            <img class="icon-no-data" src="@/assets/images/common/search-no-data.png"/>
+            <img class="icon-no-data" src="@/assets/images/common/search-no-data.png" />
             <div>无数据</div>
         </div>
         <template v-else>
@@ -19,6 +19,10 @@
 <script>
 import newFriendExamineList from "./new-friend-examine-list";
 import { getContactsApplyList } from "@/api/imContacation.js";
+
+// 事件
+import eventBase from "@/event/base";
+
 export default {
     name: "newFriendExamine",
     components: { newFriendExamineList },
@@ -31,14 +35,39 @@ export default {
     },
     mounted() {
         this.getList()
+        this.handleEventMonitor()
     },
     methods: {
+        /**
+        * 事件监听
+        */
+        handleEventMonitor() {
+            eventBase.fnCommunicationMonitoring(
+                "newFriend",
+                [
+                    "newFriendReq", // 好友信息更新
+                ],
+                this.eventHandling
+            );
+        },
+        /**
+        * 处理事件
+        */
+        eventHandling(info, operator, operatorType) {
+            console.log({ info, operator, operatorType }, "newFriend --------> 220");
+            switch (operator) {
+                case "newFriendReq":
+                    this.getList()
+                    break;
+                default:
+            }
+        },
         getList() {
             getContactsApplyList().then(res => {
                 const { errCode } = res?.commonResult || {}
-                if(errCode != 200) {
-                      this.loadState = 2;
-                      return;
+                if (errCode != 200) {
+                    this.loadState = 2;
+                    return;
                 }
                 this.recordList = res?.recordList || [];
                 this.unRecordList = res?.unRecordList || [];
