@@ -94,7 +94,10 @@ export const getPublicCachePathSync = () => {
 export const writePublicCache = async (data) => {
     let path = await getPublicCachePath();
     fs.writeFile(path, data, (err) => {
-        console.error(err);
+        if (err) {
+            console.error('writePublicCache:', err); 
+            return;
+        }
     });
 };
 

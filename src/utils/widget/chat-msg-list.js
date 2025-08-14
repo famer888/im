@@ -227,11 +227,11 @@ export const fnMsgListToBlockInfos = (pageNumList, list, msgBlockList) => {
         }
 
         // 旧的图片信息转换
-        if ([1, 3, 7, 9].includes(list[i].chatType)) {
-            if (list[i].url) {
-                list[i].content = list[i].url + "||" + list[i].chatType;
-            }
-        }
+        // if ([1, 3, 7, 9].includes(list[i].chatType)) {
+        //     if (list[i].url) {
+        //         list[i].content = list[i].url + "||" + list[i].chatType;
+        //     }
+        // }
     }
 
     // 处理新数据

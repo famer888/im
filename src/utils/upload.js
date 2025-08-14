@@ -342,7 +342,7 @@ export const uploadFile = async (file, { chatType, fileKey }, suffix) => {
         fileSize: fileNew.size,
         suffix,
     });
-    const channelType = keyData.channelType || 0;
+    // const channelType = keyData.channelType || 0;
 
     if (!keyData || !keyData.fileId) {
         // Failed to get data
@@ -480,6 +480,7 @@ export const getKeys = async ({ fileKey, ToUserID, groupId }) => {
         }
 
         const { app, pc, appOwn } = data;
+        // console.log('relKey-', data)
 
         if (app) {
             appAttachmentKey = Buffer.from(

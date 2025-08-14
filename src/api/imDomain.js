@@ -70,7 +70,7 @@ const postAxios = async (url, data, opts) => {
         prams.data = encryptHex(JSON.stringify(data), secretKey);
     }
 
-    let result = {};
+    let result = "";
     try {
         result = await requestAxios(url, prams, opts);
     } catch (error) {
@@ -81,8 +81,7 @@ const postAxios = async (url, data, opts) => {
         result = decryptHex(result, secretKey);
         result = JSON.parse(result);
     }
-
-    return result;
+    return result || {};
 };
 
 function requestAxios(url, params, opts) {
@@ -98,8 +97,9 @@ function requestAxios(url, params, opts) {
             headers: finalHeaders, // 设置请求头
         };
         axios(httpDefault)
-            .then((res) => {
-                if (res.code === 200) {
+            .then((values) => {
+                const res = values?.data || {}
+                if (res?.code === 200) {
                     resolve(res.data);
                 } else {
                     reject(res);

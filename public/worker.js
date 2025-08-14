@@ -79,8 +79,6 @@ self.addEventListener("message", (e) => {
   }
   fs.writeFileSync(filePath, arrbuf);
 
-  console.log("将接收到的数据直接返回");
-
   self.postMessage("ok"); // 将接收到的数据直接返回
   self.close();
 });
