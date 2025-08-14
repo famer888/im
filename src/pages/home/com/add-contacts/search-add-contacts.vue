@@ -1,5 +1,6 @@
 <template>
     <div class="search-add-contacts">
+        <!-- 点击搜索 -->
         <div class="add-tip" v-if="searchText && !searchResult" @click="searchContacts">
             <div class="left">
                 <img class="icon-search" src="@/assets/images/headNav/search-blue.png" alt="" />
@@ -8,21 +9,27 @@
             <img class="arrow" src="@/assets/images/headNav/arrow-right.png" alt="" />
         </div>
         <div class="search-result">
+            <!-- 导航 -->
             <div class="tabs" v-if="searchResult">
                 <div class="tab-item" :class="{ 'tab-action': item.key === tabAction }" v-for="(item, key) in tabList"
                     :key="key" @click="tabSelect(item)">
                     {{ item.name }}
                 </div>
             </div>
-            <div class="contact-item" v-if="tabAction === 1 && searchResult?.targetUser"
-                @click="handleClick(targetUserInfo)">
-                <ComImage :src="targetUserInfo.icon" type="friend" class="icon" />
-                <span class="name">{{ targetUserInfo.nickName }}</span>
-            </div>
-            <div class="contact-item" v-else-if="searchResult?.groupDetail" @click="handleClick(targetGroupInfo)">
+            <!-- 联系人搜索结果 -->
+            <template v-if="tabAction === 1 && searchResult?.length">
+                <div class="contact-item" v-for="item in searchResult"
+                    @click="handleClick(item)">
+                    <ComImage :src="item.userInfo.icon" type="friend" class="icon" />
+                    <span class="name">{{ item.userInfo.nickName }}</span>
+                </div>
+            </template>
+            <!-- 群聊搜索结果 -->
+            <div class="contact-item" v-else-if="searchResult?.groupDetail" @click="handleClick(searchResult?.groupDetail)">
                 <ComImage :src="targetGroupInfo.pic" type="group" class="icon" />
                 <span class="name">{{ targetGroupInfo.name }}</span>
             </div>
+            <!-- 无数据 -->
             <div class="search-no-data" v-else-if="searchResultNone">
                 <img class="icon-no-data" src="@/assets/images/common/search-no-data.png" alt="" />
                 <span class="tip">搜索无结果</span>
@@ -32,7 +39,8 @@
 </template>
 
 <script>
-import { groupOrUserDetail } from "@/api/imGroup.js";
+import { groupSearch } from "@/api/imGroup.js";
+import { findContactsList } from "@/api/imContacation.js";
 
 import eventCommon from "@/event/common";
 import eventBase from "@/event/base";
@@ -55,48 +63,64 @@ export default {
         targetGroupInfo() {
             return this.searchResult?.groupDetail?.groupBase || {}
         },
-        targetUserInfo() {
-            return this.searchResult?.targetUser?.userInfo || {}
-        }
     },
     beforeDestroy() {
         this.$emit("update:searchAddContactsIng", false)
     },
     methods: {
-        handleClick() {
-            // const data = this.tabAction === 1 ?  this.searchResult?.targetUser :  this.searchResult?.groupDetail
+        handleClick(info) {
+            console.log(info)
             eventBase.fnCommunicationSendMsg({
                 operator: "activeChange",
-                data: { ...this.searchResult, comType: "addContact", groupOrUserType: this.tabAction },
+                data: { ...info, comType: "addContact", groupOrUserType: this.tabAction },
             });
         },
         tabSelect(item) {
             this.tabAction = item.key;
         },
-        searchContacts() {
+        async searchContacts() {
             console.log("searchContacts-1-", this.searchText)
             if (!this.searchText) return;
             this.$emit("update:searchAddContactsIng", true)
             const fromUid = eventCommon.fnCommonInfoRU({
                 getId: "loginId",
             });
-            const pars = {
-                fromUid,
-                context: this.searchText,
-            }
-            console.log("searchContacts-1-", pars)
-            groupOrUserDetail(pars).then(res => {
-                console.log("groupOrUserDetail--", res)
-                if (!res?.groupDetail && !res?.targetUser) {
-                    this.searchResultNone = true
-                } else {
-                    this.searchResult = res || {};
-                    this.tabAction = res?.groupOrUserType;
+
+            try {
+                // 搜索群
+                const pars = {
+                    fromUid,
+                    context: this.searchText,
                 }
-            }).catch(err => {
+                console.log("searchContacts-1-", pars)
+                const res = await groupSearch(pars)
+                if(res?.groupDetail) {
+                    this.searchResult = res || {};
+                    this.tabAction = 0;
+                    return
+                }
+
+                // 搜索联系人
+                const cPars = {
+                    phoneNum: this.searchText,
+                    findType: 1
+                }
+                const { detailList = [] } = await findContactsList(cPars) || {};
+                if(detailList?.length) {
+                    console.log('findContactsList--', detailList)
+                    this.searchResult = detailList;
+                    this.tabAction = 1;
+                }
+
+                // 无结果
                 this.searchResultNone = true
-                console.log("groupOrUserDetail-2-", err)
-            })
+            } catch (error) {
+                // 搜索异常
+                this.searchResultNone = true
+                console.error(error)
+                window.$toast("搜索异常");
+            }
+
         }
     }
 }

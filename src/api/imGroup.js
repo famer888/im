@@ -208,3 +208,11 @@ export const queryGroupLink = (data) =>
         url: `${baseUrl()}/group/groupDetailFromQrCode`,
         data,
     });
+    
+// 群别名查询群
+export const groupSearch = (data) =>
+    getUrl({
+        type: "GroupOrUser",
+        url: `${baseUrl()}/group/groupSearch`,
+        data,
+    });

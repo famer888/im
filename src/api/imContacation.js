@@ -51,3 +51,10 @@ export const updateBlackContacts = (data) =>
         url: `${baseUrl()}/contacts/updateBlackContacts`,
         data,
     });
+// 查询联系人  68号/手机号
+export const findContactsList = (data) =>
+    getUrl({
+        type: "FindContactsList",
+        url: `${baseUrl()}/contacts/findContactsList`,
+        data,
+    });
