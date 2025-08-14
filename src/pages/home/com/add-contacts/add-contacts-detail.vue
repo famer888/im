@@ -98,10 +98,10 @@ export default {
             contactsRelation(pra).then(res => {
                 const { errCode } = res?.commonResult || {}
                 if (errCode == 200) {
-                    window.$toast('申请成功')
+                    window.$toast('已向对方发送添加申请')
                     this.verifierVisble = false;
                 } else {
-                    window.$toast('申请失败')
+                    window.$toast('发送失败，请稍后尝试')
                 }
                 console.log('contactsRelation--', res, errCode)
             })
