@@ -70,7 +70,7 @@ export default {
                     const { errCode } = res?.commonResult || {}
                 if (errCode == 200) {
                     this.bfMyBlack = op === 6;
-                    window.$toast(this.$t("操作成功"));
+                    window.$toast( this.bfMyBlack ? "移除成功" : "加入成功");
                 } else {
                     res?.errorDesc && window.$toast(res.errorDesc);
                 }
