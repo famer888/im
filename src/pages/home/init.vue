@@ -55,12 +55,11 @@ import BDBase from "@/database";
 import { initUserCachePath, Cache } from "@/cache";
 
 // 工具
-import { UpdateKeyPair, GetKeyPair, QueryArchiveReq } from "@/api/imBase";
+import { QueryArchiveReq } from "@/api/imBase";
 import { importDB } from "@/utils/cacheDB.js";
 import { getContactsList } from "@/api/imContacation";
 import { chatGroupDataFormat, chatFriendDataFormat } from "@/utils/base";
-import { setGenerateKeyPair } from "@/api/base/index";
-import { fnKeyObjsInit } from "@/utils/encryption-decryption";
+import { fnKeyObjsInit, fnUpdateOwnKey } from "@/utils/encryption-decryption";
 
 // api
 import { getUserInfo } from "@/api/imBase";
@@ -396,69 +395,21 @@ export default {
      * 获取密钥
      */
     handleKeyPair() {
-      GetKeyPair({
-        targetId: Number(loginId),
-      }).then((res) => {
-        const { webKeyPair = {}, appKeyPair } = res;
-
-        // 获取账户配置信息
-        const { accountConfig } = eventCommon.fnConfigRU();
-
-        // 如果 本地与获取的一致则不需要重设置
-        if (
-          accountConfig.privateKey &&
-          accountConfig.publicKey === webKeyPair.publicKey &&
-          accountConfig.keyVersion === webKeyPair.keyVersion
-        ) {
+      fnUpdateOwnKey().then(res => {
+        const { code } = res || {};
+         console.log('handleKeyPair--',res)
+        if(code === 200) {
           this.handleKeyFinish();
         } else {
-          // 设置新的密钥
-          const keyInfo = setGenerateKeyPair();
+          // 重新登录
+            this.$toast(this.$t("密钥异常，重新登录"));
 
-          // 私key
-          const privateKey = Buffer.from(keyInfo.private)
-            .toString("hex")
-            .toUpperCase();
-
-          // 公key
-          const publicKey = Buffer.from(keyInfo.public)
-            .toString("hex")
-            .toUpperCase();
-
-          // 更新密钥
-          UpdateKeyPair({ publicKey }).then((res) => {
-            if (res && res.keyVersion && res.commonResult.errCode === 200) {
-              const keyInfos = {
-                publicKey,
-                privateKey,
-                keyVersion: res.keyVersion,
-                appKeyPair,
-              };
-
-              // 同步信息
-              eventCommon.fnCommonInfoRU({
-                infoMerge: keyInfos,
-              });
-
-              // 保存到本地配置
-              eventCommon.fnConfigRU({
-                isAccount: true,
-                infoMerge: keyInfos,
-              });
-
-              this.handleKeyFinish();
-            } else {
-              // 重新登录
-              this.$toast(this.$t("密钥异常，重新登录"));
-
-              setTimeout(() => {
-                // 登出
-                eventCommon.fnLoginout();
-              }, 2000);
-            }
-          });
+            setTimeout(() => {
+              // 登出
+              eventCommon.fnLoginout();
+            }, 2000);
         }
-      });
+      })
     },
     /**
      * api获取好友列表
