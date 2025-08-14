@@ -81,6 +81,7 @@ export default {
         async searchContacts() {
             console.log("searchContacts-1-", this.searchText)
             if (!this.searchText) return;
+            const searchValue = this.searchText.replace(/@/g, '').trim(); // 去掉@和前后空格
             this.$emit("update:searchAddContactsIng", true)
             const fromUid = eventCommon.fnCommonInfoRU({
                 getId: "loginId",
@@ -90,7 +91,7 @@ export default {
                 // 搜索群
                 const pars = {
                     fromUid,
-                    context: this.searchText,
+                    context: searchValue,
                 }
                 console.log("searchContacts-1-", pars)
                 const res = await groupSearch(pars)
@@ -102,7 +103,7 @@ export default {
 
                 // 搜索联系人
                 const cPars = {
-                    phoneNum: this.searchText,
+                    phoneNum: searchValue,
                     findType: 1
                 }
                 const { detailList = [] } = await findContactsList(cPars) || {};
