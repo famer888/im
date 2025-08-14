@@ -915,15 +915,14 @@ const getNewKey = async () => {
     }
 }
 
-
 export const fnUpdateOwnKey = () => {
     // 登录的id
     const loginId = eventCommon.fnCommonInfoRU({ getId: "loginId" });
-    GetKeyPair({
+   return GetKeyPair({
         targetId: Number(loginId),
       }).then( async res => {
         const { appKeyPair = null, webKeyPair = null } = res || {}
-        if(!appKeyPair && !webKeyPair) return;
+        if(!appKeyPair || !webKeyPair) return { code: 500 };
         const { accountConfig } = eventCommon.fnConfigRU();
         let { publicKey, privateKey, keyVersion } = accountConfig;
         
@@ -934,7 +933,7 @@ export const fnUpdateOwnKey = () => {
             privateKey = newKey.privateKey;
             keyVersion = newKey.keyVersion
         }
-        if(!publicKey || !privateKey || !keyVersion || !appKeyPair) return;
+        if(!publicKey || !privateKey || !keyVersion || !appKeyPair) return { code: 501 };
 
         // 保存秘钥
         const keyInfos = {
@@ -953,6 +952,7 @@ export const fnUpdateOwnKey = () => {
             isAccount: true,
             infoMerge: keyInfos,
         });
+        return { code: 200, data: keyInfos }
       })
 }
 
