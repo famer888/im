@@ -49,16 +49,16 @@ export default {
     },
     computed: {
         targetGroupInfo() {
-            return this.info?.groupDetail?.groupBase || {}
+            return this.info?.groupBase || {}
         },
         targetUserInfo() {
-            return this.info?.targetUser?.userInfo || {}
+            return this.info?.userInfo || {}
         },
         targetUser() {
-            return this.info?.targetUser || {}
+            return this.info || {}
         },
         targetGroup() {
-            return this.info?.groupDetail || {}
+            return this.info || {}
         }
     },
     mounted() {
