@@ -4,7 +4,10 @@
         <template v-if="info.groupOrUserType === 1">
             <ComImage :src="targetUserInfo.icon" type="friend" class="icon" />
             <span class="name">{{ targetUserInfo.nickName }}</span>
-            <div class="primaryBtn" @click="showVerify(targetUserInfo)">
+            <div class="primaryBtn" v-if="targetUserInfo.friendRelation?.bfFriend" @click="handleToFriendChat()">
+               {{ $t("发送消息") }}
+            </div>
+            <div class="primaryBtn" v-else @click="showVerify(targetUserInfo)">
                 添加
             </div>
         </template>
@@ -32,6 +35,7 @@ import addVerifyDialog from "./add-verify-dialog";
 
 // 事件
 import eventCommon from "@/event/common";
+import eventBase from "@/event/base";
 
 export default {
     name: "addContactsDetail",
@@ -68,6 +72,22 @@ export default {
         console.log('addContactsDetail--', this.info)
     },
     methods: {
+        /**
+         * 到好友聊天窗
+         */
+        handleToFriendChat() {
+            const { uid, nickName, icon, friendRelation} = this.targetUserInfo;
+            eventBase.fnCommunicationSendMsg({
+                operator: "activeChange",
+                data: {
+                id: Number(uid),
+                name: friendRelation?.remarkName || nickName,
+                pic: icon,
+                type: "friend",
+                comType: "chat",
+                },
+            });
+        },
         showVerify(info) {
             console.log(info, this.loginInfo, this.info)
 

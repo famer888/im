@@ -52,7 +52,7 @@ export default {
         return {
             tabList: [
                 { name: "群聊", key: 0 },
-                { name: "陌生人", key: 1 },
+                { name: "联系人", key: 1 },
             ],
             tabAction: 1,
             searchResult: null,
