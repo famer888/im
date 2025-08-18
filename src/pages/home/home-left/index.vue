@@ -24,7 +24,7 @@
           :archiveIdStrList="archiveIdStrList"
           :unreadCount="unreadCount"
           :archiveListShow="archiveListShow"
-          :placeholder="addAction ? '搜索手机号/ID/群别名' : $t('搜索')"
+          :placeholder="addAction && navType === 1 ? '搜索手机号/ID/群别名' : $t('搜索')"
           @onChange="(value) => (searchText = value)"
           @handleBack="handleBack"
           key="all-search"
