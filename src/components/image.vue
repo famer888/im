@@ -13,7 +13,7 @@ import groupIcon from "@/assets/images/logo/default_group_icon.png";
 import friendIcon from "@/assets/images/logo/logo-58.png";
 
 export default {
-  props: ["src", "errorStyle", "type"],
+  props: ["src", "errorStyle", "type", "defaultUrl"],
   data() {
     return {
       isError: false,
@@ -39,10 +39,10 @@ export default {
         img.src = this.icon;
       } else {
         img.src = this.src;
-        img.onload = () => {
-          this.url = this.src;
-        };
       }
+      img.onload = () => {
+        this.url = img.src;
+      };
     },
     handleClick(e) {
       this.$emit("onClick", e);
