@@ -4,16 +4,17 @@
         <template v-if="info.groupOrUserType === 1">
             <ComImage :src="targetUserInfo.icon" type="friend" class="icon" />
             <span class="name">{{ targetUserInfo.nickName }}</span>
-            <div class="primaryBtn" v-if="targetUserInfo.friendRelation?.bfFriend" @click="handleToFriendChat()">
-                {{ $t("发送消息") }}
-            </div>
-            <div class="primaryBtn" v-else @click="showVerify(targetUserInfo)">
-                添加
-            </div>
+            <template v-if="!isOwn">
+                <div class="primaryBtn" v-if="targetUserInfo.friendRelation?.bfFriend" @click="handleToFriendChat()">
+                    {{ $t("发送消息") }}
+                </div>
+                <div class="primaryBtn" v-else @click="showVerify(targetUserInfo)">
+                    添加
+                </div>
+            </template>
         </template>
         <!-- 群聊 -->
         <template v-else>
-
             <ComImage :src="targetGroupInfo.pic" type="group" class="icon" />
             {{ targetGroupInfo }}
             <span class="name">{{ targetGroupInfo.name }}</span>
@@ -65,6 +66,9 @@ export default {
         },
         targetGroup() {
             return this.info || {}
+        },
+        isOwn() {
+            return this.targetUserInfo?.uid == this.loginInfo?.id
         }
     },
     mounted() {
