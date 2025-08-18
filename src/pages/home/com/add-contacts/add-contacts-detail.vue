@@ -13,8 +13,8 @@
         </template>
         <!-- 群聊 -->
         <template v-else>
-            <ComImage :src="targetUserInfo.pic" type="group" class="icon" />
-            <span class="name">放大范德萨</span>
+            <ComImage :src="targetGroupInfo.pic" type="group" class="icon" />
+            <span class="name">{{targetGroupInfo.name}}</span>
             <span class="member-count">共{{ targetGroupInfo.memberCount }}人</span>
             <div class="primaryBtn" @click="showVerify(targetGroupInfo)">
                 加入群聊
