@@ -595,12 +595,12 @@ export default {
   },
   methods: {
     updateKey() {
-      const { type, id } = this.chatContent || {};
-      if(type === "friend") {
-        fnUpdateFriendKey({id})
-      } else if(type === "group") {
-        fnUpdateGroupKey({id})
-      }
+      // const { type, id } = this.chatContent || {};
+      // if(type === "friend") {
+      //   fnUpdateFriendKey({id})
+      // } else if(type === "group") {
+      //   fnUpdateGroupKey({id})
+      // }
     },
     /**
      * 获取初始化data
