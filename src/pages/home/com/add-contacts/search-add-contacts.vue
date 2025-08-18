@@ -83,6 +83,11 @@ export default {
             if (!this.searchText) return;
             const searchValue = this.searchText.replace(/@/g, '').trim(); // 去掉@和前后空格
             this.$emit("update:searchAddContactsIng", true)
+            eventBase.fnCommunicationSendMsg({
+                operator: "activeChange",
+                data: {comType: ""},
+            });
+            
             const fromUid = eventCommon.fnCommonInfoRU({
                 getId: "loginId",
             });
