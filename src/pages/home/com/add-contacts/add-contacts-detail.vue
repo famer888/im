@@ -5,7 +5,7 @@
             <ComImage :src="targetUserInfo.icon" type="friend" class="icon" />
             <span class="name">{{ targetUserInfo.nickName }}</span>
             <div class="primaryBtn" v-if="targetUserInfo.friendRelation?.bfFriend" @click="handleToFriendChat()">
-               {{ $t("发送消息") }}
+                {{ $t("发送消息") }}
             </div>
             <div class="primaryBtn" v-else @click="showVerify(targetUserInfo)">
                 添加
@@ -13,12 +13,14 @@
         </template>
         <!-- 群聊 -->
         <template v-else>
+
             <ComImage :src="targetGroupInfo.pic" type="group" class="icon" />
-            <span class="name">{{targetGroupInfo.name}}</span>
+            {{ targetGroupInfo }}
+            <span class="name">{{ targetGroupInfo.name }}</span>
             <span class="member-count">共{{ targetGroupInfo.memberCount }}人</span>
-            <div class="primaryBtn" @click="showVerify(targetGroupInfo)">
-                加入群聊
-            </div>
+            <div class="primaryBtn" v-if="targetGroupInfo.bfJoinFriend" @click="handleToChat(targetGroupInfo)">{{
+                $t("发送消息") }}</div>
+            <div class="primaryBtn" v-else @click="showVerify(targetGroupInfo)">加入群聊</div>
         </template>
 
         <addVerifyDialog v-if="verifierVisble" :defalutValue="verifyValue" @close="verifierVisble = false"
@@ -69,22 +71,42 @@ export default {
         this.loginInfo = eventCommon.fnCommonInfoRU({
             getId: "loginInfo",
         });
-        console.log('addContactsDetail--', this.info)
     },
     methods: {
+        /**
+         * 到群聊天窗
+         */
+        handleToChat(info) {
+            if(!info.groupId) {
+              return window.$toast('群ID异常')
+            }
+            const data = {
+                id: Number(info.groupId) ,
+                pic: info.pic || "",
+                name: info.name || info.nickName,
+                type: "group",
+                comType: "chat",
+            };
+
+            // console.log('>>>>>>>>>>>>>>>>> 99 detail/group data', data)
+            eventBase.fnCommunicationSendMsg({
+                operator: "activeChange",
+                data,
+            });
+        },
         /**
          * 到好友聊天窗
          */
         handleToFriendChat() {
-            const { uid, nickName, icon, friendRelation} = this.targetUserInfo;
+            const { uid, nickName, icon, friendRelation } = this.targetUserInfo;
             eventBase.fnCommunicationSendMsg({
                 operator: "activeChange",
                 data: {
-                id: Number(uid),
-                name: friendRelation?.remarkName || nickName,
-                pic: icon,
-                type: "friend",
-                comType: "chat",
+                    id: Number(uid),
+                    name: friendRelation?.remarkName || nickName,
+                    pic: icon,
+                    type: "friend",
+                    comType: "chat",
                 },
             });
         },
