@@ -93,7 +93,7 @@ export default {
             }, 500)
         },
         searchWatch(value) {
-            this.friendList = this.friendList.filter(item =>
+            this.friendList = this.contactList.filter(item =>
                 (item?.name || "").includes(value)
                 || (item?.nickName || "").includes(value)
                 || (item?.identify || "").includes(value)
