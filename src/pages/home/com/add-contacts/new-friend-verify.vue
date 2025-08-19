@@ -6,7 +6,7 @@
                 <ComImage :src="userInfo.icon" type="friend" class="head-icon" />
                 <div class="info">
                     <span class="name">{{ userInfo.nickName }}</span>
-                    <p class="source">对方通过搜索添加</p>
+                    <p class="source">对方通过{{getAddType(info.type)}}添加</p>
                 </div>
             </div>
             <div class="info-middle">
@@ -60,6 +60,10 @@ export default {
         console.log(this.info)
     },
     methods: {
+        getAddType(type) {
+          const types = ['手机号', '扫码', '群聊', '名片', '朋友申请信息', '链接', '68号']
+          return types[type] || '搜索'
+        },
         joinBlackList(op) {
             const pra = {
                 targetUid: Number(this.userInfo.uid),
