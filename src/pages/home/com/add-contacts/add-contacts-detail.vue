@@ -16,11 +16,9 @@
         <!-- 群聊 -->
         <template v-else>
             <ComImage :src="targetGroupInfo.pic" type="group" class="icon" />
-            {{ targetGroupInfo }}
             <span class="name">{{ targetGroupInfo.name }}</span>
             <span class="member-count">共{{ targetGroupInfo.memberCount }}人</span>
-            <div class="primaryBtn" v-if="targetGroupInfo.bfJoinFriend" @click="handleToChat(targetGroupInfo)">{{
-                $t("发送消息") }}</div>
+            <div class="primaryBtn" v-if="isGroupMember" @click="handleToChat(targetGroupInfo)">{{ $t("发送消息") }}</div>
             <div class="primaryBtn" v-else @click="showVerify(targetGroupInfo)">加入群聊</div>
         </template>
 
@@ -39,6 +37,7 @@ import addVerifyDialog from "./add-verify-dialog";
 // 事件
 import eventCommon from "@/event/common";
 import eventBase from "@/event/base";
+import { Cache } from "@/cache";
 
 export default {
     name: "addContactsDetail",
@@ -52,6 +51,7 @@ export default {
             verifyValue: '',
             addInfo: {},
             loginInfo: {},
+            groupList: [],
         }
     },
     computed: {
@@ -69,14 +69,32 @@ export default {
         },
         isOwn() {
             return this.targetUserInfo?.uid == this.loginInfo?.id
+        },
+        isGroupMember() {
+           const groupId = Number(this.targetGroupInfo?.groupId) 
+           if(groupId && this.groupList.length) {
+             return this.groupList.some(item => item.id === groupId)
+           } else {
+             return false
+           }
         }
     },
     mounted() {
         this.loginInfo = eventCommon.fnCommonInfoRU({
             getId: "loginInfo",
         });
+        if(this.info.groupOrUserType == 0) {
+            this.getGroupList()
+        }
     },
     methods: {
+        getGroupList() {
+             const loginId = this.loginInfo?.id
+             Cache(`${loginId}-GroupList`).then(res => {
+                console.log('GroupList--', res)
+                this.groupList = res || [];
+             });
+        },
         /**
          * 到群聊天窗
          */
