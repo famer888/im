@@ -219,15 +219,14 @@ const fnSocketMessage = (arrayBuffer) => {
             const loginId = eventCommon.fnCommonInfoRU({
                 getId: "loginId",
             });
-            Cache(`${loginId}-newFriendReqTotal`).then(res => {
-                let newTotal = (res?.total || 0) + 1;
-                Cache(`${loginId}-newFriendReqTotal`, newTotal)
-                eventBase.fnCommunicationSendMsg({
-                    operator: "updateNewFriendReqTotal",
-                    data: {
-                        total: newTotal,
-                    }
-                });
+            const { friendReqNum = 0 } = data || {};
+            const total = Number(friendReqNum);
+            Cache(`${loginId}-newFriendReqTotal`, { total })
+            eventBase.fnCommunicationSendMsg({
+                operator: "updateNewFriendReqTotal",
+                data: {
+                    total,
+                }
             });
             eventBase.fnCommunicationSendMsg({operator: "newFriendReq"});
             
