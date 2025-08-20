@@ -173,7 +173,7 @@ export default {
                 groupId: Number(this.targetGroupInfo.groupId),
                 reqType: 15,
                 addToken: this.targetGroup.addToken,
-                msg: "",
+                msg: "申请加入群聊",
             }).then((res) => {
                 const { errMsg, errCode } = res?.commonResult || {};
                 if (errCode != 200) {
