@@ -19,7 +19,7 @@
             <span class="name">{{ targetGroupInfo.name }}</span>
             <span class="member-count">共{{ targetGroupInfo.memberCount }}人</span>
             <div class="primaryBtn" v-if="isGroupMember" @click="handleToChat(targetGroupInfo)">{{ $t("发送消息") }}</div>
-            <div class="primaryBtn" v-else @click="showVerify(targetGroupInfo)">加入群聊</div>
+            <div class="primaryBtn" v-else @click="addGroup()">加入群聊</div>
         </template>
 
         <addVerifyDialog v-if="verifierVisble" :defalutValue="verifyValue" @close="verifierVisble = false"
@@ -30,6 +30,7 @@
 <script>
 //接口
 import { contactsRelation } from "@/api/imContacation.js";
+import { groupJoin } from "@/api/imGroup";
 
 //组件
 import addVerifyDialog from "./add-verify-dialog";
@@ -91,7 +92,6 @@ export default {
         getGroupList() {
              const loginId = this.loginInfo?.id
              Cache(`${loginId}-GroupList`).then(res => {
-                console.log('GroupList--', res)
                 this.groupList = res || [];
              });
         },
@@ -133,9 +133,7 @@ export default {
             });
         },
         showVerify(info) {
-            console.log(info, this.loginInfo, this.info)
-
-
+            // console.log(info, this.loginInfo, this.info)
             this.verifyValue = '我是' + this.loginInfo?.name || '';
             this.verifierVisble = true;
             this.addInfo = info;
@@ -171,14 +169,24 @@ export default {
             })
         },
         addGroup() {
-            const pra = {
+            groupJoin({
                 groupId: Number(this.targetGroupInfo.groupId),
-                msg: this.verifyValue,
-                type: 0,
-                op: 0,
-                addToken: this.targetGroup.addToken
-            }
-            contactsRelation(pra)
+                reqType: 15,
+                addToken: this.targetGroup.addToken,
+                msg: "",
+            }).then((res) => {
+                const { errMsg, errCode } = res?.commonResult || {};
+                if (errCode != 200) {
+                    window.$toast(errMsg || res?.errorDesc || this.$t("加入群聊失败"));
+                } else {
+                    if (this.targetGroupInfo.bfJoinCheck) {
+                        // 入群需要验证
+                        window.$toast("请耐心等待群主审核");
+                    } else {
+                        window.$toast("加入群成功");
+                    }
+                }
+            });
         }
     }
 }
