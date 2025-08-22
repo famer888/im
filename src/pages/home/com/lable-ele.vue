@@ -20,7 +20,7 @@
   <a
     v-else-if="info.type === 'customLink'"
     href="javascript:void(0)"
-    @click="handleGoLink(info)"
+    @click="handleGoLink(info, true)"
     v-html="info.content"
     ></a>
   <br v-else />
@@ -51,14 +51,16 @@ export default {
         return null;
       }
     },
-    async handleGoLink(info) {
+    async handleGoLink(info, showConfirm) {
       const linkUrl = (info?.href || "").replace("<br>", "")
-      const confirmState = await window.$confirm({
+      if(showConfirm) {
+         const confirmState = await window.$confirm({
           title: this.$t("打开链接"),
           btnTitleCenter: this.$t("打开"),
           remark: linkUrl
         })
-      if(!confirmState) return;
+       if(!confirmState) return;
+      }
         
       try {
         let href = completionUrl(linkUrl)
