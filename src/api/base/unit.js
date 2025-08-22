@@ -139,16 +139,21 @@ export const getUrl = async (opts, errCallback) => {
     const { isRepairDomain = true } = opts || {};
     let result = {};
     try {
-        result = await requestApi(opts, errCallback);
+        result = await requestApi(opts);
     } catch (error) {
         let code = error.errorCode;
         if (isRepairDomain && error.errorCode < 500) {
             let newUrl = await replaceNewDomain(opts.url);
             if (newUrl) {
                 opts.url = newUrl;
-                result = await requestApi(opts, errCallback);
+                try {
+                 result = await requestApi(opts);
+                } catch (error) {
+                 errCallback()
+                }
             }
         } else {
+            errCallback()
             return error
         }
     }
@@ -169,7 +174,7 @@ const replaceNewDomain = async (url) => {
     return newUrl;
 };
 
-const requestApi = async (opt, errCallback) => {
+const requestApi = async (opt) => {
     let {
         method = "POST",
         type,
@@ -228,7 +233,8 @@ const requestApi = async (opt, errCallback) => {
                 if (errCode != 200) {
                     console.error(
                         `接口报错：${message?.commonResult?.errMsg}。接口地址：${url}，`,
-                        message
+                        message,
+                        opt
                     );
 
                     reject({
@@ -241,9 +247,9 @@ const requestApi = async (opt, errCallback) => {
                 resolve(message);
             })
             .catch(async (err) => {
-                if (errCallback) {
-                    errCallback();
-                }
+                // if (errCallback) {
+                //     errCallback();
+                // }
                 reject({ errorCode: 0, errorDesc: err });
             });
     });
