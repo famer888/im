@@ -1752,6 +1752,7 @@ const fnGroupDetailInit = (groupId) => {
             getGroupDetail({ groupId }, () => {
                 fnInitDelayedAdd(groupId);
             }).then((res) => {
+                // console.log(`[${groupId}]getGroupDetail--`,res)
                 // 如果该群聊因违反相关规定，已被限制使用
                 if (res === 1021) {
                     // 移除详情获取
@@ -1928,6 +1929,11 @@ const fnMemberListGet = ({ id, pageNum }) => {
             fnInitDelayedAdd(id);
         }
     ).then((res) => {
+        // console.log(`[${id}]getGroupMemberListV2--`, res, {
+        //     groupId: id,
+        //     pageSize: 1000,
+        //     pageNum,
+        // })
         // console.log(res, 'getGroupMemberListV2 -----------> 1626')
         // 如果其他请求有异常，相关信息则已被清空，直接跳过处理
         if (memberListObj[id]) {
