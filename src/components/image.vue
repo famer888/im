@@ -1,8 +1,8 @@
 <template>
   <img
     :src="url === '' ? icon : url"
-    @error="error"
-    :onerror="`this.url='${icon}'`"
+    @error="error()"
+    :onerror="error()"
     :style="isError && errorStyle ? errorStyle : null"
     @click="handleClick"
     @contextmenu.prevent="handleContextmenu"
@@ -11,6 +11,7 @@
   <script>
 import groupIcon from "@/assets/images/logo/default_group_icon.png";
 import friendIcon from "@/assets/images/logo/logo-58.png";
+import { getNewImgDownUrl } from "@/utils/trendsDomain/manageOssDownUpload"
 
 export default {
   props: ["src", "errorStyle", "type", "defaultUrl"],
@@ -50,9 +51,20 @@ export default {
     handleContextmenu(e) {
       this.$emit("onContextmenu", e);
     },
-    error() {
-      this.url = this.icon;
-      this.isError = true;
+    async error() {
+      if(!this.isError && (this.src || "").includes('http')) {
+        const newUrl = await getNewImgDownUrl(this.src)
+        if(newUrl) {
+          this.url = newUrl;
+        } else {
+          this.url = this.icon;
+          this.isError = true;
+        }
+      } else {
+        this.url = this.icon;
+        this.isError = true;
+      }
+ 
     },
   },
 };

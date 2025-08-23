@@ -523,7 +523,8 @@ const domainsName = `domains_${getEnvType()}`
 let domains = Local(domainsName) || {
     webBiz: "",
     webSession: "",
-    domain: ""
+    domain: "",
+    ossDefaultUrl: "",
 };
 
 const fnDomainsGet = () => {

@@ -1,8 +1,9 @@
 //管理OSS下发
 
 import { getTrendsDomainPool } from "./manageDomain";
-import { getDomainListAllNormal, domainListSort, getDomainListFirstNormal } from "./workTools";
+import { getDomainListAllNormal, domainListSort, getDomainListFirstNormal, checkImageLoad } from "./workTools";
 import { getRemainingUrl } from "@/utils/base.js";
+import eventCommon from "@/event/common";
 
 export const getOssDomains = async (channelType) => {
     let urls = []
@@ -18,11 +19,29 @@ export const getOssDomains = async (channelType) => {
     return urls || []
 }
 
-export const getNewImgDownUrl = (oriUrl, channelType) => {
-  let newUrls = getOssDomains(channelType)
-  let newUrl = newUrls[0]
-  newUrl = newUrl.replace(/\/$/, "") + getRemainingUrl(url);
-  return newUrl
+export const getNewImgDownUrl = async (oriUrl) => {
+  let newUrl = "";
+  const { ossDefaultUrl } = eventCommon.fnDomainsGet() || {};
+  let newDomain = ossDefaultUrl || "";
+  if(!newDomain) {
+     let newDomains = await getOssDomains('ossDefaultUrl')
+      newDomain = await getDomainListFirstNormal(newDomains) || ""
+  }
+  if(newDomain) {
+    newUrl = newDomain.replace(/\/$/, "") + getRemainingUrl(oriUrl);
+    const state = await checkImageLoad(newUrl)
+    if(!state) {
+      newUrl = ""
+      newDomain = ""
+    }
+    eventCommon.fnDomainsAttribSet("ossDefaultUrl", newDomain);
+    return newUrl
+  } else if(ossDefaultUrl){
+    eventCommon.fnDomainsAttribSet("ossDefaultUrl", "");
+    return ""
+  } else {
+    return ""
+  }
 }
 
 export const getNewFileDownUrl = async (oriUrl, channelType, index) => {

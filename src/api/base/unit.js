@@ -148,15 +148,14 @@ export const getUrl = async (opts, errCallback) => {
                 try {
                  result = await requestApi(opts);
                 } catch (error) {
-                 errCallback()
+                 errCallback && errCallback()
                 }
             }
         } else {
-            errCallback()
+            errCallback && errCallback()
             return error
         }
     }
-    console.log('requestApi--r-', result)
     return result;
 };
 
