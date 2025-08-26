@@ -1475,7 +1475,7 @@ const fnAlertNotification = async (data, chatList) => {
         deviceConfig.isMessageReminderWhenMinimized &&
         !isSelf &&
         !eventCommon.fnDisturbIdStrListRU({ idStrIsExist: id + type }) &&
-        ![51, 6].includes(msgType)
+        ![51, 6, 10, 13, 14, 99].includes(msgType)
     ) {
         const info = chatList.find(item => item.id === id && item.type === type);
         if (info) {
