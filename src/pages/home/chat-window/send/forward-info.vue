@@ -148,6 +148,8 @@ export default {
       padding-top: 10px;
       height: 35px;
       box-sizing: border-box;
+      max-width: 86%;
+      overflow: hidden;
 
       > div {
         margin-right: 10px;
@@ -204,6 +206,14 @@ export default {
       width: 20px;
       height: 20px;
     }
+  }
+}
+</style>
+
+<style lang="scss">
+.comForwardInfo {
+  span, div {
+    flex-shrink: 0;
   }
 }
 </style>
