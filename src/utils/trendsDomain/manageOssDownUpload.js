@@ -28,19 +28,19 @@ export const getNewImgDownUrl = async (oriUrl) => {
       newDomain = await getDomainListFirstNormal(newDomains) || ""
   }
   if(newDomain) {
-    newUrl = newDomain.replace(/\/$/, "") + getRemainingUrl(oriUrl);
-    const state = await checkImageLoad(newUrl)
-    if(!state) {
-      newUrl = ""
-      newDomain = ""
-    }
-    eventCommon.fnDomainsAttribSet("ossDefaultUrl", newDomain);
-    return newUrl
-  } else if(ossDefaultUrl){
-    eventCommon.fnDomainsAttribSet("ossDefaultUrl", "");
-    return ""
-  } else {
-    return ""
+    newUrl = String(newDomain).replace(/\/$/, "") + getRemainingUrl(oriUrl);
+      const state = await checkImageLoad(newUrl)
+      if(!state) {
+        newUrl = ""
+        newDomain = ""
+      }
+      eventCommon.fnDomainsAttribSet("ossDefaultUrl", newDomain);
+      return newUrl
+    } else if(ossDefaultUrl){
+      eventCommon.fnDomainsAttribSet("ossDefaultUrl", "");
+      return ""
+    } else {
+      return ""
   }
 }
 
