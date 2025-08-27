@@ -40,7 +40,8 @@ export default {
   },
   methods: {
     handleContent() {
-      const htmlString = repalceLink(this.content);
+      let htmlString = repalceLink(this.content);
+      htmlString = htmlString.replace(/\n/g, '<br/>')
 
       // 拆分html
       const tagList = splitHtmlStringToObjects(htmlString);
