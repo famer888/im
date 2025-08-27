@@ -9,7 +9,7 @@
     >
       <img
         v-if="[1, , 3, 9].includes(msgList[0].chatType)"
-        :src="`file:///${msgList[0].localThumbUrl || msgList[0].local}`"
+        :src="getForwardImgSrc(msgList[0])"
       />
       <h3>
         {{ msgList[0].newNickName }}
@@ -75,6 +75,14 @@ export default {
     // console.log(this.forwardMessageList);
   },
   methods: {
+    getForwardImgSrc(info) {
+      const localUrl = info.localThumbUrl || info.local
+      if(localUrl.includes('http')) {
+        return localUrl
+      } else {
+        return `file:///${localUrl}`
+      }
+    },
     messageTypeToText(value) {
       return eventMsg.fnMsgTypeToText(value);
     },
