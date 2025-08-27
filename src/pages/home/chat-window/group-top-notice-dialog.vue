@@ -1,16 +1,15 @@
 <template>
-  <div class="groupTopNoticeDialog" @click="handleOpenGroupNoticeDialog">
-    <h2>
+  <div class="groupTopNoticeDialog">
+    <h2 @click="handleOpenGroupNoticeDialog">
       {{ $t("群公告") }}
       <img src="@/assets/images/headNav/jt-icon.png" />
     </h2>
     <div>
-      <span
-        v-for="(item, index) of noticeArr"
-        :key="index"
-        :class="{ at: item.slice(0, 1) === '@', break: item === '\n' }"
-        >{{ item }}</span
-      >
+      <ComGroupNoticeView
+      :content="content"
+      :atNameList="atNameList"
+      :chatContent="chatContent"
+    />
     </div>
     <span @click.stop="handleClose">{{ $t("知道了") }}</span>
   </div>
@@ -18,45 +17,34 @@
 <script>
 import { Cache } from "@/cache";
 
-// 工具
-import { strSplitAt } from "@/utils/widget";
-
 // 事件
 import eventBase from "@/event/base";
 import eventCommon from "@/event/common";
+// 控件
+import ComGroupNoticeView from "./right-menu/group-notice/view";
 
 export default {
-  props: ["groupId", "content", "memberInfos"],
+  props: ["groupId", "content", "memberInfos", "chatContent"],
+  components: { ComGroupNoticeView },
   data() {
     return { noticeArr: [] };
   },
-  watch: {
-    content: {
-        handler(newNotice, oldNotice) {
-          if (newNotice !== oldNotice) {
-            this.handleNotice()
-          }
-        },
-        immediate: false,
-    }
+  computed: {
+    atNameList() {
+      // 设置公告数组
+      if (this.content !== "") {
+        return Object.values(this.memberInfos)
+          .filter((item) => item.name || item.nickName)
+          .map((item) => "@" + (item.name || item.nickName));
+      }
+
+      return [];
+    },
   },
   inject: ['provideGroupNotice'],
   mounted() {
-    this.handleNotice()
   },
   methods: {
-    handleNotice() {
-      const atNameList = Object.values(this.memberInfos).map(
-        (item) => item.name || item.nickName
-      );
-
-      this.noticeArr = strSplitAt(
-        this.content,
-        atNameList
-          .filter((item) => item.name || item.nickName)
-          .map((item) => "@" + (item.name || item.nickName))
-      );
-    },
     /**
      * 打开群公告对话框
      */
@@ -104,7 +92,6 @@ export default {
   border-radius: 10px;
   z-index: 10;
   box-shadow: 0px 0px 10px #eee;
-  cursor: pointer;
 
   > h2 {
     display: flex;
@@ -113,6 +100,7 @@ export default {
     font-weight: 600;
     margin: 0;
     font-size: 14px;
+    cursor: pointer;
 
     > img {
       display: block;

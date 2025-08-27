@@ -6,6 +6,7 @@
         :groupId="chatContent.id"
         :content="groupTopNoticeContent"
         :memberInfos="memberInfos"
+        :chatContent="chatContent"
         @close="groupTopNoticeContent = ''"
       />
       <ComTop
