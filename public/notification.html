@@ -28,10 +28,14 @@
       border: 1px solid #e5e5e5;
       border-radius: 10px 0 10px 10px;
     }
+    .img-box {
+      height: 44px;
+      width: 44px;
+      margin-right: 10px;
+    }
 
     #list-container li .avatar {
       border-radius: 50%;
-      margin-right: 10px;
       height: 44px;
       width: 44px;
     }
@@ -247,7 +251,9 @@
 
         html += `<li id="notice-item-${item.id}" class="list-item">
                   <div class="info-box">
-                    <img src="${item.icon || defaultIcon}" class="avatar" onerror="this.src='${defaultIcon}';" />
+                    <div class="img-box">
+                      <img src="${item.icon || defaultIcon}" class="avatar"  onerror="this.style.display='none'"  />
+                    </div>
                     <div class="info">
                       <div class="nickname-box">
                         ${isGroup ? `<img class="group-chat-icon" src="${groupChatIcon}" />` : ''}
