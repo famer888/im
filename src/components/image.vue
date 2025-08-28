@@ -52,7 +52,8 @@ export default {
       this.$emit("onContextmenu", e);
     },
     async error() {
-      if(!this.isError && (this.src || "").includes('http')) {
+      const src = this.src || "";
+      if(!this.isError && src.includes('http') && !src.includes('default')) {
         const newUrl = await getNewImgDownUrl(this.src)
         if(newUrl) {
           this.url = newUrl;

@@ -24,7 +24,8 @@ export const getNewImgDownUrl = async (oriUrl) => {
   const { ossDefaultUrl } = eventCommon.fnDomainsGet() || {};
   let newDomain = ossDefaultUrl || "";
   if(!newDomain) {
-     let newDomains = await getOssDomains('ossDefaultUrl')
+     let newDomainObjs = await getOssDomains('ossDefaultUrl') || [];
+     const newDomains = newDomainObjs.map(item => item?.domainUrl)
       newDomain = await getDomainListFirstNormal(newDomains) || ""
   }
   if(newDomain) {
@@ -34,10 +35,10 @@ export const getNewImgDownUrl = async (oriUrl) => {
         newUrl = ""
         newDomain = ""
       }
-      eventCommon.fnDomainsAttribSet("ossDefaultUrl", newDomain);
+      eventCommon.fnDomainsAttribSet({key : "ossDefaultUrl", value: newDomain});
       return newUrl
     } else if(ossDefaultUrl){
-      eventCommon.fnDomainsAttribSet("ossDefaultUrl", "");
+      eventCommon.fnDomainsAttribSet({key :"ossDefaultUrl", value: ""});
       return ""
     } else {
       return ""

@@ -132,7 +132,7 @@ export default {
                 this.msgInfo;
 
             // 文件路径
-            let fileUrl = content.split("||")[0];
+            let fileUrl = content ? content.split("||")[0] : "";
             if (chatType === 3) {
                 fileUrl = content.split("*P")[1];
             }
