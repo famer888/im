@@ -570,15 +570,22 @@ export const setTimeD = (value) => {
 
 // 获取url域名后的字符
 export const getRemainingUrl = (url) => {
-    var parsedUrl = new URL(url);
-    var protocol = parsedUrl.protocol + "//";
-    var hostname = parsedUrl.hostname;
-    var port = parsedUrl.port;
-    var remainingUrl = url.replace(
-        protocol + hostname + (port ? ":" + port : ""),
-        ""
-    );
-    return remainingUrl;
+    try {
+        if(!url) return url;
+        var parsedUrl = new URL(url);
+        var protocol = parsedUrl.protocol + "//";
+        var hostname = parsedUrl.hostname;
+        var port = parsedUrl.port;
+        var remainingUrl = url.replace(
+            protocol + hostname + (port ? ":" + port : ""),
+            ""
+        );
+        return remainingUrl; 
+    } catch (error) {
+        console.error(error, url)
+        return ""
+    }
+   
 }
 
 // 补全url的协议
