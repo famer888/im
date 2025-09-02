@@ -383,6 +383,8 @@ const fnFriendDetailsGet = (id) => {
 
         // 是否免打扰
         const bfDisturb = _.get(res, "contactsDetailBase.bfDisturb") || false;
+        // 黑名单
+        const bfMyBlack = _.get(res, "contactsDetailBase.bfMyBlack") || false;
 
         if (res && res.contactsDetailBase) {
             // 数据不更新置顶
@@ -398,6 +400,7 @@ const fnFriendDetailsGet = (id) => {
                     bfReadCancel,
                     msgCancelTime,
                     bfDisturb,
+                    bfMyBlack,
                     type: "friend",
                 },
             });
