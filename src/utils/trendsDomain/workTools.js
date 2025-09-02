@@ -3,28 +3,6 @@ import { reportErrorDomain } from "./manageReport";
 import { getDomainNumThreshold } from "./manageDomain";
 const os = require("os");
 
-export function checkImageLoad(url) {
-    return new Promise((resolve, reject) => {
-        const img = new Image();
-        
-        img.onload = function() {
-            resolve(true); // 图片加载成功
-        };
-        
-        img.onerror = function() {
-            resolve(false); // 图片加载失败
-        };
-        
-        // 设置超时处理
-        setTimeout(() => {
-            img.onload = img.onerror = null; // 清除事件处理程序
-            resolve(false); // 超时视为加载失败
-        }, 3000); // 3秒超时
-        
-        img.src = url;
-    });
-}
-
 // 获取域名列表中第一个正常的域名
 export async function getDomainListFirstNormal(urlList){
     let result = ""

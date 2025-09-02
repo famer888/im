@@ -1,17 +1,12 @@
 import {
-    getClientToken,
-    getDomainListApi,
-    reportErrorDomainApi,
-} from "@/api/imDomain";
-import {
     pollingUpdateDomainPool,
     updateTrendsDomain,
 } from "./manageDomainUpdate";
 import { getFirstNormalDomain } from "./manageDomain";
-import { getModuleType } from "./workTools";
 import { pollingCheckErrorDomain } from "./manageErrorDomain";
 import { updateToken } from "./manageToken";
 import { pollingBatchReport } from "./manageReport";
+import { getOssDomain } from "./manageOssDownUpload";
 // 事件
 import eventCommon from "@/event/common.js";
 
@@ -36,6 +31,7 @@ export const initDomain = async () => {
     pollingBatchReport();
     await updateToken();
     await updateTrendsDomain();
+    await getOssDomain()
 };
 
 // 获取一个新的可用域名
