@@ -225,3 +225,12 @@ export const disableGroup = (data) =>
         url: `${baseUrl()}/group/disableGroup`,
         data,
     });
+
+// 退出群聊
+export const groupExit = (data) =>
+    getUrl({
+        protoType: "group",
+        type: "GroupExit",
+        url: `${baseUrl()}/group/groupExit`,
+        data,
+    });

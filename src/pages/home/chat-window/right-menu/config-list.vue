@@ -54,7 +54,7 @@
       <li v-if="chatContent.memberType == 0">
         <span>{{ $t("进群需审核") }}</span>
         <ComSwitch :value="bfJoinCheck" @input="handelBfJoinCheckChange" />
-      </li>
+      </li> 
       <!-- <li>
         <span> {{ $t("禁止成员互添加好友") }}</span>
         <ComSwitch :value="bfJoinFriend" @input="handelBfJoinFriendChange" />
@@ -63,12 +63,21 @@
     <li class="clearHistory" @click="$emit('openDialogMsgClear')">
       {{ $t("清空聊天记录") }}
     </li>
-    <li class="clearHistory" v-if="!isGroup" @click="handelDeleteFriend">
-      删除联系人
-    </li>
-     <li class="clearHistory" v-if="isGroup && chatContent.memberType == 0" @click="handelDisbandGroup">
-      解散群聊
-    </li>
+
+    <template v-if="isGroup">
+      <li class="clearHistory" v-if="chatContent.memberType == 0" @click="handelDisbandGroup">
+        解散群聊
+      </li>
+      <li class="clearHistory" v-else @click="handelExitGroup">
+        删除并退出
+      </li>
+    </template>
+    <template v-else>
+        <li class="clearHistory" @click="handelDeleteFriend">
+          删除联系人
+        </li>
+    </template>
+   
   </ul>
 </template>
 <script>
@@ -88,7 +97,7 @@ import ComSwitch from "@/pages/home/com/switch.vue";
 import { updateMember } from "@/api/imChannel.js";
 import { contactsRelation } from "@/api/imContacation.js";
 import { updateBlackContacts } from "@/api/imContacation";
-import { disableGroup } from "@/api/imGroup.js";
+import { disableGroup, groupExit } from "@/api/imGroup.js";
 
 export default {
   components: {
@@ -172,11 +181,34 @@ export default {
   methods: {
     fnRcheduleDeletionTimeTextGet,
     /**
+     * 退出群聊
+     */
+    async handelExitGroup() {
+      const { id, type} = this.chatContent
+      if(type !== "group" || !id) return;
+      const state = await window.$confirm({
+        remark: "确认要退出群聊，且删除此群的聊天记录?"
+      })
+      if(!state) return;
+      groupExit({ groupId: id }).then(res => {
+         const { errCode } = res?.commonResult || {}
+            if (errCode == 200) {
+                window.$toast("退出成功");
+                eventBase.fnCommunicationSendMsg({
+                  operator: "activeChange",
+                  data: {comType: ""},
+                });
+            } else {
+                res?.errorDesc && window.$toast(res.errorDesc);
+            }
+      })
+    },
+    /**
      * 解散群聊
      */
    async handelDisbandGroup() {
       const { id, type} = this.chatContent
-      if(type !== "group") return;
+      if(type !== "group" || !id) return;
       const state = await window.$confirm({
         remark: "解散群聊后,所有群成员将失去和群友的联系,同时该群的聊天内容将全部删除"
       })
