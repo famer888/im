@@ -216,3 +216,12 @@ export const groupSearch = (data) =>
         url: `${baseUrl()}/group/groupSearch`,
         data,
     });
+
+// 解散群聊
+export const disableGroup = (data) =>
+    getUrl({
+        protoType: "group",
+        type: "DisableGroup",
+        url: `${baseUrl()}/group/disableGroup`,
+        data,
+    });

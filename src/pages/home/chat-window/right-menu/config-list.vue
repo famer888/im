@@ -66,6 +66,9 @@
     <li class="clearHistory" v-if="!isGroup" @click="handelDeleteFriend">
       删除联系人
     </li>
+     <li class="clearHistory" v-if="isGroup && chatContent.memberType == 0" @click="handelDisbandGroup">
+      解散群聊
+    </li>
   </ul>
 </template>
 <script>
@@ -85,6 +88,7 @@ import ComSwitch from "@/pages/home/com/switch.vue";
 import { updateMember } from "@/api/imChannel.js";
 import { contactsRelation } from "@/api/imContacation.js";
 import { updateBlackContacts } from "@/api/imContacation";
+import { disableGroup } from "@/api/imGroup.js";
 
 export default {
   components: {
@@ -167,6 +171,32 @@ export default {
   },
   methods: {
     fnRcheduleDeletionTimeTextGet,
+    /**
+     * 解散群聊
+     */
+   async handelDisbandGroup() {
+      const { id, type} = this.chatContent
+      if(type !== "group") return;
+      const state = await window.$confirm({
+        remark: "解散群聊后,所有群成员将失去和群友的联系,同时该群的聊天内容将全部删除"
+      })
+      if(!state) return;
+      disableGroup({ groupId: id }).then(res => {
+         const { errCode } = res?.commonResult || {}
+            if (errCode == 200) {
+                window.$toast("解散成功");
+                eventBase.fnCommunicationSendMsg({
+                  operator: "activeChange",
+                  data: {comType: ""},
+                });
+            } else {
+                res?.errorDesc && window.$toast(res.errorDesc);
+            }
+      })
+    },
+    /**
+     * 修改好友黑名单状态
+     */
     handelBfMyBlackChange() {
       const { type, id } = this.chatContent;
        if(type !== "friend") return;
@@ -175,8 +205,7 @@ export default {
             op: this.bfMyBlack ? 7 : 6,
         }
         updateBlackContacts(pra).then(res => {
-            console.log('updateBlackContacts--', res)
-                const { errCode } = res?.commonResult || {}
+            const { errCode } = res?.commonResult || {}
             if (errCode == 200) {
                 this.bfMyBlack = pra.op === 6;
                 window.$toast( this.bfMyBlack ? "加入成功" : "移除成功");
@@ -185,6 +214,9 @@ export default {
             }
         })
     },
+    /**
+     * 删除好友
+     */
    async handelDeleteFriend() {
       const { type, id } = this.chatContent;
       if(type !== "friend") return;
@@ -199,11 +231,11 @@ export default {
       }
       contactsRelation(pra).then(res => {
           if(res.commonResult?.errCode === 200) {
-            window.$toast("删除成功");
+              window.$toast("删除成功");
               eventBase.fnCommunicationSendMsg({
                   operator: "activeChange",
                   data: {comType: ""},
-            });
+              });
           }
       })
     },
