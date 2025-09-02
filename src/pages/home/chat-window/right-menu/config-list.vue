@@ -19,6 +19,10 @@
         <span> {{ $t("保存到通讯录") }}</span>
         <ComSwitch :value="bfAddress" @input="handelBfAddressChange" />
       </li>
+      <li v-if="isGroup">
+        <span> 加入黑名单</span>
+        <ComSwitch :value="bfBlackContact" @input="handelBfBlackChange" />
+      </li>
     </template>
     <template v-if="!isChannel && !isGroup && chatContent.memberType !== 2 && chatContent.id !== 10002">
       <li>
@@ -59,6 +63,9 @@
     <li class="clearHistory" @click="$emit('openDialogMsgClear')">
       {{ $t("清空聊天记录") }}
     </li>
+    <li class="clearHistory" v-if="!isGroup" @click="handelDeleteFriend">
+      删除联系人
+    </li>
   </ul>
 </template>
 <script>
@@ -75,7 +82,8 @@ import eventBase from "@/event/base";
 import ComSwitch from "@/pages/home/com/switch.vue";
 
 // api
-import { updateMember } from "@/api/imChannel.js"
+import { updateMember } from "@/api/imChannel.js";
+import { contactsRelation } from "@/api/imContacation.js";
 
 export default {
   components: {
@@ -93,6 +101,7 @@ export default {
       bfJoinCheck: false, // 进群是否需要审核
       bfJoinFriend: true, // 是否可以加好友
       bfChannelReceive: false, // 频道消息接收
+      bfBlackContact: false, //黑名单
     };
   },
   mounted() {
@@ -154,6 +163,46 @@ export default {
   },
   methods: {
     fnRcheduleDeletionTimeTextGet,
+    joinBlackList(op) {
+      const { type, id } = this.chatContent;
+       if(type !== "friend") return;
+        const pra = {
+            targetUid: Number(id),
+            op,
+        }
+        updateBlackContacts(pra).then(res => {
+            console.log('updateBlackContacts--', res)
+                const { errCode } = res?.commonResult || {}
+            if (errCode == 200) {
+                this.bfMyBlack = op === 6;
+                window.$toast( this.bfMyBlack ? "移除成功" : "加入成功");
+            } else {
+                res?.errorDesc && window.$toast(res.errorDesc);
+            }
+        })
+    },
+   async handelDeleteFriend() {
+     const { type, id } = this.chatContent;
+     if(type !== "friend") return;
+     const state = await window.$confirm({
+          remark: "删除该联系人,会同时删除与该联系人的聊天记录"
+        })
+      if(!state) return;
+      const pra = {
+        targetUid: id,
+        msg: "",
+        op: 1,
+      }
+     contactsRelation(pra).then(res => {
+        if(res.commonResult?.errCode === 200) {
+          window.$toast("删除成功");
+            eventBase.fnCommunicationSendMsg({
+                operator: "activeChange",
+                data: {comType: ""},
+          });
+        }
+     })
+    },
     /**
      * 是否可以加好友 改变
      */

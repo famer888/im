@@ -119,7 +119,7 @@ export default {
         color: #ffffff;
         cursor: pointer;
         width: 100%;
-        height: 48px;
+        height: 32px;
         border-radius: 6px;
         border: none;
 
