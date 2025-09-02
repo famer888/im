@@ -19,30 +19,21 @@ export const getOssDomains = async (channelType) => {
     return urls || []
 }
 
+export const getOssDomain = async () => {
+    let newDomainObjs = await getOssDomains('ossDefaultUrl') || [];
+     const newDomains = newDomainObjs.map(item => item?.domainUrl)
+    let newDomain = await getDomainListFirstNormal(newDomains) || ""
+    eventCommon.fnDomainsAttribSet({key : "ossDefaultUrl", value: newDomain});
+}
+
 export const getNewImgDownUrl = async (oriUrl) => {
   let newUrl = "";
   const { ossDefaultUrl } = eventCommon.fnDomainsGet() || {};
   let newDomain = ossDefaultUrl || "";
-  if(!newDomain) {
-     let newDomainObjs = await getOssDomains('ossDefaultUrl') || [];
-     const newDomains = newDomainObjs.map(item => item?.domainUrl)
-      newDomain = await getDomainListFirstNormal(newDomains) || ""
-  }
   if(newDomain) {
     newUrl = String(newDomain).replace(/\/$/, "") + getRemainingUrl(oriUrl);
-      const state = await checkImageLoad(newUrl)
-      if(!state) {
-        newUrl = ""
-        newDomain = ""
-      }
-      eventCommon.fnDomainsAttribSet({key : "ossDefaultUrl", value: newDomain});
-      return newUrl
-    } else if(ossDefaultUrl){
-      eventCommon.fnDomainsAttribSet({key :"ossDefaultUrl", value: ""});
-      return ""
-    } else {
-      return ""
-  }
+  } 
+  return newUrl
 }
 
 export const getNewFileDownUrl = async (oriUrl, channelType, index) => {

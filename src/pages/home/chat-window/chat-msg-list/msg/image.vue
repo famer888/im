@@ -134,7 +134,7 @@ export default {
             // 文件路径
             let fileUrl = content ? content.split("||")[0] : "";
             if (chatType === 3) {
-                fileUrl = content.split("*P")[1];
+                fileUrl = content?.split("*P")[1];
             }
             if( !fileUrl && this.msgInfo.thumbUrl ){
                 fileUrl = this.msgInfo.thumbUrl

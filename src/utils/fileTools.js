@@ -277,3 +277,20 @@ export const getFileInfo = (filePath) => {
         type: mimeType,
     });
 };
+
+
+export function checkImageLoad(url) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        
+        img.onload = function() {
+            resolve(true); // 图片加载成功
+        };
+        
+        img.onerror = function() {
+            resolve(false); // 图片加载失败
+        };
+        
+        img.src = url;
+    });
+}
