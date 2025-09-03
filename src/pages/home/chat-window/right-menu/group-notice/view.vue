@@ -112,7 +112,7 @@ export default {
 <style scoped lang="scss">
 .groupNoticeView {
   font-size: 14px;
-  color: #666;
+  color: #787878;
   line-height: 20px;
   word-wrap: break-word;
 

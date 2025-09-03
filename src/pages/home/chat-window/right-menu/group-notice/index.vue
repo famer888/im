@@ -1,6 +1,9 @@
 <template>
   <div class="groupNotice" @click.stop="handleOpenGroupNoticeDialog">
-    <h3>{{ $t("群公告") }}</h3>
+    <div class="head">
+       <h3>{{ $t("群公告") }}</h3>
+       <img class="arrow" src="@/assets/images/common/right-arrow-a.png"/>
+    </div>
     <ComGroupNoticeView
       :content="notice"
       :atNameList="atNameList"
@@ -46,11 +49,31 @@ export default {
 .groupNotice {
   padding: 10px;
   cursor: pointer;
+  max-height: 120px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 
-  > h3 {
-    line-height: 40px;
-    margin: 0;
-    font-size: 16px;
+  .head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    > h3 {
+      line-height: 40px;
+      margin: 0;
+      font-size: 14px;
+      color: #000;
+    }
+    .arrow {
+      height: 10px;
+    }
+  }
+
+  
+
+  .groupNoticeView {
+    overflow: hidden;
   }
 }
 </style>
