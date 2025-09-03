@@ -1,6 +1,6 @@
 <template>
-  <section class="comMemberList">
-    <div class="search">
+  <section class="comMemberList" :class="{'show-detail': showDetail}">
+    <div class="search" v-if="showDetail">
       <img src="@/assets/images/headNav/search-icon.png" />
       <img
         v-show="searchText"
@@ -15,6 +15,14 @@
         />
         <span>{{ $t("群成员列表强制刷新") }}</span>
       </span>
+      <div class="cancel" @click="showDetail = false">取消</div>
+    </div>
+    <div class="head" v-else>
+       <div class="info" @click="showDetail = true">
+          <span class="title">群成员({{ chatContent.memberCount || "" }})</span>
+          <img class="icon-arrow" src="@/assets/images/common/right-arrow-a.png" />
+       </div>
+       <img class="icon-delete" src="@/assets/images/common/user-delete.png" />
     </div>
     <ul
       :style="{
@@ -61,7 +69,8 @@ export default {
       pageSize: 40,
       isUpdating: false,
       memberListHeight: 0,
-      memberList: []
+      memberList: [],
+      showDetail: false,
     };
   },
   watch: {
@@ -216,16 +225,61 @@ export default {
 };
 </script>
 <style scoped lang="scss">
+.show-detail {
+  position: absolute;
+  left: 0;
+  top: 0;
+  background: #ffffff;
+  border-top: none !important;
+}
 .comMemberList {
   padding-top: 10px;
   border-top: 10px solid #f5f5f5;
+
+  .head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 10px 10px;
+    box-sizing: border-box;
+
+    .info {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+
+      .title {
+        font-size: 14px;
+        color: #178AFF;
+      }
+
+      .icon-arrow {
+        height: 10px;
+        margin-left: 4px;
+      }
+    }
+
+    .icon-delete {
+      height: 16px;
+      cursor: pointer;
+    }
+  }
 
   > .search {
     height: 30px;
     position: relative;
     background: #f4f6f9;
     border-radius: 4px;
-    margin: 0 25px 10px 10px;
+    margin: 0 30px 10px 30px;
+
+    .cancel {
+      position: absolute;
+      right: -28px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 12px;
+      cursor: pointer;
+    }
 
     > img {
       position: absolute;
@@ -257,7 +311,7 @@ export default {
       height: 20px;
       width: 20px;
       top: 5px;
-      right: -25px;
+      left: -25px;
       cursor: pointer;
 
       &:hover {
@@ -300,7 +354,7 @@ export default {
       > span {
         display: none;
         position: absolute;
-        top: -35px;
+        top: 35px;
         right: 1px;
         line-height: 26px;
         padding: 0 8px;
@@ -311,24 +365,25 @@ export default {
         white-space: nowrap;
         font-size: 12px;
         font-weight: normal;
+        z-index: 9;
 
         &::before,
         &::after {
           position: absolute;
-          bottom: -10px;
+          top: -10px;
           right: 3px;
           display: block;
           font-size: 0;
           line-height: 0;
-          border-color: #3daee9 transparent transparent;
+          border-color: transparent transparent #3daee9;
           border-style: solid;
           border-width: 5px;
           content: "";
         }
 
         &::after {
-          bottom: -9px;
-          border-color: #3daee9 transparent transparent;
+          top: -9px;
+          border-color: transparent transparent #3daee9;
         }
       }
     }

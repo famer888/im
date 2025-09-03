@@ -1463,14 +1463,13 @@ const getQuoteContent = (quoteInfo) => {
  * 弹出提示
  */
 const fnAlertNotification = async (data, chatList) => {
-    console.log("fnAlertNotification--", data, chatList)
     const { deviceConfig } = eventCommon.fnConfigRU();
     const { id, type } = data;
     const { msgType, avatar, content, nickName, remarkName, sendUid } = data;
     const loginId = eventCommon.fnCommonInfoRU({getId: "loginId"});
 
     const isSelf = Number(sendUid) === loginId || !sendUid;
-    console.log("fnAlertNotification--", deviceConfig.isMessageReminderWhenMinimized, !isSelf, !eventCommon.fnDisturbIdStrListRU({ idStrIsExist: id + type }), ![51].includes(msgType))
+    // console.log("fnAlertNotification--", deviceConfig.isMessageReminderWhenMinimized, !isSelf, !eventCommon.fnDisturbIdStrListRU({ idStrIsExist: id + type }), ![51].includes(msgType))
     if (
         deviceConfig.isMessageReminderWhenMinimized &&
         !isSelf &&
