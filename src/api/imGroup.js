@@ -234,3 +234,12 @@ export const groupExit = (data) =>
         url: `${baseUrl()}/group/groupExit`,
         data,
     });
+
+// 删除或增加群成员
+export const manageGroupMember = (data) =>
+    getUrl({
+        protoType: "group",
+        type: "GroupMember",
+        url: `${baseUrl()}/group/groupMember`,
+        data,
+    });

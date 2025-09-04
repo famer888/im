@@ -22,7 +22,7 @@
           <span class="title">群成员({{ chatContent.memberCount || "" }})</span>
           <img class="icon-arrow" src="@/assets/images/common/right-arrow-a.png" />
        </div>
-       <img class="icon-delete" src="@/assets/images/common/user-delete.png" />
+       <img class="icon-delete" v-if="chatContent.memberType === 0" src="@/assets/images/common/user-delete.png" @click="showSelectMemberDialog = true" />
     </div>
     <ul
       :style="{
@@ -51,18 +51,30 @@
         </span>
       </li>
     </ul>
+
+    <ComGroupMemberSelectDilog
+        v-if="showSelectMemberDialog"
+        :memberList="memberInfoList"
+        title="移出"
+        @close="showSelectMemberDialog = false"
+        @confirm="handelRemoveMember"
+    >
+    </ComGroupMemberSelectDilog>
   </section>
 </template>
 <script>
 import _ from "lodash";
 // api
-import { groupEventForceInit } from "@/api/imGroup";
+import { groupEventForceInit, manageGroupMember } from "@/api/imGroup";
 
 // 事件
 import eventBase from "@/event/base";
 
+import ComGroupMemberSelectDilog from "./group-member-select-dialog";
+
 export default {
   props: ["chatContent", "showIndex", "memberInfoList", "friendList"],
+  components: { ComGroupMemberSelectDilog },
   data() {
     return {
       searchText: "",
@@ -71,6 +83,7 @@ export default {
       memberListHeight: 0,
       memberList: [],
       showDetail: false,
+      showSelectMemberDialog: false,
     };
   },
   watch: {
@@ -152,6 +165,25 @@ export default {
         default:
       }
     },
+    handelRemoveMember(members) {
+      console.log('handelRemoveMember--', members)
+      const ids = members.map(item => item.id)
+      const params = {
+        op: 1,
+        groupId: this.chatContent.id,
+        members: ids
+      }
+      manageGroupMember(params).then(res => {
+         const { errCode } = res?.commonResult || {}
+          if (errCode == 200) {
+              window.$toast("移除成功");
+              this.showSelectMemberDialog = false;
+          } else {
+              res?.errorDesc && window.$toast(res.errorDesc);
+          }
+      })
+      console.log('handelRemoveMember--', params)
+    },
     /**
      * 成员的会话框 显示
      */
@@ -229,6 +261,7 @@ export default {
   position: absolute;
   left: 0;
   top: 0;
+  height: 100%;
   background: #ffffff;
   border-top: none !important;
 }
