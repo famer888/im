@@ -18,6 +18,12 @@
         class="search"
         :style="{ 'padding-top': archiveListShow ? '7px' : '45px' }"
       >
+        <img
+            class="icon-back"
+            v-if="isSearchSpecifiedChat"
+            src="@/assets/images/setting/back.png"
+            @click="backClick"
+        />
         <ComSearch
           :searchText="searchText"
           :unreadObj="unreadObj"
@@ -47,7 +53,12 @@
         <span class="unread" v-if="contactsUnreadCount">{{ contactsUnreadCount }}</span>
       </div>
       <section v-if="!searchAddContactsIng">
-        <template v-if="searchText === ''">
+        <ComSearchSpecifiedChat 
+          v-if="isSearchSpecifiedChat"
+          :info="searchSpecifiedChat"
+          :searchText="searchText"
+        />
+        <template v-else-if="searchText === ''">
           <ComChats
             v-if="navType === 0"
             :list="chats"
@@ -101,6 +112,7 @@ import iconGroupNotification from "@/assets/images/logo/group-icon.png";
 
 // 控件
 import ComSearch from "../com/search.vue";
+import ComSearchSpecifiedChat from "./search-specified-chat.vue";
 import ComChats from "./chats";
 import ComNav from "./nav/index";
 import ComSearchAddContacts from "../com/add-contacts/search-add-contacts";
@@ -127,6 +139,7 @@ export default {
     ComSearch,
     ComChats,
     ComSearchAddContacts,
+    ComSearchSpecifiedChat,
     SendHelper: () => import("./send-helper"),
     ComSearchs: () => import("./searchs"),
     ComAddressBook: () => import("./address-book"),
@@ -152,6 +165,7 @@ export default {
       addAction: false,
       searchAddContactsIng: false, // 搜索添加联系人中
       contactsUnreadCount: 0,
+      searchSpecifiedChat: {}, // 搜索指定的聊天
     };
   },
   provide() {
@@ -178,8 +192,17 @@ export default {
       }
       return count;
     },
+    isSearchSpecifiedChat() {
+      return Boolean(this.searchSpecifiedChat?.id)
+    }
   },
   methods: {
+    backClick() {
+      if(this.isSearchSpecifiedChat) {
+        this.searchText = "";
+        this.searchSpecifiedChat = {};
+      }
+    },
     goNewFriendExamine() {
         Cache(`${loginId}-newFriendReqTotal`, {total: 0});
         this.contactsUnreadCount = 0;
@@ -249,6 +272,7 @@ export default {
           "bfAddressSet", // 保存到通讯录
           "msgListPropertyUpdate", // 信息发送成功状态更新
           "updateNewFriendReqTotal", // 新朋友申请待处理总数更新
+          "searchSpecifiedChat", // 搜索指定的聊天窗口记录
         ],
         this.eventHandling
       );
@@ -387,6 +411,10 @@ export default {
         case "updateNewFriendReqTotal":
           // 新好友申请待处理总数
           this.contactsUnreadCount = info?.total || 0;
+          break;
+        case "searchSpecifiedChat":
+          // 搜索指定的聊天窗口记录
+          this.searchSpecifiedChat = info || {};
           break;
         default:
       }
@@ -1308,10 +1336,18 @@ export default {
   flex-direction: column;
   position: relative;
 
+  .icon-back {
+    height: 16px;
+    margin-right: 10px;
+    cursor: pointer;
+  }
+
   > .search {
     // padding-top: 45px;
     padding-bottom: 10px;
     padding-right: 10px;
+    display: flex;
+    align-items: center;
   }
 
   > i {
@@ -1331,6 +1367,7 @@ export default {
   > section {
     flex: 1;
     position: relative;
+    overflow: hidden;
   }
 
   .no-data {

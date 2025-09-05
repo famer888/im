@@ -79,6 +79,33 @@ export default class dbBase {
             })
         );
     }
+
+    searchTable({
+        id,
+        type,
+        searchText
+    }) {
+        const tableName = handleTableNameGet(id, type);
+        return new Promise(async (reject) => {
+            const list = await this.db[tableName]
+                .filter((item) => {
+                    if (typeof item.content === "string") {
+                        return (
+                            [0].includes(item.msgType || item.chatType) &&
+                            item.content &&
+                            item.content
+                                .toUpperCase()
+                                .indexOf(searchText.toUpperCase()) !==
+                                -1 
+                        );
+                    }
+                    return false;
+                })
+                .toArray();
+            return reject({ list });
+        });
+    }
+
     /**
      * 删除指定id列表的数据
      */

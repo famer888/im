@@ -51,6 +51,7 @@
           />
         </div>
       </div>
+      <img class="icon-search" src="@/assets/images/headNav/icon-search-black.png" @click="serachChat"/>
       <div class="more" v-if="![10001, 10005].includes(chatContent.id)" @click.stop="handleChatRightMenuVisibleChange">
         <img src="@/assets/images/system/icon-menu.png" />
       </div>
@@ -141,6 +142,19 @@ export default {
   },
   methods: {
     setMaxLengthStr,
+    serachChat() {
+      const { id, type, pic } = this.chatContent;
+      console.log('chatContent--',this.chatContent)
+      eventBase.fnCommunicationSendMsg({
+          operator: "searchSpecifiedChat",
+          data: {
+              id,
+              type,
+              pic,
+              name: this.name,
+          }
+      });
+    },
     /**
      * 取消选中
      */
@@ -262,6 +276,12 @@ export default {
   position: relative;
   overflow: hidden;
   white-space: nowrap;
+
+  .icon-search {
+    margin-right: 10px;
+    height: 20px;
+    cursor: pointer;
+  }
 
   > img {
     height: 15px;

@@ -22,7 +22,7 @@
           <span class="title">群成员({{ chatContent.memberCount || "" }})</span>
           <img class="icon-arrow" src="@/assets/images/common/right-arrow-a.png" />
        </div>
-       <img class="icon-delete" v-if="chatContent.memberType === 0" src="@/assets/images/common/user-delete.png" @click="showSelectMemberDialog = true" />
+       <img class="icon-delete" v-if="[0, 1].includes(chatContent.memberType)" src="@/assets/images/common/user-delete.png" @click="showSelectMemberDialog = true" />
     </div>
     <ul
       :style="{
