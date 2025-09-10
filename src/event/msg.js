@@ -194,7 +194,7 @@ const fnGroupMsgAdd = async (msg) => {
         id: Number(msg.groupId),
         type,
         msgType: msg.msgType || 0,
-        msgEncryptionVersion: msg.version,
+        msgEncryptionVersion: msg.version || 1,
         content: msg.content,
         attachmentKey: msg.attachmentKey,
     });
@@ -1463,14 +1463,14 @@ const getQuoteContent = (quoteInfo) => {
  * 弹出提示
  */
 const fnAlertNotification = async (data, chatList) => {
-    console.log("fnAlertNotification--", data, chatList)
+    // console.log("fnAlertNotification--", data, chatList)
     const { deviceConfig } = eventCommon.fnConfigRU();
     const { id, type } = data;
     const { msgType, avatar, content, nickName, remarkName, sendUid } = data;
     const loginId = eventCommon.fnCommonInfoRU({getId: "loginId"});
 
     const isSelf = Number(sendUid) === loginId || !sendUid;
-    console.log("fnAlertNotification--", deviceConfig.isMessageReminderWhenMinimized, !isSelf, !eventCommon.fnDisturbIdStrListRU({ idStrIsExist: id + type }), ![51].includes(msgType))
+    // console.log("fnAlertNotification--", deviceConfig.isMessageReminderWhenMinimized, !isSelf, !eventCommon.fnDisturbIdStrListRU({ idStrIsExist: id + type }), ![51].includes(msgType))
     if (
         deviceConfig.isMessageReminderWhenMinimized &&
         !isSelf &&
@@ -1488,9 +1488,9 @@ const fnAlertNotification = async (data, chatList) => {
                 userName: remarkName || nickName || "",
                 name: info.name || info.nickName,
             };
-            console.log("alertNotification--", params)
+            // console.log("alertNotification--", params)
             ipcRenderer.send("alertNotification", {
-                windowId: remote.getCurrentWindow().getMediaSourceId(),
+                // windowId: remote.getCurrentWindow().getMediaSourceId(),
                 ...params,
             });
         }
