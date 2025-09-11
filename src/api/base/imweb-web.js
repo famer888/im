@@ -372,6 +372,7 @@ export const OneToOneMessage = $root.OneToOneMessage = (() => {
      * @property {number|null} [edit] OneToOneMessage edit
      * @property {Array.<ILinkObj>|null} [links] OneToOneMessage links
      * @property {number|Long|null} [sentOverTime] OneToOneMessage sentOverTime
+     * @property {number|null} [channel] OneToOneMessage channel
      */
 
     /**
@@ -567,6 +568,14 @@ export const OneToOneMessage = $root.OneToOneMessage = (() => {
     OneToOneMessage.prototype.sentOverTime = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
 
     /**
+     * OneToOneMessage channel.
+     * @member {number} channel
+     * @memberof OneToOneMessage
+     * @instance
+     */
+    OneToOneMessage.prototype.channel = 0;
+
+    /**
      * Creates a new OneToOneMessage instance using the specified properties.
      * @function create
      * @memberof OneToOneMessage
@@ -635,6 +644,8 @@ export const OneToOneMessage = $root.OneToOneMessage = (() => {
                 $root.LinkObj.encode(message.links[i], writer.uint32(/* id 21, wireType 2 =*/170).fork()).ldelim();
         if (message.sentOverTime != null && Object.hasOwnProperty.call(message, "sentOverTime"))
             writer.uint32(/* id 22, wireType 0 =*/176).int64(message.sentOverTime);
+        if (message.channel != null && Object.hasOwnProperty.call(message, "channel"))
+            writer.uint32(/* id 23, wireType 0 =*/184).int32(message.channel);
         return writer;
     };
 
@@ -759,6 +770,10 @@ export const OneToOneMessage = $root.OneToOneMessage = (() => {
                 }
             case 22: {
                     message.sentOverTime = reader.int64();
+                    break;
+                }
+            case 23: {
+                    message.channel = reader.int32();
                     break;
                 }
             default:
@@ -911,6 +926,9 @@ export const OneToOneMessage = $root.OneToOneMessage = (() => {
         if (message.sentOverTime != null && message.hasOwnProperty("sentOverTime"))
             if (!$util.isInteger(message.sentOverTime) && !(message.sentOverTime && $util.isInteger(message.sentOverTime.low) && $util.isInteger(message.sentOverTime.high)))
                 return "sentOverTime: integer|Long expected";
+        if (message.channel != null && message.hasOwnProperty("channel"))
+            if (!$util.isInteger(message.channel))
+                return "channel: integer expected";
         return null;
     };
 
@@ -1145,6 +1163,8 @@ export const OneToOneMessage = $root.OneToOneMessage = (() => {
                 message.sentOverTime = object.sentOverTime;
             else if (typeof object.sentOverTime === "object")
                 message.sentOverTime = new $util.LongBits(object.sentOverTime.low >>> 0, object.sentOverTime.high >>> 0).toNumber();
+        if (object.channel != null)
+            message.channel = object.channel | 0;
         return message;
     };
 
@@ -1211,6 +1231,7 @@ export const OneToOneMessage = $root.OneToOneMessage = (() => {
                 object.sentOverTime = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
             } else
                 object.sentOverTime = options.longs === String ? "0" : 0;
+            object.channel = 0;
         }
         if (message.msgId != null && message.hasOwnProperty("msgId"))
             if (typeof message.msgId === "number")
@@ -1274,6 +1295,8 @@ export const OneToOneMessage = $root.OneToOneMessage = (() => {
                 object.sentOverTime = options.longs === String ? String(message.sentOverTime) : message.sentOverTime;
             else
                 object.sentOverTime = options.longs === String ? $util.Long.prototype.toString.call(message.sentOverTime) : options.longs === Number ? new $util.LongBits(message.sentOverTime.low >>> 0, message.sentOverTime.high >>> 0).toNumber() : message.sentOverTime;
+        if (message.channel != null && message.hasOwnProperty("channel"))
+            object.channel = message.channel;
         return object;
     };
 
@@ -2216,6 +2239,761 @@ export const GroupMessage = $root.GroupMessage = (() => {
     return GroupMessage;
 })();
 
+export const ChannelMessage = $root.ChannelMessage = (() => {
+
+    /**
+     * Properties of a ChannelMessage.
+     * @exports IChannelMessage
+     * @interface IChannelMessage
+     * @property {number|Long|null} [sendUid] ChannelMessage sendUid
+     * @property {number|Long|null} [channelId] ChannelMessage channelId
+     * @property {MessageType|null} [msgType] ChannelMessage msgType
+     * @property {Uint8Array|null} [content] ChannelMessage content
+     * @property {number|Long|null} [msgId] ChannelMessage msgId
+     * @property {number|null} [readTotal] ChannelMessage readTotal
+     * @property {number|Long|null} [msgTime] ChannelMessage msgTime
+     * @property {number|null} [version] ChannelMessage version
+     * @property {string|null} [contentMd5] ChannelMessage contentMd5
+     * @property {string|null} [attachmentKey] ChannelMessage attachmentKey
+     * @property {Array.<number|Long>|null} [atUids] ChannelMessage atUids
+     * @property {UploadChannelType|null} [channelType] ChannelMessage channelType
+     * @property {number|null} [msgFrom] ChannelMessage msgFrom
+     * @property {Array.<ILinkObj>|null} [links] ChannelMessage links
+     */
+
+    /**
+     * Constructs a new ChannelMessage.
+     * @exports ChannelMessage
+     * @classdesc Represents a ChannelMessage.
+     * @implements IChannelMessage
+     * @constructor
+     * @param {IChannelMessage=} [properties] Properties to set
+     */
+    function ChannelMessage(properties) {
+        this.atUids = [];
+        this.links = [];
+        if (properties)
+            for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                if (properties[keys[i]] != null)
+                    this[keys[i]] = properties[keys[i]];
+    }
+
+    /**
+     * ChannelMessage sendUid.
+     * @member {number|Long} sendUid
+     * @memberof ChannelMessage
+     * @instance
+     */
+    ChannelMessage.prototype.sendUid = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+
+    /**
+     * ChannelMessage channelId.
+     * @member {number|Long} channelId
+     * @memberof ChannelMessage
+     * @instance
+     */
+    ChannelMessage.prototype.channelId = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+
+    /**
+     * ChannelMessage msgType.
+     * @member {MessageType} msgType
+     * @memberof ChannelMessage
+     * @instance
+     */
+    ChannelMessage.prototype.msgType = 0;
+
+    /**
+     * ChannelMessage content.
+     * @member {Uint8Array} content
+     * @memberof ChannelMessage
+     * @instance
+     */
+    ChannelMessage.prototype.content = $util.newBuffer([]);
+
+    /**
+     * ChannelMessage msgId.
+     * @member {number|Long} msgId
+     * @memberof ChannelMessage
+     * @instance
+     */
+    ChannelMessage.prototype.msgId = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+
+    /**
+     * ChannelMessage readTotal.
+     * @member {number} readTotal
+     * @memberof ChannelMessage
+     * @instance
+     */
+    ChannelMessage.prototype.readTotal = 0;
+
+    /**
+     * ChannelMessage msgTime.
+     * @member {number|Long} msgTime
+     * @memberof ChannelMessage
+     * @instance
+     */
+    ChannelMessage.prototype.msgTime = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+
+    /**
+     * ChannelMessage version.
+     * @member {number} version
+     * @memberof ChannelMessage
+     * @instance
+     */
+    ChannelMessage.prototype.version = 0;
+
+    /**
+     * ChannelMessage contentMd5.
+     * @member {string} contentMd5
+     * @memberof ChannelMessage
+     * @instance
+     */
+    ChannelMessage.prototype.contentMd5 = "";
+
+    /**
+     * ChannelMessage attachmentKey.
+     * @member {string} attachmentKey
+     * @memberof ChannelMessage
+     * @instance
+     */
+    ChannelMessage.prototype.attachmentKey = "";
+
+    /**
+     * ChannelMessage atUids.
+     * @member {Array.<number|Long>} atUids
+     * @memberof ChannelMessage
+     * @instance
+     */
+    ChannelMessage.prototype.atUids = $util.emptyArray;
+
+    /**
+     * ChannelMessage channelType.
+     * @member {UploadChannelType} channelType
+     * @memberof ChannelMessage
+     * @instance
+     */
+    ChannelMessage.prototype.channelType = 0;
+
+    /**
+     * ChannelMessage msgFrom.
+     * @member {number} msgFrom
+     * @memberof ChannelMessage
+     * @instance
+     */
+    ChannelMessage.prototype.msgFrom = 0;
+
+    /**
+     * ChannelMessage links.
+     * @member {Array.<ILinkObj>} links
+     * @memberof ChannelMessage
+     * @instance
+     */
+    ChannelMessage.prototype.links = $util.emptyArray;
+
+    /**
+     * Creates a new ChannelMessage instance using the specified properties.
+     * @function create
+     * @memberof ChannelMessage
+     * @static
+     * @param {IChannelMessage=} [properties] Properties to set
+     * @returns {ChannelMessage} ChannelMessage instance
+     */
+    ChannelMessage.create = function create(properties) {
+        return new ChannelMessage(properties);
+    };
+
+    /**
+     * Encodes the specified ChannelMessage message. Does not implicitly {@link ChannelMessage.verify|verify} messages.
+     * @function encode
+     * @memberof ChannelMessage
+     * @static
+     * @param {IChannelMessage} message ChannelMessage message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    ChannelMessage.encode = function encode(message, writer) {
+        if (!writer)
+            writer = $Writer.create();
+        if (message.sendUid != null && Object.hasOwnProperty.call(message, "sendUid"))
+            writer.uint32(/* id 1, wireType 0 =*/8).int64(message.sendUid);
+        if (message.channelId != null && Object.hasOwnProperty.call(message, "channelId"))
+            writer.uint32(/* id 2, wireType 0 =*/16).int64(message.channelId);
+        if (message.msgType != null && Object.hasOwnProperty.call(message, "msgType"))
+            writer.uint32(/* id 3, wireType 0 =*/24).int32(message.msgType);
+        if (message.content != null && Object.hasOwnProperty.call(message, "content"))
+            writer.uint32(/* id 4, wireType 2 =*/34).bytes(message.content);
+        if (message.msgId != null && Object.hasOwnProperty.call(message, "msgId"))
+            writer.uint32(/* id 5, wireType 0 =*/40).int64(message.msgId);
+        if (message.readTotal != null && Object.hasOwnProperty.call(message, "readTotal"))
+            writer.uint32(/* id 6, wireType 0 =*/48).int32(message.readTotal);
+        if (message.msgTime != null && Object.hasOwnProperty.call(message, "msgTime"))
+            writer.uint32(/* id 7, wireType 0 =*/56).int64(message.msgTime);
+        if (message.version != null && Object.hasOwnProperty.call(message, "version"))
+            writer.uint32(/* id 8, wireType 0 =*/64).int32(message.version);
+        if (message.contentMd5 != null && Object.hasOwnProperty.call(message, "contentMd5"))
+            writer.uint32(/* id 9, wireType 2 =*/74).string(message.contentMd5);
+        if (message.attachmentKey != null && Object.hasOwnProperty.call(message, "attachmentKey"))
+            writer.uint32(/* id 10, wireType 2 =*/82).string(message.attachmentKey);
+        if (message.atUids != null && message.atUids.length) {
+            writer.uint32(/* id 11, wireType 2 =*/90).fork();
+            for (let i = 0; i < message.atUids.length; ++i)
+                writer.int64(message.atUids[i]);
+            writer.ldelim();
+        }
+        if (message.channelType != null && Object.hasOwnProperty.call(message, "channelType"))
+            writer.uint32(/* id 12, wireType 0 =*/96).int32(message.channelType);
+        if (message.msgFrom != null && Object.hasOwnProperty.call(message, "msgFrom"))
+            writer.uint32(/* id 13, wireType 0 =*/104).int32(message.msgFrom);
+        if (message.links != null && message.links.length)
+            for (let i = 0; i < message.links.length; ++i)
+                $root.LinkObj.encode(message.links[i], writer.uint32(/* id 14, wireType 2 =*/114).fork()).ldelim();
+        return writer;
+    };
+
+    /**
+     * Encodes the specified ChannelMessage message, length delimited. Does not implicitly {@link ChannelMessage.verify|verify} messages.
+     * @function encodeDelimited
+     * @memberof ChannelMessage
+     * @static
+     * @param {IChannelMessage} message ChannelMessage message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    ChannelMessage.encodeDelimited = function encodeDelimited(message, writer) {
+        return this.encode(message, writer).ldelim();
+    };
+
+    /**
+     * Decodes a ChannelMessage message from the specified reader or buffer.
+     * @function decode
+     * @memberof ChannelMessage
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @param {number} [length] Message length if known beforehand
+     * @returns {ChannelMessage} ChannelMessage
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    ChannelMessage.decode = function decode(reader, length, error) {
+        if (!(reader instanceof $Reader))
+            reader = $Reader.create(reader);
+        let end = length === undefined ? reader.len : reader.pos + length, message = new $root.ChannelMessage();
+        while (reader.pos < end) {
+            let tag = reader.uint32();
+            if (tag === error)
+                break;
+            switch (tag >>> 3) {
+            case 1: {
+                    message.sendUid = reader.int64();
+                    break;
+                }
+            case 2: {
+                    message.channelId = reader.int64();
+                    break;
+                }
+            case 3: {
+                    message.msgType = reader.int32();
+                    break;
+                }
+            case 4: {
+                    message.content = reader.bytes();
+                    break;
+                }
+            case 5: {
+                    message.msgId = reader.int64();
+                    break;
+                }
+            case 6: {
+                    message.readTotal = reader.int32();
+                    break;
+                }
+            case 7: {
+                    message.msgTime = reader.int64();
+                    break;
+                }
+            case 8: {
+                    message.version = reader.int32();
+                    break;
+                }
+            case 9: {
+                    message.contentMd5 = reader.string();
+                    break;
+                }
+            case 10: {
+                    message.attachmentKey = reader.string();
+                    break;
+                }
+            case 11: {
+                    if (!(message.atUids && message.atUids.length))
+                        message.atUids = [];
+                    if ((tag & 7) === 2) {
+                        let end2 = reader.uint32() + reader.pos;
+                        while (reader.pos < end2)
+                            message.atUids.push(reader.int64());
+                    } else
+                        message.atUids.push(reader.int64());
+                    break;
+                }
+            case 12: {
+                    message.channelType = reader.int32();
+                    break;
+                }
+            case 13: {
+                    message.msgFrom = reader.int32();
+                    break;
+                }
+            case 14: {
+                    if (!(message.links && message.links.length))
+                        message.links = [];
+                    message.links.push($root.LinkObj.decode(reader, reader.uint32()));
+                    break;
+                }
+            default:
+                reader.skipType(tag & 7);
+                break;
+            }
+        }
+        return message;
+    };
+
+    /**
+     * Decodes a ChannelMessage message from the specified reader or buffer, length delimited.
+     * @function decodeDelimited
+     * @memberof ChannelMessage
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @returns {ChannelMessage} ChannelMessage
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    ChannelMessage.decodeDelimited = function decodeDelimited(reader) {
+        if (!(reader instanceof $Reader))
+            reader = new $Reader(reader);
+        return this.decode(reader, reader.uint32());
+    };
+
+    /**
+     * Verifies a ChannelMessage message.
+     * @function verify
+     * @memberof ChannelMessage
+     * @static
+     * @param {Object.<string,*>} message Plain object to verify
+     * @returns {string|null} `null` if valid, otherwise the reason why it is not
+     */
+    ChannelMessage.verify = function verify(message) {
+        if (typeof message !== "object" || message === null)
+            return "object expected";
+        if (message.sendUid != null && message.hasOwnProperty("sendUid"))
+            if (!$util.isInteger(message.sendUid) && !(message.sendUid && $util.isInteger(message.sendUid.low) && $util.isInteger(message.sendUid.high)))
+                return "sendUid: integer|Long expected";
+        if (message.channelId != null && message.hasOwnProperty("channelId"))
+            if (!$util.isInteger(message.channelId) && !(message.channelId && $util.isInteger(message.channelId.low) && $util.isInteger(message.channelId.high)))
+                return "channelId: integer|Long expected";
+        if (message.msgType != null && message.hasOwnProperty("msgType"))
+            switch (message.msgType) {
+            default:
+                return "msgType: enum value expected";
+            case 0:
+            case 1:
+            case 2:
+            case 3:
+            case 4:
+            case 5:
+            case 6:
+            case 7:
+            case 8:
+            case 9:
+            case 10:
+            case 11:
+            case 12:
+            case 13:
+            case 14:
+            case 15:
+            case 16:
+            case 17:
+            case 18:
+                break;
+            }
+        if (message.content != null && message.hasOwnProperty("content"))
+            if (!(message.content && typeof message.content.length === "number" || $util.isString(message.content)))
+                return "content: buffer expected";
+        if (message.msgId != null && message.hasOwnProperty("msgId"))
+            if (!$util.isInteger(message.msgId) && !(message.msgId && $util.isInteger(message.msgId.low) && $util.isInteger(message.msgId.high)))
+                return "msgId: integer|Long expected";
+        if (message.readTotal != null && message.hasOwnProperty("readTotal"))
+            if (!$util.isInteger(message.readTotal))
+                return "readTotal: integer expected";
+        if (message.msgTime != null && message.hasOwnProperty("msgTime"))
+            if (!$util.isInteger(message.msgTime) && !(message.msgTime && $util.isInteger(message.msgTime.low) && $util.isInteger(message.msgTime.high)))
+                return "msgTime: integer|Long expected";
+        if (message.version != null && message.hasOwnProperty("version"))
+            if (!$util.isInteger(message.version))
+                return "version: integer expected";
+        if (message.contentMd5 != null && message.hasOwnProperty("contentMd5"))
+            if (!$util.isString(message.contentMd5))
+                return "contentMd5: string expected";
+        if (message.attachmentKey != null && message.hasOwnProperty("attachmentKey"))
+            if (!$util.isString(message.attachmentKey))
+                return "attachmentKey: string expected";
+        if (message.atUids != null && message.hasOwnProperty("atUids")) {
+            if (!Array.isArray(message.atUids))
+                return "atUids: array expected";
+            for (let i = 0; i < message.atUids.length; ++i)
+                if (!$util.isInteger(message.atUids[i]) && !(message.atUids[i] && $util.isInteger(message.atUids[i].low) && $util.isInteger(message.atUids[i].high)))
+                    return "atUids: integer|Long[] expected";
+        }
+        if (message.channelType != null && message.hasOwnProperty("channelType"))
+            switch (message.channelType) {
+            default:
+                return "channelType: enum value expected";
+            case 0:
+            case 1:
+            case 2:
+                break;
+            }
+        if (message.msgFrom != null && message.hasOwnProperty("msgFrom"))
+            if (!$util.isInteger(message.msgFrom))
+                return "msgFrom: integer expected";
+        if (message.links != null && message.hasOwnProperty("links")) {
+            if (!Array.isArray(message.links))
+                return "links: array expected";
+            for (let i = 0; i < message.links.length; ++i) {
+                let error = $root.LinkObj.verify(message.links[i]);
+                if (error)
+                    return "links." + error;
+            }
+        }
+        return null;
+    };
+
+    /**
+     * Creates a ChannelMessage message from a plain object. Also converts values to their respective internal types.
+     * @function fromObject
+     * @memberof ChannelMessage
+     * @static
+     * @param {Object.<string,*>} object Plain object
+     * @returns {ChannelMessage} ChannelMessage
+     */
+    ChannelMessage.fromObject = function fromObject(object) {
+        if (object instanceof $root.ChannelMessage)
+            return object;
+        let message = new $root.ChannelMessage();
+        if (object.sendUid != null)
+            if ($util.Long)
+                (message.sendUid = $util.Long.fromValue(object.sendUid)).unsigned = false;
+            else if (typeof object.sendUid === "string")
+                message.sendUid = parseInt(object.sendUid, 10);
+            else if (typeof object.sendUid === "number")
+                message.sendUid = object.sendUid;
+            else if (typeof object.sendUid === "object")
+                message.sendUid = new $util.LongBits(object.sendUid.low >>> 0, object.sendUid.high >>> 0).toNumber();
+        if (object.channelId != null)
+            if ($util.Long)
+                (message.channelId = $util.Long.fromValue(object.channelId)).unsigned = false;
+            else if (typeof object.channelId === "string")
+                message.channelId = parseInt(object.channelId, 10);
+            else if (typeof object.channelId === "number")
+                message.channelId = object.channelId;
+            else if (typeof object.channelId === "object")
+                message.channelId = new $util.LongBits(object.channelId.low >>> 0, object.channelId.high >>> 0).toNumber();
+        switch (object.msgType) {
+        default:
+            if (typeof object.msgType === "number") {
+                message.msgType = object.msgType;
+                break;
+            }
+            break;
+        case "text":
+        case 0:
+            message.msgType = 0;
+            break;
+        case "image":
+        case 1:
+            message.msgType = 1;
+            break;
+        case "audio":
+        case 2:
+            message.msgType = 2;
+            break;
+        case "video":
+        case 3:
+            message.msgType = 3;
+            break;
+        case "location":
+        case 4:
+            message.msgType = 4;
+            break;
+        case "nameCard":
+        case 5:
+            message.msgType = 5;
+            break;
+        case "system":
+        case 6:
+            message.msgType = 6;
+            break;
+        case "file":
+        case 7:
+            message.msgType = 7;
+            break;
+        case "notice":
+        case 8:
+            message.msgType = 8;
+            break;
+        case "dynamicImage":
+        case 9:
+            message.msgType = 9;
+            break;
+        case "redPacket":
+        case 10:
+            message.msgType = 10;
+            break;
+        case "html":
+        case 11:
+            message.msgType = 11;
+            break;
+        case "setImage":
+        case 12:
+            message.msgType = 12;
+            break;
+        case "chatTransfer":
+        case 13:
+            message.msgType = 13;
+            break;
+        case "chatTransferResult":
+        case 14:
+            message.msgType = 14;
+            break;
+        case "redPacketResult":
+        case 15:
+            message.msgType = 15;
+            break;
+        case "html2":
+        case 16:
+            message.msgType = 16;
+            break;
+        case "mediasCaption":
+        case 17:
+            message.msgType = 17;
+            break;
+        case "animatedGame":
+        case 18:
+            message.msgType = 18;
+            break;
+        }
+        if (object.content != null)
+            if (typeof object.content === "string")
+                $util.base64.decode(object.content, message.content = $util.newBuffer($util.base64.length(object.content)), 0);
+            else if (object.content.length >= 0)
+                message.content = object.content;
+        if (object.msgId != null)
+            if ($util.Long)
+                (message.msgId = $util.Long.fromValue(object.msgId)).unsigned = false;
+            else if (typeof object.msgId === "string")
+                message.msgId = parseInt(object.msgId, 10);
+            else if (typeof object.msgId === "number")
+                message.msgId = object.msgId;
+            else if (typeof object.msgId === "object")
+                message.msgId = new $util.LongBits(object.msgId.low >>> 0, object.msgId.high >>> 0).toNumber();
+        if (object.readTotal != null)
+            message.readTotal = object.readTotal | 0;
+        if (object.msgTime != null)
+            if ($util.Long)
+                (message.msgTime = $util.Long.fromValue(object.msgTime)).unsigned = false;
+            else if (typeof object.msgTime === "string")
+                message.msgTime = parseInt(object.msgTime, 10);
+            else if (typeof object.msgTime === "number")
+                message.msgTime = object.msgTime;
+            else if (typeof object.msgTime === "object")
+                message.msgTime = new $util.LongBits(object.msgTime.low >>> 0, object.msgTime.high >>> 0).toNumber();
+        if (object.version != null)
+            message.version = object.version | 0;
+        if (object.contentMd5 != null)
+            message.contentMd5 = String(object.contentMd5);
+        if (object.attachmentKey != null)
+            message.attachmentKey = String(object.attachmentKey);
+        if (object.atUids) {
+            if (!Array.isArray(object.atUids))
+                throw TypeError(".ChannelMessage.atUids: array expected");
+            message.atUids = [];
+            for (let i = 0; i < object.atUids.length; ++i)
+                if ($util.Long)
+                    (message.atUids[i] = $util.Long.fromValue(object.atUids[i])).unsigned = false;
+                else if (typeof object.atUids[i] === "string")
+                    message.atUids[i] = parseInt(object.atUids[i], 10);
+                else if (typeof object.atUids[i] === "number")
+                    message.atUids[i] = object.atUids[i];
+                else if (typeof object.atUids[i] === "object")
+                    message.atUids[i] = new $util.LongBits(object.atUids[i].low >>> 0, object.atUids[i].high >>> 0).toNumber();
+        }
+        switch (object.channelType) {
+        default:
+            if (typeof object.channelType === "number") {
+                message.channelType = object.channelType;
+                break;
+            }
+            break;
+        case "OSS_DEFAULT":
+        case 0:
+            message.channelType = 0;
+            break;
+        case "OSS_CHAT":
+        case 1:
+            message.channelType = 1;
+            break;
+        case "OSS_LOW_RATE":
+        case 2:
+            message.channelType = 2;
+            break;
+        }
+        if (object.msgFrom != null)
+            message.msgFrom = object.msgFrom | 0;
+        if (object.links) {
+            if (!Array.isArray(object.links))
+                throw TypeError(".ChannelMessage.links: array expected");
+            message.links = [];
+            for (let i = 0; i < object.links.length; ++i) {
+                if (typeof object.links[i] !== "object")
+                    throw TypeError(".ChannelMessage.links: object expected");
+                message.links[i] = $root.LinkObj.fromObject(object.links[i]);
+            }
+        }
+        return message;
+    };
+
+    /**
+     * Creates a plain object from a ChannelMessage message. Also converts values to other types if specified.
+     * @function toObject
+     * @memberof ChannelMessage
+     * @static
+     * @param {ChannelMessage} message ChannelMessage
+     * @param {$protobuf.IConversionOptions} [options] Conversion options
+     * @returns {Object.<string,*>} Plain object
+     */
+    ChannelMessage.toObject = function toObject(message, options) {
+        if (!options)
+            options = {};
+        let object = {};
+        if (options.arrays || options.defaults) {
+            object.atUids = [];
+            object.links = [];
+        }
+        if (options.defaults) {
+            if ($util.Long) {
+                let long = new $util.Long(0, 0, false);
+                object.sendUid = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+            } else
+                object.sendUid = options.longs === String ? "0" : 0;
+            if ($util.Long) {
+                let long = new $util.Long(0, 0, false);
+                object.channelId = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+            } else
+                object.channelId = options.longs === String ? "0" : 0;
+            object.msgType = options.enums === String ? "text" : 0;
+            if (options.bytes === String)
+                object.content = "";
+            else {
+                object.content = [];
+                if (options.bytes !== Array)
+                    object.content = $util.newBuffer(object.content);
+            }
+            if ($util.Long) {
+                let long = new $util.Long(0, 0, false);
+                object.msgId = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+            } else
+                object.msgId = options.longs === String ? "0" : 0;
+            object.readTotal = 0;
+            if ($util.Long) {
+                let long = new $util.Long(0, 0, false);
+                object.msgTime = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+            } else
+                object.msgTime = options.longs === String ? "0" : 0;
+            object.version = 0;
+            object.contentMd5 = "";
+            object.attachmentKey = "";
+            object.channelType = options.enums === String ? "OSS_DEFAULT" : 0;
+            object.msgFrom = 0;
+        }
+        if (message.sendUid != null && message.hasOwnProperty("sendUid"))
+            if (typeof message.sendUid === "number")
+                object.sendUid = options.longs === String ? String(message.sendUid) : message.sendUid;
+            else
+                object.sendUid = options.longs === String ? $util.Long.prototype.toString.call(message.sendUid) : options.longs === Number ? new $util.LongBits(message.sendUid.low >>> 0, message.sendUid.high >>> 0).toNumber() : message.sendUid;
+        if (message.channelId != null && message.hasOwnProperty("channelId"))
+            if (typeof message.channelId === "number")
+                object.channelId = options.longs === String ? String(message.channelId) : message.channelId;
+            else
+                object.channelId = options.longs === String ? $util.Long.prototype.toString.call(message.channelId) : options.longs === Number ? new $util.LongBits(message.channelId.low >>> 0, message.channelId.high >>> 0).toNumber() : message.channelId;
+        if (message.msgType != null && message.hasOwnProperty("msgType"))
+            object.msgType = options.enums === String ? $root.MessageType[message.msgType] === undefined ? message.msgType : $root.MessageType[message.msgType] : message.msgType;
+        if (message.content != null && message.hasOwnProperty("content"))
+            object.content = options.bytes === String ? $util.base64.encode(message.content, 0, message.content.length) : options.bytes === Array ? Array.prototype.slice.call(message.content) : message.content;
+        if (message.msgId != null && message.hasOwnProperty("msgId"))
+            if (typeof message.msgId === "number")
+                object.msgId = options.longs === String ? String(message.msgId) : message.msgId;
+            else
+                object.msgId = options.longs === String ? $util.Long.prototype.toString.call(message.msgId) : options.longs === Number ? new $util.LongBits(message.msgId.low >>> 0, message.msgId.high >>> 0).toNumber() : message.msgId;
+        if (message.readTotal != null && message.hasOwnProperty("readTotal"))
+            object.readTotal = message.readTotal;
+        if (message.msgTime != null && message.hasOwnProperty("msgTime"))
+            if (typeof message.msgTime === "number")
+                object.msgTime = options.longs === String ? String(message.msgTime) : message.msgTime;
+            else
+                object.msgTime = options.longs === String ? $util.Long.prototype.toString.call(message.msgTime) : options.longs === Number ? new $util.LongBits(message.msgTime.low >>> 0, message.msgTime.high >>> 0).toNumber() : message.msgTime;
+        if (message.version != null && message.hasOwnProperty("version"))
+            object.version = message.version;
+        if (message.contentMd5 != null && message.hasOwnProperty("contentMd5"))
+            object.contentMd5 = message.contentMd5;
+        if (message.attachmentKey != null && message.hasOwnProperty("attachmentKey"))
+            object.attachmentKey = message.attachmentKey;
+        if (message.atUids && message.atUids.length) {
+            object.atUids = [];
+            for (let j = 0; j < message.atUids.length; ++j)
+                if (typeof message.atUids[j] === "number")
+                    object.atUids[j] = options.longs === String ? String(message.atUids[j]) : message.atUids[j];
+                else
+                    object.atUids[j] = options.longs === String ? $util.Long.prototype.toString.call(message.atUids[j]) : options.longs === Number ? new $util.LongBits(message.atUids[j].low >>> 0, message.atUids[j].high >>> 0).toNumber() : message.atUids[j];
+        }
+        if (message.channelType != null && message.hasOwnProperty("channelType"))
+            object.channelType = options.enums === String ? $root.UploadChannelType[message.channelType] === undefined ? message.channelType : $root.UploadChannelType[message.channelType] : message.channelType;
+        if (message.msgFrom != null && message.hasOwnProperty("msgFrom"))
+            object.msgFrom = message.msgFrom;
+        if (message.links && message.links.length) {
+            object.links = [];
+            for (let j = 0; j < message.links.length; ++j)
+                object.links[j] = $root.LinkObj.toObject(message.links[j], options);
+        }
+        return object;
+    };
+
+    /**
+     * Converts this ChannelMessage to JSON.
+     * @function toJSON
+     * @memberof ChannelMessage
+     * @instance
+     * @returns {Object.<string,*>} JSON object
+     */
+    ChannelMessage.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+    };
+
+    /**
+     * Gets the default type url for ChannelMessage
+     * @function getTypeUrl
+     * @memberof ChannelMessage
+     * @static
+     * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+     * @returns {string} The default type url
+     */
+    ChannelMessage.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === undefined) {
+            typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/ChannelMessage";
+    };
+
+    return ChannelMessage;
+})();
+
 export const AtUser = $root.AtUser = (() => {
 
     /**
@@ -2825,6 +3603,249 @@ export const RecallMessage = $root.RecallMessage = (() => {
     };
 
     return RecallMessage;
+})();
+
+export const ReadMessage = $root.ReadMessage = (() => {
+
+    /**
+     * Properties of a ReadMessage.
+     * @exports IReadMessage
+     * @interface IReadMessage
+     * @property {number|Long|null} [msgId] ReadMessage msgId
+     * @property {number|null} [total] ReadMessage total
+     */
+
+    /**
+     * Constructs a new ReadMessage.
+     * @exports ReadMessage
+     * @classdesc Represents a ReadMessage.
+     * @implements IReadMessage
+     * @constructor
+     * @param {IReadMessage=} [properties] Properties to set
+     */
+    function ReadMessage(properties) {
+        if (properties)
+            for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                if (properties[keys[i]] != null)
+                    this[keys[i]] = properties[keys[i]];
+    }
+
+    /**
+     * ReadMessage msgId.
+     * @member {number|Long} msgId
+     * @memberof ReadMessage
+     * @instance
+     */
+    ReadMessage.prototype.msgId = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+
+    /**
+     * ReadMessage total.
+     * @member {number} total
+     * @memberof ReadMessage
+     * @instance
+     */
+    ReadMessage.prototype.total = 0;
+
+    /**
+     * Creates a new ReadMessage instance using the specified properties.
+     * @function create
+     * @memberof ReadMessage
+     * @static
+     * @param {IReadMessage=} [properties] Properties to set
+     * @returns {ReadMessage} ReadMessage instance
+     */
+    ReadMessage.create = function create(properties) {
+        return new ReadMessage(properties);
+    };
+
+    /**
+     * Encodes the specified ReadMessage message. Does not implicitly {@link ReadMessage.verify|verify} messages.
+     * @function encode
+     * @memberof ReadMessage
+     * @static
+     * @param {IReadMessage} message ReadMessage message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    ReadMessage.encode = function encode(message, writer) {
+        if (!writer)
+            writer = $Writer.create();
+        if (message.msgId != null && Object.hasOwnProperty.call(message, "msgId"))
+            writer.uint32(/* id 1, wireType 0 =*/8).int64(message.msgId);
+        if (message.total != null && Object.hasOwnProperty.call(message, "total"))
+            writer.uint32(/* id 2, wireType 0 =*/16).int32(message.total);
+        return writer;
+    };
+
+    /**
+     * Encodes the specified ReadMessage message, length delimited. Does not implicitly {@link ReadMessage.verify|verify} messages.
+     * @function encodeDelimited
+     * @memberof ReadMessage
+     * @static
+     * @param {IReadMessage} message ReadMessage message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    ReadMessage.encodeDelimited = function encodeDelimited(message, writer) {
+        return this.encode(message, writer).ldelim();
+    };
+
+    /**
+     * Decodes a ReadMessage message from the specified reader or buffer.
+     * @function decode
+     * @memberof ReadMessage
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @param {number} [length] Message length if known beforehand
+     * @returns {ReadMessage} ReadMessage
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    ReadMessage.decode = function decode(reader, length, error) {
+        if (!(reader instanceof $Reader))
+            reader = $Reader.create(reader);
+        let end = length === undefined ? reader.len : reader.pos + length, message = new $root.ReadMessage();
+        while (reader.pos < end) {
+            let tag = reader.uint32();
+            if (tag === error)
+                break;
+            switch (tag >>> 3) {
+            case 1: {
+                    message.msgId = reader.int64();
+                    break;
+                }
+            case 2: {
+                    message.total = reader.int32();
+                    break;
+                }
+            default:
+                reader.skipType(tag & 7);
+                break;
+            }
+        }
+        return message;
+    };
+
+    /**
+     * Decodes a ReadMessage message from the specified reader or buffer, length delimited.
+     * @function decodeDelimited
+     * @memberof ReadMessage
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @returns {ReadMessage} ReadMessage
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    ReadMessage.decodeDelimited = function decodeDelimited(reader) {
+        if (!(reader instanceof $Reader))
+            reader = new $Reader(reader);
+        return this.decode(reader, reader.uint32());
+    };
+
+    /**
+     * Verifies a ReadMessage message.
+     * @function verify
+     * @memberof ReadMessage
+     * @static
+     * @param {Object.<string,*>} message Plain object to verify
+     * @returns {string|null} `null` if valid, otherwise the reason why it is not
+     */
+    ReadMessage.verify = function verify(message) {
+        if (typeof message !== "object" || message === null)
+            return "object expected";
+        if (message.msgId != null && message.hasOwnProperty("msgId"))
+            if (!$util.isInteger(message.msgId) && !(message.msgId && $util.isInteger(message.msgId.low) && $util.isInteger(message.msgId.high)))
+                return "msgId: integer|Long expected";
+        if (message.total != null && message.hasOwnProperty("total"))
+            if (!$util.isInteger(message.total))
+                return "total: integer expected";
+        return null;
+    };
+
+    /**
+     * Creates a ReadMessage message from a plain object. Also converts values to their respective internal types.
+     * @function fromObject
+     * @memberof ReadMessage
+     * @static
+     * @param {Object.<string,*>} object Plain object
+     * @returns {ReadMessage} ReadMessage
+     */
+    ReadMessage.fromObject = function fromObject(object) {
+        if (object instanceof $root.ReadMessage)
+            return object;
+        let message = new $root.ReadMessage();
+        if (object.msgId != null)
+            if ($util.Long)
+                (message.msgId = $util.Long.fromValue(object.msgId)).unsigned = false;
+            else if (typeof object.msgId === "string")
+                message.msgId = parseInt(object.msgId, 10);
+            else if (typeof object.msgId === "number")
+                message.msgId = object.msgId;
+            else if (typeof object.msgId === "object")
+                message.msgId = new $util.LongBits(object.msgId.low >>> 0, object.msgId.high >>> 0).toNumber();
+        if (object.total != null)
+            message.total = object.total | 0;
+        return message;
+    };
+
+    /**
+     * Creates a plain object from a ReadMessage message. Also converts values to other types if specified.
+     * @function toObject
+     * @memberof ReadMessage
+     * @static
+     * @param {ReadMessage} message ReadMessage
+     * @param {$protobuf.IConversionOptions} [options] Conversion options
+     * @returns {Object.<string,*>} Plain object
+     */
+    ReadMessage.toObject = function toObject(message, options) {
+        if (!options)
+            options = {};
+        let object = {};
+        if (options.defaults) {
+            if ($util.Long) {
+                let long = new $util.Long(0, 0, false);
+                object.msgId = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+            } else
+                object.msgId = options.longs === String ? "0" : 0;
+            object.total = 0;
+        }
+        if (message.msgId != null && message.hasOwnProperty("msgId"))
+            if (typeof message.msgId === "number")
+                object.msgId = options.longs === String ? String(message.msgId) : message.msgId;
+            else
+                object.msgId = options.longs === String ? $util.Long.prototype.toString.call(message.msgId) : options.longs === Number ? new $util.LongBits(message.msgId.low >>> 0, message.msgId.high >>> 0).toNumber() : message.msgId;
+        if (message.total != null && message.hasOwnProperty("total"))
+            object.total = message.total;
+        return object;
+    };
+
+    /**
+     * Converts this ReadMessage to JSON.
+     * @function toJSON
+     * @memberof ReadMessage
+     * @instance
+     * @returns {Object.<string,*>} JSON object
+     */
+    ReadMessage.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+    };
+
+    /**
+     * Gets the default type url for ReadMessage
+     * @function getTypeUrl
+     * @memberof ReadMessage
+     * @static
+     * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+     * @returns {string} The default type url
+     */
+    ReadMessage.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === undefined) {
+            typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/ReadMessage";
+    };
+
+    return ReadMessage;
 })();
 
 /**
@@ -12745,6 +13766,1480 @@ export const PushGroupEventMessage = $root.PushGroupEventMessage = (() => {
     return PushGroupEventMessage;
 })();
 
+export const PushSendChannelMessageSuccessMessage = $root.PushSendChannelMessageSuccessMessage = (() => {
+
+    /**
+     * Properties of a PushSendChannelMessageSuccessMessage.
+     * @exports IPushSendChannelMessageSuccessMessage
+     * @interface IPushSendChannelMessageSuccessMessage
+     * @property {number|Long|null} [flag] PushSendChannelMessageSuccessMessage flag
+     * @property {number|Long|null} [msgId] PushSendChannelMessageSuccessMessage msgId
+     * @property {number|Long|null} [channelId] PushSendChannelMessageSuccessMessage channelId
+     */
+
+    /**
+     * Constructs a new PushSendChannelMessageSuccessMessage.
+     * @exports PushSendChannelMessageSuccessMessage
+     * @classdesc Represents a PushSendChannelMessageSuccessMessage.
+     * @implements IPushSendChannelMessageSuccessMessage
+     * @constructor
+     * @param {IPushSendChannelMessageSuccessMessage=} [properties] Properties to set
+     */
+    function PushSendChannelMessageSuccessMessage(properties) {
+        if (properties)
+            for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                if (properties[keys[i]] != null)
+                    this[keys[i]] = properties[keys[i]];
+    }
+
+    /**
+     * PushSendChannelMessageSuccessMessage flag.
+     * @member {number|Long} flag
+     * @memberof PushSendChannelMessageSuccessMessage
+     * @instance
+     */
+    PushSendChannelMessageSuccessMessage.prototype.flag = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+
+    /**
+     * PushSendChannelMessageSuccessMessage msgId.
+     * @member {number|Long} msgId
+     * @memberof PushSendChannelMessageSuccessMessage
+     * @instance
+     */
+    PushSendChannelMessageSuccessMessage.prototype.msgId = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+
+    /**
+     * PushSendChannelMessageSuccessMessage channelId.
+     * @member {number|Long} channelId
+     * @memberof PushSendChannelMessageSuccessMessage
+     * @instance
+     */
+    PushSendChannelMessageSuccessMessage.prototype.channelId = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+
+    /**
+     * Creates a new PushSendChannelMessageSuccessMessage instance using the specified properties.
+     * @function create
+     * @memberof PushSendChannelMessageSuccessMessage
+     * @static
+     * @param {IPushSendChannelMessageSuccessMessage=} [properties] Properties to set
+     * @returns {PushSendChannelMessageSuccessMessage} PushSendChannelMessageSuccessMessage instance
+     */
+    PushSendChannelMessageSuccessMessage.create = function create(properties) {
+        return new PushSendChannelMessageSuccessMessage(properties);
+    };
+
+    /**
+     * Encodes the specified PushSendChannelMessageSuccessMessage message. Does not implicitly {@link PushSendChannelMessageSuccessMessage.verify|verify} messages.
+     * @function encode
+     * @memberof PushSendChannelMessageSuccessMessage
+     * @static
+     * @param {IPushSendChannelMessageSuccessMessage} message PushSendChannelMessageSuccessMessage message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    PushSendChannelMessageSuccessMessage.encode = function encode(message, writer) {
+        if (!writer)
+            writer = $Writer.create();
+        if (message.flag != null && Object.hasOwnProperty.call(message, "flag"))
+            writer.uint32(/* id 1, wireType 0 =*/8).int64(message.flag);
+        if (message.msgId != null && Object.hasOwnProperty.call(message, "msgId"))
+            writer.uint32(/* id 2, wireType 0 =*/16).int64(message.msgId);
+        if (message.channelId != null && Object.hasOwnProperty.call(message, "channelId"))
+            writer.uint32(/* id 3, wireType 0 =*/24).int64(message.channelId);
+        return writer;
+    };
+
+    /**
+     * Encodes the specified PushSendChannelMessageSuccessMessage message, length delimited. Does not implicitly {@link PushSendChannelMessageSuccessMessage.verify|verify} messages.
+     * @function encodeDelimited
+     * @memberof PushSendChannelMessageSuccessMessage
+     * @static
+     * @param {IPushSendChannelMessageSuccessMessage} message PushSendChannelMessageSuccessMessage message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    PushSendChannelMessageSuccessMessage.encodeDelimited = function encodeDelimited(message, writer) {
+        return this.encode(message, writer).ldelim();
+    };
+
+    /**
+     * Decodes a PushSendChannelMessageSuccessMessage message from the specified reader or buffer.
+     * @function decode
+     * @memberof PushSendChannelMessageSuccessMessage
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @param {number} [length] Message length if known beforehand
+     * @returns {PushSendChannelMessageSuccessMessage} PushSendChannelMessageSuccessMessage
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    PushSendChannelMessageSuccessMessage.decode = function decode(reader, length, error) {
+        if (!(reader instanceof $Reader))
+            reader = $Reader.create(reader);
+        let end = length === undefined ? reader.len : reader.pos + length, message = new $root.PushSendChannelMessageSuccessMessage();
+        while (reader.pos < end) {
+            let tag = reader.uint32();
+            if (tag === error)
+                break;
+            switch (tag >>> 3) {
+            case 1: {
+                    message.flag = reader.int64();
+                    break;
+                }
+            case 2: {
+                    message.msgId = reader.int64();
+                    break;
+                }
+            case 3: {
+                    message.channelId = reader.int64();
+                    break;
+                }
+            default:
+                reader.skipType(tag & 7);
+                break;
+            }
+        }
+        return message;
+    };
+
+    /**
+     * Decodes a PushSendChannelMessageSuccessMessage message from the specified reader or buffer, length delimited.
+     * @function decodeDelimited
+     * @memberof PushSendChannelMessageSuccessMessage
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @returns {PushSendChannelMessageSuccessMessage} PushSendChannelMessageSuccessMessage
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    PushSendChannelMessageSuccessMessage.decodeDelimited = function decodeDelimited(reader) {
+        if (!(reader instanceof $Reader))
+            reader = new $Reader(reader);
+        return this.decode(reader, reader.uint32());
+    };
+
+    /**
+     * Verifies a PushSendChannelMessageSuccessMessage message.
+     * @function verify
+     * @memberof PushSendChannelMessageSuccessMessage
+     * @static
+     * @param {Object.<string,*>} message Plain object to verify
+     * @returns {string|null} `null` if valid, otherwise the reason why it is not
+     */
+    PushSendChannelMessageSuccessMessage.verify = function verify(message) {
+        if (typeof message !== "object" || message === null)
+            return "object expected";
+        if (message.flag != null && message.hasOwnProperty("flag"))
+            if (!$util.isInteger(message.flag) && !(message.flag && $util.isInteger(message.flag.low) && $util.isInteger(message.flag.high)))
+                return "flag: integer|Long expected";
+        if (message.msgId != null && message.hasOwnProperty("msgId"))
+            if (!$util.isInteger(message.msgId) && !(message.msgId && $util.isInteger(message.msgId.low) && $util.isInteger(message.msgId.high)))
+                return "msgId: integer|Long expected";
+        if (message.channelId != null && message.hasOwnProperty("channelId"))
+            if (!$util.isInteger(message.channelId) && !(message.channelId && $util.isInteger(message.channelId.low) && $util.isInteger(message.channelId.high)))
+                return "channelId: integer|Long expected";
+        return null;
+    };
+
+    /**
+     * Creates a PushSendChannelMessageSuccessMessage message from a plain object. Also converts values to their respective internal types.
+     * @function fromObject
+     * @memberof PushSendChannelMessageSuccessMessage
+     * @static
+     * @param {Object.<string,*>} object Plain object
+     * @returns {PushSendChannelMessageSuccessMessage} PushSendChannelMessageSuccessMessage
+     */
+    PushSendChannelMessageSuccessMessage.fromObject = function fromObject(object) {
+        if (object instanceof $root.PushSendChannelMessageSuccessMessage)
+            return object;
+        let message = new $root.PushSendChannelMessageSuccessMessage();
+        if (object.flag != null)
+            if ($util.Long)
+                (message.flag = $util.Long.fromValue(object.flag)).unsigned = false;
+            else if (typeof object.flag === "string")
+                message.flag = parseInt(object.flag, 10);
+            else if (typeof object.flag === "number")
+                message.flag = object.flag;
+            else if (typeof object.flag === "object")
+                message.flag = new $util.LongBits(object.flag.low >>> 0, object.flag.high >>> 0).toNumber();
+        if (object.msgId != null)
+            if ($util.Long)
+                (message.msgId = $util.Long.fromValue(object.msgId)).unsigned = false;
+            else if (typeof object.msgId === "string")
+                message.msgId = parseInt(object.msgId, 10);
+            else if (typeof object.msgId === "number")
+                message.msgId = object.msgId;
+            else if (typeof object.msgId === "object")
+                message.msgId = new $util.LongBits(object.msgId.low >>> 0, object.msgId.high >>> 0).toNumber();
+        if (object.channelId != null)
+            if ($util.Long)
+                (message.channelId = $util.Long.fromValue(object.channelId)).unsigned = false;
+            else if (typeof object.channelId === "string")
+                message.channelId = parseInt(object.channelId, 10);
+            else if (typeof object.channelId === "number")
+                message.channelId = object.channelId;
+            else if (typeof object.channelId === "object")
+                message.channelId = new $util.LongBits(object.channelId.low >>> 0, object.channelId.high >>> 0).toNumber();
+        return message;
+    };
+
+    /**
+     * Creates a plain object from a PushSendChannelMessageSuccessMessage message. Also converts values to other types if specified.
+     * @function toObject
+     * @memberof PushSendChannelMessageSuccessMessage
+     * @static
+     * @param {PushSendChannelMessageSuccessMessage} message PushSendChannelMessageSuccessMessage
+     * @param {$protobuf.IConversionOptions} [options] Conversion options
+     * @returns {Object.<string,*>} Plain object
+     */
+    PushSendChannelMessageSuccessMessage.toObject = function toObject(message, options) {
+        if (!options)
+            options = {};
+        let object = {};
+        if (options.defaults) {
+            if ($util.Long) {
+                let long = new $util.Long(0, 0, false);
+                object.flag = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+            } else
+                object.flag = options.longs === String ? "0" : 0;
+            if ($util.Long) {
+                let long = new $util.Long(0, 0, false);
+                object.msgId = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+            } else
+                object.msgId = options.longs === String ? "0" : 0;
+            if ($util.Long) {
+                let long = new $util.Long(0, 0, false);
+                object.channelId = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+            } else
+                object.channelId = options.longs === String ? "0" : 0;
+        }
+        if (message.flag != null && message.hasOwnProperty("flag"))
+            if (typeof message.flag === "number")
+                object.flag = options.longs === String ? String(message.flag) : message.flag;
+            else
+                object.flag = options.longs === String ? $util.Long.prototype.toString.call(message.flag) : options.longs === Number ? new $util.LongBits(message.flag.low >>> 0, message.flag.high >>> 0).toNumber() : message.flag;
+        if (message.msgId != null && message.hasOwnProperty("msgId"))
+            if (typeof message.msgId === "number")
+                object.msgId = options.longs === String ? String(message.msgId) : message.msgId;
+            else
+                object.msgId = options.longs === String ? $util.Long.prototype.toString.call(message.msgId) : options.longs === Number ? new $util.LongBits(message.msgId.low >>> 0, message.msgId.high >>> 0).toNumber() : message.msgId;
+        if (message.channelId != null && message.hasOwnProperty("channelId"))
+            if (typeof message.channelId === "number")
+                object.channelId = options.longs === String ? String(message.channelId) : message.channelId;
+            else
+                object.channelId = options.longs === String ? $util.Long.prototype.toString.call(message.channelId) : options.longs === Number ? new $util.LongBits(message.channelId.low >>> 0, message.channelId.high >>> 0).toNumber() : message.channelId;
+        return object;
+    };
+
+    /**
+     * Converts this PushSendChannelMessageSuccessMessage to JSON.
+     * @function toJSON
+     * @memberof PushSendChannelMessageSuccessMessage
+     * @instance
+     * @returns {Object.<string,*>} JSON object
+     */
+    PushSendChannelMessageSuccessMessage.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+    };
+
+    /**
+     * Gets the default type url for PushSendChannelMessageSuccessMessage
+     * @function getTypeUrl
+     * @memberof PushSendChannelMessageSuccessMessage
+     * @static
+     * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+     * @returns {string} The default type url
+     */
+    PushSendChannelMessageSuccessMessage.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === undefined) {
+            typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/PushSendChannelMessageSuccessMessage";
+    };
+
+    return PushSendChannelMessageSuccessMessage;
+})();
+
+export const PushSendRecallChannelMessageSuccessMessage = $root.PushSendRecallChannelMessageSuccessMessage = (() => {
+
+    /**
+     * Properties of a PushSendRecallChannelMessageSuccessMessage.
+     * @exports IPushSendRecallChannelMessageSuccessMessage
+     * @interface IPushSendRecallChannelMessageSuccessMessage
+     * @property {number|Long|null} [msgId] PushSendRecallChannelMessageSuccessMessage msgId
+     * @property {IRecallMessage|null} [recallMessage] PushSendRecallChannelMessageSuccessMessage recallMessage
+     */
+
+    /**
+     * Constructs a new PushSendRecallChannelMessageSuccessMessage.
+     * @exports PushSendRecallChannelMessageSuccessMessage
+     * @classdesc Represents a PushSendRecallChannelMessageSuccessMessage.
+     * @implements IPushSendRecallChannelMessageSuccessMessage
+     * @constructor
+     * @param {IPushSendRecallChannelMessageSuccessMessage=} [properties] Properties to set
+     */
+    function PushSendRecallChannelMessageSuccessMessage(properties) {
+        if (properties)
+            for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                if (properties[keys[i]] != null)
+                    this[keys[i]] = properties[keys[i]];
+    }
+
+    /**
+     * PushSendRecallChannelMessageSuccessMessage msgId.
+     * @member {number|Long} msgId
+     * @memberof PushSendRecallChannelMessageSuccessMessage
+     * @instance
+     */
+    PushSendRecallChannelMessageSuccessMessage.prototype.msgId = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+
+    /**
+     * PushSendRecallChannelMessageSuccessMessage recallMessage.
+     * @member {IRecallMessage|null|undefined} recallMessage
+     * @memberof PushSendRecallChannelMessageSuccessMessage
+     * @instance
+     */
+    PushSendRecallChannelMessageSuccessMessage.prototype.recallMessage = null;
+
+    /**
+     * Creates a new PushSendRecallChannelMessageSuccessMessage instance using the specified properties.
+     * @function create
+     * @memberof PushSendRecallChannelMessageSuccessMessage
+     * @static
+     * @param {IPushSendRecallChannelMessageSuccessMessage=} [properties] Properties to set
+     * @returns {PushSendRecallChannelMessageSuccessMessage} PushSendRecallChannelMessageSuccessMessage instance
+     */
+    PushSendRecallChannelMessageSuccessMessage.create = function create(properties) {
+        return new PushSendRecallChannelMessageSuccessMessage(properties);
+    };
+
+    /**
+     * Encodes the specified PushSendRecallChannelMessageSuccessMessage message. Does not implicitly {@link PushSendRecallChannelMessageSuccessMessage.verify|verify} messages.
+     * @function encode
+     * @memberof PushSendRecallChannelMessageSuccessMessage
+     * @static
+     * @param {IPushSendRecallChannelMessageSuccessMessage} message PushSendRecallChannelMessageSuccessMessage message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    PushSendRecallChannelMessageSuccessMessage.encode = function encode(message, writer) {
+        if (!writer)
+            writer = $Writer.create();
+        if (message.msgId != null && Object.hasOwnProperty.call(message, "msgId"))
+            writer.uint32(/* id 1, wireType 0 =*/8).int64(message.msgId);
+        if (message.recallMessage != null && Object.hasOwnProperty.call(message, "recallMessage"))
+            $root.RecallMessage.encode(message.recallMessage, writer.uint32(/* id 2, wireType 2 =*/18).fork()).ldelim();
+        return writer;
+    };
+
+    /**
+     * Encodes the specified PushSendRecallChannelMessageSuccessMessage message, length delimited. Does not implicitly {@link PushSendRecallChannelMessageSuccessMessage.verify|verify} messages.
+     * @function encodeDelimited
+     * @memberof PushSendRecallChannelMessageSuccessMessage
+     * @static
+     * @param {IPushSendRecallChannelMessageSuccessMessage} message PushSendRecallChannelMessageSuccessMessage message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    PushSendRecallChannelMessageSuccessMessage.encodeDelimited = function encodeDelimited(message, writer) {
+        return this.encode(message, writer).ldelim();
+    };
+
+    /**
+     * Decodes a PushSendRecallChannelMessageSuccessMessage message from the specified reader or buffer.
+     * @function decode
+     * @memberof PushSendRecallChannelMessageSuccessMessage
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @param {number} [length] Message length if known beforehand
+     * @returns {PushSendRecallChannelMessageSuccessMessage} PushSendRecallChannelMessageSuccessMessage
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    PushSendRecallChannelMessageSuccessMessage.decode = function decode(reader, length, error) {
+        if (!(reader instanceof $Reader))
+            reader = $Reader.create(reader);
+        let end = length === undefined ? reader.len : reader.pos + length, message = new $root.PushSendRecallChannelMessageSuccessMessage();
+        while (reader.pos < end) {
+            let tag = reader.uint32();
+            if (tag === error)
+                break;
+            switch (tag >>> 3) {
+            case 1: {
+                    message.msgId = reader.int64();
+                    break;
+                }
+            case 2: {
+                    message.recallMessage = $root.RecallMessage.decode(reader, reader.uint32());
+                    break;
+                }
+            default:
+                reader.skipType(tag & 7);
+                break;
+            }
+        }
+        return message;
+    };
+
+    /**
+     * Decodes a PushSendRecallChannelMessageSuccessMessage message from the specified reader or buffer, length delimited.
+     * @function decodeDelimited
+     * @memberof PushSendRecallChannelMessageSuccessMessage
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @returns {PushSendRecallChannelMessageSuccessMessage} PushSendRecallChannelMessageSuccessMessage
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    PushSendRecallChannelMessageSuccessMessage.decodeDelimited = function decodeDelimited(reader) {
+        if (!(reader instanceof $Reader))
+            reader = new $Reader(reader);
+        return this.decode(reader, reader.uint32());
+    };
+
+    /**
+     * Verifies a PushSendRecallChannelMessageSuccessMessage message.
+     * @function verify
+     * @memberof PushSendRecallChannelMessageSuccessMessage
+     * @static
+     * @param {Object.<string,*>} message Plain object to verify
+     * @returns {string|null} `null` if valid, otherwise the reason why it is not
+     */
+    PushSendRecallChannelMessageSuccessMessage.verify = function verify(message) {
+        if (typeof message !== "object" || message === null)
+            return "object expected";
+        if (message.msgId != null && message.hasOwnProperty("msgId"))
+            if (!$util.isInteger(message.msgId) && !(message.msgId && $util.isInteger(message.msgId.low) && $util.isInteger(message.msgId.high)))
+                return "msgId: integer|Long expected";
+        if (message.recallMessage != null && message.hasOwnProperty("recallMessage")) {
+            let error = $root.RecallMessage.verify(message.recallMessage);
+            if (error)
+                return "recallMessage." + error;
+        }
+        return null;
+    };
+
+    /**
+     * Creates a PushSendRecallChannelMessageSuccessMessage message from a plain object. Also converts values to their respective internal types.
+     * @function fromObject
+     * @memberof PushSendRecallChannelMessageSuccessMessage
+     * @static
+     * @param {Object.<string,*>} object Plain object
+     * @returns {PushSendRecallChannelMessageSuccessMessage} PushSendRecallChannelMessageSuccessMessage
+     */
+    PushSendRecallChannelMessageSuccessMessage.fromObject = function fromObject(object) {
+        if (object instanceof $root.PushSendRecallChannelMessageSuccessMessage)
+            return object;
+        let message = new $root.PushSendRecallChannelMessageSuccessMessage();
+        if (object.msgId != null)
+            if ($util.Long)
+                (message.msgId = $util.Long.fromValue(object.msgId)).unsigned = false;
+            else if (typeof object.msgId === "string")
+                message.msgId = parseInt(object.msgId, 10);
+            else if (typeof object.msgId === "number")
+                message.msgId = object.msgId;
+            else if (typeof object.msgId === "object")
+                message.msgId = new $util.LongBits(object.msgId.low >>> 0, object.msgId.high >>> 0).toNumber();
+        if (object.recallMessage != null) {
+            if (typeof object.recallMessage !== "object")
+                throw TypeError(".PushSendRecallChannelMessageSuccessMessage.recallMessage: object expected");
+            message.recallMessage = $root.RecallMessage.fromObject(object.recallMessage);
+        }
+        return message;
+    };
+
+    /**
+     * Creates a plain object from a PushSendRecallChannelMessageSuccessMessage message. Also converts values to other types if specified.
+     * @function toObject
+     * @memberof PushSendRecallChannelMessageSuccessMessage
+     * @static
+     * @param {PushSendRecallChannelMessageSuccessMessage} message PushSendRecallChannelMessageSuccessMessage
+     * @param {$protobuf.IConversionOptions} [options] Conversion options
+     * @returns {Object.<string,*>} Plain object
+     */
+    PushSendRecallChannelMessageSuccessMessage.toObject = function toObject(message, options) {
+        if (!options)
+            options = {};
+        let object = {};
+        if (options.defaults) {
+            if ($util.Long) {
+                let long = new $util.Long(0, 0, false);
+                object.msgId = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+            } else
+                object.msgId = options.longs === String ? "0" : 0;
+            object.recallMessage = null;
+        }
+        if (message.msgId != null && message.hasOwnProperty("msgId"))
+            if (typeof message.msgId === "number")
+                object.msgId = options.longs === String ? String(message.msgId) : message.msgId;
+            else
+                object.msgId = options.longs === String ? $util.Long.prototype.toString.call(message.msgId) : options.longs === Number ? new $util.LongBits(message.msgId.low >>> 0, message.msgId.high >>> 0).toNumber() : message.msgId;
+        if (message.recallMessage != null && message.hasOwnProperty("recallMessage"))
+            object.recallMessage = $root.RecallMessage.toObject(message.recallMessage, options);
+        return object;
+    };
+
+    /**
+     * Converts this PushSendRecallChannelMessageSuccessMessage to JSON.
+     * @function toJSON
+     * @memberof PushSendRecallChannelMessageSuccessMessage
+     * @instance
+     * @returns {Object.<string,*>} JSON object
+     */
+    PushSendRecallChannelMessageSuccessMessage.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+    };
+
+    /**
+     * Gets the default type url for PushSendRecallChannelMessageSuccessMessage
+     * @function getTypeUrl
+     * @memberof PushSendRecallChannelMessageSuccessMessage
+     * @static
+     * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+     * @returns {string} The default type url
+     */
+    PushSendRecallChannelMessageSuccessMessage.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === undefined) {
+            typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/PushSendRecallChannelMessageSuccessMessage";
+    };
+
+    return PushSendRecallChannelMessageSuccessMessage;
+})();
+
+export const PushChannelMessage = $root.PushChannelMessage = (() => {
+
+    /**
+     * Properties of a PushChannelMessage.
+     * @exports IPushChannelMessage
+     * @interface IPushChannelMessage
+     * @property {IChannelMessage|null} [latestChannelMessage] PushChannelMessage latestChannelMessage
+     */
+
+    /**
+     * Constructs a new PushChannelMessage.
+     * @exports PushChannelMessage
+     * @classdesc Represents a PushChannelMessage.
+     * @implements IPushChannelMessage
+     * @constructor
+     * @param {IPushChannelMessage=} [properties] Properties to set
+     */
+    function PushChannelMessage(properties) {
+        if (properties)
+            for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                if (properties[keys[i]] != null)
+                    this[keys[i]] = properties[keys[i]];
+    }
+
+    /**
+     * PushChannelMessage latestChannelMessage.
+     * @member {IChannelMessage|null|undefined} latestChannelMessage
+     * @memberof PushChannelMessage
+     * @instance
+     */
+    PushChannelMessage.prototype.latestChannelMessage = null;
+
+    /**
+     * Creates a new PushChannelMessage instance using the specified properties.
+     * @function create
+     * @memberof PushChannelMessage
+     * @static
+     * @param {IPushChannelMessage=} [properties] Properties to set
+     * @returns {PushChannelMessage} PushChannelMessage instance
+     */
+    PushChannelMessage.create = function create(properties) {
+        return new PushChannelMessage(properties);
+    };
+
+    /**
+     * Encodes the specified PushChannelMessage message. Does not implicitly {@link PushChannelMessage.verify|verify} messages.
+     * @function encode
+     * @memberof PushChannelMessage
+     * @static
+     * @param {IPushChannelMessage} message PushChannelMessage message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    PushChannelMessage.encode = function encode(message, writer) {
+        if (!writer)
+            writer = $Writer.create();
+        if (message.latestChannelMessage != null && Object.hasOwnProperty.call(message, "latestChannelMessage"))
+            $root.ChannelMessage.encode(message.latestChannelMessage, writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
+        return writer;
+    };
+
+    /**
+     * Encodes the specified PushChannelMessage message, length delimited. Does not implicitly {@link PushChannelMessage.verify|verify} messages.
+     * @function encodeDelimited
+     * @memberof PushChannelMessage
+     * @static
+     * @param {IPushChannelMessage} message PushChannelMessage message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    PushChannelMessage.encodeDelimited = function encodeDelimited(message, writer) {
+        return this.encode(message, writer).ldelim();
+    };
+
+    /**
+     * Decodes a PushChannelMessage message from the specified reader or buffer.
+     * @function decode
+     * @memberof PushChannelMessage
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @param {number} [length] Message length if known beforehand
+     * @returns {PushChannelMessage} PushChannelMessage
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    PushChannelMessage.decode = function decode(reader, length, error) {
+        if (!(reader instanceof $Reader))
+            reader = $Reader.create(reader);
+        let end = length === undefined ? reader.len : reader.pos + length, message = new $root.PushChannelMessage();
+        while (reader.pos < end) {
+            let tag = reader.uint32();
+            if (tag === error)
+                break;
+            switch (tag >>> 3) {
+            case 1: {
+                    message.latestChannelMessage = $root.ChannelMessage.decode(reader, reader.uint32());
+                    break;
+                }
+            default:
+                reader.skipType(tag & 7);
+                break;
+            }
+        }
+        return message;
+    };
+
+    /**
+     * Decodes a PushChannelMessage message from the specified reader or buffer, length delimited.
+     * @function decodeDelimited
+     * @memberof PushChannelMessage
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @returns {PushChannelMessage} PushChannelMessage
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    PushChannelMessage.decodeDelimited = function decodeDelimited(reader) {
+        if (!(reader instanceof $Reader))
+            reader = new $Reader(reader);
+        return this.decode(reader, reader.uint32());
+    };
+
+    /**
+     * Verifies a PushChannelMessage message.
+     * @function verify
+     * @memberof PushChannelMessage
+     * @static
+     * @param {Object.<string,*>} message Plain object to verify
+     * @returns {string|null} `null` if valid, otherwise the reason why it is not
+     */
+    PushChannelMessage.verify = function verify(message) {
+        if (typeof message !== "object" || message === null)
+            return "object expected";
+        if (message.latestChannelMessage != null && message.hasOwnProperty("latestChannelMessage")) {
+            let error = $root.ChannelMessage.verify(message.latestChannelMessage);
+            if (error)
+                return "latestChannelMessage." + error;
+        }
+        return null;
+    };
+
+    /**
+     * Creates a PushChannelMessage message from a plain object. Also converts values to their respective internal types.
+     * @function fromObject
+     * @memberof PushChannelMessage
+     * @static
+     * @param {Object.<string,*>} object Plain object
+     * @returns {PushChannelMessage} PushChannelMessage
+     */
+    PushChannelMessage.fromObject = function fromObject(object) {
+        if (object instanceof $root.PushChannelMessage)
+            return object;
+        let message = new $root.PushChannelMessage();
+        if (object.latestChannelMessage != null) {
+            if (typeof object.latestChannelMessage !== "object")
+                throw TypeError(".PushChannelMessage.latestChannelMessage: object expected");
+            message.latestChannelMessage = $root.ChannelMessage.fromObject(object.latestChannelMessage);
+        }
+        return message;
+    };
+
+    /**
+     * Creates a plain object from a PushChannelMessage message. Also converts values to other types if specified.
+     * @function toObject
+     * @memberof PushChannelMessage
+     * @static
+     * @param {PushChannelMessage} message PushChannelMessage
+     * @param {$protobuf.IConversionOptions} [options] Conversion options
+     * @returns {Object.<string,*>} Plain object
+     */
+    PushChannelMessage.toObject = function toObject(message, options) {
+        if (!options)
+            options = {};
+        let object = {};
+        if (options.defaults)
+            object.latestChannelMessage = null;
+        if (message.latestChannelMessage != null && message.hasOwnProperty("latestChannelMessage"))
+            object.latestChannelMessage = $root.ChannelMessage.toObject(message.latestChannelMessage, options);
+        return object;
+    };
+
+    /**
+     * Converts this PushChannelMessage to JSON.
+     * @function toJSON
+     * @memberof PushChannelMessage
+     * @instance
+     * @returns {Object.<string,*>} JSON object
+     */
+    PushChannelMessage.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+    };
+
+    /**
+     * Gets the default type url for PushChannelMessage
+     * @function getTypeUrl
+     * @memberof PushChannelMessage
+     * @static
+     * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+     * @returns {string} The default type url
+     */
+    PushChannelMessage.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === undefined) {
+            typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/PushChannelMessage";
+    };
+
+    return PushChannelMessage;
+})();
+
+export const PushChannelEventMessage = $root.PushChannelEventMessage = (() => {
+
+    /**
+     * Properties of a PushChannelEventMessage.
+     * @exports IPushChannelEventMessage
+     * @interface IPushChannelEventMessage
+     * @property {IChannelEventMessage|null} [latestChannelEventMessage] PushChannelEventMessage latestChannelEventMessage
+     */
+
+    /**
+     * Constructs a new PushChannelEventMessage.
+     * @exports PushChannelEventMessage
+     * @classdesc Represents a PushChannelEventMessage.
+     * @implements IPushChannelEventMessage
+     * @constructor
+     * @param {IPushChannelEventMessage=} [properties] Properties to set
+     */
+    function PushChannelEventMessage(properties) {
+        if (properties)
+            for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                if (properties[keys[i]] != null)
+                    this[keys[i]] = properties[keys[i]];
+    }
+
+    /**
+     * PushChannelEventMessage latestChannelEventMessage.
+     * @member {IChannelEventMessage|null|undefined} latestChannelEventMessage
+     * @memberof PushChannelEventMessage
+     * @instance
+     */
+    PushChannelEventMessage.prototype.latestChannelEventMessage = null;
+
+    /**
+     * Creates a new PushChannelEventMessage instance using the specified properties.
+     * @function create
+     * @memberof PushChannelEventMessage
+     * @static
+     * @param {IPushChannelEventMessage=} [properties] Properties to set
+     * @returns {PushChannelEventMessage} PushChannelEventMessage instance
+     */
+    PushChannelEventMessage.create = function create(properties) {
+        return new PushChannelEventMessage(properties);
+    };
+
+    /**
+     * Encodes the specified PushChannelEventMessage message. Does not implicitly {@link PushChannelEventMessage.verify|verify} messages.
+     * @function encode
+     * @memberof PushChannelEventMessage
+     * @static
+     * @param {IPushChannelEventMessage} message PushChannelEventMessage message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    PushChannelEventMessage.encode = function encode(message, writer) {
+        if (!writer)
+            writer = $Writer.create();
+        if (message.latestChannelEventMessage != null && Object.hasOwnProperty.call(message, "latestChannelEventMessage"))
+            $root.ChannelEventMessage.encode(message.latestChannelEventMessage, writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
+        return writer;
+    };
+
+    /**
+     * Encodes the specified PushChannelEventMessage message, length delimited. Does not implicitly {@link PushChannelEventMessage.verify|verify} messages.
+     * @function encodeDelimited
+     * @memberof PushChannelEventMessage
+     * @static
+     * @param {IPushChannelEventMessage} message PushChannelEventMessage message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    PushChannelEventMessage.encodeDelimited = function encodeDelimited(message, writer) {
+        return this.encode(message, writer).ldelim();
+    };
+
+    /**
+     * Decodes a PushChannelEventMessage message from the specified reader or buffer.
+     * @function decode
+     * @memberof PushChannelEventMessage
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @param {number} [length] Message length if known beforehand
+     * @returns {PushChannelEventMessage} PushChannelEventMessage
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    PushChannelEventMessage.decode = function decode(reader, length, error) {
+        if (!(reader instanceof $Reader))
+            reader = $Reader.create(reader);
+        let end = length === undefined ? reader.len : reader.pos + length, message = new $root.PushChannelEventMessage();
+        while (reader.pos < end) {
+            let tag = reader.uint32();
+            if (tag === error)
+                break;
+            switch (tag >>> 3) {
+            case 1: {
+                    message.latestChannelEventMessage = $root.ChannelEventMessage.decode(reader, reader.uint32());
+                    break;
+                }
+            default:
+                reader.skipType(tag & 7);
+                break;
+            }
+        }
+        return message;
+    };
+
+    /**
+     * Decodes a PushChannelEventMessage message from the specified reader or buffer, length delimited.
+     * @function decodeDelimited
+     * @memberof PushChannelEventMessage
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @returns {PushChannelEventMessage} PushChannelEventMessage
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    PushChannelEventMessage.decodeDelimited = function decodeDelimited(reader) {
+        if (!(reader instanceof $Reader))
+            reader = new $Reader(reader);
+        return this.decode(reader, reader.uint32());
+    };
+
+    /**
+     * Verifies a PushChannelEventMessage message.
+     * @function verify
+     * @memberof PushChannelEventMessage
+     * @static
+     * @param {Object.<string,*>} message Plain object to verify
+     * @returns {string|null} `null` if valid, otherwise the reason why it is not
+     */
+    PushChannelEventMessage.verify = function verify(message) {
+        if (typeof message !== "object" || message === null)
+            return "object expected";
+        if (message.latestChannelEventMessage != null && message.hasOwnProperty("latestChannelEventMessage")) {
+            let error = $root.ChannelEventMessage.verify(message.latestChannelEventMessage);
+            if (error)
+                return "latestChannelEventMessage." + error;
+        }
+        return null;
+    };
+
+    /**
+     * Creates a PushChannelEventMessage message from a plain object. Also converts values to their respective internal types.
+     * @function fromObject
+     * @memberof PushChannelEventMessage
+     * @static
+     * @param {Object.<string,*>} object Plain object
+     * @returns {PushChannelEventMessage} PushChannelEventMessage
+     */
+    PushChannelEventMessage.fromObject = function fromObject(object) {
+        if (object instanceof $root.PushChannelEventMessage)
+            return object;
+        let message = new $root.PushChannelEventMessage();
+        if (object.latestChannelEventMessage != null) {
+            if (typeof object.latestChannelEventMessage !== "object")
+                throw TypeError(".PushChannelEventMessage.latestChannelEventMessage: object expected");
+            message.latestChannelEventMessage = $root.ChannelEventMessage.fromObject(object.latestChannelEventMessage);
+        }
+        return message;
+    };
+
+    /**
+     * Creates a plain object from a PushChannelEventMessage message. Also converts values to other types if specified.
+     * @function toObject
+     * @memberof PushChannelEventMessage
+     * @static
+     * @param {PushChannelEventMessage} message PushChannelEventMessage
+     * @param {$protobuf.IConversionOptions} [options] Conversion options
+     * @returns {Object.<string,*>} Plain object
+     */
+    PushChannelEventMessage.toObject = function toObject(message, options) {
+        if (!options)
+            options = {};
+        let object = {};
+        if (options.defaults)
+            object.latestChannelEventMessage = null;
+        if (message.latestChannelEventMessage != null && message.hasOwnProperty("latestChannelEventMessage"))
+            object.latestChannelEventMessage = $root.ChannelEventMessage.toObject(message.latestChannelEventMessage, options);
+        return object;
+    };
+
+    /**
+     * Converts this PushChannelEventMessage to JSON.
+     * @function toJSON
+     * @memberof PushChannelEventMessage
+     * @instance
+     * @returns {Object.<string,*>} JSON object
+     */
+    PushChannelEventMessage.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+    };
+
+    /**
+     * Gets the default type url for PushChannelEventMessage
+     * @function getTypeUrl
+     * @memberof PushChannelEventMessage
+     * @static
+     * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+     * @returns {string} The default type url
+     */
+    PushChannelEventMessage.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === undefined) {
+            typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/PushChannelEventMessage";
+    };
+
+    return PushChannelEventMessage;
+})();
+
+export const PushRecallChannelMessage = $root.PushRecallChannelMessage = (() => {
+
+    /**
+     * Properties of a PushRecallChannelMessage.
+     * @exports IPushRecallChannelMessage
+     * @interface IPushRecallChannelMessage
+     * @property {number|Long|null} [msgId] PushRecallChannelMessage msgId
+     * @property {IRecallMessage|null} [latestRecallChannelMessage] PushRecallChannelMessage latestRecallChannelMessage
+     */
+
+    /**
+     * Constructs a new PushRecallChannelMessage.
+     * @exports PushRecallChannelMessage
+     * @classdesc Represents a PushRecallChannelMessage.
+     * @implements IPushRecallChannelMessage
+     * @constructor
+     * @param {IPushRecallChannelMessage=} [properties] Properties to set
+     */
+    function PushRecallChannelMessage(properties) {
+        if (properties)
+            for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                if (properties[keys[i]] != null)
+                    this[keys[i]] = properties[keys[i]];
+    }
+
+    /**
+     * PushRecallChannelMessage msgId.
+     * @member {number|Long} msgId
+     * @memberof PushRecallChannelMessage
+     * @instance
+     */
+    PushRecallChannelMessage.prototype.msgId = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+
+    /**
+     * PushRecallChannelMessage latestRecallChannelMessage.
+     * @member {IRecallMessage|null|undefined} latestRecallChannelMessage
+     * @memberof PushRecallChannelMessage
+     * @instance
+     */
+    PushRecallChannelMessage.prototype.latestRecallChannelMessage = null;
+
+    /**
+     * Creates a new PushRecallChannelMessage instance using the specified properties.
+     * @function create
+     * @memberof PushRecallChannelMessage
+     * @static
+     * @param {IPushRecallChannelMessage=} [properties] Properties to set
+     * @returns {PushRecallChannelMessage} PushRecallChannelMessage instance
+     */
+    PushRecallChannelMessage.create = function create(properties) {
+        return new PushRecallChannelMessage(properties);
+    };
+
+    /**
+     * Encodes the specified PushRecallChannelMessage message. Does not implicitly {@link PushRecallChannelMessage.verify|verify} messages.
+     * @function encode
+     * @memberof PushRecallChannelMessage
+     * @static
+     * @param {IPushRecallChannelMessage} message PushRecallChannelMessage message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    PushRecallChannelMessage.encode = function encode(message, writer) {
+        if (!writer)
+            writer = $Writer.create();
+        if (message.msgId != null && Object.hasOwnProperty.call(message, "msgId"))
+            writer.uint32(/* id 1, wireType 0 =*/8).int64(message.msgId);
+        if (message.latestRecallChannelMessage != null && Object.hasOwnProperty.call(message, "latestRecallChannelMessage"))
+            $root.RecallMessage.encode(message.latestRecallChannelMessage, writer.uint32(/* id 2, wireType 2 =*/18).fork()).ldelim();
+        return writer;
+    };
+
+    /**
+     * Encodes the specified PushRecallChannelMessage message, length delimited. Does not implicitly {@link PushRecallChannelMessage.verify|verify} messages.
+     * @function encodeDelimited
+     * @memberof PushRecallChannelMessage
+     * @static
+     * @param {IPushRecallChannelMessage} message PushRecallChannelMessage message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    PushRecallChannelMessage.encodeDelimited = function encodeDelimited(message, writer) {
+        return this.encode(message, writer).ldelim();
+    };
+
+    /**
+     * Decodes a PushRecallChannelMessage message from the specified reader or buffer.
+     * @function decode
+     * @memberof PushRecallChannelMessage
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @param {number} [length] Message length if known beforehand
+     * @returns {PushRecallChannelMessage} PushRecallChannelMessage
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    PushRecallChannelMessage.decode = function decode(reader, length, error) {
+        if (!(reader instanceof $Reader))
+            reader = $Reader.create(reader);
+        let end = length === undefined ? reader.len : reader.pos + length, message = new $root.PushRecallChannelMessage();
+        while (reader.pos < end) {
+            let tag = reader.uint32();
+            if (tag === error)
+                break;
+            switch (tag >>> 3) {
+            case 1: {
+                    message.msgId = reader.int64();
+                    break;
+                }
+            case 2: {
+                    message.latestRecallChannelMessage = $root.RecallMessage.decode(reader, reader.uint32());
+                    break;
+                }
+            default:
+                reader.skipType(tag & 7);
+                break;
+            }
+        }
+        return message;
+    };
+
+    /**
+     * Decodes a PushRecallChannelMessage message from the specified reader or buffer, length delimited.
+     * @function decodeDelimited
+     * @memberof PushRecallChannelMessage
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @returns {PushRecallChannelMessage} PushRecallChannelMessage
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    PushRecallChannelMessage.decodeDelimited = function decodeDelimited(reader) {
+        if (!(reader instanceof $Reader))
+            reader = new $Reader(reader);
+        return this.decode(reader, reader.uint32());
+    };
+
+    /**
+     * Verifies a PushRecallChannelMessage message.
+     * @function verify
+     * @memberof PushRecallChannelMessage
+     * @static
+     * @param {Object.<string,*>} message Plain object to verify
+     * @returns {string|null} `null` if valid, otherwise the reason why it is not
+     */
+    PushRecallChannelMessage.verify = function verify(message) {
+        if (typeof message !== "object" || message === null)
+            return "object expected";
+        if (message.msgId != null && message.hasOwnProperty("msgId"))
+            if (!$util.isInteger(message.msgId) && !(message.msgId && $util.isInteger(message.msgId.low) && $util.isInteger(message.msgId.high)))
+                return "msgId: integer|Long expected";
+        if (message.latestRecallChannelMessage != null && message.hasOwnProperty("latestRecallChannelMessage")) {
+            let error = $root.RecallMessage.verify(message.latestRecallChannelMessage);
+            if (error)
+                return "latestRecallChannelMessage." + error;
+        }
+        return null;
+    };
+
+    /**
+     * Creates a PushRecallChannelMessage message from a plain object. Also converts values to their respective internal types.
+     * @function fromObject
+     * @memberof PushRecallChannelMessage
+     * @static
+     * @param {Object.<string,*>} object Plain object
+     * @returns {PushRecallChannelMessage} PushRecallChannelMessage
+     */
+    PushRecallChannelMessage.fromObject = function fromObject(object) {
+        if (object instanceof $root.PushRecallChannelMessage)
+            return object;
+        let message = new $root.PushRecallChannelMessage();
+        if (object.msgId != null)
+            if ($util.Long)
+                (message.msgId = $util.Long.fromValue(object.msgId)).unsigned = false;
+            else if (typeof object.msgId === "string")
+                message.msgId = parseInt(object.msgId, 10);
+            else if (typeof object.msgId === "number")
+                message.msgId = object.msgId;
+            else if (typeof object.msgId === "object")
+                message.msgId = new $util.LongBits(object.msgId.low >>> 0, object.msgId.high >>> 0).toNumber();
+        if (object.latestRecallChannelMessage != null) {
+            if (typeof object.latestRecallChannelMessage !== "object")
+                throw TypeError(".PushRecallChannelMessage.latestRecallChannelMessage: object expected");
+            message.latestRecallChannelMessage = $root.RecallMessage.fromObject(object.latestRecallChannelMessage);
+        }
+        return message;
+    };
+
+    /**
+     * Creates a plain object from a PushRecallChannelMessage message. Also converts values to other types if specified.
+     * @function toObject
+     * @memberof PushRecallChannelMessage
+     * @static
+     * @param {PushRecallChannelMessage} message PushRecallChannelMessage
+     * @param {$protobuf.IConversionOptions} [options] Conversion options
+     * @returns {Object.<string,*>} Plain object
+     */
+    PushRecallChannelMessage.toObject = function toObject(message, options) {
+        if (!options)
+            options = {};
+        let object = {};
+        if (options.defaults) {
+            if ($util.Long) {
+                let long = new $util.Long(0, 0, false);
+                object.msgId = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+            } else
+                object.msgId = options.longs === String ? "0" : 0;
+            object.latestRecallChannelMessage = null;
+        }
+        if (message.msgId != null && message.hasOwnProperty("msgId"))
+            if (typeof message.msgId === "number")
+                object.msgId = options.longs === String ? String(message.msgId) : message.msgId;
+            else
+                object.msgId = options.longs === String ? $util.Long.prototype.toString.call(message.msgId) : options.longs === Number ? new $util.LongBits(message.msgId.low >>> 0, message.msgId.high >>> 0).toNumber() : message.msgId;
+        if (message.latestRecallChannelMessage != null && message.hasOwnProperty("latestRecallChannelMessage"))
+            object.latestRecallChannelMessage = $root.RecallMessage.toObject(message.latestRecallChannelMessage, options);
+        return object;
+    };
+
+    /**
+     * Converts this PushRecallChannelMessage to JSON.
+     * @function toJSON
+     * @memberof PushRecallChannelMessage
+     * @instance
+     * @returns {Object.<string,*>} JSON object
+     */
+    PushRecallChannelMessage.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+    };
+
+    /**
+     * Gets the default type url for PushRecallChannelMessage
+     * @function getTypeUrl
+     * @memberof PushRecallChannelMessage
+     * @static
+     * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+     * @returns {string} The default type url
+     */
+    PushRecallChannelMessage.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === undefined) {
+            typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/PushRecallChannelMessage";
+    };
+
+    return PushRecallChannelMessage;
+})();
+
+export const PushReadChannelMessage = $root.PushReadChannelMessage = (() => {
+
+    /**
+     * Properties of a PushReadChannelMessage.
+     * @exports IPushReadChannelMessage
+     * @interface IPushReadChannelMessage
+     * @property {number|Long|null} [channelId] PushReadChannelMessage channelId
+     * @property {Array.<IReadMessage>|null} [readChannelMessages] PushReadChannelMessage readChannelMessages
+     */
+
+    /**
+     * Constructs a new PushReadChannelMessage.
+     * @exports PushReadChannelMessage
+     * @classdesc Represents a PushReadChannelMessage.
+     * @implements IPushReadChannelMessage
+     * @constructor
+     * @param {IPushReadChannelMessage=} [properties] Properties to set
+     */
+    function PushReadChannelMessage(properties) {
+        this.readChannelMessages = [];
+        if (properties)
+            for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                if (properties[keys[i]] != null)
+                    this[keys[i]] = properties[keys[i]];
+    }
+
+    /**
+     * PushReadChannelMessage channelId.
+     * @member {number|Long} channelId
+     * @memberof PushReadChannelMessage
+     * @instance
+     */
+    PushReadChannelMessage.prototype.channelId = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+
+    /**
+     * PushReadChannelMessage readChannelMessages.
+     * @member {Array.<IReadMessage>} readChannelMessages
+     * @memberof PushReadChannelMessage
+     * @instance
+     */
+    PushReadChannelMessage.prototype.readChannelMessages = $util.emptyArray;
+
+    /**
+     * Creates a new PushReadChannelMessage instance using the specified properties.
+     * @function create
+     * @memberof PushReadChannelMessage
+     * @static
+     * @param {IPushReadChannelMessage=} [properties] Properties to set
+     * @returns {PushReadChannelMessage} PushReadChannelMessage instance
+     */
+    PushReadChannelMessage.create = function create(properties) {
+        return new PushReadChannelMessage(properties);
+    };
+
+    /**
+     * Encodes the specified PushReadChannelMessage message. Does not implicitly {@link PushReadChannelMessage.verify|verify} messages.
+     * @function encode
+     * @memberof PushReadChannelMessage
+     * @static
+     * @param {IPushReadChannelMessage} message PushReadChannelMessage message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    PushReadChannelMessage.encode = function encode(message, writer) {
+        if (!writer)
+            writer = $Writer.create();
+        if (message.channelId != null && Object.hasOwnProperty.call(message, "channelId"))
+            writer.uint32(/* id 1, wireType 0 =*/8).int64(message.channelId);
+        if (message.readChannelMessages != null && message.readChannelMessages.length)
+            for (let i = 0; i < message.readChannelMessages.length; ++i)
+                $root.ReadMessage.encode(message.readChannelMessages[i], writer.uint32(/* id 2, wireType 2 =*/18).fork()).ldelim();
+        return writer;
+    };
+
+    /**
+     * Encodes the specified PushReadChannelMessage message, length delimited. Does not implicitly {@link PushReadChannelMessage.verify|verify} messages.
+     * @function encodeDelimited
+     * @memberof PushReadChannelMessage
+     * @static
+     * @param {IPushReadChannelMessage} message PushReadChannelMessage message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    PushReadChannelMessage.encodeDelimited = function encodeDelimited(message, writer) {
+        return this.encode(message, writer).ldelim();
+    };
+
+    /**
+     * Decodes a PushReadChannelMessage message from the specified reader or buffer.
+     * @function decode
+     * @memberof PushReadChannelMessage
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @param {number} [length] Message length if known beforehand
+     * @returns {PushReadChannelMessage} PushReadChannelMessage
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    PushReadChannelMessage.decode = function decode(reader, length, error) {
+        if (!(reader instanceof $Reader))
+            reader = $Reader.create(reader);
+        let end = length === undefined ? reader.len : reader.pos + length, message = new $root.PushReadChannelMessage();
+        while (reader.pos < end) {
+            let tag = reader.uint32();
+            if (tag === error)
+                break;
+            switch (tag >>> 3) {
+            case 1: {
+                    message.channelId = reader.int64();
+                    break;
+                }
+            case 2: {
+                    if (!(message.readChannelMessages && message.readChannelMessages.length))
+                        message.readChannelMessages = [];
+                    message.readChannelMessages.push($root.ReadMessage.decode(reader, reader.uint32()));
+                    break;
+                }
+            default:
+                reader.skipType(tag & 7);
+                break;
+            }
+        }
+        return message;
+    };
+
+    /**
+     * Decodes a PushReadChannelMessage message from the specified reader or buffer, length delimited.
+     * @function decodeDelimited
+     * @memberof PushReadChannelMessage
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @returns {PushReadChannelMessage} PushReadChannelMessage
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    PushReadChannelMessage.decodeDelimited = function decodeDelimited(reader) {
+        if (!(reader instanceof $Reader))
+            reader = new $Reader(reader);
+        return this.decode(reader, reader.uint32());
+    };
+
+    /**
+     * Verifies a PushReadChannelMessage message.
+     * @function verify
+     * @memberof PushReadChannelMessage
+     * @static
+     * @param {Object.<string,*>} message Plain object to verify
+     * @returns {string|null} `null` if valid, otherwise the reason why it is not
+     */
+    PushReadChannelMessage.verify = function verify(message) {
+        if (typeof message !== "object" || message === null)
+            return "object expected";
+        if (message.channelId != null && message.hasOwnProperty("channelId"))
+            if (!$util.isInteger(message.channelId) && !(message.channelId && $util.isInteger(message.channelId.low) && $util.isInteger(message.channelId.high)))
+                return "channelId: integer|Long expected";
+        if (message.readChannelMessages != null && message.hasOwnProperty("readChannelMessages")) {
+            if (!Array.isArray(message.readChannelMessages))
+                return "readChannelMessages: array expected";
+            for (let i = 0; i < message.readChannelMessages.length; ++i) {
+                let error = $root.ReadMessage.verify(message.readChannelMessages[i]);
+                if (error)
+                    return "readChannelMessages." + error;
+            }
+        }
+        return null;
+    };
+
+    /**
+     * Creates a PushReadChannelMessage message from a plain object. Also converts values to their respective internal types.
+     * @function fromObject
+     * @memberof PushReadChannelMessage
+     * @static
+     * @param {Object.<string,*>} object Plain object
+     * @returns {PushReadChannelMessage} PushReadChannelMessage
+     */
+    PushReadChannelMessage.fromObject = function fromObject(object) {
+        if (object instanceof $root.PushReadChannelMessage)
+            return object;
+        let message = new $root.PushReadChannelMessage();
+        if (object.channelId != null)
+            if ($util.Long)
+                (message.channelId = $util.Long.fromValue(object.channelId)).unsigned = false;
+            else if (typeof object.channelId === "string")
+                message.channelId = parseInt(object.channelId, 10);
+            else if (typeof object.channelId === "number")
+                message.channelId = object.channelId;
+            else if (typeof object.channelId === "object")
+                message.channelId = new $util.LongBits(object.channelId.low >>> 0, object.channelId.high >>> 0).toNumber();
+        if (object.readChannelMessages) {
+            if (!Array.isArray(object.readChannelMessages))
+                throw TypeError(".PushReadChannelMessage.readChannelMessages: array expected");
+            message.readChannelMessages = [];
+            for (let i = 0; i < object.readChannelMessages.length; ++i) {
+                if (typeof object.readChannelMessages[i] !== "object")
+                    throw TypeError(".PushReadChannelMessage.readChannelMessages: object expected");
+                message.readChannelMessages[i] = $root.ReadMessage.fromObject(object.readChannelMessages[i]);
+            }
+        }
+        return message;
+    };
+
+    /**
+     * Creates a plain object from a PushReadChannelMessage message. Also converts values to other types if specified.
+     * @function toObject
+     * @memberof PushReadChannelMessage
+     * @static
+     * @param {PushReadChannelMessage} message PushReadChannelMessage
+     * @param {$protobuf.IConversionOptions} [options] Conversion options
+     * @returns {Object.<string,*>} Plain object
+     */
+    PushReadChannelMessage.toObject = function toObject(message, options) {
+        if (!options)
+            options = {};
+        let object = {};
+        if (options.arrays || options.defaults)
+            object.readChannelMessages = [];
+        if (options.defaults)
+            if ($util.Long) {
+                let long = new $util.Long(0, 0, false);
+                object.channelId = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+            } else
+                object.channelId = options.longs === String ? "0" : 0;
+        if (message.channelId != null && message.hasOwnProperty("channelId"))
+            if (typeof message.channelId === "number")
+                object.channelId = options.longs === String ? String(message.channelId) : message.channelId;
+            else
+                object.channelId = options.longs === String ? $util.Long.prototype.toString.call(message.channelId) : options.longs === Number ? new $util.LongBits(message.channelId.low >>> 0, message.channelId.high >>> 0).toNumber() : message.channelId;
+        if (message.readChannelMessages && message.readChannelMessages.length) {
+            object.readChannelMessages = [];
+            for (let j = 0; j < message.readChannelMessages.length; ++j)
+                object.readChannelMessages[j] = $root.ReadMessage.toObject(message.readChannelMessages[j], options);
+        }
+        return object;
+    };
+
+    /**
+     * Converts this PushReadChannelMessage to JSON.
+     * @function toJSON
+     * @memberof PushReadChannelMessage
+     * @instance
+     * @returns {Object.<string,*>} JSON object
+     */
+    PushReadChannelMessage.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+    };
+
+    /**
+     * Gets the default type url for PushReadChannelMessage
+     * @function getTypeUrl
+     * @memberof PushReadChannelMessage
+     * @static
+     * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+     * @returns {string} The default type url
+     */
+    PushReadChannelMessage.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === undefined) {
+            typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/PushReadChannelMessage";
+    };
+
+    return PushReadChannelMessage;
+})();
+
 export const TextObj = $root.TextObj = (() => {
 
     /**
@@ -20120,6 +22615,8 @@ export const GroupReqStatus = $root.GroupReqStatus = (() => {
  * @property {number} GROUP_LINK=14 GROUP_LINK value
  * @property {number} GROUP_ALIAS=15 GROUP_ALIAS value
  * @property {number} GROUP_IS_ENABLED=16 GROUP_IS_ENABLED value
+ * @property {number} GROUP_OBSERVE_ADD=17 GROUP_OBSERVE_ADD value
+ * @property {number} GROUP_OBSERVE_REMOVE=18 GROUP_OBSERVE_REMOVE value
  */
 export const GroupReqType = $root.GroupReqType = (() => {
     const valuesById = {}, values = Object.create(valuesById);
@@ -20140,6 +22637,8 @@ export const GroupReqType = $root.GroupReqType = (() => {
     values[valuesById[14] = "GROUP_LINK"] = 14;
     values[valuesById[15] = "GROUP_ALIAS"] = 15;
     values[valuesById[16] = "GROUP_IS_ENABLED"] = 16;
+    values[valuesById[17] = "GROUP_OBSERVE_ADD"] = 17;
+    values[valuesById[18] = "GROUP_OBSERVE_REMOVE"] = 18;
     return values;
 })();
 
@@ -28600,6 +31099,647 @@ export const LinkObj = $root.LinkObj = (() => {
     return LinkObj;
 })();
 
+export const FeeConfig = $root.FeeConfig = (() => {
+
+    /**
+     * Properties of a FeeConfig.
+     * @exports IFeeConfig
+     * @interface IFeeConfig
+     * @property {number|null} [scenesType] FeeConfig scenesType
+     * @property {string|null} [scenesName] FeeConfig scenesName
+     * @property {Array.<ICoinFeeConfig>|null} [feeConfigs] FeeConfig feeConfigs
+     */
+
+    /**
+     * Constructs a new FeeConfig.
+     * @exports FeeConfig
+     * @classdesc Represents a FeeConfig.
+     * @implements IFeeConfig
+     * @constructor
+     * @param {IFeeConfig=} [properties] Properties to set
+     */
+    function FeeConfig(properties) {
+        this.feeConfigs = [];
+        if (properties)
+            for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                if (properties[keys[i]] != null)
+                    this[keys[i]] = properties[keys[i]];
+    }
+
+    /**
+     * FeeConfig scenesType.
+     * @member {number} scenesType
+     * @memberof FeeConfig
+     * @instance
+     */
+    FeeConfig.prototype.scenesType = 0;
+
+    /**
+     * FeeConfig scenesName.
+     * @member {string} scenesName
+     * @memberof FeeConfig
+     * @instance
+     */
+    FeeConfig.prototype.scenesName = "";
+
+    /**
+     * FeeConfig feeConfigs.
+     * @member {Array.<ICoinFeeConfig>} feeConfigs
+     * @memberof FeeConfig
+     * @instance
+     */
+    FeeConfig.prototype.feeConfigs = $util.emptyArray;
+
+    /**
+     * Creates a new FeeConfig instance using the specified properties.
+     * @function create
+     * @memberof FeeConfig
+     * @static
+     * @param {IFeeConfig=} [properties] Properties to set
+     * @returns {FeeConfig} FeeConfig instance
+     */
+    FeeConfig.create = function create(properties) {
+        return new FeeConfig(properties);
+    };
+
+    /**
+     * Encodes the specified FeeConfig message. Does not implicitly {@link FeeConfig.verify|verify} messages.
+     * @function encode
+     * @memberof FeeConfig
+     * @static
+     * @param {IFeeConfig} message FeeConfig message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    FeeConfig.encode = function encode(message, writer) {
+        if (!writer)
+            writer = $Writer.create();
+        if (message.scenesType != null && Object.hasOwnProperty.call(message, "scenesType"))
+            writer.uint32(/* id 2, wireType 0 =*/16).int32(message.scenesType);
+        if (message.scenesName != null && Object.hasOwnProperty.call(message, "scenesName"))
+            writer.uint32(/* id 3, wireType 2 =*/26).string(message.scenesName);
+        if (message.feeConfigs != null && message.feeConfigs.length)
+            for (let i = 0; i < message.feeConfigs.length; ++i)
+                $root.CoinFeeConfig.encode(message.feeConfigs[i], writer.uint32(/* id 4, wireType 2 =*/34).fork()).ldelim();
+        return writer;
+    };
+
+    /**
+     * Encodes the specified FeeConfig message, length delimited. Does not implicitly {@link FeeConfig.verify|verify} messages.
+     * @function encodeDelimited
+     * @memberof FeeConfig
+     * @static
+     * @param {IFeeConfig} message FeeConfig message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    FeeConfig.encodeDelimited = function encodeDelimited(message, writer) {
+        return this.encode(message, writer).ldelim();
+    };
+
+    /**
+     * Decodes a FeeConfig message from the specified reader or buffer.
+     * @function decode
+     * @memberof FeeConfig
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @param {number} [length] Message length if known beforehand
+     * @returns {FeeConfig} FeeConfig
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    FeeConfig.decode = function decode(reader, length, error) {
+        if (!(reader instanceof $Reader))
+            reader = $Reader.create(reader);
+        let end = length === undefined ? reader.len : reader.pos + length, message = new $root.FeeConfig();
+        while (reader.pos < end) {
+            let tag = reader.uint32();
+            if (tag === error)
+                break;
+            switch (tag >>> 3) {
+            case 2: {
+                    message.scenesType = reader.int32();
+                    break;
+                }
+            case 3: {
+                    message.scenesName = reader.string();
+                    break;
+                }
+            case 4: {
+                    if (!(message.feeConfigs && message.feeConfigs.length))
+                        message.feeConfigs = [];
+                    message.feeConfigs.push($root.CoinFeeConfig.decode(reader, reader.uint32()));
+                    break;
+                }
+            default:
+                reader.skipType(tag & 7);
+                break;
+            }
+        }
+        return message;
+    };
+
+    /**
+     * Decodes a FeeConfig message from the specified reader or buffer, length delimited.
+     * @function decodeDelimited
+     * @memberof FeeConfig
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @returns {FeeConfig} FeeConfig
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    FeeConfig.decodeDelimited = function decodeDelimited(reader) {
+        if (!(reader instanceof $Reader))
+            reader = new $Reader(reader);
+        return this.decode(reader, reader.uint32());
+    };
+
+    /**
+     * Verifies a FeeConfig message.
+     * @function verify
+     * @memberof FeeConfig
+     * @static
+     * @param {Object.<string,*>} message Plain object to verify
+     * @returns {string|null} `null` if valid, otherwise the reason why it is not
+     */
+    FeeConfig.verify = function verify(message) {
+        if (typeof message !== "object" || message === null)
+            return "object expected";
+        if (message.scenesType != null && message.hasOwnProperty("scenesType"))
+            if (!$util.isInteger(message.scenesType))
+                return "scenesType: integer expected";
+        if (message.scenesName != null && message.hasOwnProperty("scenesName"))
+            if (!$util.isString(message.scenesName))
+                return "scenesName: string expected";
+        if (message.feeConfigs != null && message.hasOwnProperty("feeConfigs")) {
+            if (!Array.isArray(message.feeConfigs))
+                return "feeConfigs: array expected";
+            for (let i = 0; i < message.feeConfigs.length; ++i) {
+                let error = $root.CoinFeeConfig.verify(message.feeConfigs[i]);
+                if (error)
+                    return "feeConfigs." + error;
+            }
+        }
+        return null;
+    };
+
+    /**
+     * Creates a FeeConfig message from a plain object. Also converts values to their respective internal types.
+     * @function fromObject
+     * @memberof FeeConfig
+     * @static
+     * @param {Object.<string,*>} object Plain object
+     * @returns {FeeConfig} FeeConfig
+     */
+    FeeConfig.fromObject = function fromObject(object) {
+        if (object instanceof $root.FeeConfig)
+            return object;
+        let message = new $root.FeeConfig();
+        if (object.scenesType != null)
+            message.scenesType = object.scenesType | 0;
+        if (object.scenesName != null)
+            message.scenesName = String(object.scenesName);
+        if (object.feeConfigs) {
+            if (!Array.isArray(object.feeConfigs))
+                throw TypeError(".FeeConfig.feeConfigs: array expected");
+            message.feeConfigs = [];
+            for (let i = 0; i < object.feeConfigs.length; ++i) {
+                if (typeof object.feeConfigs[i] !== "object")
+                    throw TypeError(".FeeConfig.feeConfigs: object expected");
+                message.feeConfigs[i] = $root.CoinFeeConfig.fromObject(object.feeConfigs[i]);
+            }
+        }
+        return message;
+    };
+
+    /**
+     * Creates a plain object from a FeeConfig message. Also converts values to other types if specified.
+     * @function toObject
+     * @memberof FeeConfig
+     * @static
+     * @param {FeeConfig} message FeeConfig
+     * @param {$protobuf.IConversionOptions} [options] Conversion options
+     * @returns {Object.<string,*>} Plain object
+     */
+    FeeConfig.toObject = function toObject(message, options) {
+        if (!options)
+            options = {};
+        let object = {};
+        if (options.arrays || options.defaults)
+            object.feeConfigs = [];
+        if (options.defaults) {
+            object.scenesType = 0;
+            object.scenesName = "";
+        }
+        if (message.scenesType != null && message.hasOwnProperty("scenesType"))
+            object.scenesType = message.scenesType;
+        if (message.scenesName != null && message.hasOwnProperty("scenesName"))
+            object.scenesName = message.scenesName;
+        if (message.feeConfigs && message.feeConfigs.length) {
+            object.feeConfigs = [];
+            for (let j = 0; j < message.feeConfigs.length; ++j)
+                object.feeConfigs[j] = $root.CoinFeeConfig.toObject(message.feeConfigs[j], options);
+        }
+        return object;
+    };
+
+    /**
+     * Converts this FeeConfig to JSON.
+     * @function toJSON
+     * @memberof FeeConfig
+     * @instance
+     * @returns {Object.<string,*>} JSON object
+     */
+    FeeConfig.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+    };
+
+    /**
+     * Gets the default type url for FeeConfig
+     * @function getTypeUrl
+     * @memberof FeeConfig
+     * @static
+     * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+     * @returns {string} The default type url
+     */
+    FeeConfig.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === undefined) {
+            typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/FeeConfig";
+    };
+
+    return FeeConfig;
+})();
+
+export const CoinFeeConfig = $root.CoinFeeConfig = (() => {
+
+    /**
+     * Properties of a CoinFeeConfig.
+     * @exports ICoinFeeConfig
+     * @interface ICoinFeeConfig
+     * @property {string|null} [coinName] CoinFeeConfig coinName
+     * @property {string|null} [minFee] CoinFeeConfig minFee
+     * @property {string|null} [maxFee] CoinFeeConfig maxFee
+     * @property {string|null} [baseFee] CoinFeeConfig baseFee
+     * @property {string|null} [feeRate] CoinFeeConfig feeRate
+     * @property {string|null} [fixedFee] CoinFeeConfig fixedFee
+     * @property {number|null} [mathType] CoinFeeConfig mathType
+     * @property {number|null} [feeScale] CoinFeeConfig feeScale
+     */
+
+    /**
+     * Constructs a new CoinFeeConfig.
+     * @exports CoinFeeConfig
+     * @classdesc Represents a CoinFeeConfig.
+     * @implements ICoinFeeConfig
+     * @constructor
+     * @param {ICoinFeeConfig=} [properties] Properties to set
+     */
+    function CoinFeeConfig(properties) {
+        if (properties)
+            for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                if (properties[keys[i]] != null)
+                    this[keys[i]] = properties[keys[i]];
+    }
+
+    /**
+     * CoinFeeConfig coinName.
+     * @member {string} coinName
+     * @memberof CoinFeeConfig
+     * @instance
+     */
+    CoinFeeConfig.prototype.coinName = "";
+
+    /**
+     * CoinFeeConfig minFee.
+     * @member {string} minFee
+     * @memberof CoinFeeConfig
+     * @instance
+     */
+    CoinFeeConfig.prototype.minFee = "";
+
+    /**
+     * CoinFeeConfig maxFee.
+     * @member {string} maxFee
+     * @memberof CoinFeeConfig
+     * @instance
+     */
+    CoinFeeConfig.prototype.maxFee = "";
+
+    /**
+     * CoinFeeConfig baseFee.
+     * @member {string} baseFee
+     * @memberof CoinFeeConfig
+     * @instance
+     */
+    CoinFeeConfig.prototype.baseFee = "";
+
+    /**
+     * CoinFeeConfig feeRate.
+     * @member {string} feeRate
+     * @memberof CoinFeeConfig
+     * @instance
+     */
+    CoinFeeConfig.prototype.feeRate = "";
+
+    /**
+     * CoinFeeConfig fixedFee.
+     * @member {string} fixedFee
+     * @memberof CoinFeeConfig
+     * @instance
+     */
+    CoinFeeConfig.prototype.fixedFee = "";
+
+    /**
+     * CoinFeeConfig mathType.
+     * @member {number} mathType
+     * @memberof CoinFeeConfig
+     * @instance
+     */
+    CoinFeeConfig.prototype.mathType = 0;
+
+    /**
+     * CoinFeeConfig feeScale.
+     * @member {number} feeScale
+     * @memberof CoinFeeConfig
+     * @instance
+     */
+    CoinFeeConfig.prototype.feeScale = 0;
+
+    /**
+     * Creates a new CoinFeeConfig instance using the specified properties.
+     * @function create
+     * @memberof CoinFeeConfig
+     * @static
+     * @param {ICoinFeeConfig=} [properties] Properties to set
+     * @returns {CoinFeeConfig} CoinFeeConfig instance
+     */
+    CoinFeeConfig.create = function create(properties) {
+        return new CoinFeeConfig(properties);
+    };
+
+    /**
+     * Encodes the specified CoinFeeConfig message. Does not implicitly {@link CoinFeeConfig.verify|verify} messages.
+     * @function encode
+     * @memberof CoinFeeConfig
+     * @static
+     * @param {ICoinFeeConfig} message CoinFeeConfig message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    CoinFeeConfig.encode = function encode(message, writer) {
+        if (!writer)
+            writer = $Writer.create();
+        if (message.coinName != null && Object.hasOwnProperty.call(message, "coinName"))
+            writer.uint32(/* id 1, wireType 2 =*/10).string(message.coinName);
+        if (message.minFee != null && Object.hasOwnProperty.call(message, "minFee"))
+            writer.uint32(/* id 2, wireType 2 =*/18).string(message.minFee);
+        if (message.maxFee != null && Object.hasOwnProperty.call(message, "maxFee"))
+            writer.uint32(/* id 3, wireType 2 =*/26).string(message.maxFee);
+        if (message.baseFee != null && Object.hasOwnProperty.call(message, "baseFee"))
+            writer.uint32(/* id 4, wireType 2 =*/34).string(message.baseFee);
+        if (message.feeRate != null && Object.hasOwnProperty.call(message, "feeRate"))
+            writer.uint32(/* id 5, wireType 2 =*/42).string(message.feeRate);
+        if (message.fixedFee != null && Object.hasOwnProperty.call(message, "fixedFee"))
+            writer.uint32(/* id 6, wireType 2 =*/50).string(message.fixedFee);
+        if (message.mathType != null && Object.hasOwnProperty.call(message, "mathType"))
+            writer.uint32(/* id 7, wireType 0 =*/56).int32(message.mathType);
+        if (message.feeScale != null && Object.hasOwnProperty.call(message, "feeScale"))
+            writer.uint32(/* id 8, wireType 0 =*/64).int32(message.feeScale);
+        return writer;
+    };
+
+    /**
+     * Encodes the specified CoinFeeConfig message, length delimited. Does not implicitly {@link CoinFeeConfig.verify|verify} messages.
+     * @function encodeDelimited
+     * @memberof CoinFeeConfig
+     * @static
+     * @param {ICoinFeeConfig} message CoinFeeConfig message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    CoinFeeConfig.encodeDelimited = function encodeDelimited(message, writer) {
+        return this.encode(message, writer).ldelim();
+    };
+
+    /**
+     * Decodes a CoinFeeConfig message from the specified reader or buffer.
+     * @function decode
+     * @memberof CoinFeeConfig
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @param {number} [length] Message length if known beforehand
+     * @returns {CoinFeeConfig} CoinFeeConfig
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    CoinFeeConfig.decode = function decode(reader, length, error) {
+        if (!(reader instanceof $Reader))
+            reader = $Reader.create(reader);
+        let end = length === undefined ? reader.len : reader.pos + length, message = new $root.CoinFeeConfig();
+        while (reader.pos < end) {
+            let tag = reader.uint32();
+            if (tag === error)
+                break;
+            switch (tag >>> 3) {
+            case 1: {
+                    message.coinName = reader.string();
+                    break;
+                }
+            case 2: {
+                    message.minFee = reader.string();
+                    break;
+                }
+            case 3: {
+                    message.maxFee = reader.string();
+                    break;
+                }
+            case 4: {
+                    message.baseFee = reader.string();
+                    break;
+                }
+            case 5: {
+                    message.feeRate = reader.string();
+                    break;
+                }
+            case 6: {
+                    message.fixedFee = reader.string();
+                    break;
+                }
+            case 7: {
+                    message.mathType = reader.int32();
+                    break;
+                }
+            case 8: {
+                    message.feeScale = reader.int32();
+                    break;
+                }
+            default:
+                reader.skipType(tag & 7);
+                break;
+            }
+        }
+        return message;
+    };
+
+    /**
+     * Decodes a CoinFeeConfig message from the specified reader or buffer, length delimited.
+     * @function decodeDelimited
+     * @memberof CoinFeeConfig
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @returns {CoinFeeConfig} CoinFeeConfig
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    CoinFeeConfig.decodeDelimited = function decodeDelimited(reader) {
+        if (!(reader instanceof $Reader))
+            reader = new $Reader(reader);
+        return this.decode(reader, reader.uint32());
+    };
+
+    /**
+     * Verifies a CoinFeeConfig message.
+     * @function verify
+     * @memberof CoinFeeConfig
+     * @static
+     * @param {Object.<string,*>} message Plain object to verify
+     * @returns {string|null} `null` if valid, otherwise the reason why it is not
+     */
+    CoinFeeConfig.verify = function verify(message) {
+        if (typeof message !== "object" || message === null)
+            return "object expected";
+        if (message.coinName != null && message.hasOwnProperty("coinName"))
+            if (!$util.isString(message.coinName))
+                return "coinName: string expected";
+        if (message.minFee != null && message.hasOwnProperty("minFee"))
+            if (!$util.isString(message.minFee))
+                return "minFee: string expected";
+        if (message.maxFee != null && message.hasOwnProperty("maxFee"))
+            if (!$util.isString(message.maxFee))
+                return "maxFee: string expected";
+        if (message.baseFee != null && message.hasOwnProperty("baseFee"))
+            if (!$util.isString(message.baseFee))
+                return "baseFee: string expected";
+        if (message.feeRate != null && message.hasOwnProperty("feeRate"))
+            if (!$util.isString(message.feeRate))
+                return "feeRate: string expected";
+        if (message.fixedFee != null && message.hasOwnProperty("fixedFee"))
+            if (!$util.isString(message.fixedFee))
+                return "fixedFee: string expected";
+        if (message.mathType != null && message.hasOwnProperty("mathType"))
+            if (!$util.isInteger(message.mathType))
+                return "mathType: integer expected";
+        if (message.feeScale != null && message.hasOwnProperty("feeScale"))
+            if (!$util.isInteger(message.feeScale))
+                return "feeScale: integer expected";
+        return null;
+    };
+
+    /**
+     * Creates a CoinFeeConfig message from a plain object. Also converts values to their respective internal types.
+     * @function fromObject
+     * @memberof CoinFeeConfig
+     * @static
+     * @param {Object.<string,*>} object Plain object
+     * @returns {CoinFeeConfig} CoinFeeConfig
+     */
+    CoinFeeConfig.fromObject = function fromObject(object) {
+        if (object instanceof $root.CoinFeeConfig)
+            return object;
+        let message = new $root.CoinFeeConfig();
+        if (object.coinName != null)
+            message.coinName = String(object.coinName);
+        if (object.minFee != null)
+            message.minFee = String(object.minFee);
+        if (object.maxFee != null)
+            message.maxFee = String(object.maxFee);
+        if (object.baseFee != null)
+            message.baseFee = String(object.baseFee);
+        if (object.feeRate != null)
+            message.feeRate = String(object.feeRate);
+        if (object.fixedFee != null)
+            message.fixedFee = String(object.fixedFee);
+        if (object.mathType != null)
+            message.mathType = object.mathType | 0;
+        if (object.feeScale != null)
+            message.feeScale = object.feeScale | 0;
+        return message;
+    };
+
+    /**
+     * Creates a plain object from a CoinFeeConfig message. Also converts values to other types if specified.
+     * @function toObject
+     * @memberof CoinFeeConfig
+     * @static
+     * @param {CoinFeeConfig} message CoinFeeConfig
+     * @param {$protobuf.IConversionOptions} [options] Conversion options
+     * @returns {Object.<string,*>} Plain object
+     */
+    CoinFeeConfig.toObject = function toObject(message, options) {
+        if (!options)
+            options = {};
+        let object = {};
+        if (options.defaults) {
+            object.coinName = "";
+            object.minFee = "";
+            object.maxFee = "";
+            object.baseFee = "";
+            object.feeRate = "";
+            object.fixedFee = "";
+            object.mathType = 0;
+            object.feeScale = 0;
+        }
+        if (message.coinName != null && message.hasOwnProperty("coinName"))
+            object.coinName = message.coinName;
+        if (message.minFee != null && message.hasOwnProperty("minFee"))
+            object.minFee = message.minFee;
+        if (message.maxFee != null && message.hasOwnProperty("maxFee"))
+            object.maxFee = message.maxFee;
+        if (message.baseFee != null && message.hasOwnProperty("baseFee"))
+            object.baseFee = message.baseFee;
+        if (message.feeRate != null && message.hasOwnProperty("feeRate"))
+            object.feeRate = message.feeRate;
+        if (message.fixedFee != null && message.hasOwnProperty("fixedFee"))
+            object.fixedFee = message.fixedFee;
+        if (message.mathType != null && message.hasOwnProperty("mathType"))
+            object.mathType = message.mathType;
+        if (message.feeScale != null && message.hasOwnProperty("feeScale"))
+            object.feeScale = message.feeScale;
+        return object;
+    };
+
+    /**
+     * Converts this CoinFeeConfig to JSON.
+     * @function toJSON
+     * @memberof CoinFeeConfig
+     * @instance
+     * @returns {Object.<string,*>} JSON object
+     */
+    CoinFeeConfig.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+    };
+
+    /**
+     * Gets the default type url for CoinFeeConfig
+     * @function getTypeUrl
+     * @memberof CoinFeeConfig
+     * @static
+     * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+     * @returns {string} The default type url
+     */
+    CoinFeeConfig.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === undefined) {
+            typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/CoinFeeConfig";
+    };
+
+    return CoinFeeConfig;
+})();
+
 export const GroupReqMsgDto = $root.GroupReqMsgDto = (() => {
 
     /**
@@ -29120,6 +32260,8 @@ export const GroupReqMsgDto = $root.GroupReqMsgDto = (() => {
             case 14:
             case 15:
             case 16:
+            case 17:
+            case 18:
                 break;
             }
         if (message.groupReqStatus != null && message.hasOwnProperty("groupReqStatus"))
@@ -29334,6 +32476,14 @@ export const GroupReqMsgDto = $root.GroupReqMsgDto = (() => {
         case "GROUP_IS_ENABLED":
         case 16:
             message.groupReqType = 16;
+            break;
+        case "GROUP_OBSERVE_ADD":
+        case 17:
+            message.groupReqType = 17;
+            break;
+        case "GROUP_OBSERVE_REMOVE":
+        case 18:
+            message.groupReqType = 18;
             break;
         }
         switch (object.groupReqStatus) {
@@ -31081,6 +34231,8 @@ export const GroupReqEventMsgDto = $root.GroupReqEventMsgDto = (() => {
             case 14:
             case 15:
             case 16:
+            case 17:
+            case 18:
                 break;
             }
         if (message.groupReqStatus != null && message.hasOwnProperty("groupReqStatus"))
@@ -31228,6 +34380,14 @@ export const GroupReqEventMsgDto = $root.GroupReqEventMsgDto = (() => {
         case "GROUP_IS_ENABLED":
         case 16:
             message.groupReqType = 16;
+            break;
+        case "GROUP_OBSERVE_ADD":
+        case 17:
+            message.groupReqType = 17;
+            break;
+        case "GROUP_OBSERVE_REMOVE":
+        case 18:
+            message.groupReqType = 18;
             break;
         }
         switch (object.groupReqStatus) {
@@ -33559,6 +36719,1544 @@ export const GroupEventForceInitResp = $root.GroupEventForceInitResp = (() => {
     };
 
     return GroupEventForceInitResp;
+})();
+
+/**
+ * ChannelEventType enum.
+ * @exports ChannelEventType
+ * @enum {number}
+ * @property {number} FORCE_INIT=0 FORCE_INIT value
+ * @property {number} CHANNEL_EVENT=1 CHANNEL_EVENT value
+ * @property {number} CHANNEL_SUBSCRIBER_EVENT=2 CHANNEL_SUBSCRIBER_EVENT value
+ */
+export const ChannelEventType = $root.ChannelEventType = (() => {
+    const valuesById = {}, values = Object.create(valuesById);
+    values[valuesById[0] = "FORCE_INIT"] = 0;
+    values[valuesById[1] = "CHANNEL_EVENT"] = 1;
+    values[valuesById[2] = "CHANNEL_SUBSCRIBER_EVENT"] = 2;
+    return values;
+})();
+
+/**
+ * ChannelOperateType enum.
+ * @exports ChannelOperateType
+ * @enum {number}
+ * @property {number} CHANNEL_CREATE=0 CHANNEL_CREATE value
+ * @property {number} CHANNEL_NAME=1 CHANNEL_NAME value
+ * @property {number} CHANNEL_ICON=2 CHANNEL_ICON value
+ * @property {number} CHANNEL_CONTENT=3 CHANNEL_CONTENT value
+ * @property {number} CHANNEL_REMOVE=4 CHANNEL_REMOVE value
+ * @property {number} CHANNEL_ENABLE=5 CHANNEL_ENABLE value
+ * @property {number} CHANNEL_DISABLE=6 CHANNEL_DISABLE value
+ * @property {number} CHANNEL_DISMISS=7 CHANNEL_DISMISS value
+ */
+export const ChannelOperateType = $root.ChannelOperateType = (() => {
+    const valuesById = {}, values = Object.create(valuesById);
+    values[valuesById[0] = "CHANNEL_CREATE"] = 0;
+    values[valuesById[1] = "CHANNEL_NAME"] = 1;
+    values[valuesById[2] = "CHANNEL_ICON"] = 2;
+    values[valuesById[3] = "CHANNEL_CONTENT"] = 3;
+    values[valuesById[4] = "CHANNEL_REMOVE"] = 4;
+    values[valuesById[5] = "CHANNEL_ENABLE"] = 5;
+    values[valuesById[6] = "CHANNEL_DISABLE"] = 6;
+    values[valuesById[7] = "CHANNEL_DISMISS"] = 7;
+    return values;
+})();
+
+/**
+ * SubscriberOperateType enum.
+ * @exports SubscriberOperateType
+ * @enum {number}
+ * @property {number} SUBSCRIBER_JOIN=0 SUBSCRIBER_JOIN value
+ * @property {number} SUBSCRIBER_PRIVILEGE_UPDATE=1 SUBSCRIBER_PRIVILEGE_UPDATE value
+ * @property {number} SUBSCRIBER_REMOVE=2 SUBSCRIBER_REMOVE value
+ * @property {number} SUBSCRIBER_INVITE=3 SUBSCRIBER_INVITE value
+ */
+export const SubscriberOperateType = $root.SubscriberOperateType = (() => {
+    const valuesById = {}, values = Object.create(valuesById);
+    values[valuesById[0] = "SUBSCRIBER_JOIN"] = 0;
+    values[valuesById[1] = "SUBSCRIBER_PRIVILEGE_UPDATE"] = 1;
+    values[valuesById[2] = "SUBSCRIBER_REMOVE"] = 2;
+    values[valuesById[3] = "SUBSCRIBER_INVITE"] = 3;
+    return values;
+})();
+
+/**
+ * AdminOperateType enum.
+ * @exports AdminOperateType
+ * @enum {number}
+ * @property {number} ADMIN_ADD=0 ADMIN_ADD value
+ * @property {number} ADMIN_DELETE=1 ADMIN_DELETE value
+ */
+export const AdminOperateType = $root.AdminOperateType = (() => {
+    const valuesById = {}, values = Object.create(valuesById);
+    values[valuesById[0] = "ADMIN_ADD"] = 0;
+    values[valuesById[1] = "ADMIN_DELETE"] = 1;
+    return values;
+})();
+
+export const ChannelInfo = $root.ChannelInfo = (() => {
+
+    /**
+     * Properties of a ChannelInfo.
+     * @exports IChannelInfo
+     * @interface IChannelInfo
+     * @property {ChannelOperateType|null} [operateType] ChannelInfo operateType
+     * @property {string|null} [channelName] ChannelInfo channelName
+     * @property {string|null} [icon] ChannelInfo icon
+     * @property {boolean|null} [contentLimit] ChannelInfo contentLimit
+     */
+
+    /**
+     * Constructs a new ChannelInfo.
+     * @exports ChannelInfo
+     * @classdesc Represents a ChannelInfo.
+     * @implements IChannelInfo
+     * @constructor
+     * @param {IChannelInfo=} [properties] Properties to set
+     */
+    function ChannelInfo(properties) {
+        if (properties)
+            for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                if (properties[keys[i]] != null)
+                    this[keys[i]] = properties[keys[i]];
+    }
+
+    /**
+     * ChannelInfo operateType.
+     * @member {ChannelOperateType} operateType
+     * @memberof ChannelInfo
+     * @instance
+     */
+    ChannelInfo.prototype.operateType = 0;
+
+    /**
+     * ChannelInfo channelName.
+     * @member {string} channelName
+     * @memberof ChannelInfo
+     * @instance
+     */
+    ChannelInfo.prototype.channelName = "";
+
+    /**
+     * ChannelInfo icon.
+     * @member {string} icon
+     * @memberof ChannelInfo
+     * @instance
+     */
+    ChannelInfo.prototype.icon = "";
+
+    /**
+     * ChannelInfo contentLimit.
+     * @member {boolean} contentLimit
+     * @memberof ChannelInfo
+     * @instance
+     */
+    ChannelInfo.prototype.contentLimit = false;
+
+    /**
+     * Creates a new ChannelInfo instance using the specified properties.
+     * @function create
+     * @memberof ChannelInfo
+     * @static
+     * @param {IChannelInfo=} [properties] Properties to set
+     * @returns {ChannelInfo} ChannelInfo instance
+     */
+    ChannelInfo.create = function create(properties) {
+        return new ChannelInfo(properties);
+    };
+
+    /**
+     * Encodes the specified ChannelInfo message. Does not implicitly {@link ChannelInfo.verify|verify} messages.
+     * @function encode
+     * @memberof ChannelInfo
+     * @static
+     * @param {IChannelInfo} message ChannelInfo message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    ChannelInfo.encode = function encode(message, writer) {
+        if (!writer)
+            writer = $Writer.create();
+        if (message.operateType != null && Object.hasOwnProperty.call(message, "operateType"))
+            writer.uint32(/* id 1, wireType 0 =*/8).int32(message.operateType);
+        if (message.channelName != null && Object.hasOwnProperty.call(message, "channelName"))
+            writer.uint32(/* id 2, wireType 2 =*/18).string(message.channelName);
+        if (message.icon != null && Object.hasOwnProperty.call(message, "icon"))
+            writer.uint32(/* id 3, wireType 2 =*/26).string(message.icon);
+        if (message.contentLimit != null && Object.hasOwnProperty.call(message, "contentLimit"))
+            writer.uint32(/* id 4, wireType 0 =*/32).bool(message.contentLimit);
+        return writer;
+    };
+
+    /**
+     * Encodes the specified ChannelInfo message, length delimited. Does not implicitly {@link ChannelInfo.verify|verify} messages.
+     * @function encodeDelimited
+     * @memberof ChannelInfo
+     * @static
+     * @param {IChannelInfo} message ChannelInfo message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    ChannelInfo.encodeDelimited = function encodeDelimited(message, writer) {
+        return this.encode(message, writer).ldelim();
+    };
+
+    /**
+     * Decodes a ChannelInfo message from the specified reader or buffer.
+     * @function decode
+     * @memberof ChannelInfo
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @param {number} [length] Message length if known beforehand
+     * @returns {ChannelInfo} ChannelInfo
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    ChannelInfo.decode = function decode(reader, length, error) {
+        if (!(reader instanceof $Reader))
+            reader = $Reader.create(reader);
+        let end = length === undefined ? reader.len : reader.pos + length, message = new $root.ChannelInfo();
+        while (reader.pos < end) {
+            let tag = reader.uint32();
+            if (tag === error)
+                break;
+            switch (tag >>> 3) {
+            case 1: {
+                    message.operateType = reader.int32();
+                    break;
+                }
+            case 2: {
+                    message.channelName = reader.string();
+                    break;
+                }
+            case 3: {
+                    message.icon = reader.string();
+                    break;
+                }
+            case 4: {
+                    message.contentLimit = reader.bool();
+                    break;
+                }
+            default:
+                reader.skipType(tag & 7);
+                break;
+            }
+        }
+        return message;
+    };
+
+    /**
+     * Decodes a ChannelInfo message from the specified reader or buffer, length delimited.
+     * @function decodeDelimited
+     * @memberof ChannelInfo
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @returns {ChannelInfo} ChannelInfo
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    ChannelInfo.decodeDelimited = function decodeDelimited(reader) {
+        if (!(reader instanceof $Reader))
+            reader = new $Reader(reader);
+        return this.decode(reader, reader.uint32());
+    };
+
+    /**
+     * Verifies a ChannelInfo message.
+     * @function verify
+     * @memberof ChannelInfo
+     * @static
+     * @param {Object.<string,*>} message Plain object to verify
+     * @returns {string|null} `null` if valid, otherwise the reason why it is not
+     */
+    ChannelInfo.verify = function verify(message) {
+        if (typeof message !== "object" || message === null)
+            return "object expected";
+        if (message.operateType != null && message.hasOwnProperty("operateType"))
+            switch (message.operateType) {
+            default:
+                return "operateType: enum value expected";
+            case 0:
+            case 1:
+            case 2:
+            case 3:
+            case 4:
+            case 5:
+            case 6:
+            case 7:
+                break;
+            }
+        if (message.channelName != null && message.hasOwnProperty("channelName"))
+            if (!$util.isString(message.channelName))
+                return "channelName: string expected";
+        if (message.icon != null && message.hasOwnProperty("icon"))
+            if (!$util.isString(message.icon))
+                return "icon: string expected";
+        if (message.contentLimit != null && message.hasOwnProperty("contentLimit"))
+            if (typeof message.contentLimit !== "boolean")
+                return "contentLimit: boolean expected";
+        return null;
+    };
+
+    /**
+     * Creates a ChannelInfo message from a plain object. Also converts values to their respective internal types.
+     * @function fromObject
+     * @memberof ChannelInfo
+     * @static
+     * @param {Object.<string,*>} object Plain object
+     * @returns {ChannelInfo} ChannelInfo
+     */
+    ChannelInfo.fromObject = function fromObject(object) {
+        if (object instanceof $root.ChannelInfo)
+            return object;
+        let message = new $root.ChannelInfo();
+        switch (object.operateType) {
+        default:
+            if (typeof object.operateType === "number") {
+                message.operateType = object.operateType;
+                break;
+            }
+            break;
+        case "CHANNEL_CREATE":
+        case 0:
+            message.operateType = 0;
+            break;
+        case "CHANNEL_NAME":
+        case 1:
+            message.operateType = 1;
+            break;
+        case "CHANNEL_ICON":
+        case 2:
+            message.operateType = 2;
+            break;
+        case "CHANNEL_CONTENT":
+        case 3:
+            message.operateType = 3;
+            break;
+        case "CHANNEL_REMOVE":
+        case 4:
+            message.operateType = 4;
+            break;
+        case "CHANNEL_ENABLE":
+        case 5:
+            message.operateType = 5;
+            break;
+        case "CHANNEL_DISABLE":
+        case 6:
+            message.operateType = 6;
+            break;
+        case "CHANNEL_DISMISS":
+        case 7:
+            message.operateType = 7;
+            break;
+        }
+        if (object.channelName != null)
+            message.channelName = String(object.channelName);
+        if (object.icon != null)
+            message.icon = String(object.icon);
+        if (object.contentLimit != null)
+            message.contentLimit = Boolean(object.contentLimit);
+        return message;
+    };
+
+    /**
+     * Creates a plain object from a ChannelInfo message. Also converts values to other types if specified.
+     * @function toObject
+     * @memberof ChannelInfo
+     * @static
+     * @param {ChannelInfo} message ChannelInfo
+     * @param {$protobuf.IConversionOptions} [options] Conversion options
+     * @returns {Object.<string,*>} Plain object
+     */
+    ChannelInfo.toObject = function toObject(message, options) {
+        if (!options)
+            options = {};
+        let object = {};
+        if (options.defaults) {
+            object.operateType = options.enums === String ? "CHANNEL_CREATE" : 0;
+            object.channelName = "";
+            object.icon = "";
+            object.contentLimit = false;
+        }
+        if (message.operateType != null && message.hasOwnProperty("operateType"))
+            object.operateType = options.enums === String ? $root.ChannelOperateType[message.operateType] === undefined ? message.operateType : $root.ChannelOperateType[message.operateType] : message.operateType;
+        if (message.channelName != null && message.hasOwnProperty("channelName"))
+            object.channelName = message.channelName;
+        if (message.icon != null && message.hasOwnProperty("icon"))
+            object.icon = message.icon;
+        if (message.contentLimit != null && message.hasOwnProperty("contentLimit"))
+            object.contentLimit = message.contentLimit;
+        return object;
+    };
+
+    /**
+     * Converts this ChannelInfo to JSON.
+     * @function toJSON
+     * @memberof ChannelInfo
+     * @instance
+     * @returns {Object.<string,*>} JSON object
+     */
+    ChannelInfo.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+    };
+
+    /**
+     * Gets the default type url for ChannelInfo
+     * @function getTypeUrl
+     * @memberof ChannelInfo
+     * @static
+     * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+     * @returns {string} The default type url
+     */
+    ChannelInfo.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === undefined) {
+            typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/ChannelInfo";
+    };
+
+    return ChannelInfo;
+})();
+
+/**
+ * SubscriberRole enum.
+ * @exports SubscriberRole
+ * @enum {number}
+ * @property {number} OWNER=0 OWNER value
+ * @property {number} ADMIN=1 ADMIN value
+ * @property {number} NONE=2 NONE value
+ */
+export const SubscriberRole = $root.SubscriberRole = (() => {
+    const valuesById = {}, values = Object.create(valuesById);
+    values[valuesById[0] = "OWNER"] = 0;
+    values[valuesById[1] = "ADMIN"] = 1;
+    values[valuesById[2] = "NONE"] = 2;
+    return values;
+})();
+
+export const SubscriberInfo = $root.SubscriberInfo = (() => {
+
+    /**
+     * Properties of a SubscriberInfo.
+     * @exports ISubscriberInfo
+     * @interface ISubscriberInfo
+     * @property {SubscriberOperateType|null} [operateType] SubscriberInfo operateType
+     * @property {SubscriberRole|null} [role] SubscriberInfo role
+     * @property {number|null} [privilege] SubscriberInfo privilege
+     * @property {ChannelReqStatus|null} [reqStatus] SubscriberInfo reqStatus
+     * @property {AdminOperateType|null} [adminOperateType] SubscriberInfo adminOperateType
+     */
+
+    /**
+     * Constructs a new SubscriberInfo.
+     * @exports SubscriberInfo
+     * @classdesc Represents a SubscriberInfo.
+     * @implements ISubscriberInfo
+     * @constructor
+     * @param {ISubscriberInfo=} [properties] Properties to set
+     */
+    function SubscriberInfo(properties) {
+        if (properties)
+            for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                if (properties[keys[i]] != null)
+                    this[keys[i]] = properties[keys[i]];
+    }
+
+    /**
+     * SubscriberInfo operateType.
+     * @member {SubscriberOperateType} operateType
+     * @memberof SubscriberInfo
+     * @instance
+     */
+    SubscriberInfo.prototype.operateType = 0;
+
+    /**
+     * SubscriberInfo role.
+     * @member {SubscriberRole} role
+     * @memberof SubscriberInfo
+     * @instance
+     */
+    SubscriberInfo.prototype.role = 0;
+
+    /**
+     * SubscriberInfo privilege.
+     * @member {number} privilege
+     * @memberof SubscriberInfo
+     * @instance
+     */
+    SubscriberInfo.prototype.privilege = 0;
+
+    /**
+     * SubscriberInfo reqStatus.
+     * @member {ChannelReqStatus} reqStatus
+     * @memberof SubscriberInfo
+     * @instance
+     */
+    SubscriberInfo.prototype.reqStatus = 0;
+
+    /**
+     * SubscriberInfo adminOperateType.
+     * @member {AdminOperateType} adminOperateType
+     * @memberof SubscriberInfo
+     * @instance
+     */
+    SubscriberInfo.prototype.adminOperateType = 0;
+
+    /**
+     * Creates a new SubscriberInfo instance using the specified properties.
+     * @function create
+     * @memberof SubscriberInfo
+     * @static
+     * @param {ISubscriberInfo=} [properties] Properties to set
+     * @returns {SubscriberInfo} SubscriberInfo instance
+     */
+    SubscriberInfo.create = function create(properties) {
+        return new SubscriberInfo(properties);
+    };
+
+    /**
+     * Encodes the specified SubscriberInfo message. Does not implicitly {@link SubscriberInfo.verify|verify} messages.
+     * @function encode
+     * @memberof SubscriberInfo
+     * @static
+     * @param {ISubscriberInfo} message SubscriberInfo message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    SubscriberInfo.encode = function encode(message, writer) {
+        if (!writer)
+            writer = $Writer.create();
+        if (message.operateType != null && Object.hasOwnProperty.call(message, "operateType"))
+            writer.uint32(/* id 1, wireType 0 =*/8).int32(message.operateType);
+        if (message.role != null && Object.hasOwnProperty.call(message, "role"))
+            writer.uint32(/* id 2, wireType 0 =*/16).int32(message.role);
+        if (message.privilege != null && Object.hasOwnProperty.call(message, "privilege"))
+            writer.uint32(/* id 3, wireType 0 =*/24).int32(message.privilege);
+        if (message.reqStatus != null && Object.hasOwnProperty.call(message, "reqStatus"))
+            writer.uint32(/* id 4, wireType 0 =*/32).int32(message.reqStatus);
+        if (message.adminOperateType != null && Object.hasOwnProperty.call(message, "adminOperateType"))
+            writer.uint32(/* id 5, wireType 0 =*/40).int32(message.adminOperateType);
+        return writer;
+    };
+
+    /**
+     * Encodes the specified SubscriberInfo message, length delimited. Does not implicitly {@link SubscriberInfo.verify|verify} messages.
+     * @function encodeDelimited
+     * @memberof SubscriberInfo
+     * @static
+     * @param {ISubscriberInfo} message SubscriberInfo message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    SubscriberInfo.encodeDelimited = function encodeDelimited(message, writer) {
+        return this.encode(message, writer).ldelim();
+    };
+
+    /**
+     * Decodes a SubscriberInfo message from the specified reader or buffer.
+     * @function decode
+     * @memberof SubscriberInfo
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @param {number} [length] Message length if known beforehand
+     * @returns {SubscriberInfo} SubscriberInfo
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    SubscriberInfo.decode = function decode(reader, length, error) {
+        if (!(reader instanceof $Reader))
+            reader = $Reader.create(reader);
+        let end = length === undefined ? reader.len : reader.pos + length, message = new $root.SubscriberInfo();
+        while (reader.pos < end) {
+            let tag = reader.uint32();
+            if (tag === error)
+                break;
+            switch (tag >>> 3) {
+            case 1: {
+                    message.operateType = reader.int32();
+                    break;
+                }
+            case 2: {
+                    message.role = reader.int32();
+                    break;
+                }
+            case 3: {
+                    message.privilege = reader.int32();
+                    break;
+                }
+            case 4: {
+                    message.reqStatus = reader.int32();
+                    break;
+                }
+            case 5: {
+                    message.adminOperateType = reader.int32();
+                    break;
+                }
+            default:
+                reader.skipType(tag & 7);
+                break;
+            }
+        }
+        return message;
+    };
+
+    /**
+     * Decodes a SubscriberInfo message from the specified reader or buffer, length delimited.
+     * @function decodeDelimited
+     * @memberof SubscriberInfo
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @returns {SubscriberInfo} SubscriberInfo
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    SubscriberInfo.decodeDelimited = function decodeDelimited(reader) {
+        if (!(reader instanceof $Reader))
+            reader = new $Reader(reader);
+        return this.decode(reader, reader.uint32());
+    };
+
+    /**
+     * Verifies a SubscriberInfo message.
+     * @function verify
+     * @memberof SubscriberInfo
+     * @static
+     * @param {Object.<string,*>} message Plain object to verify
+     * @returns {string|null} `null` if valid, otherwise the reason why it is not
+     */
+    SubscriberInfo.verify = function verify(message) {
+        if (typeof message !== "object" || message === null)
+            return "object expected";
+        if (message.operateType != null && message.hasOwnProperty("operateType"))
+            switch (message.operateType) {
+            default:
+                return "operateType: enum value expected";
+            case 0:
+            case 1:
+            case 2:
+            case 3:
+                break;
+            }
+        if (message.role != null && message.hasOwnProperty("role"))
+            switch (message.role) {
+            default:
+                return "role: enum value expected";
+            case 0:
+            case 1:
+            case 2:
+                break;
+            }
+        if (message.privilege != null && message.hasOwnProperty("privilege"))
+            if (!$util.isInteger(message.privilege))
+                return "privilege: integer expected";
+        if (message.reqStatus != null && message.hasOwnProperty("reqStatus"))
+            switch (message.reqStatus) {
+            default:
+                return "reqStatus: enum value expected";
+            case 0:
+            case 1:
+            case 2:
+                break;
+            }
+        if (message.adminOperateType != null && message.hasOwnProperty("adminOperateType"))
+            switch (message.adminOperateType) {
+            default:
+                return "adminOperateType: enum value expected";
+            case 0:
+            case 1:
+                break;
+            }
+        return null;
+    };
+
+    /**
+     * Creates a SubscriberInfo message from a plain object. Also converts values to their respective internal types.
+     * @function fromObject
+     * @memberof SubscriberInfo
+     * @static
+     * @param {Object.<string,*>} object Plain object
+     * @returns {SubscriberInfo} SubscriberInfo
+     */
+    SubscriberInfo.fromObject = function fromObject(object) {
+        if (object instanceof $root.SubscriberInfo)
+            return object;
+        let message = new $root.SubscriberInfo();
+        switch (object.operateType) {
+        default:
+            if (typeof object.operateType === "number") {
+                message.operateType = object.operateType;
+                break;
+            }
+            break;
+        case "SUBSCRIBER_JOIN":
+        case 0:
+            message.operateType = 0;
+            break;
+        case "SUBSCRIBER_PRIVILEGE_UPDATE":
+        case 1:
+            message.operateType = 1;
+            break;
+        case "SUBSCRIBER_REMOVE":
+        case 2:
+            message.operateType = 2;
+            break;
+        case "SUBSCRIBER_INVITE":
+        case 3:
+            message.operateType = 3;
+            break;
+        }
+        switch (object.role) {
+        default:
+            if (typeof object.role === "number") {
+                message.role = object.role;
+                break;
+            }
+            break;
+        case "OWNER":
+        case 0:
+            message.role = 0;
+            break;
+        case "ADMIN":
+        case 1:
+            message.role = 1;
+            break;
+        case "NONE":
+        case 2:
+            message.role = 2;
+            break;
+        }
+        if (object.privilege != null)
+            message.privilege = object.privilege | 0;
+        switch (object.reqStatus) {
+        default:
+            if (typeof object.reqStatus === "number") {
+                message.reqStatus = object.reqStatus;
+                break;
+            }
+            break;
+        case "CHANNEL_CHECKING":
+        case 0:
+            message.reqStatus = 0;
+            break;
+        case "CHANNEL_AGREE":
+        case 1:
+            message.reqStatus = 1;
+            break;
+        case "CHANNEL_REFUSE":
+        case 2:
+            message.reqStatus = 2;
+            break;
+        }
+        switch (object.adminOperateType) {
+        default:
+            if (typeof object.adminOperateType === "number") {
+                message.adminOperateType = object.adminOperateType;
+                break;
+            }
+            break;
+        case "ADMIN_ADD":
+        case 0:
+            message.adminOperateType = 0;
+            break;
+        case "ADMIN_DELETE":
+        case 1:
+            message.adminOperateType = 1;
+            break;
+        }
+        return message;
+    };
+
+    /**
+     * Creates a plain object from a SubscriberInfo message. Also converts values to other types if specified.
+     * @function toObject
+     * @memberof SubscriberInfo
+     * @static
+     * @param {SubscriberInfo} message SubscriberInfo
+     * @param {$protobuf.IConversionOptions} [options] Conversion options
+     * @returns {Object.<string,*>} Plain object
+     */
+    SubscriberInfo.toObject = function toObject(message, options) {
+        if (!options)
+            options = {};
+        let object = {};
+        if (options.defaults) {
+            object.operateType = options.enums === String ? "SUBSCRIBER_JOIN" : 0;
+            object.role = options.enums === String ? "OWNER" : 0;
+            object.privilege = 0;
+            object.reqStatus = options.enums === String ? "CHANNEL_CHECKING" : 0;
+            object.adminOperateType = options.enums === String ? "ADMIN_ADD" : 0;
+        }
+        if (message.operateType != null && message.hasOwnProperty("operateType"))
+            object.operateType = options.enums === String ? $root.SubscriberOperateType[message.operateType] === undefined ? message.operateType : $root.SubscriberOperateType[message.operateType] : message.operateType;
+        if (message.role != null && message.hasOwnProperty("role"))
+            object.role = options.enums === String ? $root.SubscriberRole[message.role] === undefined ? message.role : $root.SubscriberRole[message.role] : message.role;
+        if (message.privilege != null && message.hasOwnProperty("privilege"))
+            object.privilege = message.privilege;
+        if (message.reqStatus != null && message.hasOwnProperty("reqStatus"))
+            object.reqStatus = options.enums === String ? $root.ChannelReqStatus[message.reqStatus] === undefined ? message.reqStatus : $root.ChannelReqStatus[message.reqStatus] : message.reqStatus;
+        if (message.adminOperateType != null && message.hasOwnProperty("adminOperateType"))
+            object.adminOperateType = options.enums === String ? $root.AdminOperateType[message.adminOperateType] === undefined ? message.adminOperateType : $root.AdminOperateType[message.adminOperateType] : message.adminOperateType;
+        return object;
+    };
+
+    /**
+     * Converts this SubscriberInfo to JSON.
+     * @function toJSON
+     * @memberof SubscriberInfo
+     * @instance
+     * @returns {Object.<string,*>} JSON object
+     */
+    SubscriberInfo.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+    };
+
+    /**
+     * Gets the default type url for SubscriberInfo
+     * @function getTypeUrl
+     * @memberof SubscriberInfo
+     * @static
+     * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+     * @returns {string} The default type url
+     */
+    SubscriberInfo.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === undefined) {
+            typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/SubscriberInfo";
+    };
+
+    return SubscriberInfo;
+})();
+
+export const ChannelEventMessage = $root.ChannelEventMessage = (() => {
+
+    /**
+     * Properties of a ChannelEventMessage.
+     * @exports IChannelEventMessage
+     * @interface IChannelEventMessage
+     * @property {number|Long|null} [msgId] ChannelEventMessage msgId
+     * @property {ChannelEventType|null} [eventType] ChannelEventMessage eventType
+     * @property {number|Long|null} [channelId] ChannelEventMessage channelId
+     * @property {IChannelInfo|null} [channelInfo] ChannelEventMessage channelInfo
+     * @property {ISubscriberInfo|null} [subscriberInfo] ChannelEventMessage subscriberInfo
+     * @property {number|Long|null} [msgTime] ChannelEventMessage msgTime
+     * @property {string|null} [msg] ChannelEventMessage msg
+     * @property {IChannelNoticeMsg|null} [channelNoticeMsg] ChannelEventMessage channelNoticeMsg
+     */
+
+    /**
+     * Constructs a new ChannelEventMessage.
+     * @exports ChannelEventMessage
+     * @classdesc Represents a ChannelEventMessage.
+     * @implements IChannelEventMessage
+     * @constructor
+     * @param {IChannelEventMessage=} [properties] Properties to set
+     */
+    function ChannelEventMessage(properties) {
+        if (properties)
+            for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                if (properties[keys[i]] != null)
+                    this[keys[i]] = properties[keys[i]];
+    }
+
+    /**
+     * ChannelEventMessage msgId.
+     * @member {number|Long} msgId
+     * @memberof ChannelEventMessage
+     * @instance
+     */
+    ChannelEventMessage.prototype.msgId = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+
+    /**
+     * ChannelEventMessage eventType.
+     * @member {ChannelEventType} eventType
+     * @memberof ChannelEventMessage
+     * @instance
+     */
+    ChannelEventMessage.prototype.eventType = 0;
+
+    /**
+     * ChannelEventMessage channelId.
+     * @member {number|Long} channelId
+     * @memberof ChannelEventMessage
+     * @instance
+     */
+    ChannelEventMessage.prototype.channelId = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+
+    /**
+     * ChannelEventMessage channelInfo.
+     * @member {IChannelInfo|null|undefined} channelInfo
+     * @memberof ChannelEventMessage
+     * @instance
+     */
+    ChannelEventMessage.prototype.channelInfo = null;
+
+    /**
+     * ChannelEventMessage subscriberInfo.
+     * @member {ISubscriberInfo|null|undefined} subscriberInfo
+     * @memberof ChannelEventMessage
+     * @instance
+     */
+    ChannelEventMessage.prototype.subscriberInfo = null;
+
+    /**
+     * ChannelEventMessage msgTime.
+     * @member {number|Long} msgTime
+     * @memberof ChannelEventMessage
+     * @instance
+     */
+    ChannelEventMessage.prototype.msgTime = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+
+    /**
+     * ChannelEventMessage msg.
+     * @member {string} msg
+     * @memberof ChannelEventMessage
+     * @instance
+     */
+    ChannelEventMessage.prototype.msg = "";
+
+    /**
+     * ChannelEventMessage channelNoticeMsg.
+     * @member {IChannelNoticeMsg|null|undefined} channelNoticeMsg
+     * @memberof ChannelEventMessage
+     * @instance
+     */
+    ChannelEventMessage.prototype.channelNoticeMsg = null;
+
+    /**
+     * Creates a new ChannelEventMessage instance using the specified properties.
+     * @function create
+     * @memberof ChannelEventMessage
+     * @static
+     * @param {IChannelEventMessage=} [properties] Properties to set
+     * @returns {ChannelEventMessage} ChannelEventMessage instance
+     */
+    ChannelEventMessage.create = function create(properties) {
+        return new ChannelEventMessage(properties);
+    };
+
+    /**
+     * Encodes the specified ChannelEventMessage message. Does not implicitly {@link ChannelEventMessage.verify|verify} messages.
+     * @function encode
+     * @memberof ChannelEventMessage
+     * @static
+     * @param {IChannelEventMessage} message ChannelEventMessage message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    ChannelEventMessage.encode = function encode(message, writer) {
+        if (!writer)
+            writer = $Writer.create();
+        if (message.msgId != null && Object.hasOwnProperty.call(message, "msgId"))
+            writer.uint32(/* id 1, wireType 0 =*/8).int64(message.msgId);
+        if (message.eventType != null && Object.hasOwnProperty.call(message, "eventType"))
+            writer.uint32(/* id 2, wireType 0 =*/16).int32(message.eventType);
+        if (message.channelId != null && Object.hasOwnProperty.call(message, "channelId"))
+            writer.uint32(/* id 3, wireType 0 =*/24).int64(message.channelId);
+        if (message.channelInfo != null && Object.hasOwnProperty.call(message, "channelInfo"))
+            $root.ChannelInfo.encode(message.channelInfo, writer.uint32(/* id 4, wireType 2 =*/34).fork()).ldelim();
+        if (message.subscriberInfo != null && Object.hasOwnProperty.call(message, "subscriberInfo"))
+            $root.SubscriberInfo.encode(message.subscriberInfo, writer.uint32(/* id 5, wireType 2 =*/42).fork()).ldelim();
+        if (message.msgTime != null && Object.hasOwnProperty.call(message, "msgTime"))
+            writer.uint32(/* id 6, wireType 0 =*/48).int64(message.msgTime);
+        if (message.msg != null && Object.hasOwnProperty.call(message, "msg"))
+            writer.uint32(/* id 7, wireType 2 =*/58).string(message.msg);
+        if (message.channelNoticeMsg != null && Object.hasOwnProperty.call(message, "channelNoticeMsg"))
+            $root.ChannelNoticeMsg.encode(message.channelNoticeMsg, writer.uint32(/* id 8, wireType 2 =*/66).fork()).ldelim();
+        return writer;
+    };
+
+    /**
+     * Encodes the specified ChannelEventMessage message, length delimited. Does not implicitly {@link ChannelEventMessage.verify|verify} messages.
+     * @function encodeDelimited
+     * @memberof ChannelEventMessage
+     * @static
+     * @param {IChannelEventMessage} message ChannelEventMessage message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    ChannelEventMessage.encodeDelimited = function encodeDelimited(message, writer) {
+        return this.encode(message, writer).ldelim();
+    };
+
+    /**
+     * Decodes a ChannelEventMessage message from the specified reader or buffer.
+     * @function decode
+     * @memberof ChannelEventMessage
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @param {number} [length] Message length if known beforehand
+     * @returns {ChannelEventMessage} ChannelEventMessage
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    ChannelEventMessage.decode = function decode(reader, length, error) {
+        if (!(reader instanceof $Reader))
+            reader = $Reader.create(reader);
+        let end = length === undefined ? reader.len : reader.pos + length, message = new $root.ChannelEventMessage();
+        while (reader.pos < end) {
+            let tag = reader.uint32();
+            if (tag === error)
+                break;
+            switch (tag >>> 3) {
+            case 1: {
+                    message.msgId = reader.int64();
+                    break;
+                }
+            case 2: {
+                    message.eventType = reader.int32();
+                    break;
+                }
+            case 3: {
+                    message.channelId = reader.int64();
+                    break;
+                }
+            case 4: {
+                    message.channelInfo = $root.ChannelInfo.decode(reader, reader.uint32());
+                    break;
+                }
+            case 5: {
+                    message.subscriberInfo = $root.SubscriberInfo.decode(reader, reader.uint32());
+                    break;
+                }
+            case 6: {
+                    message.msgTime = reader.int64();
+                    break;
+                }
+            case 7: {
+                    message.msg = reader.string();
+                    break;
+                }
+            case 8: {
+                    message.channelNoticeMsg = $root.ChannelNoticeMsg.decode(reader, reader.uint32());
+                    break;
+                }
+            default:
+                reader.skipType(tag & 7);
+                break;
+            }
+        }
+        return message;
+    };
+
+    /**
+     * Decodes a ChannelEventMessage message from the specified reader or buffer, length delimited.
+     * @function decodeDelimited
+     * @memberof ChannelEventMessage
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @returns {ChannelEventMessage} ChannelEventMessage
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    ChannelEventMessage.decodeDelimited = function decodeDelimited(reader) {
+        if (!(reader instanceof $Reader))
+            reader = new $Reader(reader);
+        return this.decode(reader, reader.uint32());
+    };
+
+    /**
+     * Verifies a ChannelEventMessage message.
+     * @function verify
+     * @memberof ChannelEventMessage
+     * @static
+     * @param {Object.<string,*>} message Plain object to verify
+     * @returns {string|null} `null` if valid, otherwise the reason why it is not
+     */
+    ChannelEventMessage.verify = function verify(message) {
+        if (typeof message !== "object" || message === null)
+            return "object expected";
+        if (message.msgId != null && message.hasOwnProperty("msgId"))
+            if (!$util.isInteger(message.msgId) && !(message.msgId && $util.isInteger(message.msgId.low) && $util.isInteger(message.msgId.high)))
+                return "msgId: integer|Long expected";
+        if (message.eventType != null && message.hasOwnProperty("eventType"))
+            switch (message.eventType) {
+            default:
+                return "eventType: enum value expected";
+            case 0:
+            case 1:
+            case 2:
+                break;
+            }
+        if (message.channelId != null && message.hasOwnProperty("channelId"))
+            if (!$util.isInteger(message.channelId) && !(message.channelId && $util.isInteger(message.channelId.low) && $util.isInteger(message.channelId.high)))
+                return "channelId: integer|Long expected";
+        if (message.channelInfo != null && message.hasOwnProperty("channelInfo")) {
+            let error = $root.ChannelInfo.verify(message.channelInfo);
+            if (error)
+                return "channelInfo." + error;
+        }
+        if (message.subscriberInfo != null && message.hasOwnProperty("subscriberInfo")) {
+            let error = $root.SubscriberInfo.verify(message.subscriberInfo);
+            if (error)
+                return "subscriberInfo." + error;
+        }
+        if (message.msgTime != null && message.hasOwnProperty("msgTime"))
+            if (!$util.isInteger(message.msgTime) && !(message.msgTime && $util.isInteger(message.msgTime.low) && $util.isInteger(message.msgTime.high)))
+                return "msgTime: integer|Long expected";
+        if (message.msg != null && message.hasOwnProperty("msg"))
+            if (!$util.isString(message.msg))
+                return "msg: string expected";
+        if (message.channelNoticeMsg != null && message.hasOwnProperty("channelNoticeMsg")) {
+            let error = $root.ChannelNoticeMsg.verify(message.channelNoticeMsg);
+            if (error)
+                return "channelNoticeMsg." + error;
+        }
+        return null;
+    };
+
+    /**
+     * Creates a ChannelEventMessage message from a plain object. Also converts values to their respective internal types.
+     * @function fromObject
+     * @memberof ChannelEventMessage
+     * @static
+     * @param {Object.<string,*>} object Plain object
+     * @returns {ChannelEventMessage} ChannelEventMessage
+     */
+    ChannelEventMessage.fromObject = function fromObject(object) {
+        if (object instanceof $root.ChannelEventMessage)
+            return object;
+        let message = new $root.ChannelEventMessage();
+        if (object.msgId != null)
+            if ($util.Long)
+                (message.msgId = $util.Long.fromValue(object.msgId)).unsigned = false;
+            else if (typeof object.msgId === "string")
+                message.msgId = parseInt(object.msgId, 10);
+            else if (typeof object.msgId === "number")
+                message.msgId = object.msgId;
+            else if (typeof object.msgId === "object")
+                message.msgId = new $util.LongBits(object.msgId.low >>> 0, object.msgId.high >>> 0).toNumber();
+        switch (object.eventType) {
+        default:
+            if (typeof object.eventType === "number") {
+                message.eventType = object.eventType;
+                break;
+            }
+            break;
+        case "FORCE_INIT":
+        case 0:
+            message.eventType = 0;
+            break;
+        case "CHANNEL_EVENT":
+        case 1:
+            message.eventType = 1;
+            break;
+        case "CHANNEL_SUBSCRIBER_EVENT":
+        case 2:
+            message.eventType = 2;
+            break;
+        }
+        if (object.channelId != null)
+            if ($util.Long)
+                (message.channelId = $util.Long.fromValue(object.channelId)).unsigned = false;
+            else if (typeof object.channelId === "string")
+                message.channelId = parseInt(object.channelId, 10);
+            else if (typeof object.channelId === "number")
+                message.channelId = object.channelId;
+            else if (typeof object.channelId === "object")
+                message.channelId = new $util.LongBits(object.channelId.low >>> 0, object.channelId.high >>> 0).toNumber();
+        if (object.channelInfo != null) {
+            if (typeof object.channelInfo !== "object")
+                throw TypeError(".ChannelEventMessage.channelInfo: object expected");
+            message.channelInfo = $root.ChannelInfo.fromObject(object.channelInfo);
+        }
+        if (object.subscriberInfo != null) {
+            if (typeof object.subscriberInfo !== "object")
+                throw TypeError(".ChannelEventMessage.subscriberInfo: object expected");
+            message.subscriberInfo = $root.SubscriberInfo.fromObject(object.subscriberInfo);
+        }
+        if (object.msgTime != null)
+            if ($util.Long)
+                (message.msgTime = $util.Long.fromValue(object.msgTime)).unsigned = false;
+            else if (typeof object.msgTime === "string")
+                message.msgTime = parseInt(object.msgTime, 10);
+            else if (typeof object.msgTime === "number")
+                message.msgTime = object.msgTime;
+            else if (typeof object.msgTime === "object")
+                message.msgTime = new $util.LongBits(object.msgTime.low >>> 0, object.msgTime.high >>> 0).toNumber();
+        if (object.msg != null)
+            message.msg = String(object.msg);
+        if (object.channelNoticeMsg != null) {
+            if (typeof object.channelNoticeMsg !== "object")
+                throw TypeError(".ChannelEventMessage.channelNoticeMsg: object expected");
+            message.channelNoticeMsg = $root.ChannelNoticeMsg.fromObject(object.channelNoticeMsg);
+        }
+        return message;
+    };
+
+    /**
+     * Creates a plain object from a ChannelEventMessage message. Also converts values to other types if specified.
+     * @function toObject
+     * @memberof ChannelEventMessage
+     * @static
+     * @param {ChannelEventMessage} message ChannelEventMessage
+     * @param {$protobuf.IConversionOptions} [options] Conversion options
+     * @returns {Object.<string,*>} Plain object
+     */
+    ChannelEventMessage.toObject = function toObject(message, options) {
+        if (!options)
+            options = {};
+        let object = {};
+        if (options.defaults) {
+            if ($util.Long) {
+                let long = new $util.Long(0, 0, false);
+                object.msgId = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+            } else
+                object.msgId = options.longs === String ? "0" : 0;
+            object.eventType = options.enums === String ? "FORCE_INIT" : 0;
+            if ($util.Long) {
+                let long = new $util.Long(0, 0, false);
+                object.channelId = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+            } else
+                object.channelId = options.longs === String ? "0" : 0;
+            object.channelInfo = null;
+            object.subscriberInfo = null;
+            if ($util.Long) {
+                let long = new $util.Long(0, 0, false);
+                object.msgTime = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+            } else
+                object.msgTime = options.longs === String ? "0" : 0;
+            object.msg = "";
+            object.channelNoticeMsg = null;
+        }
+        if (message.msgId != null && message.hasOwnProperty("msgId"))
+            if (typeof message.msgId === "number")
+                object.msgId = options.longs === String ? String(message.msgId) : message.msgId;
+            else
+                object.msgId = options.longs === String ? $util.Long.prototype.toString.call(message.msgId) : options.longs === Number ? new $util.LongBits(message.msgId.low >>> 0, message.msgId.high >>> 0).toNumber() : message.msgId;
+        if (message.eventType != null && message.hasOwnProperty("eventType"))
+            object.eventType = options.enums === String ? $root.ChannelEventType[message.eventType] === undefined ? message.eventType : $root.ChannelEventType[message.eventType] : message.eventType;
+        if (message.channelId != null && message.hasOwnProperty("channelId"))
+            if (typeof message.channelId === "number")
+                object.channelId = options.longs === String ? String(message.channelId) : message.channelId;
+            else
+                object.channelId = options.longs === String ? $util.Long.prototype.toString.call(message.channelId) : options.longs === Number ? new $util.LongBits(message.channelId.low >>> 0, message.channelId.high >>> 0).toNumber() : message.channelId;
+        if (message.channelInfo != null && message.hasOwnProperty("channelInfo"))
+            object.channelInfo = $root.ChannelInfo.toObject(message.channelInfo, options);
+        if (message.subscriberInfo != null && message.hasOwnProperty("subscriberInfo"))
+            object.subscriberInfo = $root.SubscriberInfo.toObject(message.subscriberInfo, options);
+        if (message.msgTime != null && message.hasOwnProperty("msgTime"))
+            if (typeof message.msgTime === "number")
+                object.msgTime = options.longs === String ? String(message.msgTime) : message.msgTime;
+            else
+                object.msgTime = options.longs === String ? $util.Long.prototype.toString.call(message.msgTime) : options.longs === Number ? new $util.LongBits(message.msgTime.low >>> 0, message.msgTime.high >>> 0).toNumber() : message.msgTime;
+        if (message.msg != null && message.hasOwnProperty("msg"))
+            object.msg = message.msg;
+        if (message.channelNoticeMsg != null && message.hasOwnProperty("channelNoticeMsg"))
+            object.channelNoticeMsg = $root.ChannelNoticeMsg.toObject(message.channelNoticeMsg, options);
+        return object;
+    };
+
+    /**
+     * Converts this ChannelEventMessage to JSON.
+     * @function toJSON
+     * @memberof ChannelEventMessage
+     * @instance
+     * @returns {Object.<string,*>} JSON object
+     */
+    ChannelEventMessage.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+    };
+
+    /**
+     * Gets the default type url for ChannelEventMessage
+     * @function getTypeUrl
+     * @memberof ChannelEventMessage
+     * @static
+     * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+     * @returns {string} The default type url
+     */
+    ChannelEventMessage.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === undefined) {
+            typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/ChannelEventMessage";
+    };
+
+    return ChannelEventMessage;
+})();
+
+export const ChannelNoticeMsg = $root.ChannelNoticeMsg = (() => {
+
+    /**
+     * Properties of a ChannelNoticeMsg.
+     * @exports IChannelNoticeMsg
+     * @interface IChannelNoticeMsg
+     * @property {boolean|null} [isNotice] ChannelNoticeMsg isNotice
+     * @property {string|null} [noticeMsg] ChannelNoticeMsg noticeMsg
+     * @property {number|Long|null} [unReadNum] ChannelNoticeMsg unReadNum
+     */
+
+    /**
+     * Constructs a new ChannelNoticeMsg.
+     * @exports ChannelNoticeMsg
+     * @classdesc Represents a ChannelNoticeMsg.
+     * @implements IChannelNoticeMsg
+     * @constructor
+     * @param {IChannelNoticeMsg=} [properties] Properties to set
+     */
+    function ChannelNoticeMsg(properties) {
+        if (properties)
+            for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                if (properties[keys[i]] != null)
+                    this[keys[i]] = properties[keys[i]];
+    }
+
+    /**
+     * ChannelNoticeMsg isNotice.
+     * @member {boolean} isNotice
+     * @memberof ChannelNoticeMsg
+     * @instance
+     */
+    ChannelNoticeMsg.prototype.isNotice = false;
+
+    /**
+     * ChannelNoticeMsg noticeMsg.
+     * @member {string} noticeMsg
+     * @memberof ChannelNoticeMsg
+     * @instance
+     */
+    ChannelNoticeMsg.prototype.noticeMsg = "";
+
+    /**
+     * ChannelNoticeMsg unReadNum.
+     * @member {number|Long} unReadNum
+     * @memberof ChannelNoticeMsg
+     * @instance
+     */
+    ChannelNoticeMsg.prototype.unReadNum = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+
+    /**
+     * Creates a new ChannelNoticeMsg instance using the specified properties.
+     * @function create
+     * @memberof ChannelNoticeMsg
+     * @static
+     * @param {IChannelNoticeMsg=} [properties] Properties to set
+     * @returns {ChannelNoticeMsg} ChannelNoticeMsg instance
+     */
+    ChannelNoticeMsg.create = function create(properties) {
+        return new ChannelNoticeMsg(properties);
+    };
+
+    /**
+     * Encodes the specified ChannelNoticeMsg message. Does not implicitly {@link ChannelNoticeMsg.verify|verify} messages.
+     * @function encode
+     * @memberof ChannelNoticeMsg
+     * @static
+     * @param {IChannelNoticeMsg} message ChannelNoticeMsg message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    ChannelNoticeMsg.encode = function encode(message, writer) {
+        if (!writer)
+            writer = $Writer.create();
+        if (message.isNotice != null && Object.hasOwnProperty.call(message, "isNotice"))
+            writer.uint32(/* id 1, wireType 0 =*/8).bool(message.isNotice);
+        if (message.noticeMsg != null && Object.hasOwnProperty.call(message, "noticeMsg"))
+            writer.uint32(/* id 2, wireType 2 =*/18).string(message.noticeMsg);
+        if (message.unReadNum != null && Object.hasOwnProperty.call(message, "unReadNum"))
+            writer.uint32(/* id 3, wireType 0 =*/24).int64(message.unReadNum);
+        return writer;
+    };
+
+    /**
+     * Encodes the specified ChannelNoticeMsg message, length delimited. Does not implicitly {@link ChannelNoticeMsg.verify|verify} messages.
+     * @function encodeDelimited
+     * @memberof ChannelNoticeMsg
+     * @static
+     * @param {IChannelNoticeMsg} message ChannelNoticeMsg message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    ChannelNoticeMsg.encodeDelimited = function encodeDelimited(message, writer) {
+        return this.encode(message, writer).ldelim();
+    };
+
+    /**
+     * Decodes a ChannelNoticeMsg message from the specified reader or buffer.
+     * @function decode
+     * @memberof ChannelNoticeMsg
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @param {number} [length] Message length if known beforehand
+     * @returns {ChannelNoticeMsg} ChannelNoticeMsg
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    ChannelNoticeMsg.decode = function decode(reader, length, error) {
+        if (!(reader instanceof $Reader))
+            reader = $Reader.create(reader);
+        let end = length === undefined ? reader.len : reader.pos + length, message = new $root.ChannelNoticeMsg();
+        while (reader.pos < end) {
+            let tag = reader.uint32();
+            if (tag === error)
+                break;
+            switch (tag >>> 3) {
+            case 1: {
+                    message.isNotice = reader.bool();
+                    break;
+                }
+            case 2: {
+                    message.noticeMsg = reader.string();
+                    break;
+                }
+            case 3: {
+                    message.unReadNum = reader.int64();
+                    break;
+                }
+            default:
+                reader.skipType(tag & 7);
+                break;
+            }
+        }
+        return message;
+    };
+
+    /**
+     * Decodes a ChannelNoticeMsg message from the specified reader or buffer, length delimited.
+     * @function decodeDelimited
+     * @memberof ChannelNoticeMsg
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @returns {ChannelNoticeMsg} ChannelNoticeMsg
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    ChannelNoticeMsg.decodeDelimited = function decodeDelimited(reader) {
+        if (!(reader instanceof $Reader))
+            reader = new $Reader(reader);
+        return this.decode(reader, reader.uint32());
+    };
+
+    /**
+     * Verifies a ChannelNoticeMsg message.
+     * @function verify
+     * @memberof ChannelNoticeMsg
+     * @static
+     * @param {Object.<string,*>} message Plain object to verify
+     * @returns {string|null} `null` if valid, otherwise the reason why it is not
+     */
+    ChannelNoticeMsg.verify = function verify(message) {
+        if (typeof message !== "object" || message === null)
+            return "object expected";
+        if (message.isNotice != null && message.hasOwnProperty("isNotice"))
+            if (typeof message.isNotice !== "boolean")
+                return "isNotice: boolean expected";
+        if (message.noticeMsg != null && message.hasOwnProperty("noticeMsg"))
+            if (!$util.isString(message.noticeMsg))
+                return "noticeMsg: string expected";
+        if (message.unReadNum != null && message.hasOwnProperty("unReadNum"))
+            if (!$util.isInteger(message.unReadNum) && !(message.unReadNum && $util.isInteger(message.unReadNum.low) && $util.isInteger(message.unReadNum.high)))
+                return "unReadNum: integer|Long expected";
+        return null;
+    };
+
+    /**
+     * Creates a ChannelNoticeMsg message from a plain object. Also converts values to their respective internal types.
+     * @function fromObject
+     * @memberof ChannelNoticeMsg
+     * @static
+     * @param {Object.<string,*>} object Plain object
+     * @returns {ChannelNoticeMsg} ChannelNoticeMsg
+     */
+    ChannelNoticeMsg.fromObject = function fromObject(object) {
+        if (object instanceof $root.ChannelNoticeMsg)
+            return object;
+        let message = new $root.ChannelNoticeMsg();
+        if (object.isNotice != null)
+            message.isNotice = Boolean(object.isNotice);
+        if (object.noticeMsg != null)
+            message.noticeMsg = String(object.noticeMsg);
+        if (object.unReadNum != null)
+            if ($util.Long)
+                (message.unReadNum = $util.Long.fromValue(object.unReadNum)).unsigned = false;
+            else if (typeof object.unReadNum === "string")
+                message.unReadNum = parseInt(object.unReadNum, 10);
+            else if (typeof object.unReadNum === "number")
+                message.unReadNum = object.unReadNum;
+            else if (typeof object.unReadNum === "object")
+                message.unReadNum = new $util.LongBits(object.unReadNum.low >>> 0, object.unReadNum.high >>> 0).toNumber();
+        return message;
+    };
+
+    /**
+     * Creates a plain object from a ChannelNoticeMsg message. Also converts values to other types if specified.
+     * @function toObject
+     * @memberof ChannelNoticeMsg
+     * @static
+     * @param {ChannelNoticeMsg} message ChannelNoticeMsg
+     * @param {$protobuf.IConversionOptions} [options] Conversion options
+     * @returns {Object.<string,*>} Plain object
+     */
+    ChannelNoticeMsg.toObject = function toObject(message, options) {
+        if (!options)
+            options = {};
+        let object = {};
+        if (options.defaults) {
+            object.isNotice = false;
+            object.noticeMsg = "";
+            if ($util.Long) {
+                let long = new $util.Long(0, 0, false);
+                object.unReadNum = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+            } else
+                object.unReadNum = options.longs === String ? "0" : 0;
+        }
+        if (message.isNotice != null && message.hasOwnProperty("isNotice"))
+            object.isNotice = message.isNotice;
+        if (message.noticeMsg != null && message.hasOwnProperty("noticeMsg"))
+            object.noticeMsg = message.noticeMsg;
+        if (message.unReadNum != null && message.hasOwnProperty("unReadNum"))
+            if (typeof message.unReadNum === "number")
+                object.unReadNum = options.longs === String ? String(message.unReadNum) : message.unReadNum;
+            else
+                object.unReadNum = options.longs === String ? $util.Long.prototype.toString.call(message.unReadNum) : options.longs === Number ? new $util.LongBits(message.unReadNum.low >>> 0, message.unReadNum.high >>> 0).toNumber() : message.unReadNum;
+        return object;
+    };
+
+    /**
+     * Converts this ChannelNoticeMsg to JSON.
+     * @function toJSON
+     * @memberof ChannelNoticeMsg
+     * @instance
+     * @returns {Object.<string,*>} JSON object
+     */
+    ChannelNoticeMsg.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+    };
+
+    /**
+     * Gets the default type url for ChannelNoticeMsg
+     * @function getTypeUrl
+     * @memberof ChannelNoticeMsg
+     * @static
+     * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+     * @returns {string} The default type url
+     */
+    ChannelNoticeMsg.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === undefined) {
+            typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/ChannelNoticeMsg";
+    };
+
+    return ChannelNoticeMsg;
+})();
+
+/**
+ * ChannelReqStatus enum.
+ * @exports ChannelReqStatus
+ * @enum {number}
+ * @property {number} CHANNEL_CHECKING=0 CHANNEL_CHECKING value
+ * @property {number} CHANNEL_AGREE=1 CHANNEL_AGREE value
+ * @property {number} CHANNEL_REFUSE=2 CHANNEL_REFUSE value
+ */
+export const ChannelReqStatus = $root.ChannelReqStatus = (() => {
+    const valuesById = {}, values = Object.create(valuesById);
+    values[valuesById[0] = "CHANNEL_CHECKING"] = 0;
+    values[valuesById[1] = "CHANNEL_AGREE"] = 1;
+    values[valuesById[2] = "CHANNEL_REFUSE"] = 2;
+    return values;
 })();
 
 export { $root as default };

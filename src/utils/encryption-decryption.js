@@ -41,6 +41,9 @@ let friendKeyObjs = {};
 // 群 密钥对象集
 let groupKeyObjs = {};
 
+// 频道 密钥对象集
+let channelKeyObjs = {};
+
 /**
  * 全部密钥的对象初始化
  */
@@ -52,6 +55,13 @@ export const fnKeyObjsInit = () => {
     Cache(`${loginId}-group-key-objs`).then((res) => {
         if (res) {
             groupKeyObjs = res;
+        }
+    });
+
+    // 初始化频道的 密钥对象集
+    Cache(`${loginId}-channel-key-objs`).then((res) => {
+        if (res) {
+            channelKeyObjs = res;
         }
     });
 
@@ -69,9 +79,83 @@ export const fnInitAllGroupKey = (loginId) => {
     Cache(`${loginId}-group-key-objs`, null);
 };
 
+export const fnInitAllChannelKey = (loginId) => {
+    groupKeyObjs = {};
+    Cache(`${loginId}-channel-key-objs`, null);
+};
+
 export const fnInitAllFriendKey = (loginId) => {
     friendKeyObjs = {};
     Cache(`${loginId}-friend-key-objs`, null);
+};
+
+/**
+ * 获取频道真实的密钥
+ */
+export const fnChannelRelKeyGet = async (id) => {
+    // 登录的id
+    const loginId = eventCommon.fnCommonInfoRU({ getId: "loginId" });
+
+    // 密钥信息
+    let keyInfos = channelKeyObjs[id];
+
+    // 密钥不存在，则需要api获取
+    if (!keyInfos) {
+        const keyPair = await GetKeyPair({
+            targetId: id,
+            flag: 3,
+            // groupKeyVersion: 1,
+        });
+        console.log('keyPair--', keyPair, {
+            targetId: id,
+            flag: 3,
+            // groupKeyVersion: 1,
+        })
+
+        if (keyPair && !_.isEmpty(keyPair.groupKeyPair)) {
+            keyInfos = keyPair.groupKeyPair;
+
+            // 记录
+            channelKeyObjs[id] = keyInfos;
+
+            // 保存到本地
+            Cache(`${loginId}-channel-key-objs`, channelKeyObjs);
+        } else {
+            // 解密错误
+            console.error("频道解密-获取密钥失败-3-", keyInfos);
+            return null;
+        }
+    }
+
+    // 账户配置信息
+    const { accountConfig } = eventCommon.fnConfigRU();
+
+    // 自己的私key，同账户app的公key
+    const { privateKey } = accountConfig;
+
+    // 解密出真实的密钥
+    let key = null;
+    try {
+         key = secret(privateKey, keyInfos.publicKey).toUpperCase();
+    } catch (error) {
+        console.error('解密-生成秘钥异常-2-',privateKey, keyInfos)
+    }
+   
+    const msgKeyBuffer = Uint8Array.from(Buffer.from(keyInfos.msgKey, "hex"));
+    let msgkey = null; 
+    try {
+      msgkey = _decrypt(msgKeyBuffer, key);
+    } catch (error) {
+        console.error('解密异常-msgkey-', privateKey, keyInfos)
+    }
+    const buffer = ConcatInt8([
+        Uint8Array.from([10]),
+        Uint8Array.from([msgkey.byteLength]),
+        msgkey,
+    ]);
+
+    // 返回真实的群密钥
+    return fnUtf8ArrayToStr(buffer).trim();
 };
 
 /**
@@ -379,6 +463,23 @@ export const fnMsgDecryption = async ({
 
         if (type === "group") {
             relKey = await fnGroupRelKeyGet(id);
+
+            // 如果群密钥没获取到，则直接结束
+            if (!relKey) {
+                console.error("群消息 解密失败-1-");
+                return {};
+            }
+
+            // 群消息解密
+            try {
+                contentNew = _decrypt(content, relKey);
+            } catch (err) {
+                // 消息解密失败
+                console.error("群消息 解密失败-2-");
+                return {};
+            }
+        } else if (type === "channel") {
+            relKey = await fnChannelRelKeyGet(id);
 
             // 如果群密钥没获取到，则直接结束
             if (!relKey) {

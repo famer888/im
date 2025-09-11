@@ -11,7 +11,7 @@
       "
       @onChange="handleGroupsShowChange"
     />
-    <!-- <Channels /> -->
+    <Channels />
     <Friends
       v-if="friendList.length > 0"
       :list="friendList"
@@ -29,7 +29,7 @@
 <script>
 import Groups from "./groups";
 import Friends from "./friends";
-// import Channels from "./channels";
+import Channels from "./channels";
 
 export default {
   data() {
@@ -44,7 +44,7 @@ export default {
   components: {
     Groups,
     Friends,
-    // Channels,
+    Channels,
   },
   methods: {
     /**

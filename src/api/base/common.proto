@@ -123,9 +123,9 @@ enum SecurityType {
 
 // 群成员类型
 enum GroupMemberType {
-    HOST    = 0; // 群主
-    MANAGE  = 1; // 管理员
-    MEMBER  = 2; // 成员
+    HOST    = 0;  // 群主
+    MANAGE  = 1;  // 管理员
+    MEMBER  = 2;  // 成员
 }
 
 // 附件存储空间类型
@@ -192,6 +192,8 @@ enum GroupReqType {
     GROUP_LINK                      = 14; // 来自群链接 v1.7.0
     GROUP_ALIAS                     = 15; // 来自群别名
     GROUP_IS_ENABLED                = 16; // 群已启用（禁用 -> 启用 广播事件） v5.8.0 本质上是群更新 需要修改本地群状态
+    GROUP_OBSERVE_ADD               = 17; // 来着观察者号入群（客户端暂不用）
+    GROUP_OBSERVE_REMOVE            = 18; // 移除观察者号（客户端暂不用）
 }
 
 // 群处理消息类型
@@ -533,4 +535,23 @@ message LinkObj {
     string      link        = 1;
     int32       location    = 2;
     int32       length      = 3;
+}
+
+// 场景对应手续费配置对象
+message FeeConfig {
+    int32   scenesType = 2; // 场景类型 1:快捷区-购买 4:快捷区-出售 8:广告商-自选区购买 9:广告商-自选区出售 10:汇总区广告 11:汇总区-交易 80:用户下广告列表-购买 90:用户下广告列表-出售 6:私聊转账 7:群聊转账 31:私聊红包 32:普通红包 33:专属红包 34:拼手气红包
+    string  scenesName = 3; // 场景名称
+    repeated CoinFeeConfig feeConfigs = 4; // 币种对应的手续费配置
+}
+
+// 基础手续费配置实体结构
+message CoinFeeConfig {
+    string coinName = 1; // 币种名称
+    string minFee = 2; // 最小手续费值
+    string maxFee = 3; // 最大手续费值
+    string baseFee = 4; // 基础手续费值
+    string feeRate = 5; // 手续费率
+    string fixedFee = 6; // 固定服务费
+    int32 mathType = 7; // 配置计算手续费规则类型 默认0：服务费=fee_rate*币种数量 1：服务费=min(max(币种数量*fee_rate,min_fee),max_fee)+base_fee
+    int32 feeScale = 8; // 手续费小数位
 }

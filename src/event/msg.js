@@ -275,6 +275,28 @@ const fnFriendMsgAdd = async (msg) => {
     });
 };
 
+const fnChannelMsgAdd = async (msg) => {
+
+        // 登录id
+    const loginId = eventCommon.fnCommonInfoRU({
+        getId: "loginId",
+    });
+
+    const channelId = Number(msg.channelId)
+
+    
+    const { contentStr, fileKey } = await fnMsgDecryption({
+        id: channelId,
+        type: 'channel',
+        msgType: msg.msgType || 0,
+        msgEncryptionVersion: msg.version,
+        content:msg.content,
+        attachmentKey: msg.attachmentKey,
+    });
+    console.log('contentStr', contentStr, fileKey)
+
+}
+
 /**
  * 骰子发送 修改
  */
@@ -1562,4 +1584,5 @@ export default {
     fnAlertNotification,
     fnGroupMsgReadRecord,
     fnGroupMsgReadUpdate,
+    fnChannelMsgAdd,
 };

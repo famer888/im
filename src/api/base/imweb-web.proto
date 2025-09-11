@@ -4,6 +4,7 @@ option java_outer_classname = "IMWEB";
 
 import "common.proto";
 import "group_message.proto";
+import "channel_event.proto";
 
 // protoc.exe  -I=. --java_out=../src imweb.proto
 
@@ -73,6 +74,7 @@ message OneToOneMessage {
     int32 edit    = 20; // 消息是否编辑 0未编辑，1已编辑
     repeated LinkObj links = 21; // links 文本消息中带的链接数组
     int64 sentOverTime = 22; // 转发对应的原发送完成时间 只有转发时才传值
+    int32           channel = 23; // 消息所属渠道 1-68，2-4E，3-97
 }
 
 // 群消息
@@ -98,6 +100,24 @@ message GroupMessage {
     int64 sentOverTime = 20; // 转发对应的原发送完成时间 只有转发时才传值
 }
 
+// 频道消息
+message  ChannelMessage {
+    int64		        sendUid       = 1;        // 发送人uid
+    int64		        channelId     = 2;        // 接收频道id
+    MessageType     msgType       = 3;        // 消息类型
+    bytes		        content       = 4;        // 消息内容  contentSize 为 0 表示消息已撤回
+    int64		        msgId         = 5;        // 频道消息ID
+    int32           readTotal     = 6;        // 已读总数
+    int64		        msgTime       = 7;        // 消息时间
+    int32           version       = 8;        // 加密版本号
+    string          contentMd5    = 9;        // 消息内容md5值
+    string          attachmentKey = 10;       // 附件加解密key
+    repeated int64	atUids        = 11;       // atUids at人列表 如果at ALL  uid传-1
+    UploadChannelType channelType = 12;       // OSS上传通道类型
+    int32                 msgFrom = 13;       // 消息来源 0-68,1-机器人
+    repeated LinkObj  links       = 14;       // links 文本消息中带的链接数组
+}
+
 message AtUser {
     int64      uid          = 1;    // 用户ID
     string     nickName     = 2;    // 昵称
@@ -112,6 +132,14 @@ message RecallMessage {
     int32    clear          = 4; // 0: 默认删单条消息 1： 清空所有消息 2： 清空所有消息和会话记录
     int64   clearTime      = 5; // 清空时间
 }
+
+// 已读消息
+message ReadMessage {
+    int64       msgId           = 1; // 已读消息id
+    int32       total           = 2; // 已读数
+}
+
+
 // 好友操作类型
 enum FriendDoType {
     AGREE_JOIN_FRIEND       = 0; // 同意加好友
@@ -338,6 +366,45 @@ message PushGroupEventMessage {
     repeated     GroupUpdateEventMsgDto        groupUpdateEventMsgDto  = 2; // 群更新事件消息集合
 }
 
+
+// 推送发送频道消息成功消息 4201
+message PushSendChannelMessageSuccessMessage {
+    int64		    flag            = 1;    // 标志
+    int64		    msgId           = 2;    // 消息id
+    int64       channelId       = 3;    // 频道id
+}
+
+// 推送发送撤回频道消息成功消息 4202
+message PushSendRecallChannelMessageSuccessMessage {
+    int64           msgId           = 1; // 撤回消息自身消息id
+    RecallMessage   recallMessage   = 2; // 发送撤回的消息内容
+}
+
+//  推送频道消息         4203
+message PushChannelMessage {
+    // 最新频道消息 暂时推送1条
+    ChannelMessage  latestChannelMessage = 1;
+}
+
+// 推送频道事件消息      4204
+message PushChannelEventMessage {
+    // 最新频道事件 暂时推送1条
+    ChannelEventMessage  latestChannelEventMessage = 1;
+}
+
+// 推送撤回频道消息   4205
+message  PushRecallChannelMessage {
+    // 撤回频道消息 暂时推送1条
+    // 当前消息id , 推送的recallMessage 中的 msgId 为撤回的具体消息id
+    int64          msgId                       = 1;
+    RecallMessage  latestRecallChannelMessage  = 2;
+}
+
+// 推送已读频道消息   4206
+message  PushReadChannelMessage {
+    int64                  channelId            = 1;    // 频道id
+    repeated  ReadMessage  readChannelMessages  = 2;    // 已读频道消息
+}
 
 //clinet message content obj /// 客户端自行协商协议
 //文本消息

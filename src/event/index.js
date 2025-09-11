@@ -1,5 +1,6 @@
 import { ipcRenderer } from "@/platform";
 import packet from "@/api/base/imweb-web";
+import channelEvents from "@/api/base/channel_event";
 import { decrypt } from "@/socket/api/request";
 import { ReceiveServerToClient } from "@/socket/api/message";
 import { fnUpdateKeyFriend } from "@/utils/encryption-decryption";
@@ -56,7 +57,8 @@ const fnSocketMessage = (arrayBuffer) => {
         29999: "ErrrMessageResp", // 消息报错
         20601: "PushUserOnOrOffLineMessageResp", // 推送用户上下线
         20701: "PushGroupEventMessage",
-        20403: "PushGroupMsgReceiptMessage"
+        20403: "PushGroupMsgReceiptMessage",
+        4203: "PushChannelMessage",
     };
 
     const code = new DataView(arrayBuffer.slice(2, 4)).getUint16();
@@ -120,6 +122,13 @@ const fnSocketMessage = (arrayBuffer) => {
             // 登录成功 接口已对应处理，所以这个推送不需要处理
             break;
         }
+        // 频道消息接收
+        case 4203: {
+            if (data.latestChannelMessage) {
+                eventMsg.fnChannelMsgAdd(data.latestChannelMessage);
+            }
+            break;
+        } 
         // 好友消息接收
         case 20102: {
             if (data.oneToOneMessage) {

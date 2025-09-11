@@ -36,7 +36,9 @@
     "proto4": "pbjs -t static-module --es6 -w es6 -o src/api/base/domain_url.js  src/api/base/domain_url.proto",
     "proto5": "pbjs -t static-module --es6 -w es6 -o src/api/base/sys.js  src/api/base/sys.proto",
     "proto6": "pbjs -t static-module --es6 -w es6 -o src/api/base/group.js  src/api/base/group.proto",
-    "proto7": "pbjs -t static-module --es6 -w es6 -o src/api/base/group_message.js  src/api/base/group_message.proto"
+    "proto7": "pbjs -t static-module --es6 -w es6 -o src/api/base/group_message.js  src/api/base/group_message.proto",
+    "proto8": "pbjs -t static-module --es6 -w es6 -o src/api/base/channel_event.js  src/api/base/channel_event.proto",
+    "proto9": "pbjs -t static-module --es6 -w es6 -o src/api/base/channel_api.js  src/api/base/channel_api.proto"
   },
   "main": "background.js",
   "dependencies": {
