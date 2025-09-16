@@ -24,7 +24,7 @@
 // 工具
 import { strSplitAt } from "@/utils/widget";
 import { repalceLink, repalceLinkNoPrefix } from "@/utils/base";
-import { splitHtmlStringToObjects } from "@/utils/widget";
+import { splitHtmlStringToObjects, strReplaceEmojiImgLabel } from "@/utils/widget";
 
 // 事件
 import eventBase from "@/event/base";
@@ -50,6 +50,8 @@ export default {
     handleContent() {
       let htmlString = repalceLink(this.content);
          htmlString = htmlString.replace(/\n/g, '<br/>')
+        // 字符串替换为表情图片标签
+         htmlString = strReplaceEmojiImgLabel(htmlString);
 
       // 拆分html
       const tagList = splitHtmlStringToObjects(htmlString);
@@ -189,6 +191,10 @@ export default {
       &:hover {
         opacity: 0.8;
       }
+    }
+
+    > img {
+      height: 18px;
     }
 
     > .break {
