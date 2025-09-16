@@ -428,6 +428,8 @@ export const fnMsgDecryption = async ({
                 console.error("fileKey 解密失败");
             }
         }
+    } else {
+        fileKey = attachmentKey
     }
 
     // 附加信息解码
