@@ -194,7 +194,7 @@ const fnGroupMsgAdd = async (msg) => {
         id: Number(msg.groupId),
         type,
         msgType: msg.msgType || 0,
-        msgEncryptionVersion: msg.version || 1,
+        msgEncryptionVersion: msg.version ,
         content: msg.content,
         attachmentKey: msg.attachmentKey,
     });
