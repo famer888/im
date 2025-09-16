@@ -23,9 +23,9 @@ export function eventWsReceivedMsg(arrayBuffer) {
     let timeNow = new Date().getTime();
     let timeout = 0;
 
-    if (timeNow - timeBefore < 20) {
-        timeout = timeBefore + 20 - timeNow;
-        timeBefore = timeBefore + 20;
+    if (timeNow - timeBefore < 80) {
+        timeout = timeBefore + 80 - timeNow;
+        timeBefore = timeBefore + 80;
     } else {
         timeBefore = timeNow;
     }
