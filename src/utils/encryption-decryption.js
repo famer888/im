@@ -104,16 +104,11 @@ export const fnChannelRelKeyGet = async (id) => {
         const keyPair = await GetKeyPair({
             targetId: id,
             flag: 3,
-            // groupKeyVersion: 1,
+            channelKeyVersion: 1,
         });
-        console.log('keyPair--', keyPair, {
-            targetId: id,
-            flag: 3,
-            // groupKeyVersion: 1,
-        })
 
-        if (keyPair && !_.isEmpty(keyPair.groupKeyPair)) {
-            keyInfos = keyPair.groupKeyPair;
+        if (keyPair && !_.isEmpty(keyPair.channelKeyPair)) {
+            keyInfos = keyPair.channelKeyPair;
 
             // 记录
             channelKeyObjs[id] = keyInfos;
@@ -845,6 +840,7 @@ const fnEncode = (str, type, picData) => {
 export const fnFormartMsgParams = async ({ data, customMsgId, id, type }) => {
     const {
         groupId,
+        channelId,
         text,
         sendTime,
         msgType,
@@ -859,6 +855,7 @@ export const fnFormartMsgParams = async ({ data, customMsgId, id, type }) => {
         atUsers,
         receiveUid,
         groupAttachmentKey,
+        channelAttachmentKey,
         ownAppAttachmentKey,
         appAttachmentKey,
         webAttachmentKey,
@@ -888,6 +885,7 @@ export const fnFormartMsgParams = async ({ data, customMsgId, id, type }) => {
         msgType, // 消息类型
         contentMd5: md5(contentCode), // 消息内容md5值
         sendTime: Number(sendTime), // 发送时间
+        msgTime: Number(sendTime),
         sendUser: null, // 发送者信息
         snapchatTime: 0, // 阅后即焚设置时间 5秒， 10秒
         source: 1, // 消息来源 add v1.2.0
@@ -920,6 +918,22 @@ export const fnFormartMsgParams = async ({ data, customMsgId, id, type }) => {
 
             // 获取真实的密钥
             const relKey = await fnGroupRelKeyGet(id);
+
+            // 如果群密钥没获取到，则直接结束
+            if (!relKey) {
+                window.$toast(i18n.t("密钥异常，发送消息失败"));
+                return;
+            }
+
+            // 加密内容
+            params.content = _encrypt2(relKey, contentCode);
+        } else if(type === "channel") {
+
+            params.version = 1;
+            params.attachmentKey = channelAttachmentKey;
+
+            // 获取真实的密钥
+            const relKey = await fnChannelRelKeyGet(id);
 
             // 如果群密钥没获取到，则直接结束
             if (!relKey) {
@@ -982,6 +996,8 @@ export const fnFormartMsgParams = async ({ data, customMsgId, id, type }) => {
 
     if (type === "group") {
         params.groupId = groupId;
+    } else if(type === "channel") {
+        params.channelId = channelId; 
     } else {
         params.receiveUid = receiveUid;
     }

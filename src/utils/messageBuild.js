@@ -1,4 +1,4 @@
-import { CReqChatSendPrivate, CReqSendChatGroup } from "@/socket/api/message";
+import { CReqChatSendPrivate, CReqSendChatGroup, CReqSendChatChannel } from "@/socket/api/message";
 import { fnFormartMsgParams } from "./encryption-decryption";
 
 // 工具
@@ -71,6 +71,18 @@ setInterval(() => {
                 if (res) {
                     // console.log("CReqSendChatGroup--", res)
                     CReqSendChatGroup(res, flag);
+                }
+            });
+        } else if(info.channelId) {
+             fnFormartMsgParams({
+                data: [12, 18].includes(info.msgType) ? info : { ...info, version: 1 },
+                customMsgId: flag,
+                id: info.channelId,
+                type: "channel",
+            }).then((res) => {
+                if (res) {
+                    console.log("CReqSendChatChannel--", res, flag)
+                    CReqSendChatChannel(res, Number(flag));
                 }
             });
         } else {

@@ -1,6 +1,7 @@
 import {
     OneToOneMessageReq,
     SendGroupMessageReq,
+    SendChannelMessage,
     SendRecallOneToOneMessageReq,
     SendRecallGroupMessageReq,
     SendReceiptMessageReq,
@@ -80,6 +81,26 @@ export function CReqMessageReceipt(receipts) {
 }
 
 /**
+ * 发送频道消息
+ * @param {*} data 
+ * @param {*} flag 
+ */
+export function CReqSendChatChannel(data, flag) {
+    if (data.atUids && data.atUids.length && data.atUids[0] == undefined) {
+        data.atUids = [];
+    }
+       console.log('CReqSendChatChannel-1-',data, flag)
+    const message = SendChannelMessage.create({ channelMessage: data, flag });
+    console.log('CReqSendChatChannel-2-',message)
+    const buffer = SendChannelMessage.encode(message).finish();
+        // console.log('CReqSendChatChannel-3-',buffer)
+    const rb = initHeader(buffer, 3101);
+            // console.log('CReqSendChatChannel-4-',rb)
+    console.log("发出推送-3101-")
+    webSocketSend(rb);
+}
+
+/**
  * 用户发送群聊消息
  * uint32  UserID = 1;                                      // 发送用户ID
  * uint32  ClientType = 2;                                  // 发送端类型
@@ -95,6 +116,7 @@ export function CReqSendChatGroup(data, flag) {
     if (data.atUids && data.atUids.length && data.atUids[0] == undefined) {
         data.atUids = [];
     }
+    console.log('CReqSendChatGroup--', data, flag)
     const message = SendGroupMessageReq.create({ groupMsg: data, flag });
     const buffer = SendGroupMessageReq.encode(message).finish();
     const rb = initHeader(buffer, 10201);
