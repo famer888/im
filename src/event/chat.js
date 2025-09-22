@@ -6,6 +6,7 @@ import {
     QueryArchiveReq,
     RemoveArchiveReq,
 } from "@/api/imBase";
+import { getChannelDetail } from "@/api/imChannel";
 
 // 事件
 import eventCommon from "./common";
@@ -42,7 +43,7 @@ const fnChatListSort = (list) => {
 /**
  * 聊天窗口信息 更新
  */
-const fnChatWindowUpdate = (info) => {
+const fnChatWindowUpdate =  (info) => {
     const { updateInfo, chats, friendList, groups, channels, unreadObj } = info;
 
     const loginId = eventCommon.fnCommonInfoRU({
@@ -118,8 +119,14 @@ const fnChatWindowUpdate = (info) => {
         }
 
         // 频道信息同步
+            console.log('channels--', updateInfo, channels)
         if (updateInfo.type === "channel") {
             chatInfo = channels.find((item) => item.channelId === updateInfo.id);
+            console.log('channels--', chatInfo)
+            // if(!chatInfo) {
+            //     const res = await getChannelDetail({ channelId: updateInfo.id });
+            //     console.log('getChannelDetail--', res)
+            // }
         }
 
 
@@ -138,12 +145,11 @@ const fnChatWindowUpdate = (info) => {
         returnInfo.chatList = list;
         returnInfo.chatTopSize = chatTopSize;
 
+        const cacheNames = {"group": "MessageGroupList", "friend": "MessageUserList", "channel": "MessageChannelList"}
         // 同步到本地
         Cache(
-            `${loginId}${
-                updateInfo.type === "group"
-                    ? "MessageGroupList"
-                    : "MessageUserList"
+            `${loginId}${ 
+                cacheNames[updateInfo.type] || "MessageUserList"
             }`,
             returnInfo.chatList.filter((item) => item.type === updateInfo.type)
         );

@@ -56,6 +56,7 @@ const fnMsgAdd = async ({ msg, contentStr, fileKey, type }) => {
     msgNew.isSelf = loginId === msgNew.UserID;
     msgNew.ChatType = msgNew.msgType;
     msgNew.chatType = msgNew.msgType;
+    msgNew.sendTime = msgNew.sendTime || msgNew.msgTime;
     const chatType = msgNew.chatType || msgNew.ChatType || msgNew.msgType;
 
     // id 和 名称
@@ -64,6 +65,9 @@ const fnMsgAdd = async ({ msg, contentStr, fileKey, type }) => {
             msgNew.receiveUid === loginId ? msgNew.UserID : msgNew.receiveUid;
         msgNew.friendId = msgNew.id;
         //
+    } else if(type === "channel") {
+        msgNew.id = msgNew.channelId;
+        // msgNew.name = msgNew.groupName;
     } else {
         msgNew.id = msgNew.groupId;
         msgNew.name = msgNew.groupName;
@@ -283,18 +287,27 @@ const fnChannelMsgAdd = async (msg) => {
     });
 
     const channelId = Number(msg.channelId)
+    const type = "channel"
 
     
     const { contentStr, fileKey } = await fnMsgDecryption({
         id: channelId,
-        type: 'channel',
+        type,
         msgType: msg.msgType || 0,
         msgEncryptionVersion: msg.version,
         content:msg.content,
         attachmentKey: msg.attachmentKey,
     });
-    console.log('contentStr', contentStr, fileKey)
+    if (!contentStr) {
+        return;
+    }
 
+     fnMsgAdd({
+        msg,
+        contentStr,
+        fileKey,
+        type,
+    });
 }
 
 /**
