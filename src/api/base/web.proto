@@ -87,6 +87,7 @@ message GetKeyPairReq {
     int32          webKeyVersion   = 4; // web密钥版本号(不传则下发最新)
     int32          appKeyVersion   = 5; // app密钥版本号(不传则下发最新)
     int32          groupKeyVersion   = 6; // 群聊版本号(不传则下发最新)
+    int32          channelKeyVersion = 7; // 频道版本号(不传则下发最新)
 }
 
 // 获取密钥对resp
@@ -95,6 +96,7 @@ message GetKeyPairResp {
     KeyPairBase    appKeyPair     = 2; // app密钥（用户）
     KeyPairBase    webKeyPair     = 3; // web秘钥（用户）
     KeyPairBase    groupKeyPair   = 4; // 群聊秘钥
+    KeyPairBase    channelKeyPair = 5; // 频道秘钥
 }
 
 //获取好友秘钥对列表req [/sys/GetKeyPairList]（暂未使用）

@@ -1082,6 +1082,7 @@ export const GetKeyPairReq = $root.GetKeyPairReq = (() => {
      * @property {number|null} [webKeyVersion] GetKeyPairReq webKeyVersion
      * @property {number|null} [appKeyVersion] GetKeyPairReq appKeyVersion
      * @property {number|null} [groupKeyVersion] GetKeyPairReq groupKeyVersion
+     * @property {number|null} [channelKeyVersion] GetKeyPairReq channelKeyVersion
      */
 
     /**
@@ -1148,6 +1149,14 @@ export const GetKeyPairReq = $root.GetKeyPairReq = (() => {
     GetKeyPairReq.prototype.groupKeyVersion = 0;
 
     /**
+     * GetKeyPairReq channelKeyVersion.
+     * @member {number} channelKeyVersion
+     * @memberof GetKeyPairReq
+     * @instance
+     */
+    GetKeyPairReq.prototype.channelKeyVersion = 0;
+
+    /**
      * Creates a new GetKeyPairReq instance using the specified properties.
      * @function create
      * @memberof GetKeyPairReq
@@ -1183,6 +1192,8 @@ export const GetKeyPairReq = $root.GetKeyPairReq = (() => {
             writer.uint32(/* id 5, wireType 0 =*/40).int32(message.appKeyVersion);
         if (message.groupKeyVersion != null && Object.hasOwnProperty.call(message, "groupKeyVersion"))
             writer.uint32(/* id 6, wireType 0 =*/48).int32(message.groupKeyVersion);
+        if (message.channelKeyVersion != null && Object.hasOwnProperty.call(message, "channelKeyVersion"))
+            writer.uint32(/* id 7, wireType 0 =*/56).int32(message.channelKeyVersion);
         return writer;
     };
 
@@ -1241,6 +1252,10 @@ export const GetKeyPairReq = $root.GetKeyPairReq = (() => {
                 }
             case 6: {
                     message.groupKeyVersion = reader.int32();
+                    break;
+                }
+            case 7: {
+                    message.channelKeyVersion = reader.int32();
                     break;
                 }
             default:
@@ -1305,6 +1320,9 @@ export const GetKeyPairReq = $root.GetKeyPairReq = (() => {
         if (message.groupKeyVersion != null && message.hasOwnProperty("groupKeyVersion"))
             if (!$util.isInteger(message.groupKeyVersion))
                 return "groupKeyVersion: integer expected";
+        if (message.channelKeyVersion != null && message.hasOwnProperty("channelKeyVersion"))
+            if (!$util.isInteger(message.channelKeyVersion))
+                return "channelKeyVersion: integer expected";
         return null;
     };
 
@@ -1364,6 +1382,8 @@ export const GetKeyPairReq = $root.GetKeyPairReq = (() => {
             message.appKeyVersion = object.appKeyVersion | 0;
         if (object.groupKeyVersion != null)
             message.groupKeyVersion = object.groupKeyVersion | 0;
+        if (object.channelKeyVersion != null)
+            message.channelKeyVersion = object.channelKeyVersion | 0;
         return message;
     };
 
@@ -1391,6 +1411,7 @@ export const GetKeyPairReq = $root.GetKeyPairReq = (() => {
             object.webKeyVersion = 0;
             object.appKeyVersion = 0;
             object.groupKeyVersion = 0;
+            object.channelKeyVersion = 0;
         }
         if (message.clientInfo != null && message.hasOwnProperty("clientInfo"))
             object.clientInfo = $root.ClientInfo.toObject(message.clientInfo, options);
@@ -1407,6 +1428,8 @@ export const GetKeyPairReq = $root.GetKeyPairReq = (() => {
             object.appKeyVersion = message.appKeyVersion;
         if (message.groupKeyVersion != null && message.hasOwnProperty("groupKeyVersion"))
             object.groupKeyVersion = message.groupKeyVersion;
+        if (message.channelKeyVersion != null && message.hasOwnProperty("channelKeyVersion"))
+            object.channelKeyVersion = message.channelKeyVersion;
         return object;
     };
 
@@ -1449,6 +1472,7 @@ export const GetKeyPairResp = $root.GetKeyPairResp = (() => {
      * @property {IKeyPairBase|null} [appKeyPair] GetKeyPairResp appKeyPair
      * @property {IKeyPairBase|null} [webKeyPair] GetKeyPairResp webKeyPair
      * @property {IKeyPairBase|null} [groupKeyPair] GetKeyPairResp groupKeyPair
+     * @property {IKeyPairBase|null} [channelKeyPair] GetKeyPairResp channelKeyPair
      */
 
     /**
@@ -1499,6 +1523,14 @@ export const GetKeyPairResp = $root.GetKeyPairResp = (() => {
     GetKeyPairResp.prototype.groupKeyPair = null;
 
     /**
+     * GetKeyPairResp channelKeyPair.
+     * @member {IKeyPairBase|null|undefined} channelKeyPair
+     * @memberof GetKeyPairResp
+     * @instance
+     */
+    GetKeyPairResp.prototype.channelKeyPair = null;
+
+    /**
      * Creates a new GetKeyPairResp instance using the specified properties.
      * @function create
      * @memberof GetKeyPairResp
@@ -1530,6 +1562,8 @@ export const GetKeyPairResp = $root.GetKeyPairResp = (() => {
             $root.KeyPairBase.encode(message.webKeyPair, writer.uint32(/* id 3, wireType 2 =*/26).fork()).ldelim();
         if (message.groupKeyPair != null && Object.hasOwnProperty.call(message, "groupKeyPair"))
             $root.KeyPairBase.encode(message.groupKeyPair, writer.uint32(/* id 4, wireType 2 =*/34).fork()).ldelim();
+        if (message.channelKeyPair != null && Object.hasOwnProperty.call(message, "channelKeyPair"))
+            $root.KeyPairBase.encode(message.channelKeyPair, writer.uint32(/* id 5, wireType 2 =*/42).fork()).ldelim();
         return writer;
     };
 
@@ -1580,6 +1614,10 @@ export const GetKeyPairResp = $root.GetKeyPairResp = (() => {
                 }
             case 4: {
                     message.groupKeyPair = $root.KeyPairBase.decode(reader, reader.uint32());
+                    break;
+                }
+            case 5: {
+                    message.channelKeyPair = $root.KeyPairBase.decode(reader, reader.uint32());
                     break;
                 }
             default:
@@ -1637,6 +1675,11 @@ export const GetKeyPairResp = $root.GetKeyPairResp = (() => {
             if (error)
                 return "groupKeyPair." + error;
         }
+        if (message.channelKeyPair != null && message.hasOwnProperty("channelKeyPair")) {
+            let error = $root.KeyPairBase.verify(message.channelKeyPair);
+            if (error)
+                return "channelKeyPair." + error;
+        }
         return null;
     };
 
@@ -1672,6 +1715,11 @@ export const GetKeyPairResp = $root.GetKeyPairResp = (() => {
                 throw TypeError(".GetKeyPairResp.groupKeyPair: object expected");
             message.groupKeyPair = $root.KeyPairBase.fromObject(object.groupKeyPair);
         }
+        if (object.channelKeyPair != null) {
+            if (typeof object.channelKeyPair !== "object")
+                throw TypeError(".GetKeyPairResp.channelKeyPair: object expected");
+            message.channelKeyPair = $root.KeyPairBase.fromObject(object.channelKeyPair);
+        }
         return message;
     };
 
@@ -1693,6 +1741,7 @@ export const GetKeyPairResp = $root.GetKeyPairResp = (() => {
             object.appKeyPair = null;
             object.webKeyPair = null;
             object.groupKeyPair = null;
+            object.channelKeyPair = null;
         }
         if (message.commonResult != null && message.hasOwnProperty("commonResult"))
             object.commonResult = $root.CommonResult.toObject(message.commonResult, options);
@@ -1702,6 +1751,8 @@ export const GetKeyPairResp = $root.GetKeyPairResp = (() => {
             object.webKeyPair = $root.KeyPairBase.toObject(message.webKeyPair, options);
         if (message.groupKeyPair != null && message.hasOwnProperty("groupKeyPair"))
             object.groupKeyPair = $root.KeyPairBase.toObject(message.groupKeyPair, options);
+        if (message.channelKeyPair != null && message.hasOwnProperty("channelKeyPair"))
+            object.channelKeyPair = $root.KeyPairBase.toObject(message.channelKeyPair, options);
         return object;
     };
 
@@ -16734,6 +16785,8 @@ export const GroupReqInfo = $root.GroupReqInfo = (() => {
             case 14:
             case 15:
             case 16:
+            case 17:
+            case 18:
                 break;
             }
         if (message.groupReqStatus != null && message.hasOwnProperty("groupReqStatus"))
@@ -16896,6 +16949,14 @@ export const GroupReqInfo = $root.GroupReqInfo = (() => {
         case "GROUP_IS_ENABLED":
         case 16:
             message.groupReqType = 16;
+            break;
+        case "GROUP_OBSERVE_ADD":
+        case 17:
+            message.groupReqType = 17;
+            break;
+        case "GROUP_OBSERVE_REMOVE":
+        case 18:
+            message.groupReqType = 18;
             break;
         }
         switch (object.groupReqStatus) {
@@ -31802,6 +31863,8 @@ export const GroupJoinReq = $root.GroupJoinReq = (() => {
             case 14:
             case 15:
             case 16:
+            case 17:
+            case 18:
                 break;
             }
         if (message.addToken != null && message.hasOwnProperty("addToken"))
@@ -31915,6 +31978,14 @@ export const GroupJoinReq = $root.GroupJoinReq = (() => {
         case "GROUP_IS_ENABLED":
         case 16:
             message.reqType = 16;
+            break;
+        case "GROUP_OBSERVE_ADD":
+        case 17:
+            message.reqType = 17;
+            break;
+        case "GROUP_OBSERVE_REMOVE":
+        case 18:
+            message.reqType = 18;
             break;
         }
         if (object.addToken != null)
@@ -35102,6 +35173,8 @@ export const GroupReqStatus = $root.GroupReqStatus = (() => {
  * @property {number} GROUP_LINK=14 GROUP_LINK value
  * @property {number} GROUP_ALIAS=15 GROUP_ALIAS value
  * @property {number} GROUP_IS_ENABLED=16 GROUP_IS_ENABLED value
+ * @property {number} GROUP_OBSERVE_ADD=17 GROUP_OBSERVE_ADD value
+ * @property {number} GROUP_OBSERVE_REMOVE=18 GROUP_OBSERVE_REMOVE value
  */
 export const GroupReqType = $root.GroupReqType = (() => {
     const valuesById = {}, values = Object.create(valuesById);
@@ -35122,6 +35195,8 @@ export const GroupReqType = $root.GroupReqType = (() => {
     values[valuesById[14] = "GROUP_LINK"] = 14;
     values[valuesById[15] = "GROUP_ALIAS"] = 15;
     values[valuesById[16] = "GROUP_IS_ENABLED"] = 16;
+    values[valuesById[17] = "GROUP_OBSERVE_ADD"] = 17;
+    values[valuesById[18] = "GROUP_OBSERVE_REMOVE"] = 18;
     return values;
 })();
 
@@ -43580,6 +43655,647 @@ export const LinkObj = $root.LinkObj = (() => {
     };
 
     return LinkObj;
+})();
+
+export const FeeConfig = $root.FeeConfig = (() => {
+
+    /**
+     * Properties of a FeeConfig.
+     * @exports IFeeConfig
+     * @interface IFeeConfig
+     * @property {number|null} [scenesType] FeeConfig scenesType
+     * @property {string|null} [scenesName] FeeConfig scenesName
+     * @property {Array.<ICoinFeeConfig>|null} [feeConfigs] FeeConfig feeConfigs
+     */
+
+    /**
+     * Constructs a new FeeConfig.
+     * @exports FeeConfig
+     * @classdesc Represents a FeeConfig.
+     * @implements IFeeConfig
+     * @constructor
+     * @param {IFeeConfig=} [properties] Properties to set
+     */
+    function FeeConfig(properties) {
+        this.feeConfigs = [];
+        if (properties)
+            for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                if (properties[keys[i]] != null)
+                    this[keys[i]] = properties[keys[i]];
+    }
+
+    /**
+     * FeeConfig scenesType.
+     * @member {number} scenesType
+     * @memberof FeeConfig
+     * @instance
+     */
+    FeeConfig.prototype.scenesType = 0;
+
+    /**
+     * FeeConfig scenesName.
+     * @member {string} scenesName
+     * @memberof FeeConfig
+     * @instance
+     */
+    FeeConfig.prototype.scenesName = "";
+
+    /**
+     * FeeConfig feeConfigs.
+     * @member {Array.<ICoinFeeConfig>} feeConfigs
+     * @memberof FeeConfig
+     * @instance
+     */
+    FeeConfig.prototype.feeConfigs = $util.emptyArray;
+
+    /**
+     * Creates a new FeeConfig instance using the specified properties.
+     * @function create
+     * @memberof FeeConfig
+     * @static
+     * @param {IFeeConfig=} [properties] Properties to set
+     * @returns {FeeConfig} FeeConfig instance
+     */
+    FeeConfig.create = function create(properties) {
+        return new FeeConfig(properties);
+    };
+
+    /**
+     * Encodes the specified FeeConfig message. Does not implicitly {@link FeeConfig.verify|verify} messages.
+     * @function encode
+     * @memberof FeeConfig
+     * @static
+     * @param {IFeeConfig} message FeeConfig message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    FeeConfig.encode = function encode(message, writer) {
+        if (!writer)
+            writer = $Writer.create();
+        if (message.scenesType != null && Object.hasOwnProperty.call(message, "scenesType"))
+            writer.uint32(/* id 2, wireType 0 =*/16).int32(message.scenesType);
+        if (message.scenesName != null && Object.hasOwnProperty.call(message, "scenesName"))
+            writer.uint32(/* id 3, wireType 2 =*/26).string(message.scenesName);
+        if (message.feeConfigs != null && message.feeConfigs.length)
+            for (let i = 0; i < message.feeConfigs.length; ++i)
+                $root.CoinFeeConfig.encode(message.feeConfigs[i], writer.uint32(/* id 4, wireType 2 =*/34).fork()).ldelim();
+        return writer;
+    };
+
+    /**
+     * Encodes the specified FeeConfig message, length delimited. Does not implicitly {@link FeeConfig.verify|verify} messages.
+     * @function encodeDelimited
+     * @memberof FeeConfig
+     * @static
+     * @param {IFeeConfig} message FeeConfig message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    FeeConfig.encodeDelimited = function encodeDelimited(message, writer) {
+        return this.encode(message, writer).ldelim();
+    };
+
+    /**
+     * Decodes a FeeConfig message from the specified reader or buffer.
+     * @function decode
+     * @memberof FeeConfig
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @param {number} [length] Message length if known beforehand
+     * @returns {FeeConfig} FeeConfig
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    FeeConfig.decode = function decode(reader, length, error) {
+        if (!(reader instanceof $Reader))
+            reader = $Reader.create(reader);
+        let end = length === undefined ? reader.len : reader.pos + length, message = new $root.FeeConfig();
+        while (reader.pos < end) {
+            let tag = reader.uint32();
+            if (tag === error)
+                break;
+            switch (tag >>> 3) {
+            case 2: {
+                    message.scenesType = reader.int32();
+                    break;
+                }
+            case 3: {
+                    message.scenesName = reader.string();
+                    break;
+                }
+            case 4: {
+                    if (!(message.feeConfigs && message.feeConfigs.length))
+                        message.feeConfigs = [];
+                    message.feeConfigs.push($root.CoinFeeConfig.decode(reader, reader.uint32()));
+                    break;
+                }
+            default:
+                reader.skipType(tag & 7);
+                break;
+            }
+        }
+        return message;
+    };
+
+    /**
+     * Decodes a FeeConfig message from the specified reader or buffer, length delimited.
+     * @function decodeDelimited
+     * @memberof FeeConfig
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @returns {FeeConfig} FeeConfig
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    FeeConfig.decodeDelimited = function decodeDelimited(reader) {
+        if (!(reader instanceof $Reader))
+            reader = new $Reader(reader);
+        return this.decode(reader, reader.uint32());
+    };
+
+    /**
+     * Verifies a FeeConfig message.
+     * @function verify
+     * @memberof FeeConfig
+     * @static
+     * @param {Object.<string,*>} message Plain object to verify
+     * @returns {string|null} `null` if valid, otherwise the reason why it is not
+     */
+    FeeConfig.verify = function verify(message) {
+        if (typeof message !== "object" || message === null)
+            return "object expected";
+        if (message.scenesType != null && message.hasOwnProperty("scenesType"))
+            if (!$util.isInteger(message.scenesType))
+                return "scenesType: integer expected";
+        if (message.scenesName != null && message.hasOwnProperty("scenesName"))
+            if (!$util.isString(message.scenesName))
+                return "scenesName: string expected";
+        if (message.feeConfigs != null && message.hasOwnProperty("feeConfigs")) {
+            if (!Array.isArray(message.feeConfigs))
+                return "feeConfigs: array expected";
+            for (let i = 0; i < message.feeConfigs.length; ++i) {
+                let error = $root.CoinFeeConfig.verify(message.feeConfigs[i]);
+                if (error)
+                    return "feeConfigs." + error;
+            }
+        }
+        return null;
+    };
+
+    /**
+     * Creates a FeeConfig message from a plain object. Also converts values to their respective internal types.
+     * @function fromObject
+     * @memberof FeeConfig
+     * @static
+     * @param {Object.<string,*>} object Plain object
+     * @returns {FeeConfig} FeeConfig
+     */
+    FeeConfig.fromObject = function fromObject(object) {
+        if (object instanceof $root.FeeConfig)
+            return object;
+        let message = new $root.FeeConfig();
+        if (object.scenesType != null)
+            message.scenesType = object.scenesType | 0;
+        if (object.scenesName != null)
+            message.scenesName = String(object.scenesName);
+        if (object.feeConfigs) {
+            if (!Array.isArray(object.feeConfigs))
+                throw TypeError(".FeeConfig.feeConfigs: array expected");
+            message.feeConfigs = [];
+            for (let i = 0; i < object.feeConfigs.length; ++i) {
+                if (typeof object.feeConfigs[i] !== "object")
+                    throw TypeError(".FeeConfig.feeConfigs: object expected");
+                message.feeConfigs[i] = $root.CoinFeeConfig.fromObject(object.feeConfigs[i]);
+            }
+        }
+        return message;
+    };
+
+    /**
+     * Creates a plain object from a FeeConfig message. Also converts values to other types if specified.
+     * @function toObject
+     * @memberof FeeConfig
+     * @static
+     * @param {FeeConfig} message FeeConfig
+     * @param {$protobuf.IConversionOptions} [options] Conversion options
+     * @returns {Object.<string,*>} Plain object
+     */
+    FeeConfig.toObject = function toObject(message, options) {
+        if (!options)
+            options = {};
+        let object = {};
+        if (options.arrays || options.defaults)
+            object.feeConfigs = [];
+        if (options.defaults) {
+            object.scenesType = 0;
+            object.scenesName = "";
+        }
+        if (message.scenesType != null && message.hasOwnProperty("scenesType"))
+            object.scenesType = message.scenesType;
+        if (message.scenesName != null && message.hasOwnProperty("scenesName"))
+            object.scenesName = message.scenesName;
+        if (message.feeConfigs && message.feeConfigs.length) {
+            object.feeConfigs = [];
+            for (let j = 0; j < message.feeConfigs.length; ++j)
+                object.feeConfigs[j] = $root.CoinFeeConfig.toObject(message.feeConfigs[j], options);
+        }
+        return object;
+    };
+
+    /**
+     * Converts this FeeConfig to JSON.
+     * @function toJSON
+     * @memberof FeeConfig
+     * @instance
+     * @returns {Object.<string,*>} JSON object
+     */
+    FeeConfig.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+    };
+
+    /**
+     * Gets the default type url for FeeConfig
+     * @function getTypeUrl
+     * @memberof FeeConfig
+     * @static
+     * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+     * @returns {string} The default type url
+     */
+    FeeConfig.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === undefined) {
+            typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/FeeConfig";
+    };
+
+    return FeeConfig;
+})();
+
+export const CoinFeeConfig = $root.CoinFeeConfig = (() => {
+
+    /**
+     * Properties of a CoinFeeConfig.
+     * @exports ICoinFeeConfig
+     * @interface ICoinFeeConfig
+     * @property {string|null} [coinName] CoinFeeConfig coinName
+     * @property {string|null} [minFee] CoinFeeConfig minFee
+     * @property {string|null} [maxFee] CoinFeeConfig maxFee
+     * @property {string|null} [baseFee] CoinFeeConfig baseFee
+     * @property {string|null} [feeRate] CoinFeeConfig feeRate
+     * @property {string|null} [fixedFee] CoinFeeConfig fixedFee
+     * @property {number|null} [mathType] CoinFeeConfig mathType
+     * @property {number|null} [feeScale] CoinFeeConfig feeScale
+     */
+
+    /**
+     * Constructs a new CoinFeeConfig.
+     * @exports CoinFeeConfig
+     * @classdesc Represents a CoinFeeConfig.
+     * @implements ICoinFeeConfig
+     * @constructor
+     * @param {ICoinFeeConfig=} [properties] Properties to set
+     */
+    function CoinFeeConfig(properties) {
+        if (properties)
+            for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                if (properties[keys[i]] != null)
+                    this[keys[i]] = properties[keys[i]];
+    }
+
+    /**
+     * CoinFeeConfig coinName.
+     * @member {string} coinName
+     * @memberof CoinFeeConfig
+     * @instance
+     */
+    CoinFeeConfig.prototype.coinName = "";
+
+    /**
+     * CoinFeeConfig minFee.
+     * @member {string} minFee
+     * @memberof CoinFeeConfig
+     * @instance
+     */
+    CoinFeeConfig.prototype.minFee = "";
+
+    /**
+     * CoinFeeConfig maxFee.
+     * @member {string} maxFee
+     * @memberof CoinFeeConfig
+     * @instance
+     */
+    CoinFeeConfig.prototype.maxFee = "";
+
+    /**
+     * CoinFeeConfig baseFee.
+     * @member {string} baseFee
+     * @memberof CoinFeeConfig
+     * @instance
+     */
+    CoinFeeConfig.prototype.baseFee = "";
+
+    /**
+     * CoinFeeConfig feeRate.
+     * @member {string} feeRate
+     * @memberof CoinFeeConfig
+     * @instance
+     */
+    CoinFeeConfig.prototype.feeRate = "";
+
+    /**
+     * CoinFeeConfig fixedFee.
+     * @member {string} fixedFee
+     * @memberof CoinFeeConfig
+     * @instance
+     */
+    CoinFeeConfig.prototype.fixedFee = "";
+
+    /**
+     * CoinFeeConfig mathType.
+     * @member {number} mathType
+     * @memberof CoinFeeConfig
+     * @instance
+     */
+    CoinFeeConfig.prototype.mathType = 0;
+
+    /**
+     * CoinFeeConfig feeScale.
+     * @member {number} feeScale
+     * @memberof CoinFeeConfig
+     * @instance
+     */
+    CoinFeeConfig.prototype.feeScale = 0;
+
+    /**
+     * Creates a new CoinFeeConfig instance using the specified properties.
+     * @function create
+     * @memberof CoinFeeConfig
+     * @static
+     * @param {ICoinFeeConfig=} [properties] Properties to set
+     * @returns {CoinFeeConfig} CoinFeeConfig instance
+     */
+    CoinFeeConfig.create = function create(properties) {
+        return new CoinFeeConfig(properties);
+    };
+
+    /**
+     * Encodes the specified CoinFeeConfig message. Does not implicitly {@link CoinFeeConfig.verify|verify} messages.
+     * @function encode
+     * @memberof CoinFeeConfig
+     * @static
+     * @param {ICoinFeeConfig} message CoinFeeConfig message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    CoinFeeConfig.encode = function encode(message, writer) {
+        if (!writer)
+            writer = $Writer.create();
+        if (message.coinName != null && Object.hasOwnProperty.call(message, "coinName"))
+            writer.uint32(/* id 1, wireType 2 =*/10).string(message.coinName);
+        if (message.minFee != null && Object.hasOwnProperty.call(message, "minFee"))
+            writer.uint32(/* id 2, wireType 2 =*/18).string(message.minFee);
+        if (message.maxFee != null && Object.hasOwnProperty.call(message, "maxFee"))
+            writer.uint32(/* id 3, wireType 2 =*/26).string(message.maxFee);
+        if (message.baseFee != null && Object.hasOwnProperty.call(message, "baseFee"))
+            writer.uint32(/* id 4, wireType 2 =*/34).string(message.baseFee);
+        if (message.feeRate != null && Object.hasOwnProperty.call(message, "feeRate"))
+            writer.uint32(/* id 5, wireType 2 =*/42).string(message.feeRate);
+        if (message.fixedFee != null && Object.hasOwnProperty.call(message, "fixedFee"))
+            writer.uint32(/* id 6, wireType 2 =*/50).string(message.fixedFee);
+        if (message.mathType != null && Object.hasOwnProperty.call(message, "mathType"))
+            writer.uint32(/* id 7, wireType 0 =*/56).int32(message.mathType);
+        if (message.feeScale != null && Object.hasOwnProperty.call(message, "feeScale"))
+            writer.uint32(/* id 8, wireType 0 =*/64).int32(message.feeScale);
+        return writer;
+    };
+
+    /**
+     * Encodes the specified CoinFeeConfig message, length delimited. Does not implicitly {@link CoinFeeConfig.verify|verify} messages.
+     * @function encodeDelimited
+     * @memberof CoinFeeConfig
+     * @static
+     * @param {ICoinFeeConfig} message CoinFeeConfig message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    CoinFeeConfig.encodeDelimited = function encodeDelimited(message, writer) {
+        return this.encode(message, writer).ldelim();
+    };
+
+    /**
+     * Decodes a CoinFeeConfig message from the specified reader or buffer.
+     * @function decode
+     * @memberof CoinFeeConfig
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @param {number} [length] Message length if known beforehand
+     * @returns {CoinFeeConfig} CoinFeeConfig
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    CoinFeeConfig.decode = function decode(reader, length, error) {
+        if (!(reader instanceof $Reader))
+            reader = $Reader.create(reader);
+        let end = length === undefined ? reader.len : reader.pos + length, message = new $root.CoinFeeConfig();
+        while (reader.pos < end) {
+            let tag = reader.uint32();
+            if (tag === error)
+                break;
+            switch (tag >>> 3) {
+            case 1: {
+                    message.coinName = reader.string();
+                    break;
+                }
+            case 2: {
+                    message.minFee = reader.string();
+                    break;
+                }
+            case 3: {
+                    message.maxFee = reader.string();
+                    break;
+                }
+            case 4: {
+                    message.baseFee = reader.string();
+                    break;
+                }
+            case 5: {
+                    message.feeRate = reader.string();
+                    break;
+                }
+            case 6: {
+                    message.fixedFee = reader.string();
+                    break;
+                }
+            case 7: {
+                    message.mathType = reader.int32();
+                    break;
+                }
+            case 8: {
+                    message.feeScale = reader.int32();
+                    break;
+                }
+            default:
+                reader.skipType(tag & 7);
+                break;
+            }
+        }
+        return message;
+    };
+
+    /**
+     * Decodes a CoinFeeConfig message from the specified reader or buffer, length delimited.
+     * @function decodeDelimited
+     * @memberof CoinFeeConfig
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @returns {CoinFeeConfig} CoinFeeConfig
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    CoinFeeConfig.decodeDelimited = function decodeDelimited(reader) {
+        if (!(reader instanceof $Reader))
+            reader = new $Reader(reader);
+        return this.decode(reader, reader.uint32());
+    };
+
+    /**
+     * Verifies a CoinFeeConfig message.
+     * @function verify
+     * @memberof CoinFeeConfig
+     * @static
+     * @param {Object.<string,*>} message Plain object to verify
+     * @returns {string|null} `null` if valid, otherwise the reason why it is not
+     */
+    CoinFeeConfig.verify = function verify(message) {
+        if (typeof message !== "object" || message === null)
+            return "object expected";
+        if (message.coinName != null && message.hasOwnProperty("coinName"))
+            if (!$util.isString(message.coinName))
+                return "coinName: string expected";
+        if (message.minFee != null && message.hasOwnProperty("minFee"))
+            if (!$util.isString(message.minFee))
+                return "minFee: string expected";
+        if (message.maxFee != null && message.hasOwnProperty("maxFee"))
+            if (!$util.isString(message.maxFee))
+                return "maxFee: string expected";
+        if (message.baseFee != null && message.hasOwnProperty("baseFee"))
+            if (!$util.isString(message.baseFee))
+                return "baseFee: string expected";
+        if (message.feeRate != null && message.hasOwnProperty("feeRate"))
+            if (!$util.isString(message.feeRate))
+                return "feeRate: string expected";
+        if (message.fixedFee != null && message.hasOwnProperty("fixedFee"))
+            if (!$util.isString(message.fixedFee))
+                return "fixedFee: string expected";
+        if (message.mathType != null && message.hasOwnProperty("mathType"))
+            if (!$util.isInteger(message.mathType))
+                return "mathType: integer expected";
+        if (message.feeScale != null && message.hasOwnProperty("feeScale"))
+            if (!$util.isInteger(message.feeScale))
+                return "feeScale: integer expected";
+        return null;
+    };
+
+    /**
+     * Creates a CoinFeeConfig message from a plain object. Also converts values to their respective internal types.
+     * @function fromObject
+     * @memberof CoinFeeConfig
+     * @static
+     * @param {Object.<string,*>} object Plain object
+     * @returns {CoinFeeConfig} CoinFeeConfig
+     */
+    CoinFeeConfig.fromObject = function fromObject(object) {
+        if (object instanceof $root.CoinFeeConfig)
+            return object;
+        let message = new $root.CoinFeeConfig();
+        if (object.coinName != null)
+            message.coinName = String(object.coinName);
+        if (object.minFee != null)
+            message.minFee = String(object.minFee);
+        if (object.maxFee != null)
+            message.maxFee = String(object.maxFee);
+        if (object.baseFee != null)
+            message.baseFee = String(object.baseFee);
+        if (object.feeRate != null)
+            message.feeRate = String(object.feeRate);
+        if (object.fixedFee != null)
+            message.fixedFee = String(object.fixedFee);
+        if (object.mathType != null)
+            message.mathType = object.mathType | 0;
+        if (object.feeScale != null)
+            message.feeScale = object.feeScale | 0;
+        return message;
+    };
+
+    /**
+     * Creates a plain object from a CoinFeeConfig message. Also converts values to other types if specified.
+     * @function toObject
+     * @memberof CoinFeeConfig
+     * @static
+     * @param {CoinFeeConfig} message CoinFeeConfig
+     * @param {$protobuf.IConversionOptions} [options] Conversion options
+     * @returns {Object.<string,*>} Plain object
+     */
+    CoinFeeConfig.toObject = function toObject(message, options) {
+        if (!options)
+            options = {};
+        let object = {};
+        if (options.defaults) {
+            object.coinName = "";
+            object.minFee = "";
+            object.maxFee = "";
+            object.baseFee = "";
+            object.feeRate = "";
+            object.fixedFee = "";
+            object.mathType = 0;
+            object.feeScale = 0;
+        }
+        if (message.coinName != null && message.hasOwnProperty("coinName"))
+            object.coinName = message.coinName;
+        if (message.minFee != null && message.hasOwnProperty("minFee"))
+            object.minFee = message.minFee;
+        if (message.maxFee != null && message.hasOwnProperty("maxFee"))
+            object.maxFee = message.maxFee;
+        if (message.baseFee != null && message.hasOwnProperty("baseFee"))
+            object.baseFee = message.baseFee;
+        if (message.feeRate != null && message.hasOwnProperty("feeRate"))
+            object.feeRate = message.feeRate;
+        if (message.fixedFee != null && message.hasOwnProperty("fixedFee"))
+            object.fixedFee = message.fixedFee;
+        if (message.mathType != null && message.hasOwnProperty("mathType"))
+            object.mathType = message.mathType;
+        if (message.feeScale != null && message.hasOwnProperty("feeScale"))
+            object.feeScale = message.feeScale;
+        return object;
+    };
+
+    /**
+     * Converts this CoinFeeConfig to JSON.
+     * @function toJSON
+     * @memberof CoinFeeConfig
+     * @instance
+     * @returns {Object.<string,*>} JSON object
+     */
+    CoinFeeConfig.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+    };
+
+    /**
+     * Gets the default type url for CoinFeeConfig
+     * @function getTypeUrl
+     * @memberof CoinFeeConfig
+     * @static
+     * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+     * @returns {string} The default type url
+     */
+    CoinFeeConfig.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === undefined) {
+            typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/CoinFeeConfig";
+    };
+
+    return CoinFeeConfig;
 })();
 
 export { $root as default };

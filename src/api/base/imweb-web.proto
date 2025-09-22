@@ -253,6 +253,26 @@ message ReceiveKeyPairMessageReq {
 message ReceiveServerToClientReq {
     repeated int64 ids = 1; // resp消息Id
 }
+
+//-----------------------------channel message---///
+
+// 发送频道消息 4101
+message SendChannelMessage {
+    ChannelMessage	channelMessage = 1; //频道消息
+    int64		        flag           = 2; //标志
+}
+
+// 发送撤回频道消息  4102
+message SendRecallChannelMessage {
+    RecallMessage  recallChannelMessage  = 1; // 撤回的频道消息
+}
+
+// 发送已读频道消息  4103
+message SendReadChannelMessage {
+    int64               channelId       = 1;    // 频道id
+    repeated    int64   msgId           = 2;    // 已读频道消息id
+}
+
 //////---------- server to  client------resp（响应）--------------///
 //错误消息 29999
 message ErrrMessageResp {
