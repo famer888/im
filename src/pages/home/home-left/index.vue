@@ -232,13 +232,16 @@ export default {
       Promise.all([
         Cache(`${loginId}MessageGroupList`),
         Cache(`${loginId}MessageUserList`),
+        Cache(`${loginId}MessageChannelList`),
       ]).then((res) => {
         const groupChats = res[0] || [];
         const friendChats = res[1] || [];
+        const channelChats = res[2] || [];
         const info = eventChat.fnChatListSort([
           ...this.chats,
           ...groupChats,
           ...friendChats,
+          ...channelChats,
         ]);
 
         this.chats = info.list;

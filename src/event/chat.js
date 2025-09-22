@@ -6,7 +6,6 @@ import {
     QueryArchiveReq,
     RemoveArchiveReq,
 } from "@/api/imBase";
-import { getChannelDetail } from "@/api/imChannel";
 
 // 事件
 import eventCommon from "./common";
@@ -119,14 +118,8 @@ const fnChatWindowUpdate =  (info) => {
         }
 
         // 频道信息同步
-            console.log('channels--', updateInfo, channels)
         if (updateInfo.type === "channel") {
             chatInfo = channels.find((item) => item.channelId === updateInfo.id);
-            console.log('channels--', chatInfo)
-            // if(!chatInfo) {
-            //     const res = await getChannelDetail({ channelId: updateInfo.id });
-            //     console.log('getChannelDetail--', res)
-            // }
         }
 
 
