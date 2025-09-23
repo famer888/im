@@ -341,7 +341,7 @@ export default class dbBase {
                     msgTargetId: id,
                     clear: 0,
                     clearTime: new Date().getTime(),
-                    isGroup: type === "group",
+                    type,
                 });
             }
         }
@@ -372,7 +372,7 @@ export default class dbBase {
                 msgTargetId: id,
                 clear: 1,
                 clearTime: new Date().getTime(),
-                isGroup: type == "group",
+                type,
             });
         }
         return { isClearAll: true };

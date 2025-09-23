@@ -5,6 +5,7 @@ import {
     SendRecallOneToOneMessageReq,
     SendRecallGroupMessageReq,
     SendReceiptMessageReq,
+    SendRecallChannelMessage,
     ReceiveServerToClientReq,
     ReceiveKeyPairMessageReq,
     ReceiveGroupEventReceiptMessage,
@@ -125,7 +126,7 @@ export function CReqSendChatGroup(data, flag) {
 }
 
 /**
- * 删除私聊消息
+ * 删除消息
  * int64   msgId   = 1; // 消息ID 当为 clear为0 或者 channelName 不为空时， msgID 设置为-1
  * int64   msgTargetId = 2; // 群ID、接收者ID、发送者ID
  * string  channelName    = 3; // 流媒体
@@ -134,21 +135,24 @@ export function CReqSendChatGroup(data, flag) {
  * int64   clearTime      = 6; // 清空时间
  */
 export function CReqRemoveMessage(data) {
-    const { isGroup } = data;
+    const { isGroup, type } = data;
     const params = {};
     let msg = 10105;
     let method = SendRecallOneToOneMessageReq;
     // 群消息撤回
-    if (isGroup) {
+    if (type === "group") {
         method = SendRecallGroupMessageReq;
         msg = 10205;
         params.recallGroupMessage = data;
+    } else if(type === "channel") {
+        method = SendRecallChannelMessage;
+        msg = 3102;
+        params.recallChannelMessage = data;
     } else {
         params.recallOneToOneMessage = data;
     }
     const message = method.create(params);
     const buffer = method.encode(message).finish();
     const rb = initHeader(buffer, msg);
-    console.log("发出推送--"+ msg)
     webSocketSend(rb);
 }
