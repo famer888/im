@@ -808,7 +808,7 @@ const fnMsgContentAddQuote = async (data) => {
             getId: "loginId",
         });
 
-        let id = data.groupId;
+        let id = data.groupId || data.channelId;
         if (!id) {
             id = data.UserID == loginId ? data.ToUserID : data.UserID;
 
@@ -817,7 +817,8 @@ const fnMsgContentAddQuote = async (data) => {
                     data.receiveUid == loginId ? data.sendUid : data.receiveUid;
             }
         }
-        const type = data.groupId ? "group" : "friend";
+        const type = data.groupId ? "group"
+                    :data.channelId ? "channel" : "friend";
 
         const arr = content.split("-||-");
         content = arr[0];
