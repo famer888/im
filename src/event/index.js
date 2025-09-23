@@ -58,7 +58,8 @@ const fnSocketMessage = (arrayBuffer) => {
         20601: "PushUserOnOrOffLineMessageResp", // 推送用户上下线
         20701: "PushGroupEventMessage",
         20403: "PushGroupMsgReceiptMessage",
-        4203: "PushChannelMessage",
+        4203: "PushChannelMessage", // 频道消息接收
+        4205: "PushRecallChannelMessage", // 频道消息撤回/删除
     };
 
     const code = new DataView(arrayBuffer.slice(2, 4)).getUint16();
@@ -127,6 +128,29 @@ const fnSocketMessage = (arrayBuffer) => {
             if (data.latestChannelMessage) {
                 eventMsg.fnChannelMsgAdd(data.latestChannelMessage);
             }
+            break;
+        } 
+        // 频道消息撤回/删除
+        case 4205: {
+            console.log('频道消息撤回--', data)
+            // if (data.latestChannelMessage) {
+            //     eventMsg.fnChannelMsgAdd(data.latestChannelMessage);
+            // }
+               // 远程其它端操作清除全部，clear为1，表示全部清除
+            const info = data.latestRecallChannelMessage
+            let isClear = false;
+            // 群聊消息删除
+            eventMsg.fnMsgDelete({
+                info: {
+                    id: Number(info.msgTargetId),
+                    type: "channel",
+                    msgId: Number(info.msgId),
+                    idsDelete: isClear
+                        ? []
+                        : [{msgId: Number(info.msgId)}],
+                    isOtherPlatformOperate: true, // 这个字段表示远程其它端操作删除，本地同步删除
+                },
+            });
             break;
         } 
         // 好友消息接收
