@@ -132,22 +132,19 @@ const fnSocketMessage = (arrayBuffer) => {
         } 
         // 频道消息撤回/删除
         case 4205: {
-            console.log('频道消息撤回--', data)
-            // if (data.latestChannelMessage) {
-            //     eventMsg.fnChannelMsgAdd(data.latestChannelMessage);
-            // }
-               // 远程其它端操作清除全部，clear为1，表示全部清除
-            const info = data.latestRecallChannelMessage
-            let isClear = false;
-            // 群聊消息删除
+            // 远程其它端操作清除全部，clear为1，表示全部清除
+            const { msgId, msgTargetId, clear } = data?.latestRecallChannelMessage || {};
+            if(!msgTargetId) return;
+            let isClear = Boolean(clear);
+            // 频道消息删除
             eventMsg.fnMsgDelete({
                 info: {
-                    id: Number(info.msgTargetId),
+                    id: Number(msgTargetId),
                     type: "channel",
-                    msgId: Number(info.msgId),
+                    msgId: Number(msgId),
                     idsDelete: isClear
                         ? []
-                        : [{msgId: Number(info.msgId)}],
+                        : [{msgId: Number(msgId)}],
                     isOtherPlatformOperate: true, // 这个字段表示远程其它端操作删除，本地同步删除
                 },
             });
