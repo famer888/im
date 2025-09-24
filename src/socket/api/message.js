@@ -95,9 +95,9 @@ export function CReqSendChatChannel(data, flag) {
     console.log('CReqSendChatChannel-2-',message)
     const buffer = SendChannelMessage.encode(message).finish();
         // console.log('CReqSendChatChannel-3-',buffer)
-    const rb = initHeader(buffer, 3101);
+    const rb = initHeader(buffer, 4101);
             // console.log('CReqSendChatChannel-4-',rb)
-    console.log("发出推送-3101-")
+    console.log("发出推送-4101-")
     webSocketSend(rb);
 }
 
