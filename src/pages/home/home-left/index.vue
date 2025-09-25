@@ -747,7 +747,7 @@ export default {
         await this.eventHandgroupShutupAll(info);
       }
 
-      const updateInfos = eventChat.fnChatWindowUpdate(
+      const updateInfos = await eventChat.fnChatWindowUpdate(
         {
           updateInfo: info,
           chats: this.chats,
@@ -814,6 +814,7 @@ export default {
      * 处理事件 消息删除
      */
     eventHandlingMsgDelete(info) {
+      console.log("eventHandlingMsgDelete--", info)
       // // 更新会话列表对应会话框的content
       const { id, type, lastInfo, isOtherPlatformOperate, unreadMsgCount } =
         info;

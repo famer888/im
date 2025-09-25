@@ -6,6 +6,7 @@ import {
     QueryArchiveReq,
     RemoveArchiveReq,
 } from "@/api/imBase";
+import { getChannelDetail } from "@/api/imChannel";
 
 // 事件
 import eventCommon from "./common";
@@ -42,7 +43,8 @@ const fnChatListSort = (list) => {
 /**
  * 聊天窗口信息 更新
  */
-const fnChatWindowUpdate =  (info) => {
+const fnChatWindowUpdate = async (info) => {
+    // console.log("fnChatWindowUpdate--", info)
     const { updateInfo, chats, friendList, groups, channels, unreadObj } = info;
 
     const loginId = eventCommon.fnCommonInfoRU({
@@ -120,6 +122,12 @@ const fnChatWindowUpdate =  (info) => {
         // 频道信息同步
         if (updateInfo.type === "channel") {
             chatInfo = channels.find((item) => item.channelId === updateInfo.id);
+            // console.log("chatInfo--", chatInfo)
+            if (!chatInfo) {
+                const res = await getChannelDetail({ channelId: updateInfo.id });
+                console.log("chatInfo-2-", res)
+                chatInfo = res?.data || {};
+            }
         }
 
 

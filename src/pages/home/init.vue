@@ -389,7 +389,7 @@ export default {
           this.handleChatsGet();
         }, 10);
       }
-      this.handleChannels();
+      // this.handleChannels();
     },
     /**
      * 获取密钥
