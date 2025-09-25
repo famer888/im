@@ -33,11 +33,11 @@ export default {
 <style scoped lang="scss">
 .comFriendInfo {
   position: relative;
-  padding: 20px 10px 20px 60px;
+  padding: 0px 10px 4px 60px;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  min-height: 85px;
+  min-height: 55px;
 
   > img {
     position: absolute;

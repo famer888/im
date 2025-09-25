@@ -36,8 +36,9 @@ export default {
   width: 100%;
   padding: 12px 10px;
   box-sizing: border-box;
-  border-top: 10px solid #f5f5f5;
+  border-bottom: 10px solid #f5f5f5;
   cursor: pointer;
+  height: 65px;
 
   > h3 {
     font-size: 14px;

@@ -40,7 +40,6 @@ export default {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-top: 10px;
   }
 
   .link {
@@ -48,6 +47,9 @@ export default {
     cursor: pointer;
     word-wrap: break-word;
     width: 200px;
+    white-space: nowrap;  
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .code-entrance {

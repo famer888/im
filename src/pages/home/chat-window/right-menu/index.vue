@@ -7,11 +7,11 @@
        <ComChannelQrcode v-if="channelQrcodeVisilbe" :chatContent="chatContent"  @close="channelQrcodeVisilbe = false" />
      </template> 
     <template v-else-if="isGroup">
-        <ComGroupNotice :notice="notice" :memberInfoList="memberInfoList" :chatContent="chatContent" />
-      <ComGroupAliasQrcode
+     <ComGroupAliasQrcode
         :chatContent="chatContent"
         @showGroupQrCode="groupQrcodeVisilbe = true"
       />
+      <ComGroupNotice :notice="notice" :memberInfoList="memberInfoList" :chatContent="chatContent" />
       <ComGroupQrcode
         v-if="groupQrcodeVisilbe"
         :chatContent="chatContent"
@@ -350,16 +350,16 @@ export default {
 #comRightMenu {
   display: flex;
   z-index: 10;
-  width: 270px;
+  width: 256px;
   flex-direction: column;
   background-color: #fff;
   position: fixed;
-  top: 83px;
+  top: 28px;
   right: 0;
   bottom: 0;
-  box-shadow: -2px 10px 10px rgb(153 153 153 / 30%);
+  // box-shadow: -2px 10px 10px rgb(153 153 153 / 30%);
   overflow-y: auto;
-  border-left: 1px solid rgba(238, 238, 238, 0.3);
+  // border-left: 1px solid rgba(238, 238, 238, 0.3);
   color: #333;
   .right-menu-content{
     position: relative;

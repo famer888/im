@@ -55,6 +55,7 @@
       <div class="more" v-if="![10001, 10005].includes(chatContent.id)" @click.stop="handleChatRightMenuVisibleChange">
         <img src="@/assets/images/system/icon-menu.png" />
       </div>
+      <div class="right-menu-place" v-if="rightMenuVisible"></div>
       <section v-if="selectedList.length > 0" class="selected">
         <span v-if="!haveAnnouncement" @click="$emit('forwardDialogShow')">
           {{ $t("转发") }} {{ selectedList.length }}
@@ -268,7 +269,6 @@ export default {
   height: 51px;
   padding: 0 16px;
   align-items: center;
-  border-bottom: 1px solid #eee;
   font-size: 16px;
   font-weight: 700;
   font-family: PingFangSC-Bold;
@@ -399,6 +399,11 @@ export default {
       width: 100%;
       height: 100%;
     }
+  }
+
+  > .right-menu-place {
+    width: 260px;
+    flex-shrink: 1;
   }
 
   > .selected {
