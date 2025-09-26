@@ -11,12 +11,8 @@
       >
         <ComImage :src="item.icon" type="friend" />
         <h2>
-          <span
-            v-for="(n, index) in item.nameArr"
-            :key="index"
-            :class="{ active: n.isActive }"
-            >{{ n.text }}</span
-          >
+          <span class="name" v-if="item.name" v-html="getWordKeyHtml(item.name)"></span>
+          <span class="nickName" v-if="item.nickName" v-html="getWordKeyHtml(item.nickName)"></span>
         </h2>
         <span v-if="!item.type" class="lord">
           {{ $t("群主") }}
@@ -34,7 +30,7 @@ import eventBase from "@/event/base";
 import eventCommon from "@/event/common";
 
 export default {
-  props: ["searchText", "isLeader"],
+  props: ["searchText", "isLeader", "type"],
   data() {
     return {
       memberList: [],
@@ -43,38 +39,18 @@ export default {
       atIndexActive: 0,
     };
   },
-  inject: ["provideMemberList"],
+  inject: ["provideMemberList", "provideChannelUserList"],
   computed: {
     /**
      * 艾特--搜索结果--分页
      */
     atShowList() {
       const currentList = this.atSearchList;
-      const list = currentList.map((item) => {
-        const name = item.name || item.nickName || "";
-
-        let nameArr = [];
-        if (name === "") {
-          nameArr[name];
-        } else {
-          const regex = new RegExp(`(${this.searchText})`); // 创建一个正则表达式，捕获分隔符
-          nameArr = name.split(regex).filter(Boolean);
-        }
-
-        // const nameHtml = (item.name || item.nickName || "").replace(
-        //   text,
-        //   `<span style="color: #178aff">${text}</span>`
-        // );
-        return {
-          ...item,
-          nameArr: nameArr.map((n) => {
-            return n === this.searchText
-              ? { text: n, isActive: true }
-              : { text: n };
-          }),
-          icon: item.icon,
-        };
-      });
+      console.log("atSearchList--", currentList)
+      const list = currentList.filter(item => {
+        const name = item.name + item.nickName
+        return name.includes(this.searchText)
+      })
       this.atIndexActive = 0;
       return list;
     },
@@ -91,17 +67,32 @@ export default {
       "scroll",
       this.handleAtListScrollChange
     );
+    console.log('channel--',this.provideChannelUserList())
 
     // 成员列表
-    this.memberList = this.provideMemberList().map((item) => {
-      return {
-        id: item.id,
-        name: item.name || item.nickName,
-        icon: item.icon,
-        type: item.type,
-        nickName: item.nickName
-      };
-    });
+    if(this.type === "channel") {
+      this.memberList = this.provideChannelUserList().map((item) => {
+        const userInfo = item.userInfoDTO || {};
+        return {
+          id: userInfo.uid,
+          name: userInfo.name || "",
+          icon: userInfo.icon,
+          type: item.memberType -1,
+          nickName: userInfo.nickName
+        };
+      });
+    } else {
+      this.memberList = this.provideMemberList().map((item) => {
+        return {
+          id: item.id,
+          name: item.name,
+          icon: item.icon,
+          type: item.type,
+          nickName: item.nickName
+        };
+      });
+    }
+
 
     // at搜索列表设置
     this.handleAtSearchListSet();
@@ -124,6 +115,15 @@ export default {
     eventBase.fnCommunicationMonitoring("atListDialog", null);
   },
   methods: {
+    /**
+     * 高亮
+     */
+    getWordKeyHtml(content) {
+      return content.replace(
+        this.searchText,
+        `<span class="highlight">${this.searchText}</span>`
+      );
+    },
     /**
      * 监听事件执行
      */
@@ -164,7 +164,7 @@ export default {
         memberList.unshift({
           id: -1,
           type: -1,
-          name: "全体成员",
+          name: "",
           nickName: "全体成员"
         });
       }
@@ -177,8 +177,8 @@ export default {
         this.atSearchList = memberList;
       } else {
         // 有搜索条件--过滤显示
-        this.atSearchList = memberList.filter(({ name }) =>
-          name.includes(this.searchText)
+        this.atSearchList = memberList.filter(({ name, nickName }) =>
+          (name + nickName).includes(this.searchText)
         );
 
         // 如果过滤后没有数据，则关闭
@@ -191,6 +191,7 @@ export default {
      * at的成员列表滚动
      */
     handleAtListScrollChange() {
+      console.log("handleAtListScrollChange--")
       _.throttle(this.handleAtListLazyRender, 100);
     },
     /**
@@ -308,14 +309,31 @@ export default {
       }
 
       > h2 {
-        > span {
+        display: flex;
+        align-items: center;
+        
+        .name,.nickName {
+          max-width: 200px;
+          overflow: hidden;
+          display: block;
+          white-space: nowrap;
+          text-overflow: ellipsis;
+        }
+
+        .name {
           font-size: 14px;
           font-weight: bold;
-          color: #666;
+          color: #000000;
+          margin-right: 10px;
+        }
 
-          &.active {
-            color: #178aff;
-          }
+        .nickName {
+           color: #787878;
+           font-weight: 300;
+        }
+
+        .highlight {
+          color: #3369fe
         }
       }
 
