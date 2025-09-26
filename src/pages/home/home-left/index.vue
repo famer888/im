@@ -225,6 +225,15 @@ export default {
     handleArchiveIdStrList(list) {
       this.archiveIdStrList = list;
     },
+    uniqueById(arr) {
+        const map = new Map();
+        arr.forEach(item => {
+            if (!map.has(item.id)) {
+                map.set(item.id, item);
+            }
+        });
+        return Array.from(map.values());
+    },
     /**
      * 获取聊天窗口列表
      */
@@ -237,12 +246,14 @@ export default {
         const groupChats = res[0] || [];
         const friendChats = res[1] || [];
         const channelChats = res[2] || [];
-        const info = eventChat.fnChatListSort([
+        let chats = [
           ...this.chats,
           ...groupChats,
           ...friendChats,
           ...channelChats,
-        ]);
+        ]
+        chats = this.uniqueById(chats)
+        const info = eventChat.fnChatListSort(chats);
 
         this.chats = info.list;
         chatTopSize = info.chatTopSize;
@@ -814,7 +825,6 @@ export default {
      * 处理事件 消息删除
      */
     eventHandlingMsgDelete(info) {
-      console.log("eventHandlingMsgDelete--", info)
       // // 更新会话列表对应会话框的content
       const { id, type, lastInfo, isOtherPlatformOperate, unreadMsgCount } =
         info;
