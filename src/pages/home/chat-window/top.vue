@@ -68,14 +68,14 @@
           @click="$emit('topEvent', 'mgsDeleteAllEquipment')"
         >
           {{
-            this.chatContent.type === "group"
-              ? $t("为所有人删除")
-              : `从本地和 ${
+            this.chatContent.type === "friend"
+              ? `从本地和 ${
                   setMaxLengthStr(
                     this.chatContent.name || this.chatContent.nickName,
                     18
                   ) || $t("移动端")
                 } 删除`
+              : $t("为所有人删除")
           }}
           {{ selectedList.length }}
         </span>
