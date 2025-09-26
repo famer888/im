@@ -1,5 +1,5 @@
 <template>
-  <div class="groupManageDialog">
+  <div class="channelManageDialog">
     <div>
       <picture @click="handleClose">
         <img src="@/assets/images/common/close-icon.png" />
@@ -31,7 +31,7 @@
           :key="index"
           class="member-item cursor"
         >
-          <ComImage :src="item.icon" type="friend" class="member-avatar" />
+          <ComImage :src="item.userInfoDTO.icon" type="friend" class="member-avatar" />
           <div class="member-info">
             <div class="member-info-top">
               <div class="member-name">
@@ -144,7 +144,7 @@ export default {
 </script>
 
 <style scoped lang="scss">
-.groupManageDialog {
+.channelManageDialog {
   position: fixed;
   left: 0;
   right: 0;
