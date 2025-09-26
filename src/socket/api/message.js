@@ -146,7 +146,7 @@ export function CReqRemoveMessage(data) {
         params.recallGroupMessage = data;
     } else if(type === "channel") {
         method = SendRecallChannelMessage;
-        msg = 3102;
+        msg = 4102;
         params.recallChannelMessage = data;
     } else {
         params.recallOneToOneMessage = data;
