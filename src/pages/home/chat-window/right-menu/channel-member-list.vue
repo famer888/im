@@ -35,10 +35,10 @@
             {{ item.userInfoDTO.lastTime ? $t("在线") : handleOnlineTime(item.userInfoDTO.lastTime) }}
           </p>
         </div>
-        <span v-if="item.type === 0" class="lord">
+        <span v-if="item.memberType === 1" class="lord">
           频道主
         </span>
-        <span v-else-if="item.type === 1">
+        <span v-else-if="item.memberType === 2">
           {{ $t("管理员") }}
         </span>
       </li>
