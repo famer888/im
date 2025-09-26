@@ -108,14 +108,14 @@
               "
             >
               {{
-                chatContent.type === "group"
-                  ? $t("为所有人删除")
-                  : `从本地和 ${
+                chatContent.type === "friend"
+                  ? `从本地和 ${
                       setMaxLengthStr(
                         this.chatContent.name || this.chatContent.nickName,
                         18
                       ) || $t("移动端")
                     } 删除`
+                  : $t("为所有人删除")
               }}
             </a>
             <img class="icon" src="@/assets/images/menu/delete.png" alt=""/>
@@ -197,14 +197,14 @@
               "
             >
               {{
-                chatContent.type === "group"
-                  ? $t("为所有人删除")
-                  : `${$t('从本地和')} ${
+                chatContent.type === "friend"
+                  ? `${$t('从本地和')} ${
                       setMaxLengthStr(
                         this.chatContent.name || this.chatContent.nickName,
                         18
                       ) || $t("移动端")
-                    } ${$t('删除')}`
+                    } ${$t('删除')}` 
+                  : $t("为所有人删除")
               }}
             </a>
              <img class="icon" src="@/assets/images/menu/delete.png" alt=""/>
