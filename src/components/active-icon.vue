@@ -18,7 +18,7 @@ export default {
     },
     size: {
       type: [Number, String],
-      default: 24,
+      default: 20,
     },
   },
 };

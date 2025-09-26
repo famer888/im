@@ -76,6 +76,7 @@
     <button @click="handleSendMsgText()">{{ $t("发送") }}</button>
     <ComAtList
       v-if="atListVisible"
+      :type="chatContent.type"
       :searchText="searchText"
       :isLeader="isLeader"
       @addAt="handleAddAt"
@@ -555,11 +556,11 @@ export default {
      * 根据当前的光标所在 对应显示可以 @ 的好友
      */
     async handleAtListShow() {
+      const { type } = this.chatContent;
       // 不是群或者是弹窗
-      if (this.chatContent.type !== "group" || this.isDialog) {
+      if (!["group", "channel"].includes(type) || this.isDialog) {
         return;
       }
-
       const selection = window.getSelection();
       const { anchorOffset, focusOffset, anchorNode } = selection;
 
@@ -568,14 +569,13 @@ export default {
       // 2. 当前不是群聊
       if (
         anchorNode.nodeName !== "#text" ||
-        this.chatContent.type !== "group"
+        !["group", "channel"].includes(type)
       ) {
         if (this.atListVisible) {
           this.atListVisible = false;
         }
         return;
       }
-
       let atListVisible = false;
 
       // 不为选中
@@ -596,6 +596,7 @@ export default {
         }
 
         // @存在
+        console.log("atLastIndex--", atLastIndex)
         if (atLastIndex !== -1) {
           // 第一个就是@
           if (atLastIndex === 0) {
@@ -1139,7 +1140,8 @@ export default {
   min-height: 91px;
   border-top: 1px solid #eee;
   background: #fff;
-  padding-left: 90px;
+  padding: 14px;
+  box-sizing: border-box;
 
   &.dialog {
     padding-left: 50px;
@@ -1257,27 +1259,24 @@ export default {
     color: #999;
     font-size: 12px;
     position: absolute;
-    top: 0;
-    left: 100px;
+    top: 30px;
+    left: 14px;
     line-height: 50px;
   }
 
   > .btns {
-    height: 50px;
+    height: 24px;
     display: flex;
     margin: 0;
-    position: absolute;
-    left: 10px;
-    top: 0;
     padding: 0;
-    width: 80px;
+    margin-bottom: 6px;
 
     > div {
-      flex: 1;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
+      margin-right: 26px;
 
       img {
         display: block;
@@ -1298,7 +1297,6 @@ export default {
     overflow: scroll;
     width: 100%;
     min-height: 90px;
-    padding: 15px 80px 15px 10px;
     white-space: pre-wrap;
     line-height: 20px;
     position: relative;
