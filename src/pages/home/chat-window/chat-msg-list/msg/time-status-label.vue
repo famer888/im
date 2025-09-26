@@ -1,5 +1,10 @@
 <template>
   <div class="comTimeStatusLabel">
+    <div class="read" v-if="chatContent.type === 'channel'">
+      <img v-if="msgInfo.isSelf" class="read-icon" src="@/assets/images/channel/read2.png" />
+      <img v-else class="read-icon" src="@/assets/images/channel/read1.png" />
+      <span class="read-num">0</span>
+    </div>
     <span>
       {{ formatTimeStamp(msgInfo.sendTime) }}
     </span>
@@ -111,11 +116,21 @@ export default {
 .comTimeStatusLabel {
   position: absolute;
   right: 8px;
-  bottom: 8px;
-  bottom: 2px;
+  bottom: 0px;
   display: flex;
   align-items: center;
   z-index: 1;
+
+  .read {
+    display: flex;
+    align-items: center;
+    .read-num {
+      font-size: 12px;
+      color: #666;
+      margin-left: 2px;
+    }
+    margin-right: 2px;
+  }
 
   > span {
     font-size: 12px;
