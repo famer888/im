@@ -1580,7 +1580,7 @@ export default {
 
   > section {
     height: 100%;
-    background: #fbfbfb;
+    background: #f6f6f6;
 
     > img {
       position: absolute;
@@ -1726,7 +1726,7 @@ export default {
 
   @keyframes highlight {
     0% {
-      background-color: #fbfbfb; /* 初始背景色 */
+      background-color: #f6f6f6; /* 初始背景色 */
     }
     30% {
       background-color: #e9f3f9; /* 中间高亮颜色 */
@@ -1735,7 +1735,7 @@ export default {
       background-color: #e9f3f9; /* 中间高亮颜色 */
     }
     100% {
-      background-color: #fbfbfb; /* 结束时恢复原色 */
+      background-color: #f6f6f6; /* 结束时恢复原色 */
     }
   }
 }

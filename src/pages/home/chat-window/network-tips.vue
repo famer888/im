@@ -61,7 +61,7 @@ export default {
   right: 0;
   top: 83px;
   z-index: 9;
-  background: #fbfbfb;
+  background: #f6f6f6;
 
   > img {
     display: block;
