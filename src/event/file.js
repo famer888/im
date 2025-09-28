@@ -114,8 +114,9 @@ const handleDownloadFileFailed = (_$, data) => {
  */
 const fnDownloadFileInfoUpdate = (data, errorType) => {
     // console.log('下载成功后更新', data)
-    const id = data.groupId || data.userId;
-    const type = !data.groupId ? "friend" : "group";
+    const id = data.groupId || data.channelId || data.userId;
+    const type = data.groupId ? "group" 
+                              : data.channelId ? "channel" : "friend";
     const { customMsgId, fileLocalPath, isOpen, isDir, chatType, local, localThumbUrl } = data;
     let updated = { local: errorType || fileLocalPath };
 
@@ -279,10 +280,12 @@ const fnFileUploadInfoGet = async (values) => {
         appAttachmentKey,
         webAttachmentKey,
         groupAttachmentKey,
+        channelAttachmentKey,
     } = await getKeys({
         fileKey,
-        ToUserID: type !== "group" ? id : null,
+        ToUserID: !["group", "channel"].includes(type) ? id : null,
         groupId: type === "group" ? id : null,
+        channelId: type === "channel" ? id : null,
     });
 
     // 文件信息更新
@@ -304,7 +307,12 @@ const fnFileUploadInfoGet = async (values) => {
               ...fileInfos,
               groupAttachmentKey,
           }
-        : {
+        : type === "channel" ?
+          {
+              ...fileInfos,
+              channelAttachmentKey,
+          }
+        :{
               ...fileInfos,
               ownAppAttachmentKey,
               appAttachmentKey,
@@ -324,7 +332,8 @@ const fnFileInfosGet = async (info) => {
     // 文件夹地址
     const dirPath = await getUserDataDirectory({
         GroupID: type === "group" ? id : null,
-        UserID: type !== "group" ? id : null,
+        UserID: type === "user" ? id : null,
+        ChannelID: type === "channel" ? id : null,
     });
 
     let name = file.name;
