@@ -60,6 +60,7 @@ const fnSocketMessage = (arrayBuffer) => {
         20403: "PushGroupMsgReceiptMessage",
         4203: "PushChannelMessage", // 频道消息接收
         4205: "PushRecallChannelMessage", // 频道消息撤回/删除
+        4201: "PushSendChannelMessageSuccessMessage", // 频道消息发送成功
     };
 
     const code = new DataView(arrayBuffer.slice(2, 4)).getUint16();
@@ -172,6 +173,11 @@ const fnSocketMessage = (arrayBuffer) => {
         case 20201: {
             // 群组 消息发送成功
             eventMsg.fnMsgSendSuccess(data, "group", code);
+            break;
+        }
+        case 4201: {
+            // 频道 消息发送成功
+            eventMsg.fnMsgSendSuccess(data, "channel", code);
             break;
         }
         case 20103: {
