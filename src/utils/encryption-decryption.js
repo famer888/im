@@ -928,9 +928,13 @@ export const fnFormartMsgParams = async ({ data, customMsgId, id, type }) => {
             // 加密内容
             params.content = _encrypt2(relKey, contentCode);
         } else if(type === "channel") {
+             const loginId = eventCommon.fnCommonInfoRU({
+                    getId: "loginId",
+                });
 
             params.version = 1;
             params.attachmentKey = channelAttachmentKey;
+            params.sendUid = loginId;
 
             // 获取真实的密钥
             const relKey = await fnChannelRelKeyGet(id);
