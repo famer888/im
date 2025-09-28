@@ -1261,8 +1261,10 @@ const fnMsgSend = async (info) => {
  * 消息发送成功
  */
 const fnMsgSendSuccess = (msg, type) => {
-    const { flag, msgId, groupId, receiveUid, sentOverTime } = msg;
-    const id = type === "group" ? Number(groupId) : Number(receiveUid);
+    const { flag, msgId, groupId, channelId, receiveUid, sentOverTime } = msg;
+    const id = type === "group" ? Number(groupId) 
+               : type === "channel" ? Number(channelId) 
+               : Number(receiveUid);
     const customMsgId = Number(flag).toString();
     let updated = {
         MsgID: Number(msgId),
@@ -1523,7 +1525,7 @@ const fnAlertNotification = async (data, chatList) => {
                 userName: remarkName || nickName || "",
                 name: info.name || info.nickName,
             };
-            console.log("alertNotification--", params)
+            // console.log("alertNotification--", params)
             ipcRenderer.send("alertNotification", {
                 windowId: remote.getCurrentWindow().getMediaSourceId(),
                 ...params,

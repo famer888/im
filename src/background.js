@@ -729,6 +729,7 @@ const handleFileDownload = (args) => {
         uid,
         groupId,
         userId,
+        channelId,
         chatType,
         fileName,
         fileUrl,
@@ -758,7 +759,8 @@ const handleFileDownload = (args) => {
     const dirPath = nodePath.join(
         userData,
         `/Local Storage/${uid}/${
-            groupId ? "group-" + groupId : "user-" + userId
+            groupId ? "group-" + groupId
+                    : channelId ?  "channel-" + channelId : "user-" + userId
         }/${msgId}/`
     );
 

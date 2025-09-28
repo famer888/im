@@ -20,6 +20,7 @@ import { getVideoPreview, base64ToFile, bufferToFile } from "@/utils/fileTools";
 import {
     fnGroupRelKeyGet,
     fnFriendRelKeyGet,
+    fnChannelRelKeyGet,
 } from "@/utils/encryption-decryption";
 import { getOssDomains } from "@/utils/trendsDomain/manageOssDownUpload";
 
@@ -441,12 +442,13 @@ const ossUpload = async (fileId, File, endpoint) => {
 };
 
 ////////////////////// Get keys
-export const getKeys = async ({ fileKey, ToUserID, groupId }) => {
+export const getKeys = async ({ fileKey, ToUserID, groupId, channelId }) => {
     // Keys
     let ownAppAttachmentKey;
     let appAttachmentKey;
     let webAttachmentKey;
     let groupAttachmentKey;
+    let channelAttachmentKey;
 
     if (groupId) {
         // group
@@ -456,6 +458,21 @@ export const getKeys = async ({ fileKey, ToUserID, groupId }) => {
         if (relKey) {
             try {
                 groupAttachmentKey = Buffer.from(
+                    _encrypt2(relKey, encode(fileKey, "all")),
+                    "hex"
+                )
+                    .toString("hex")
+                    .toUpperCase();
+            } catch (error) {
+                //
+            }
+        }
+    } else if (channelId) {
+        const relKey = await fnChannelRelKeyGet(channelId);
+
+        if (relKey) {
+            try {
+                channelAttachmentKey = Buffer.from(
                     _encrypt2(relKey, encode(fileKey, "all")),
                     "hex"
                 )
@@ -515,5 +532,6 @@ export const getKeys = async ({ fileKey, ToUserID, groupId }) => {
         appAttachmentKey,
         webAttachmentKey,
         groupAttachmentKey,
+        channelAttachmentKey,
     };
 };

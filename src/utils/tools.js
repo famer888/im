@@ -39,7 +39,7 @@ const getCachDirectory = ({ GroupID, UserID }) => {
     });
 };
 
-const getUserDataDirectory = ({ GroupID, UserID }) => {
+const getUserDataDirectory = ({ GroupID, UserID, ChannelID }) => {
     return new Promise(async (resolve) => {
         let path = "";
         path = await ipcRenderer.invoke("get-user-data-path");
@@ -51,7 +51,9 @@ const getUserDataDirectory = ({ GroupID, UserID }) => {
             path = nodePath.join(
                 path,
                 `/Local Storage/${
-                    GroupID ? "group-" + GroupID : "user-" + UserID
+                    GroupID ? "group-" + GroupID 
+                            : ChannelID ? "channel-" + ChannelID
+                            : "user-" + UserID
                 }/`
             );
         }

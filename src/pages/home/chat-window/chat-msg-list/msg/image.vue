@@ -150,6 +150,8 @@ export default {
 
                 if ( this.chatContent.type === "group") {
                     params.groupId = this.chatContent.id;
+                } else if (this.chatContent.type === "channel") {
+                     params.channelId = this.chatContent.id;
                 } else {
                     params.userId = this.chatContent.id;
                 }
@@ -174,6 +176,9 @@ export default {
                 trendsFileUrl,
                 fileName,
                 uid: loginId,
+                channelId: this.chatContent.type === "channel"
+                        ? this.chatContent.id
+                        : null,
                 userId:
                     this.chatContent.type === "friend"
                         ? this.chatContent.id

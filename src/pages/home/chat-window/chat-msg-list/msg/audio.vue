@@ -77,6 +77,7 @@ export default {
         uid: loginId,
         userId: this.chatContent.type === "friend" ? this.chatContent.id : null,
         groupId: this.chatContent.type === "group" ? this.chatContent.id : null,
+        channelId: this.chatContent.type === "channel" ? this.chatContent.id : null,
         windowId: remote.getCurrentWindow().getMediaSourceId(),
         msgId: MsgID,
         fileKey,
