@@ -365,14 +365,20 @@ const fnFriendListFormat = (list) => {
 /**
  * 获取好友详情并对应更新
  */
-const fnFriendDetailsGet = (id) => {
+const fnFriendDetailsGet = (id, { channelId, groupId } = {}) => {
     // 如果是系统账户，则不需要拉详情
     if (["10002"].includes(id)) {
         return;
     }
 
+    let params = {
+        targetUid: id
+    }
+    if(groupId) params.groupId = groupId;
+    if(channelId) params.channelId = channelId;
+
     // 获取联系人详情
-    getContactsDetail({ targetUid: id }).then((res) => {
+    getContactsDetail(params).then((res) => {
         // 阅后即焚 是否开启
         const bfReadCancel =
             _.get(res, "contactsDetailBase.bfReadCancel") || false;
@@ -383,8 +389,12 @@ const fnFriendDetailsGet = (id) => {
 
         // 是否免打扰
         const bfDisturb = _.get(res, "contactsDetailBase.bfDisturb") || false;
+
         // 黑名单
         const bfMyBlack = _.get(res, "contactsDetailBase.bfMyBlack") || false;
+
+        // 添加好友所需的token
+        const addToken = _.get(res, "contactsDetailBase.addToken") || "";
 
         if (res && res.contactsDetailBase) {
             // 数据不更新置顶
@@ -401,6 +411,7 @@ const fnFriendDetailsGet = (id) => {
                     msgCancelTime,
                     bfDisturb,
                     bfMyBlack,
+                    addToken,
                     type: "friend",
                 },
             });
@@ -524,6 +535,29 @@ const fnRemarkUpdate = (info, operatorType) => {
             }
         }
     });
+
+    // 更新好友备注专属数组
+    if(operatorType === "name") {
+      Cache(`${loginId}-FriendRemarks`).then((res) => {
+        if(res) {
+            let list = res;
+            const index = list.findIndex((item) => item.id === info.id);
+            if (index !== -1) {
+                list[index].name = name;
+             
+            } else {
+                list.push({
+                    id: info.id,
+                    name,
+                })
+            }
+            // 更新到本地
+            eventCommon.fnFriendRemarksSet(list);
+            Cache(`${loginId}-FriendRemarks`, list);
+        }
+    });
+    }
+
 
     // 更新聊天列表, 只有名称更新需要
     if (operatorType === "name") {

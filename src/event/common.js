@@ -541,6 +541,16 @@ const fnDomainsAttribSet = ({key, value}) => {
     Local(domainsName, domains) 
 }
 
+// 好友备注
+let friendRemarks = [];
+const fnFriendRemarksGet = () => {
+    return friendRemarks || [];
+}
+
+const fnFriendRemarksSet = (data) => {
+    friendRemarks = data || [];
+}
+
 export default {
     fnIdCopyRU,
     fnCommonInfoRU,
@@ -562,4 +572,6 @@ export default {
     fnDomainsGet,
     fnDomainsSet,
     fnDomainsAttribSet,
+    fnFriendRemarksGet,
+    fnFriendRemarksSet,
 };

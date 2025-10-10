@@ -251,6 +251,7 @@ export default {
 
             // 清除 好友列表和聊天窗口列表
             await Cache(`${loginId}-ContactList`, []);
+            await Cache(`${loginId}-FriendRemarks`, []);
 
             await Cache(`${loginId}MessageGroupList`, []);
             await Cache(`${loginId}MessageUserList`, []);
@@ -302,6 +303,7 @@ export default {
           } else {
             Cache(`${loginId}-ContactList`, this.friendList);
             this.friendNum = 100;
+            this.handleFriendRemarks()
           }
           break;
         }
@@ -344,6 +346,21 @@ export default {
           this.handleUpdateFirendsForApi(1);
         }
       });
+    },
+    /**
+     * 初始化好友备注数据
+     */
+    async handleFriendRemarks() {
+      let remarks = [];
+      const ContactList = await Cache(`${loginId}-ContactList`);
+      if(!ContactList.length) return;
+      ContactList.forEach(item => {
+        const {id, name} = item
+        if(id && name) {
+          remarks.push({id, name})
+        }
+      });
+      Cache(`${loginId}-FriendRemarks`, remarks);
     },
     /**
      * 获取所有频道列表
@@ -390,6 +407,11 @@ export default {
         }, 10);
       }
       // this.handleChannels();
+      Cache(`${loginId}-FriendRemarks`).then(res => {
+        if(!res || !res?.length) {
+           this.handleFriendRemarks()
+        }
+      })
     },
     /**
      * 获取密钥
