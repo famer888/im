@@ -32,24 +32,30 @@
           :id="id"
           :value="name"
         />
-        <ComImage v-else ref="groupPic" :src="pic" type="group" />
+        <!-- <ComImage v-else ref="groupPic" :src="pic" type="group" /> -->
       </template>
       <span v-else>{{ $t("二维码链接异常") }}</span>
     </section>
-    <template v-if="codeUrl">
-      <button @click="handleExportQrCode">
-        <img src="@/assets/images/system/down.png" />
-        {{ $t("保存图片") }}
-      </button>
-      <button @click="handleGroupQrCodeImageForward">
-        <img src="@/assets/images/system/share.png" />
-        {{ $t("转发给朋友") }}
-      </button>
-      <button @click="handleCopyLink">
-        <img src="@/assets/images/system/link.png" />
-        {{ $t("复制链接") }}
-      </button>
-    </template>
+    <div v-if="codeUrl" class="buttons">
+      <div class="btn-item">
+        <button @click="handleExportQrCode">
+          <img src="@/assets/images/system/down.png" />
+        </button>
+        <span class="btn-title">{{ $t("保存图片") }}</span> 
+      </div>
+      <div class="btn-item">
+        <button @click="handleGroupQrCodeImageForward">
+          <img src="@/assets/images/system/share.png" />
+        </button>
+        <span class="btn-title">{{ $t("转发给朋友") }}</span> 
+      </div>
+      <div class="btn-item">
+        <button @click="handleGroupQrCodeImageForward">
+          <img src="@/assets/images/system/link.png" />
+        </button>
+        <span class="btn-title">{{ $t("复制链接") }}</span> 
+      </div>
+    </div>
   </div>
 </template>
 <script>
@@ -127,10 +133,10 @@ export default {
       });
 
       //绘制头像
-      if(this.iconType !== "textAvatar") {
-        let groupPic = this.$refs.groupPic.$el;
-        canvasAddRadiusImg(canvas, ctx, groupPic, 110, 242, 50, 50, 25);
-      }
+      // if(this.iconType !== "textAvatar") {
+      //   let groupPic = this.$refs.groupPic.$el;
+      //   canvasAddRadiusImg(canvas, ctx, groupPic, 110, 242, 50, 50, 25);
+      // }
       
       return canvas.toDataURL("image/png");
     },
@@ -188,10 +194,10 @@ export default {
 .comGroupQrCode {
   position: fixed;
   right: 0;
-  bottom: 0;
+  top: 34px;
   width: 270px;
-  height: calc(100% - 83px);
-  background: #f5f5f5;
+  height: calc(100% - 34px);
+  background: #ffffff;
   z-index: 10;
   display: flex;
   flex-direction: column;
@@ -238,7 +244,6 @@ export default {
     flex-direction: column;
     position: relative;
     padding-bottom: 30px;
-    margin-bottom: 35px;
 
     > h3 {
       display: block;
@@ -285,29 +290,53 @@ export default {
     }
   }
 
-  > button {
-    width: 228px;
-    height: 40px;
-    background: #ffffff;
-    border: 1px solid #b9babe;
-    border-radius: 8px;
-    font-size: 16px;
-    font-weight: 500;
-    color: #000;
+  .buttons {
     display: flex;
     align-items: center;
-    justify-content: center;
-    margin-bottom: 10px;
-    cursor: pointer;
+    border: none;
 
-    &:hover {
-      background: #f9f9f9;
+    .btn-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin-left: 20px;
+
+      &:first-child {
+       margin-left: 0;
+      }
+    }
+    
+    button {
+      width: 54px;
+      height: 54px;
+      background: #F2F9FF;
+      border-radius: 16px;
+      border: none;
+      font-size: 16px;
+      font-weight: 500;
+      color: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 10px;
+      cursor: pointer;
+      position: relative;
+
+      &:hover {
+        background: #f9f9f9;
+      }
+
+      > img {
+        display: block;
+        width: 20px;
+      }
     }
 
-    > img {
-      display: block;
-      width: 20px;
-      margin-right: 5px;
+    .btn-title {
+      font-size: 12px;
+      color: #000;
+      font-weight: 300;
     }
   }
 }
