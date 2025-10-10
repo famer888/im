@@ -29,6 +29,7 @@ import ComLableEle from "@/pages/home/com/lable-ele.vue";
 
 // 事件
 import eventBase from "@/event/base";
+import eventCommon from '@/event/common';
 
 export default {
   components: {
@@ -117,11 +118,30 @@ export default {
       htmlString = repalceLink(htmlString);
       // 替换回链接防污染
       htmlString = htmlString.replace('ht#customLink#tp', 'http');
+
+      if(this.atUsers?.length) {
+        // 给atUsers增加备注名
+        const friendRemarks = eventCommon.fnFriendRemarksGet();
+        this.atUsers.forEach(item => {
+          const remarkObj = friendRemarks.find(i => i.id === item.uid);
+          if(remarkObj) {
+            item.name = remarkObj.name || "";
+          }
+        })
+
+        // 替换at的好友真实昵称替换为好友备注
+        this.atUsers.forEach(item => {
+          if(item.name) {
+            htmlString = htmlString.replace('@'+item.nickName, '@'+item.name)
+          }
+        })
+      }
+
       // 拆分html
       const tagList = splitHtmlStringToObjects(htmlString);
       // at的名称列表
       const atNameList = this.atUsers
-        ? this.atUsers.map((item) => "@" + item.nickName)
+        ? this.atUsers.map((item) => "@" + item.name || item.nickName)
         : [];
 
       // text再进行拆分 把at拆出来
@@ -164,8 +184,7 @@ export default {
   border-radius: 10px;
   border-top-left-radius: 0;
   word-wrap: break-word;
-  background: rgb(243, 243, 243);
-  border: 1px solid #eeeff3;
+  background: #ffffff;
   position: relative;
   padding: 10px 10px 10px 12px;
 
