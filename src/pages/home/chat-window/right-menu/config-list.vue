@@ -19,10 +19,10 @@
         <span> {{ $t("保存到通讯录") }}</span>
         <ComSwitch :value="bfAddress" @input="handelBfAddressChange" />
       </li>
-      <!-- <li v-if="!isGroup">
+      <li v-if="!isGroup">
         <span> 加入黑名单</span>
         <ComSwitch :value="bfMyBlack" @input="handelBfMyBlackChange" />
-      </li> -->
+      </li>
     </template>
     <template v-if="!isChannel && !isGroup && chatContent.memberType !== 2 && chatContent.id !== 10002">
       <li>

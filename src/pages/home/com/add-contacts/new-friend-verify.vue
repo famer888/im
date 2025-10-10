@@ -28,8 +28,8 @@
                 <p class="msg">{{ info.msg }}</p>
             </div>
             <div class="footer">
-                <!-- <div class="primaryBtn blacklist-btn remove" v-if="bfMyBlack" @click="joinBlackList(7)">移除黑名单</div>
-                <div class="primaryBtn blacklist-btn"  v-else @click="joinBlackList(6)">加入黑名单</div> -->
+                <div class="primaryBtn blacklist-btn remove" v-if="bfMyBlack" @click="joinBlackList(7)">移除黑名单</div>
+                <div class="primaryBtn blacklist-btn"  v-else @click="joinBlackList(6)">加入黑名单</div>
 
                 <div class="primaryBtn" @click="passVerify()">通过验证</div>
             </div>
