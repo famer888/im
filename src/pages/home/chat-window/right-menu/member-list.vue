@@ -167,6 +167,10 @@ export default {
     },
     handelRemoveMember(members) {
       console.log('handelRemoveMember--', members)
+      if(!members.length) {
+        window.$toast("请至少选择一位群成员");
+        return;
+      }
       const ids = members.map(item => item.id)
       const params = {
         op: 1,
