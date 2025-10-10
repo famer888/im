@@ -72,6 +72,7 @@
         删除并退出
       </li>
     </template>
+    <template v-else-if="isChannel"></template>
     <template v-else>
         <li class="clearHistory" @click="handelDeleteFriend">
           删除联系人
