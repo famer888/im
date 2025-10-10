@@ -1082,7 +1082,6 @@ export const GetKeyPairReq = $root.GetKeyPairReq = (() => {
      * @property {number|null} [webKeyVersion] GetKeyPairReq webKeyVersion
      * @property {number|null} [appKeyVersion] GetKeyPairReq appKeyVersion
      * @property {number|null} [groupKeyVersion] GetKeyPairReq groupKeyVersion
-     * @property {number|null} [channelKeyVersion] GetKeyPairReq channelKeyVersion
      */
 
     /**
@@ -1149,14 +1148,6 @@ export const GetKeyPairReq = $root.GetKeyPairReq = (() => {
     GetKeyPairReq.prototype.groupKeyVersion = 0;
 
     /**
-     * GetKeyPairReq channelKeyVersion.
-     * @member {number} channelKeyVersion
-     * @memberof GetKeyPairReq
-     * @instance
-     */
-    GetKeyPairReq.prototype.channelKeyVersion = 0;
-
-    /**
      * Creates a new GetKeyPairReq instance using the specified properties.
      * @function create
      * @memberof GetKeyPairReq
@@ -1192,8 +1183,6 @@ export const GetKeyPairReq = $root.GetKeyPairReq = (() => {
             writer.uint32(/* id 5, wireType 0 =*/40).int32(message.appKeyVersion);
         if (message.groupKeyVersion != null && Object.hasOwnProperty.call(message, "groupKeyVersion"))
             writer.uint32(/* id 6, wireType 0 =*/48).int32(message.groupKeyVersion);
-        if (message.channelKeyVersion != null && Object.hasOwnProperty.call(message, "channelKeyVersion"))
-            writer.uint32(/* id 7, wireType 0 =*/56).int32(message.channelKeyVersion);
         return writer;
     };
 
@@ -1252,10 +1241,6 @@ export const GetKeyPairReq = $root.GetKeyPairReq = (() => {
                 }
             case 6: {
                     message.groupKeyVersion = reader.int32();
-                    break;
-                }
-            case 7: {
-                    message.channelKeyVersion = reader.int32();
                     break;
                 }
             default:
@@ -1320,9 +1305,6 @@ export const GetKeyPairReq = $root.GetKeyPairReq = (() => {
         if (message.groupKeyVersion != null && message.hasOwnProperty("groupKeyVersion"))
             if (!$util.isInteger(message.groupKeyVersion))
                 return "groupKeyVersion: integer expected";
-        if (message.channelKeyVersion != null && message.hasOwnProperty("channelKeyVersion"))
-            if (!$util.isInteger(message.channelKeyVersion))
-                return "channelKeyVersion: integer expected";
         return null;
     };
 
@@ -1382,8 +1364,6 @@ export const GetKeyPairReq = $root.GetKeyPairReq = (() => {
             message.appKeyVersion = object.appKeyVersion | 0;
         if (object.groupKeyVersion != null)
             message.groupKeyVersion = object.groupKeyVersion | 0;
-        if (object.channelKeyVersion != null)
-            message.channelKeyVersion = object.channelKeyVersion | 0;
         return message;
     };
 
@@ -1411,7 +1391,6 @@ export const GetKeyPairReq = $root.GetKeyPairReq = (() => {
             object.webKeyVersion = 0;
             object.appKeyVersion = 0;
             object.groupKeyVersion = 0;
-            object.channelKeyVersion = 0;
         }
         if (message.clientInfo != null && message.hasOwnProperty("clientInfo"))
             object.clientInfo = $root.ClientInfo.toObject(message.clientInfo, options);
@@ -1428,8 +1407,6 @@ export const GetKeyPairReq = $root.GetKeyPairReq = (() => {
             object.appKeyVersion = message.appKeyVersion;
         if (message.groupKeyVersion != null && message.hasOwnProperty("groupKeyVersion"))
             object.groupKeyVersion = message.groupKeyVersion;
-        if (message.channelKeyVersion != null && message.hasOwnProperty("channelKeyVersion"))
-            object.channelKeyVersion = message.channelKeyVersion;
         return object;
     };
 
@@ -1472,7 +1449,6 @@ export const GetKeyPairResp = $root.GetKeyPairResp = (() => {
      * @property {IKeyPairBase|null} [appKeyPair] GetKeyPairResp appKeyPair
      * @property {IKeyPairBase|null} [webKeyPair] GetKeyPairResp webKeyPair
      * @property {IKeyPairBase|null} [groupKeyPair] GetKeyPairResp groupKeyPair
-     * @property {IKeyPairBase|null} [channelKeyPair] GetKeyPairResp channelKeyPair
      */
 
     /**
@@ -1523,14 +1499,6 @@ export const GetKeyPairResp = $root.GetKeyPairResp = (() => {
     GetKeyPairResp.prototype.groupKeyPair = null;
 
     /**
-     * GetKeyPairResp channelKeyPair.
-     * @member {IKeyPairBase|null|undefined} channelKeyPair
-     * @memberof GetKeyPairResp
-     * @instance
-     */
-    GetKeyPairResp.prototype.channelKeyPair = null;
-
-    /**
      * Creates a new GetKeyPairResp instance using the specified properties.
      * @function create
      * @memberof GetKeyPairResp
@@ -1562,8 +1530,6 @@ export const GetKeyPairResp = $root.GetKeyPairResp = (() => {
             $root.KeyPairBase.encode(message.webKeyPair, writer.uint32(/* id 3, wireType 2 =*/26).fork()).ldelim();
         if (message.groupKeyPair != null && Object.hasOwnProperty.call(message, "groupKeyPair"))
             $root.KeyPairBase.encode(message.groupKeyPair, writer.uint32(/* id 4, wireType 2 =*/34).fork()).ldelim();
-        if (message.channelKeyPair != null && Object.hasOwnProperty.call(message, "channelKeyPair"))
-            $root.KeyPairBase.encode(message.channelKeyPair, writer.uint32(/* id 5, wireType 2 =*/42).fork()).ldelim();
         return writer;
     };
 
@@ -1614,10 +1580,6 @@ export const GetKeyPairResp = $root.GetKeyPairResp = (() => {
                 }
             case 4: {
                     message.groupKeyPair = $root.KeyPairBase.decode(reader, reader.uint32());
-                    break;
-                }
-            case 5: {
-                    message.channelKeyPair = $root.KeyPairBase.decode(reader, reader.uint32());
                     break;
                 }
             default:
@@ -1675,11 +1637,6 @@ export const GetKeyPairResp = $root.GetKeyPairResp = (() => {
             if (error)
                 return "groupKeyPair." + error;
         }
-        if (message.channelKeyPair != null && message.hasOwnProperty("channelKeyPair")) {
-            let error = $root.KeyPairBase.verify(message.channelKeyPair);
-            if (error)
-                return "channelKeyPair." + error;
-        }
         return null;
     };
 
@@ -1715,11 +1672,6 @@ export const GetKeyPairResp = $root.GetKeyPairResp = (() => {
                 throw TypeError(".GetKeyPairResp.groupKeyPair: object expected");
             message.groupKeyPair = $root.KeyPairBase.fromObject(object.groupKeyPair);
         }
-        if (object.channelKeyPair != null) {
-            if (typeof object.channelKeyPair !== "object")
-                throw TypeError(".GetKeyPairResp.channelKeyPair: object expected");
-            message.channelKeyPair = $root.KeyPairBase.fromObject(object.channelKeyPair);
-        }
         return message;
     };
 
@@ -1741,7 +1693,6 @@ export const GetKeyPairResp = $root.GetKeyPairResp = (() => {
             object.appKeyPair = null;
             object.webKeyPair = null;
             object.groupKeyPair = null;
-            object.channelKeyPair = null;
         }
         if (message.commonResult != null && message.hasOwnProperty("commonResult"))
             object.commonResult = $root.CommonResult.toObject(message.commonResult, options);
@@ -1751,8 +1702,6 @@ export const GetKeyPairResp = $root.GetKeyPairResp = (() => {
             object.webKeyPair = $root.KeyPairBase.toObject(message.webKeyPair, options);
         if (message.groupKeyPair != null && message.hasOwnProperty("groupKeyPair"))
             object.groupKeyPair = $root.KeyPairBase.toObject(message.groupKeyPair, options);
-        if (message.channelKeyPair != null && message.hasOwnProperty("channelKeyPair"))
-            object.channelKeyPair = $root.KeyPairBase.toObject(message.channelKeyPair, options);
         return object;
     };
 
@@ -9553,6 +9502,7 @@ export const ContactsOperator = $root.ContactsOperator = (() => {
  * @property {number} REQ_MSG=4 REQ_MSG value
  * @property {number} LINK=5 LINK value
  * @property {number} IDENTIFY=6 IDENTIFY value
+ * @property {number} CHANNEL=7 CHANNEL value
  */
 export const ContactsAddType = $root.ContactsAddType = (() => {
     const valuesById = {}, values = Object.create(valuesById);
@@ -9563,6 +9513,7 @@ export const ContactsAddType = $root.ContactsAddType = (() => {
     values[valuesById[4] = "REQ_MSG"] = 4;
     values[valuesById[5] = "LINK"] = 5;
     values[valuesById[6] = "IDENTIFY"] = 6;
+    values[valuesById[7] = "CHANNEL"] = 7;
     return values;
 })();
 
@@ -10280,6 +10231,7 @@ export const ContactsRecordBase = $root.ContactsRecordBase = (() => {
      * @property {string|null} [signature] ContactsRecordBase signature
      * @property {string|null} [groupName] ContactsRecordBase groupName
      * @property {boolean|null} [bfIdSearch] ContactsRecordBase bfIdSearch
+     * @property {string|null} [channelName] ContactsRecordBase channelName
      */
 
     /**
@@ -10362,6 +10314,14 @@ export const ContactsRecordBase = $root.ContactsRecordBase = (() => {
     ContactsRecordBase.prototype.bfIdSearch = false;
 
     /**
+     * ContactsRecordBase channelName.
+     * @member {string} channelName
+     * @memberof ContactsRecordBase
+     * @instance
+     */
+    ContactsRecordBase.prototype.channelName = "";
+
+    /**
      * Creates a new ContactsRecordBase instance using the specified properties.
      * @function create
      * @memberof ContactsRecordBase
@@ -10401,6 +10361,8 @@ export const ContactsRecordBase = $root.ContactsRecordBase = (() => {
             writer.uint32(/* id 7, wireType 2 =*/58).string(message.groupName);
         if (message.bfIdSearch != null && Object.hasOwnProperty.call(message, "bfIdSearch"))
             writer.uint32(/* id 8, wireType 0 =*/64).bool(message.bfIdSearch);
+        if (message.channelName != null && Object.hasOwnProperty.call(message, "channelName"))
+            writer.uint32(/* id 9, wireType 2 =*/74).string(message.channelName);
         return writer;
     };
 
@@ -10469,6 +10431,10 @@ export const ContactsRecordBase = $root.ContactsRecordBase = (() => {
                     message.bfIdSearch = reader.bool();
                     break;
                 }
+            case 9: {
+                    message.channelName = reader.string();
+                    break;
+                }
             default:
                 reader.skipType(tag & 7);
                 break;
@@ -10529,6 +10495,7 @@ export const ContactsRecordBase = $root.ContactsRecordBase = (() => {
             case 4:
             case 5:
             case 6:
+            case 7:
                 break;
             }
         if (message.signature != null && message.hasOwnProperty("signature"))
@@ -10540,6 +10507,9 @@ export const ContactsRecordBase = $root.ContactsRecordBase = (() => {
         if (message.bfIdSearch != null && message.hasOwnProperty("bfIdSearch"))
             if (typeof message.bfIdSearch !== "boolean")
                 return "bfIdSearch: boolean expected";
+        if (message.channelName != null && message.hasOwnProperty("channelName"))
+            if (!$util.isString(message.channelName))
+                return "channelName: string expected";
         return null;
     };
 
@@ -10608,6 +10578,10 @@ export const ContactsRecordBase = $root.ContactsRecordBase = (() => {
         case 6:
             message.type = 6;
             break;
+        case "CHANNEL":
+        case 7:
+            message.type = 7;
+            break;
         }
         if (object.signature != null)
             message.signature = String(object.signature);
@@ -10615,6 +10589,8 @@ export const ContactsRecordBase = $root.ContactsRecordBase = (() => {
             message.groupName = String(object.groupName);
         if (object.bfIdSearch != null)
             message.bfIdSearch = Boolean(object.bfIdSearch);
+        if (object.channelName != null)
+            message.channelName = String(object.channelName);
         return message;
     };
 
@@ -10644,6 +10620,7 @@ export const ContactsRecordBase = $root.ContactsRecordBase = (() => {
             object.signature = "";
             object.groupName = "";
             object.bfIdSearch = false;
+            object.channelName = "";
         }
         if (message.userInfo != null && message.hasOwnProperty("userInfo"))
             object.userInfo = $root.UserBase.toObject(message.userInfo, options);
@@ -10664,6 +10641,8 @@ export const ContactsRecordBase = $root.ContactsRecordBase = (() => {
             object.groupName = message.groupName;
         if (message.bfIdSearch != null && message.hasOwnProperty("bfIdSearch"))
             object.bfIdSearch = message.bfIdSearch;
+        if (message.channelName != null && message.hasOwnProperty("channelName"))
+            object.channelName = message.channelName;
         return object;
     };
 
@@ -11383,6 +11362,7 @@ export const ContactsDetailReq = $root.ContactsDetailReq = (() => {
      * @property {IClientInfo|null} [clientInfo] ContactsDetailReq clientInfo
      * @property {number|Long|null} [targetUid] ContactsDetailReq targetUid
      * @property {number|Long|null} [groupId] ContactsDetailReq groupId
+     * @property {number|Long|null} [channelId] ContactsDetailReq channelId
      */
 
     /**
@@ -11425,6 +11405,14 @@ export const ContactsDetailReq = $root.ContactsDetailReq = (() => {
     ContactsDetailReq.prototype.groupId = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
 
     /**
+     * ContactsDetailReq channelId.
+     * @member {number|Long} channelId
+     * @memberof ContactsDetailReq
+     * @instance
+     */
+    ContactsDetailReq.prototype.channelId = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+
+    /**
      * Creates a new ContactsDetailReq instance using the specified properties.
      * @function create
      * @memberof ContactsDetailReq
@@ -11454,6 +11442,8 @@ export const ContactsDetailReq = $root.ContactsDetailReq = (() => {
             writer.uint32(/* id 2, wireType 0 =*/16).int64(message.targetUid);
         if (message.groupId != null && Object.hasOwnProperty.call(message, "groupId"))
             writer.uint32(/* id 3, wireType 0 =*/24).int64(message.groupId);
+        if (message.channelId != null && Object.hasOwnProperty.call(message, "channelId"))
+            writer.uint32(/* id 4, wireType 0 =*/32).int64(message.channelId);
         return writer;
     };
 
@@ -11502,6 +11492,10 @@ export const ContactsDetailReq = $root.ContactsDetailReq = (() => {
                     message.groupId = reader.int64();
                     break;
                 }
+            case 4: {
+                    message.channelId = reader.int64();
+                    break;
+                }
             default:
                 reader.skipType(tag & 7);
                 break;
@@ -11548,6 +11542,9 @@ export const ContactsDetailReq = $root.ContactsDetailReq = (() => {
         if (message.groupId != null && message.hasOwnProperty("groupId"))
             if (!$util.isInteger(message.groupId) && !(message.groupId && $util.isInteger(message.groupId.low) && $util.isInteger(message.groupId.high)))
                 return "groupId: integer|Long expected";
+        if (message.channelId != null && message.hasOwnProperty("channelId"))
+            if (!$util.isInteger(message.channelId) && !(message.channelId && $util.isInteger(message.channelId.low) && $util.isInteger(message.channelId.high)))
+                return "channelId: integer|Long expected";
         return null;
     };
 
@@ -11586,6 +11583,15 @@ export const ContactsDetailReq = $root.ContactsDetailReq = (() => {
                 message.groupId = object.groupId;
             else if (typeof object.groupId === "object")
                 message.groupId = new $util.LongBits(object.groupId.low >>> 0, object.groupId.high >>> 0).toNumber();
+        if (object.channelId != null)
+            if ($util.Long)
+                (message.channelId = $util.Long.fromValue(object.channelId)).unsigned = false;
+            else if (typeof object.channelId === "string")
+                message.channelId = parseInt(object.channelId, 10);
+            else if (typeof object.channelId === "number")
+                message.channelId = object.channelId;
+            else if (typeof object.channelId === "object")
+                message.channelId = new $util.LongBits(object.channelId.low >>> 0, object.channelId.high >>> 0).toNumber();
         return message;
     };
 
@@ -11614,6 +11620,11 @@ export const ContactsDetailReq = $root.ContactsDetailReq = (() => {
                 object.groupId = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
             } else
                 object.groupId = options.longs === String ? "0" : 0;
+            if ($util.Long) {
+                let long = new $util.Long(0, 0, false);
+                object.channelId = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+            } else
+                object.channelId = options.longs === String ? "0" : 0;
         }
         if (message.clientInfo != null && message.hasOwnProperty("clientInfo"))
             object.clientInfo = $root.ClientInfo.toObject(message.clientInfo, options);
@@ -11627,6 +11638,11 @@ export const ContactsDetailReq = $root.ContactsDetailReq = (() => {
                 object.groupId = options.longs === String ? String(message.groupId) : message.groupId;
             else
                 object.groupId = options.longs === String ? $util.Long.prototype.toString.call(message.groupId) : options.longs === Number ? new $util.LongBits(message.groupId.low >>> 0, message.groupId.high >>> 0).toNumber() : message.groupId;
+        if (message.channelId != null && message.hasOwnProperty("channelId"))
+            if (typeof message.channelId === "number")
+                object.channelId = options.longs === String ? String(message.channelId) : message.channelId;
+            else
+                object.channelId = options.longs === String ? $util.Long.prototype.toString.call(message.channelId) : options.longs === Number ? new $util.LongBits(message.channelId.low >>> 0, message.channelId.high >>> 0).toNumber() : message.channelId;
         return object;
     };
 
@@ -13016,6 +13032,7 @@ export const ContactsApplyListReq = $root.ContactsApplyListReq = (() => {
      * @exports IContactsApplyListReq
      * @interface IContactsApplyListReq
      * @property {IClientInfo|null} [clientInfo] ContactsApplyListReq clientInfo
+     * @property {number|null} [version] ContactsApplyListReq version
      */
 
     /**
@@ -13040,6 +13057,14 @@ export const ContactsApplyListReq = $root.ContactsApplyListReq = (() => {
      * @instance
      */
     ContactsApplyListReq.prototype.clientInfo = null;
+
+    /**
+     * ContactsApplyListReq version.
+     * @member {number} version
+     * @memberof ContactsApplyListReq
+     * @instance
+     */
+    ContactsApplyListReq.prototype.version = 0;
 
     /**
      * Creates a new ContactsApplyListReq instance using the specified properties.
@@ -13067,6 +13092,8 @@ export const ContactsApplyListReq = $root.ContactsApplyListReq = (() => {
             writer = $Writer.create();
         if (message.clientInfo != null && Object.hasOwnProperty.call(message, "clientInfo"))
             $root.ClientInfo.encode(message.clientInfo, writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
+        if (message.version != null && Object.hasOwnProperty.call(message, "version"))
+            writer.uint32(/* id 2, wireType 0 =*/16).int32(message.version);
         return writer;
     };
 
@@ -13105,6 +13132,10 @@ export const ContactsApplyListReq = $root.ContactsApplyListReq = (() => {
             switch (tag >>> 3) {
             case 1: {
                     message.clientInfo = $root.ClientInfo.decode(reader, reader.uint32());
+                    break;
+                }
+            case 2: {
+                    message.version = reader.int32();
                     break;
                 }
             default:
@@ -13147,6 +13178,9 @@ export const ContactsApplyListReq = $root.ContactsApplyListReq = (() => {
             if (error)
                 return "clientInfo." + error;
         }
+        if (message.version != null && message.hasOwnProperty("version"))
+            if (!$util.isInteger(message.version))
+                return "version: integer expected";
         return null;
     };
 
@@ -13167,6 +13201,8 @@ export const ContactsApplyListReq = $root.ContactsApplyListReq = (() => {
                 throw TypeError(".ContactsApplyListReq.clientInfo: object expected");
             message.clientInfo = $root.ClientInfo.fromObject(object.clientInfo);
         }
+        if (object.version != null)
+            message.version = object.version | 0;
         return message;
     };
 
@@ -13183,10 +13219,14 @@ export const ContactsApplyListReq = $root.ContactsApplyListReq = (() => {
         if (!options)
             options = {};
         let object = {};
-        if (options.defaults)
+        if (options.defaults) {
             object.clientInfo = null;
+            object.version = 0;
+        }
         if (message.clientInfo != null && message.hasOwnProperty("clientInfo"))
             object.clientInfo = $root.ClientInfo.toObject(message.clientInfo, options);
+        if (message.version != null && message.hasOwnProperty("version"))
+            object.version = message.version;
         return object;
     };
 
@@ -13764,6 +13804,7 @@ export const ContactsRelationReq = $root.ContactsRelationReq = (() => {
             case 4:
             case 5:
             case 6:
+            case 7:
                 break;
             }
         if (message.op != null && message.hasOwnProperty("op"))
@@ -13857,6 +13898,10 @@ export const ContactsRelationReq = $root.ContactsRelationReq = (() => {
         case "IDENTIFY":
         case 6:
             message.type = 6;
+            break;
+        case "CHANNEL":
+        case 7:
+            message.type = 7;
             break;
         }
         switch (object.op) {
@@ -33402,6 +33447,464 @@ export const FindContactsListResp = $root.FindContactsListResp = (() => {
     };
 
     return FindContactsListResp;
+})();
+
+export const DisableGroupReq = $root.DisableGroupReq = (() => {
+
+    /**
+     * Properties of a DisableGroupReq.
+     * @exports IDisableGroupReq
+     * @interface IDisableGroupReq
+     * @property {IClientInfo|null} [clientInfo] DisableGroupReq clientInfo
+     * @property {number|Long|null} [groupId] DisableGroupReq groupId
+     */
+
+    /**
+     * Constructs a new DisableGroupReq.
+     * @exports DisableGroupReq
+     * @classdesc Represents a DisableGroupReq.
+     * @implements IDisableGroupReq
+     * @constructor
+     * @param {IDisableGroupReq=} [properties] Properties to set
+     */
+    function DisableGroupReq(properties) {
+        if (properties)
+            for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                if (properties[keys[i]] != null)
+                    this[keys[i]] = properties[keys[i]];
+    }
+
+    /**
+     * DisableGroupReq clientInfo.
+     * @member {IClientInfo|null|undefined} clientInfo
+     * @memberof DisableGroupReq
+     * @instance
+     */
+    DisableGroupReq.prototype.clientInfo = null;
+
+    /**
+     * DisableGroupReq groupId.
+     * @member {number|Long} groupId
+     * @memberof DisableGroupReq
+     * @instance
+     */
+    DisableGroupReq.prototype.groupId = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+
+    /**
+     * Creates a new DisableGroupReq instance using the specified properties.
+     * @function create
+     * @memberof DisableGroupReq
+     * @static
+     * @param {IDisableGroupReq=} [properties] Properties to set
+     * @returns {DisableGroupReq} DisableGroupReq instance
+     */
+    DisableGroupReq.create = function create(properties) {
+        return new DisableGroupReq(properties);
+    };
+
+    /**
+     * Encodes the specified DisableGroupReq message. Does not implicitly {@link DisableGroupReq.verify|verify} messages.
+     * @function encode
+     * @memberof DisableGroupReq
+     * @static
+     * @param {IDisableGroupReq} message DisableGroupReq message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    DisableGroupReq.encode = function encode(message, writer) {
+        if (!writer)
+            writer = $Writer.create();
+        if (message.clientInfo != null && Object.hasOwnProperty.call(message, "clientInfo"))
+            $root.ClientInfo.encode(message.clientInfo, writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
+        if (message.groupId != null && Object.hasOwnProperty.call(message, "groupId"))
+            writer.uint32(/* id 2, wireType 0 =*/16).int64(message.groupId);
+        return writer;
+    };
+
+    /**
+     * Encodes the specified DisableGroupReq message, length delimited. Does not implicitly {@link DisableGroupReq.verify|verify} messages.
+     * @function encodeDelimited
+     * @memberof DisableGroupReq
+     * @static
+     * @param {IDisableGroupReq} message DisableGroupReq message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    DisableGroupReq.encodeDelimited = function encodeDelimited(message, writer) {
+        return this.encode(message, writer).ldelim();
+    };
+
+    /**
+     * Decodes a DisableGroupReq message from the specified reader or buffer.
+     * @function decode
+     * @memberof DisableGroupReq
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @param {number} [length] Message length if known beforehand
+     * @returns {DisableGroupReq} DisableGroupReq
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    DisableGroupReq.decode = function decode(reader, length, error) {
+        if (!(reader instanceof $Reader))
+            reader = $Reader.create(reader);
+        let end = length === undefined ? reader.len : reader.pos + length, message = new $root.DisableGroupReq();
+        while (reader.pos < end) {
+            let tag = reader.uint32();
+            if (tag === error)
+                break;
+            switch (tag >>> 3) {
+            case 1: {
+                    message.clientInfo = $root.ClientInfo.decode(reader, reader.uint32());
+                    break;
+                }
+            case 2: {
+                    message.groupId = reader.int64();
+                    break;
+                }
+            default:
+                reader.skipType(tag & 7);
+                break;
+            }
+        }
+        return message;
+    };
+
+    /**
+     * Decodes a DisableGroupReq message from the specified reader or buffer, length delimited.
+     * @function decodeDelimited
+     * @memberof DisableGroupReq
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @returns {DisableGroupReq} DisableGroupReq
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    DisableGroupReq.decodeDelimited = function decodeDelimited(reader) {
+        if (!(reader instanceof $Reader))
+            reader = new $Reader(reader);
+        return this.decode(reader, reader.uint32());
+    };
+
+    /**
+     * Verifies a DisableGroupReq message.
+     * @function verify
+     * @memberof DisableGroupReq
+     * @static
+     * @param {Object.<string,*>} message Plain object to verify
+     * @returns {string|null} `null` if valid, otherwise the reason why it is not
+     */
+    DisableGroupReq.verify = function verify(message) {
+        if (typeof message !== "object" || message === null)
+            return "object expected";
+        if (message.clientInfo != null && message.hasOwnProperty("clientInfo")) {
+            let error = $root.ClientInfo.verify(message.clientInfo);
+            if (error)
+                return "clientInfo." + error;
+        }
+        if (message.groupId != null && message.hasOwnProperty("groupId"))
+            if (!$util.isInteger(message.groupId) && !(message.groupId && $util.isInteger(message.groupId.low) && $util.isInteger(message.groupId.high)))
+                return "groupId: integer|Long expected";
+        return null;
+    };
+
+    /**
+     * Creates a DisableGroupReq message from a plain object. Also converts values to their respective internal types.
+     * @function fromObject
+     * @memberof DisableGroupReq
+     * @static
+     * @param {Object.<string,*>} object Plain object
+     * @returns {DisableGroupReq} DisableGroupReq
+     */
+    DisableGroupReq.fromObject = function fromObject(object) {
+        if (object instanceof $root.DisableGroupReq)
+            return object;
+        let message = new $root.DisableGroupReq();
+        if (object.clientInfo != null) {
+            if (typeof object.clientInfo !== "object")
+                throw TypeError(".DisableGroupReq.clientInfo: object expected");
+            message.clientInfo = $root.ClientInfo.fromObject(object.clientInfo);
+        }
+        if (object.groupId != null)
+            if ($util.Long)
+                (message.groupId = $util.Long.fromValue(object.groupId)).unsigned = false;
+            else if (typeof object.groupId === "string")
+                message.groupId = parseInt(object.groupId, 10);
+            else if (typeof object.groupId === "number")
+                message.groupId = object.groupId;
+            else if (typeof object.groupId === "object")
+                message.groupId = new $util.LongBits(object.groupId.low >>> 0, object.groupId.high >>> 0).toNumber();
+        return message;
+    };
+
+    /**
+     * Creates a plain object from a DisableGroupReq message. Also converts values to other types if specified.
+     * @function toObject
+     * @memberof DisableGroupReq
+     * @static
+     * @param {DisableGroupReq} message DisableGroupReq
+     * @param {$protobuf.IConversionOptions} [options] Conversion options
+     * @returns {Object.<string,*>} Plain object
+     */
+    DisableGroupReq.toObject = function toObject(message, options) {
+        if (!options)
+            options = {};
+        let object = {};
+        if (options.defaults) {
+            object.clientInfo = null;
+            if ($util.Long) {
+                let long = new $util.Long(0, 0, false);
+                object.groupId = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+            } else
+                object.groupId = options.longs === String ? "0" : 0;
+        }
+        if (message.clientInfo != null && message.hasOwnProperty("clientInfo"))
+            object.clientInfo = $root.ClientInfo.toObject(message.clientInfo, options);
+        if (message.groupId != null && message.hasOwnProperty("groupId"))
+            if (typeof message.groupId === "number")
+                object.groupId = options.longs === String ? String(message.groupId) : message.groupId;
+            else
+                object.groupId = options.longs === String ? $util.Long.prototype.toString.call(message.groupId) : options.longs === Number ? new $util.LongBits(message.groupId.low >>> 0, message.groupId.high >>> 0).toNumber() : message.groupId;
+        return object;
+    };
+
+    /**
+     * Converts this DisableGroupReq to JSON.
+     * @function toJSON
+     * @memberof DisableGroupReq
+     * @instance
+     * @returns {Object.<string,*>} JSON object
+     */
+    DisableGroupReq.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+    };
+
+    /**
+     * Gets the default type url for DisableGroupReq
+     * @function getTypeUrl
+     * @memberof DisableGroupReq
+     * @static
+     * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+     * @returns {string} The default type url
+     */
+    DisableGroupReq.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === undefined) {
+            typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/DisableGroupReq";
+    };
+
+    return DisableGroupReq;
+})();
+
+export const DisableGroupResp = $root.DisableGroupResp = (() => {
+
+    /**
+     * Properties of a DisableGroupResp.
+     * @exports IDisableGroupResp
+     * @interface IDisableGroupResp
+     * @property {ICommonResult|null} [commonResult] DisableGroupResp commonResult
+     */
+
+    /**
+     * Constructs a new DisableGroupResp.
+     * @exports DisableGroupResp
+     * @classdesc Represents a DisableGroupResp.
+     * @implements IDisableGroupResp
+     * @constructor
+     * @param {IDisableGroupResp=} [properties] Properties to set
+     */
+    function DisableGroupResp(properties) {
+        if (properties)
+            for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                if (properties[keys[i]] != null)
+                    this[keys[i]] = properties[keys[i]];
+    }
+
+    /**
+     * DisableGroupResp commonResult.
+     * @member {ICommonResult|null|undefined} commonResult
+     * @memberof DisableGroupResp
+     * @instance
+     */
+    DisableGroupResp.prototype.commonResult = null;
+
+    /**
+     * Creates a new DisableGroupResp instance using the specified properties.
+     * @function create
+     * @memberof DisableGroupResp
+     * @static
+     * @param {IDisableGroupResp=} [properties] Properties to set
+     * @returns {DisableGroupResp} DisableGroupResp instance
+     */
+    DisableGroupResp.create = function create(properties) {
+        return new DisableGroupResp(properties);
+    };
+
+    /**
+     * Encodes the specified DisableGroupResp message. Does not implicitly {@link DisableGroupResp.verify|verify} messages.
+     * @function encode
+     * @memberof DisableGroupResp
+     * @static
+     * @param {IDisableGroupResp} message DisableGroupResp message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    DisableGroupResp.encode = function encode(message, writer) {
+        if (!writer)
+            writer = $Writer.create();
+        if (message.commonResult != null && Object.hasOwnProperty.call(message, "commonResult"))
+            $root.CommonResult.encode(message.commonResult, writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
+        return writer;
+    };
+
+    /**
+     * Encodes the specified DisableGroupResp message, length delimited. Does not implicitly {@link DisableGroupResp.verify|verify} messages.
+     * @function encodeDelimited
+     * @memberof DisableGroupResp
+     * @static
+     * @param {IDisableGroupResp} message DisableGroupResp message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    DisableGroupResp.encodeDelimited = function encodeDelimited(message, writer) {
+        return this.encode(message, writer).ldelim();
+    };
+
+    /**
+     * Decodes a DisableGroupResp message from the specified reader or buffer.
+     * @function decode
+     * @memberof DisableGroupResp
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @param {number} [length] Message length if known beforehand
+     * @returns {DisableGroupResp} DisableGroupResp
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    DisableGroupResp.decode = function decode(reader, length, error) {
+        if (!(reader instanceof $Reader))
+            reader = $Reader.create(reader);
+        let end = length === undefined ? reader.len : reader.pos + length, message = new $root.DisableGroupResp();
+        while (reader.pos < end) {
+            let tag = reader.uint32();
+            if (tag === error)
+                break;
+            switch (tag >>> 3) {
+            case 1: {
+                    message.commonResult = $root.CommonResult.decode(reader, reader.uint32());
+                    break;
+                }
+            default:
+                reader.skipType(tag & 7);
+                break;
+            }
+        }
+        return message;
+    };
+
+    /**
+     * Decodes a DisableGroupResp message from the specified reader or buffer, length delimited.
+     * @function decodeDelimited
+     * @memberof DisableGroupResp
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @returns {DisableGroupResp} DisableGroupResp
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    DisableGroupResp.decodeDelimited = function decodeDelimited(reader) {
+        if (!(reader instanceof $Reader))
+            reader = new $Reader(reader);
+        return this.decode(reader, reader.uint32());
+    };
+
+    /**
+     * Verifies a DisableGroupResp message.
+     * @function verify
+     * @memberof DisableGroupResp
+     * @static
+     * @param {Object.<string,*>} message Plain object to verify
+     * @returns {string|null} `null` if valid, otherwise the reason why it is not
+     */
+    DisableGroupResp.verify = function verify(message) {
+        if (typeof message !== "object" || message === null)
+            return "object expected";
+        if (message.commonResult != null && message.hasOwnProperty("commonResult")) {
+            let error = $root.CommonResult.verify(message.commonResult);
+            if (error)
+                return "commonResult." + error;
+        }
+        return null;
+    };
+
+    /**
+     * Creates a DisableGroupResp message from a plain object. Also converts values to their respective internal types.
+     * @function fromObject
+     * @memberof DisableGroupResp
+     * @static
+     * @param {Object.<string,*>} object Plain object
+     * @returns {DisableGroupResp} DisableGroupResp
+     */
+    DisableGroupResp.fromObject = function fromObject(object) {
+        if (object instanceof $root.DisableGroupResp)
+            return object;
+        let message = new $root.DisableGroupResp();
+        if (object.commonResult != null) {
+            if (typeof object.commonResult !== "object")
+                throw TypeError(".DisableGroupResp.commonResult: object expected");
+            message.commonResult = $root.CommonResult.fromObject(object.commonResult);
+        }
+        return message;
+    };
+
+    /**
+     * Creates a plain object from a DisableGroupResp message. Also converts values to other types if specified.
+     * @function toObject
+     * @memberof DisableGroupResp
+     * @static
+     * @param {DisableGroupResp} message DisableGroupResp
+     * @param {$protobuf.IConversionOptions} [options] Conversion options
+     * @returns {Object.<string,*>} Plain object
+     */
+    DisableGroupResp.toObject = function toObject(message, options) {
+        if (!options)
+            options = {};
+        let object = {};
+        if (options.defaults)
+            object.commonResult = null;
+        if (message.commonResult != null && message.hasOwnProperty("commonResult"))
+            object.commonResult = $root.CommonResult.toObject(message.commonResult, options);
+        return object;
+    };
+
+    /**
+     * Converts this DisableGroupResp to JSON.
+     * @function toJSON
+     * @memberof DisableGroupResp
+     * @instance
+     * @returns {Object.<string,*>} JSON object
+     */
+    DisableGroupResp.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+    };
+
+    /**
+     * Gets the default type url for DisableGroupResp
+     * @function getTypeUrl
+     * @memberof DisableGroupResp
+     * @static
+     * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+     * @returns {string} The default type url
+     */
+    DisableGroupResp.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === undefined) {
+            typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/DisableGroupResp";
+    };
+
+    return DisableGroupResp;
 })();
 
 export const ClientInfo = $root.ClientInfo = (() => {

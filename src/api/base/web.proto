@@ -87,7 +87,6 @@ message GetKeyPairReq {
     int32          webKeyVersion   = 4; // web密钥版本号(不传则下发最新)
     int32          appKeyVersion   = 5; // app密钥版本号(不传则下发最新)
     int32          groupKeyVersion   = 6; // 群聊版本号(不传则下发最新)
-    int32          channelKeyVersion = 7; // 频道版本号(不传则下发最新)
 }
 
 // 获取密钥对resp
@@ -96,7 +95,6 @@ message GetKeyPairResp {
     KeyPairBase    appKeyPair     = 2; // app密钥（用户）
     KeyPairBase    webKeyPair     = 3; // web秘钥（用户）
     KeyPairBase    groupKeyPair   = 4; // 群聊秘钥
-    KeyPairBase    channelKeyPair = 5; // 频道秘钥
 }
 
 //获取好友秘钥对列表req [/sys/GetKeyPairList]（暂未使用）
@@ -347,6 +345,7 @@ enum ContactsAddType {
     REQ_MSG = 4; //朋友申请信息
     LINK    = 5; //链接 v1.4.0
     IDENTIFY = 6; //68号 v1.4.0
+    CHANNEL  = 7; //频道
 }
 
 // 投诉类型(原因)
@@ -387,6 +386,7 @@ message ContactsRecordBase {
     string              signature           = 6; //个性签名
     string              groupName           = 7; //群名称
     bool                bfIdSearch          = 8; //是否显示68号
+    string              channelName         = 9; //频道名称
 }
 
 // 联系人列表req [/contacts/contactsList]
@@ -412,6 +412,7 @@ message ContactsDetailReq {
     ClientInfo clientInfo = 1; // web端信息
     int64 targetUid = 2; // 目标用户ID
     int64 groupId = 3; // 群组Id
+    int64 channelId = 4; // 频道Id
 }
 //联系人详情resp
 message ContactsDetailResp {
@@ -445,6 +446,7 @@ message UpdateContactsResp {
 //联系人申请列表req [/contacts/contactsApplyList]（add v1.0.0暂未使用）
 message ContactsApplyListReq {
     ClientInfo  clientInfo     = 1; // 客户端信息
+    int32       version        = 2; // 接口版本
 }
 //联系人申请列表resp
 message ContactsApplyListResp {
@@ -978,4 +980,16 @@ message FindContactsListReq {
 message FindContactsListResp {
     CommonResult        commonResult    = 1; // 结果信息
     repeated ContactsDetailBase  detailList  = 2; //联系人详情列表
+}
+
+
+// 解散群 [groupUrl/group/disableGroup] v1.6.0
+message DisableGroupReq {
+    ClientInfo  clientInfo  = 1; // 客户端信息
+    int64       groupId     = 2; // 群id
+}
+
+// 解散群
+message DisableGroupResp {
+    CommonResult   commonResult   = 1; // 结果信息
 }
