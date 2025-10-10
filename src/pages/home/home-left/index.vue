@@ -1242,6 +1242,11 @@ export default {
       // console.log('ChannelList ------------>', res)
     });
 
+    // 好友备注同步
+    Cache(`${loginId}-FriendRemarks`).then((res) => {
+      eventCommon.fnFriendRemarksSet(res)
+    })
+
     Cache(`${loginId}-newFriendReqTotal`).then(res => {
       this.contactsUnreadCount = res?.total || 0;
     })
