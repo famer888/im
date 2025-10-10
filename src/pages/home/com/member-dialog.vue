@@ -1,6 +1,6 @@
 <template>
   <div class="comMemberDialog" @click.stop>
-    <div>
+    <div class="member-content">
       <picture @click.stop="$emit('close')">
         <img src="@/assets/images/common/close-icon.png" />
       </picture>
@@ -65,15 +65,22 @@
           <span>{{ 20 - text.length }}</span>
         </div>
       </div>
-      <div class="bottom" v-if="!isSelf && bfFriend">
-        <span @click="handleToFriendChat">
+      <div class="bottom" v-if="!isSelf">
+        <span v-if="bfFriend" @click="handleToFriendChat">
           {{ $t("发送消息") }}
+        </span>
+        <span v-else-if="memberDetail.addToken" @click="verifierVisble = true">
+          添加
         </span>
       </div>
     </div>
+    <ComAddVerifyDialog v-if="verifierVisble" :defalutValue="verifyValue" @close="verifierVisble = false"
+          @confirm="verifyConfirm" />
   </div>
 </template>
 <script>
+//组件
+import ComAddVerifyDialog from "./add-contacts/add-verify-dialog.vue";
 
 // 事件
 import eventBase from "@/event/base";
@@ -81,11 +88,19 @@ import eventCommon from "@/event/common";
 import eventFriend from "@/event/friend";
 import { Cache } from "@/cache";
 
+//接口
+import { contactsRelation } from "@/api/imContacation.js";
+
 export default {
-  props: ["memberInfo"],
+  props: ["memberInfo", "channelId"],
   inject: ["provideUpdateGroupMember"],
+  components: {
+      ComAddVerifyDialog
+  },
   data() {
     return {
+      verifyValue: "",
+      verifierVisble: false,
       searchText: "",
       nameUpdate: "",
       nickName: "",
@@ -99,15 +114,27 @@ export default {
       bfFriend: false,
       stepNum: 1,
       text: "",
-      maxWidth: 280
+      maxWidth: 280,
+      memberDetail: {},
     };
+  },
+  created() {
+      // 添加监听 设置通信事件的监听机制
+    eventBase.fnCommunicationMonitoring(
+      "memberDialog",
+      [
+        "friendUpdate", // 接口获取到的成员详情
+      ],
+      this.eventHandling
+    );
   },
   mounted() {
     const loginId = eventCommon.fnCommonInfoRU({
       getId: "loginId",
     });
 
-    const { id, name, nickName, depict, bfFriend } = this.memberInfo;
+    const { id, name, nickName, depict, bfFriend, channelId } = this.memberInfo;
+    console.log("memberInfo--", this.memberInfo)
 
     this.name = name || "";
     this.nickName = nickName;
@@ -130,7 +157,7 @@ export default {
     }
 
     // 如果是好友，好友信息 API 更新
-    eventFriend.fnFriendDetailsGet(id);
+    eventFriend.fnFriendDetailsGet(id, {channelId});
 
     // 如果bfFriend是undefined,则检查是否为好友
     if (bfFriend === undefined) {
@@ -138,7 +165,51 @@ export default {
     }
 
   },
+  beforeDestroy() {
+     eventBase.fnCommunicationMonitoring("memberDialog", null);
+  },
   methods: {
+    eventHandling(info, operator, operatorType) {
+      switch (operator) {
+        case "friendUpdate": {
+          if(info.id === this.memberInfo.id) {
+             this.memberDetail = info;
+          }
+          console.log("friendUpdate--", info, this.memberDetail)
+        }
+      }
+    },
+    // 好友验证消息输入框确认回调
+    verifyConfirm(msg) {
+          console.log('verifyConfirm--', msg, this.memberInfo)
+          if(!msg) {
+            window.$toast('请输入验证消息');
+            return;
+          }
+          this.verifyValue = msg;
+          this.addFriend();
+      },
+    // 添加好友
+    addFriend() {
+          const pra = {
+              targetUid: Number(this.memberInfo.id),
+              msg: this.verifyValue,
+              type: 0,
+              op: 0,
+              addToken: this.memberDetail.addToken
+          }
+          console.log("contactsRelation--", pra)
+          contactsRelation(pra).then(res => {
+              const { errCode } = res?.commonResult || {}
+              if (errCode == 200) {
+                  window.$toast('已向对方发送添加申请')
+                  this.verifierVisble = false;
+              } else {
+                  window.$toast('发送失败，请稍后尝试')
+              }
+              console.log('contactsRelation--', res, errCode)
+          })
+    },
     // 检查传进来群成员信息和自己是否为好友
     handCheckisFriend(loginId, id) {
       // 如果传进来的群成员和自己不是好友关系，获取好友列表再次确认
@@ -255,7 +326,7 @@ export default {
   z-index: 1800;
   background: rgba($color: #000000, $alpha: 0.2);
 
-  > div {
+  .member-content {
     background: #fff;
     position: absolute;
     left: 50%;

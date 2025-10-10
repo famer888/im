@@ -30,6 +30,7 @@
           v-for="(item, index) in managerList"
           :key="index"
           class="member-item cursor"
+          @click="handleMemberDialogShow(item)"
         >
           <ComImage :src="item.userInfoDTO.icon" type="friend" class="member-avatar" />
           <div class="member-info">
@@ -64,6 +65,7 @@ import { longToNum } from "@/utils/base";
 
 // 事件
 import eventCommon from "@/event/common";
+import eventBase from "@/event/base";
 
 export default {
   props: ["memberInfoList", "channelId"],
@@ -84,6 +86,25 @@ export default {
     this.handelHostInfoSet();
   },
   methods: {
+       /**
+     * 成员的会话框 显示
+     */
+    handleMemberDialogShow(info) {
+      console.log("handleMemberDialogShow--", info)
+      eventBase.fnCommunicationSendMsg({
+        operator: "memberDialogShow",
+        data: {
+          values: {
+            id: info.userInfoDTO.uid,
+            icon: info.userInfoDTO.icon,
+            // name: info.userInfoDTO.name,
+            nickName: info.userInfoDTO.nickName,
+            // bfFriend: info.bfFriend,
+            channelId: this.channelId,
+          },
+        },
+      });
+    },
     /**
      *  关闭 群管理会话框
      */

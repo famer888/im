@@ -172,6 +172,7 @@ export default {
             // name: info.userInfoDTO.name,
             nickName: info.userInfoDTO.nickName,
             // bfFriend: info.bfFriend,
+            channelId: this.chatContent.id,
           },
         },
       });
