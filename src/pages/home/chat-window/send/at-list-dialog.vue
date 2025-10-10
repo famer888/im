@@ -7,7 +7,7 @@
         :class="{
           active: index + atListShowIndex === atIndexActive,
         }"
-        @click.stop="handleClick(item.nickName)"
+        @click.stop="handleClick(item.name || item.nickName)"
       >
         <ComImage :src="item.icon" type="friend" />
         <h2>

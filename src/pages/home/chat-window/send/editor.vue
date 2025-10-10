@@ -934,13 +934,22 @@ export default {
       // 如果是群，判断是否有at的信息
       if (type === "group") {
         textListSend = textListSend.map((item) => {
+          let content = item.values.content
           const atUsers = fnTextGetAt(
-            item.values.content,
+            content,
             this.provideMemberList(),
             this.isLeader
           );
 
           if (atUsers.length > 0) {
+            // 将消息内容中的备注名替换为真实昵称
+            atUsers.forEach(i => {
+              if(i.name) {
+               content = content.replace(i.name, i.nickName);
+              }
+            });
+            item.values.content = content;
+
             return {
               ...item,
               values: {

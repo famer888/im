@@ -120,24 +120,24 @@ export const fnEmojiToText = (htmlString) => {
  * at的成员id
  */
 export const fnTextGetAt = (str, atList, isLeader) => {
-    let strNew = str;
 
     // 所有被@的名称
     let names = [];
 
     for (const item of atList) {
-        if (str.includes(item.nickName) && item.nickName.includes("@")) {
-            const index = str.indexOf(item.nickName);
+        const memberName = item.name || item.nickName;
+        if (str.includes(memberName) && memberName.includes("@")) {
+            const index = str.indexOf(memberName);
 
             // 如果前面是at
             if (index !== 0 && str[index - 1] === "@") {
                 // 后面是at或空格，或者是最后，则为at
-                const lastIndex = index + item.nickName.length;
+                const lastIndex = index + memberName.length;
                 if (
                     lastIndex === str.length ||
                     [" ", "@"].includes(str[lastIndex])
                 ) {
-                    names.push(item.nickName);
+                    names.push(memberName);
                 }
             }
         }
@@ -164,10 +164,10 @@ export const fnTextGetAt = (str, atList, isLeader) => {
         ? [-1]
         : atList
               .filter((item) =>
-                  names.some((n) => n.indexOf(item.nickName) === 0)
+                  names.some((n) => n.indexOf(item.name || item.nickName) === 0)
               )
               .map((item) => {
-                  return { id: item.id.toString(), nickName: item.nickName };
+                  return { id: item.id.toString(), nickName: item.nickName, name: item.name };
               });
 };
 
