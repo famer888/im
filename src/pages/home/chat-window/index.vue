@@ -422,12 +422,16 @@ export default {
       });
     },
     isDeleteAll() {
+      const { type, memberType } = this.chatContent;
       return (
         this.rightClickSelectedInfo &&
         this.rightClickSelectedInfo.readStatus !== -1 &&
-        (this.chatContent.type === "friend" ||
+        (
+          type === "friend" ||
           this.rightClickSelectedInfo.isSelf ||
-          this.chatContent.memberType !== 2)
+          memberType !== 2  ||
+          (type === "channel" && memberType !== 3) 
+        )
       );
     },
   },
@@ -463,7 +467,8 @@ export default {
           }
         }, 1000)
 
-    } else if(type === "channel" && adminPrivacy) {
+    // } else if(type === "channel" && adminPrivacy) {
+    } else if(type === "channel") {
       this.handleChannelMemberGet();
     } else {
       // 获取好友详情
@@ -1145,6 +1150,7 @@ export default {
         channelId
       }
       getChannelUsers(prams).then(res => {
+        console.log('getChannelUsers--', res)
         channelUserList = res.data?.rowList ||[]
       })
     },
