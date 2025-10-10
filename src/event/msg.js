@@ -198,7 +198,7 @@ const fnGroupMsgAdd = async (msg) => {
         id: Number(msg.groupId),
         type,
         msgType: msg.msgType || 0,
-        msgEncryptionVersion: msg.version,
+        msgEncryptionVersion: msg.version ,
         content: msg.content,
         attachmentKey: msg.attachmentKey,
     });
@@ -1527,7 +1527,7 @@ const fnAlertNotification = async (data, chatList) => {
             };
             // console.log("alertNotification--", params)
             ipcRenderer.send("alertNotification", {
-                windowId: remote.getCurrentWindow().getMediaSourceId(),
+                // windowId: remote.getCurrentWindow().getMediaSourceId(),
                 ...params,
             });
         }

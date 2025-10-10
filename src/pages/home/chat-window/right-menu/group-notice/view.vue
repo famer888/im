@@ -21,7 +21,7 @@
 // 工具
 import { strSplitAt } from "@/utils/widget";
 import { repalceLink, repalceLinkNoPrefix } from "@/utils/base";
-import { splitHtmlStringToObjects } from "@/utils/widget";
+import { splitHtmlStringToObjects, strReplaceEmojiImgLabel } from "@/utils/widget";
 import  eventBase from '@/event/base';
 // 控件
 import ComLableEle from "@/pages/home/com/lable-ele.vue";
@@ -42,6 +42,9 @@ export default {
     handleContent() {
       let htmlString = repalceLink(this.content);
       htmlString = htmlString.replace(/\n/g, '<br/>')
+      
+      // 字符串替换为表情图片标签
+      htmlString = strReplaceEmojiImgLabel(htmlString);
 
       // 拆分html
       const tagList = splitHtmlStringToObjects(htmlString);
@@ -125,18 +128,22 @@ export default {
   }
   .notice-content{
     overflow-y: scroll;
-    > .at {
-    margin: 0;
-    font-size: 14px;
-    color: #3369fe;
-    display: inline-block;
-    cursor: pointer;
-    font-weight: normal;
 
-    a:hover {
-      text-decoration: underline;
+    > .at {
+        margin: 0;
+        font-size: 14px;
+        color: #3369fe;
+        display: inline-block;
+        cursor: pointer;
+        font-weight: normal;
+
+        a:hover {
+          text-decoration: underline;
+        }
     }
-  }
+    > img {
+      height: 18px;
+    }
   }
 }
 </style>

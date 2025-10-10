@@ -111,7 +111,8 @@ ipcMain.on('noticeCloseItem', (e, item) => {
 });  
 
 export const closeNotification = (item) => {
-  const {id} = item;
+  const { id } = item || {};
+  if(!id) return;
   listData = listData.filter(item => item.id !== id);
   if(!listData.length) {
     closeNotice()
