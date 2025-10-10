@@ -68,6 +68,7 @@ export const createNoticeWindow = async (mainWindow) => {
 }  
 
 const updateShowLocation = (boxH) => {
+  if(!noticeWindow) return;
   const { width, height, spacing, hideAllHeight} = noticeItemConfig;
   const { marginRight, marginBottom } = noticeConfig;
   let boxHeight = boxH || height;
