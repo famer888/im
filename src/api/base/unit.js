@@ -100,10 +100,13 @@ function aesEncode(data, key) {
 
 export const getSignHeader = () => {
     const NEW_SIGN = "f58c15f54e8f7826";
-    const SECRET_NAME = "4669ae8d7010521fcaf4855dbfbb1303";
-    let client = eventCommon.fnClientInfoGet();
-    client.appVer = 163;
-    client.sysMac = getApiMacAddressSync();
+
+    // const SECRET_NAME = "4669ae8d7010521fcaf4855dbfbb1303";
+    // let client = eventCommon.fnClientInfoGet();
+    let myClient = eventCommon.fnClientInfoGet();
+    // client.appVer = 163;
+    // client.sysMac = getApiMacAddressSync();
+    
 
     // const SECRET_NAME ="da4a207e3ea1d2d7911c2002397c60d0";
     // let client = {
@@ -115,6 +118,21 @@ export const getSignHeader = () => {
     //     "plat": 0,
     //     "packageCode": 1000
     // }
+
+    const SECRET_NAME ="e884263661036ec9e123ea63d78e6e28";
+    let client = {
+        "language": 2,
+        "sysModel": "android",
+        "sessionId": "nlocal::6fb6cebaa04a4d9caf204c5ea9e35aa88c591db8f7689e38916028db23699a10982f43eb6c3cfab92404193ea14e88b2",
+        // "sessionId": "fb67f512beea5f00000038fbb5ef3df7",
+        "sysMac": "e72c8fecc70838e5a960c0299160a18bcoin",
+        "appVer": 620,
+        "plat": 0,
+        "packageCode": 1000
+    }
+    client.sessionId=myClient.sessionId
+
+    console.log(client, 'NEW_SIGN:', NEW_SIGN, 'SECRET_NAME:', SECRET_NAME)
 
     let clientStr = JSON.stringify(client);
 

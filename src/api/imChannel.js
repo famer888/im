@@ -9,7 +9,8 @@ import { decrypt } from "./base/index";
 import axios from "axios";
 const crypto = require("crypto");
 import eventCommon from "@/event/common.js";
-const bodyAesKey = "5cfa3aa8651afbc4";
+// const bodyAesKey = "5cfa3aa8651afbc4";
+const bodyAesKey = "b7983e3f466c952e";
 
 // 获取频道列表
 export const getChannelList = (data) => {
