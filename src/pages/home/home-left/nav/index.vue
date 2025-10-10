@@ -15,10 +15,10 @@
             }-icon.png`)
           "
         />
-        <span v-if="index === 0 && unreadCount !== 0" class="unread">
+        <span v-if="index === 0 && unreadCount > 0" class="unread">
           {{ unreadCount > 99 ? '99+' : unreadCount }}
         </span>
-        <span v-else-if="index === 1 && contactsUnreadCount !== 0" class="unread">
+        <span v-else-if="index === 1 && contactsUnreadCount > 0" class="unread">
           {{ contactsUnreadCount > 99 ? '99+' : contactsUnreadCount }}
         </span>
       </li>
