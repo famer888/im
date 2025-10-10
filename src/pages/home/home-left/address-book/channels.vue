@@ -11,7 +11,7 @@
       v-show="listVisible"
       :noMore="noMore"
       :loading="loading"
-       height="380px"
+       height="356px"
        @load="this.nextPage"
      >
       <ul v-if="listVisible">
