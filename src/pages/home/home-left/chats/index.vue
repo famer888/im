@@ -50,6 +50,7 @@
               class="icon"
             />
             <h3>
+              <img class="channel-feature" v-if="item.type === 'channel'" src="@/assets/images/channel/feature.png" />
               {{
                 item.id === "invitation"
                   ? $t("群通知")
