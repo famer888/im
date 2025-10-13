@@ -4,7 +4,7 @@
      v-if="chatContent.type === 'channel' && !chatContent.adminPrivacy"
      @click="channelDisturbSet"
      >
-      {{ chatContent.isDisturb ? '永久静音' : '接收通知' }} 
+      {{ (chatContent.isDisturb || chatContent.detail?.isDisturb) ? '永久静音' : '接收通知' }} 
     </div>
     <div
       v-else-if="(chatContent.bfShutup && chatContent.memberType > 1) || chatContent.isDisable"

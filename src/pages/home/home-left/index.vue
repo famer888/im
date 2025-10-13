@@ -287,6 +287,7 @@ export default {
           "msgListPropertyUpdate", // 信息发送成功状态更新
           "updateNewFriendReqTotal", // 新朋友申请待处理总数更新
           "searchSpecifiedChat", // 搜索指定的聊天窗口记录
+          "channelDetailCache", // 缓存频道的详情
         ],
         this.eventHandling
       );
@@ -326,6 +327,11 @@ export default {
         case "msgNew": {
           // 处理事件 添加新消息
           this.eventHandlingMsgNew(info, operatorType);
+          break;
+        }
+        case "channelDetailCache": {
+          // 处理事件 缓存频道的详情
+          this.eventChannelDetailCache(info);
           break;
         }
         case "msgReadByMe": {
@@ -797,6 +803,22 @@ export default {
             },
           });
         }
+      }
+    },
+    /**
+     * 缓存频道的详情
+     */
+    async eventChannelDetailCache(info) {
+      if(!info?.channelId) return;
+      const index = this.chats.findIndex(item => item.channelId === info.channelId)
+      if(index >= 0) {
+       this.chats[index].detail = info;
+      }
+      let cacheList = await Cache(`${loginId}MessageChannelList`);
+      const cacheIndex = cacheList.findIndex(item => item.channelId === info.channelId)
+      if(cacheIndex >= 0) {
+        cacheList[cacheIndex].detail = info;
+        Cache(`${loginId}MessageChannelList`, cacheList);
       }
     },
     /**

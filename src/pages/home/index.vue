@@ -287,6 +287,10 @@ export default {
         if (info?.type === "channel" || info?.comType === "detailsChannel") {
           const res = await getChannelDetail({ channelId: info.channelId });
           channelDetail = res.data;
+          eventBase.fnCommunicationSendMsg({
+                operator: "channelDetailCache",
+                data: channelDetail,
+          });
         }
 
         this.infoActive = {
