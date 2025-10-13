@@ -4,7 +4,7 @@
       <picture @click="handleClose">
         <img src="@/assets/images/common/close-icon.png" />
       </picture>
-      <div class="title">群主</div>
+      <div class="title">所有者</div>
       <div class="member-list">
         <div v-if="hostInfo" class="member-item cursor">
           <ComImage

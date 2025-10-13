@@ -36,7 +36,7 @@
           </p>
         </div>
         <span v-if="item.memberType === 1" class="lord">
-          频道主
+          所有者
         </span>
         <span v-else-if="item.memberType === 2">
           {{ $t("管理员") }}
