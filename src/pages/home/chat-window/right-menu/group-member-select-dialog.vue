@@ -6,7 +6,7 @@
                     <span class="title">{{title}}</span>
                     <img class="close" src="@/assets/images/common/close-icon.png" @click="$emit('close')" />
                 </div>
-                <ComSearch class="search" placeholder="ID/名称" :searchText="searchText" @onChange="searchChange"></ComSearch>
+                <ComSearch class="search" placeholder="名称" :searchText="searchText" @onChange="searchChange"></ComSearch>
             </div>
             <ul class="member-list">
                 <li class="member-item" :class="{ disable: item.type < 2 }" v-for="(item, index) in memberInfoList" :key="index" @click="selectMember(item)">
