@@ -50,7 +50,7 @@
         <span class="btn-title">{{ $t("转发给朋友") }}</span> 
       </div>
       <div class="btn-item">
-        <button @click="handleGroupQrCodeImageForward">
+        <button @click="handleCopyLink">
           <img src="@/assets/images/system/link.png" />
         </button>
         <span class="btn-title">{{ $t("复制链接") }}</span> 
