@@ -60,7 +60,7 @@
         <ComSwitch :value="bfJoinFriend" @input="handelBfJoinFriendChange" />
       </li> -->
     </template>
-    <li class="clearHistory" @click="$emit('openDialogMsgClear')">
+    <li class="clearHistory" v-if="!isChannel || (isChannel && chatContent.memberType !== 3)" @click="$emit('openDialogMsgClear')">
       {{ $t("清空聊天记录") }}
     </li>
 
