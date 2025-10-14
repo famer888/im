@@ -870,7 +870,7 @@ export default {
           break;
         }
       }
-      if (isOtherPlatformOperate) {
+      // if (isOtherPlatformOperate) {
         // 更新未读
         // 手机端等其它端操作删除信息，判断删除信息所属所属好友或者群的未读数,
         // 如果当前删除的信息发送时间大于记录未读数的时间，则未读数-1
@@ -880,7 +880,7 @@ export default {
           curUnreadObj.count = unreadMsgCount;
           this.unreadObj[id + type] = curUnreadObj;
         }
-      }
+      // }
 
       if (isUpdate) {
         // 更新会话列表和会话列表本地文件
