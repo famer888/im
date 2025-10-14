@@ -63,11 +63,11 @@ export default {
 
       // at的名称列表
       const atNameList = this.atUsers
-        ? this.atUsers.map((item) => "@" + item.nickName)
+        ? this.atUsers.map((item) => ("@" + item.nickName + " @" + item.name))
         : [];
 
       // 如果是打开成员
-      if (atNameList.includes(text)) {
+      if (atNameList.some(i => i.includes(text))) {
         eventBase.fnCommunicationSendMsg({
           operator: "memberDialogShow",
           data: {

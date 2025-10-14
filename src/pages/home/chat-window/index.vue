@@ -653,7 +653,7 @@ export default {
           } else if (info.atName) {
             // 如果是at名，则找到该成员
             this.memberDialogInfo = memberInfoList.find(
-              (item) => item.nickName === info.atName
+              (item) => item.nickName === info.atName || item.name === info.atName
             );
           }
           break;
