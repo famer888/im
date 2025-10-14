@@ -467,8 +467,7 @@ export default {
           }
         }, 1000)
 
-    // } else if(type === "channel" && adminPrivacy) {
-    } else if(type === "channel") {
+    } else if(type === "channel" && adminPrivacy) {
       this.handleChannelMemberGet();
     } else {
       // 获取好友详情
@@ -1036,6 +1035,11 @@ export default {
         case "rightMenuVisibleShow": {
           // 聊天右键菜单改变 显示/隐藏
           this.isGroupUpdate = false;
+          const { id, type } = this.chatContent;
+          if(type === "friend") {
+            eventFriend.fnFriendDetailsGet(id);
+          }
+          
           // 这里暂时加个延迟，临时解决rightMenu的mounted生命周期会执行两次
           setTimeout(() => {
              this.rightMenuVisible = true;
