@@ -248,6 +248,7 @@ export default {
     position: relative;
     padding-bottom: 25px;
     max-width: 400px;
+    min-width: 120px;
     cursor: pointer;
 
     &.bg {
