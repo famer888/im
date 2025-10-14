@@ -188,6 +188,7 @@ export default {
       const { id, type} = this.chatContent
       if(type !== "group" || !id) return;
       const state = await window.$confirm({
+        title: "退出群聊",
         remark: "确认要退出群聊，且删除此群的聊天记录?"
       })
       if(!state) return;
@@ -211,6 +212,7 @@ export default {
       const { id, type} = this.chatContent
       if(type !== "group" || !id) return;
       const state = await window.$confirm({
+        title: "温馨提示",
         remark: "解散群聊后,所有群成员将失去和群友的联系,同时该群的聊天内容将全部删除"
       })
       if(!state) return;
@@ -230,13 +232,18 @@ export default {
     /**
      * 修改好友黑名单状态
      */
-    handelBfMyBlackChange() {
+    async handelBfMyBlackChange() {
       const { type, id } = this.chatContent;
        if(type !== "friend") return;
         const pra = {
             targetUid: Number(id),
             op: this.bfMyBlack ? 7 : 6,
         }
+        const confirmState = await window.$confirm({
+            title: op === 6 ? "加入黑名单" : "移除黑名单",
+            remark: op === 6 ? "加入黑名单后，你将不再接收到对方的任何消息" : "确认移除黑名单吗",
+        })
+        if(!confirmState) return;
         updateBlackContacts(pra).then(res => {
             const { errCode } = res?.commonResult || {}
             if (errCode == 200) {
@@ -254,6 +261,7 @@ export default {
       const { type, id } = this.chatContent;
       if(type !== "friend") return;
       const state = await window.$confirm({
+          title: "删除联系人",
           remark: "删除该联系人,会同时删除与该联系人的聊天记录"
         })
       if(!state) return;
