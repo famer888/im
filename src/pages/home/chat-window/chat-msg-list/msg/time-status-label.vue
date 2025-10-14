@@ -11,17 +11,17 @@
     <ComLoading v-if="msgInfo.readStatus === -1" />
     <div class="tips" v-else-if="msgInfo.isSelf">
       <i v-if="msgInfo.readStatus === 0" @click="handleReSend">!</i>
-      <img
+      <!-- <img
         v-if="msgInfo.readStatus === 1 && chatContent.type === 'group'"
         src="@/assets/images/message/has-resive.png"
+      /> -->
+      <img
+        v-else-if="msgInfo.readStatus === 2 || msgInfo.readUsers?.length"
+        src="@/assets/images/message/has-read.png"
       />
       <img
         v-else-if="msgInfo.readStatus === 1"
         src="@/assets/images/message/has-send.png"
-      />
-      <img
-        v-else-if="msgInfo.readStatus === 2"
-        src="@/assets/images/message/has-read.png"
       />
     </div>
   </div>
