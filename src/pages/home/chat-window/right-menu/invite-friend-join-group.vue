@@ -13,7 +13,7 @@
                 </div> -->
             </div>
             <ul class="friend-list">
-                <li class="friend-item" :class="{ disable: item.isGroupMember }" v-for="(item, index) in friendList" :key="index" @click="selectFriend(item)">
+                <li class="friend-item" :class="{ disable: item.isGroupMember || item.nickName === '账号已注销' }" v-for="(item, index) in friendList" :key="index" @click="selectFriend(item)">
                     <div class="left">
                         <ComImage type="friend" :src="item.pic" class="member-avatar" />
                         <span class="name">{{ item.name || item.nickName }}</span>
@@ -70,7 +70,11 @@ export default {
                 if (errCode == 200) {
                     window.$toast('邀请成功')
                     this.selectFriends = [];
-                    this.$emit("close")
+                    this.$emit("close");
+                    // window.$confirm({
+                    //     title: "邀请成功",
+                    //     remark: op === 6 ? "加入黑名单后，你将不再接收到对方的任何消息" : "确认移除黑名单吗",
+                    // })
                 } else {
                     window.$toast('邀请失败')
                 }
