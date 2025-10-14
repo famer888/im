@@ -92,14 +92,15 @@ export default {
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 18px;
+      font-size: 16px;
       font-weight: 400;
       color: #000000;
     }
 
     > p {
       padding: 10px 0 5px;
-      color: #333;
+      color: #999999;
+      font-size: 14px;
       text-align: center;
       line-height: 20px;
       word-wrap: break-word;
