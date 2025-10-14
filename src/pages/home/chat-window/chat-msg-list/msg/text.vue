@@ -1,6 +1,6 @@
 <template>
   <div
-    :class="{ comMsgText: true, self: isSelf }"
+    :class="{ comMsgText: true, self: isSelf && chatContent.type !== 'channel' }"
     @click.stop
     @click.right="(e) => $emit('rightClick', e)"
   >
@@ -35,7 +35,7 @@ export default {
   components: {
     ComLableEle,
   },
-  props: ["isSelf", "content", "atUsers", "currentGuoupId", "links"],
+  props: ["isSelf", "content", "atUsers", "currentGuoupId", "links", "chatContent"],
   watch: {
     info: {
       handler(newVal, oldVal) {
@@ -181,6 +181,7 @@ export default {
 <style scoped lang="scss">
 .comMsgText {
   max-width: 450px;
+  min-width: 130px;
   border-radius: 10px;
   border-top-left-radius: 0;
   word-wrap: break-word;

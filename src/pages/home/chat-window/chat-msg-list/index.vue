@@ -71,7 +71,7 @@
               <section
                 v-else
                 :class="{
-                  self: n.isSelf,
+                  self: n.isSelf && chatContent.type !== 'channel',
                   showAvatar: !n.isSelf && chatContent.type === 'group',
                 }"
               >
@@ -98,6 +98,7 @@
                 <ComMsgText
                   v-if="n.chatType === 0"
                   :isSelf="n.isSelf"
+                  :chatContent="chatContent"
                   :content="n.content"
                   :atUsers="n.atUsers"
                   :currentGuoupId="chatContent.id"
