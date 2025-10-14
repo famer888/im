@@ -64,11 +64,16 @@ export default {
           const types = ['手机号', '扫码', '群聊', '名片', '朋友申请信息', '链接', '68号']
           return types[type] || '搜索'
         },
-        joinBlackList(op) {
+        async joinBlackList(op) {
             const pra = {
                 targetUid: Number(this.userInfo.uid),
                 op,
             }
+            const confirmState = await window.$confirm({
+                title: op === 6 ? "加入黑名单" : "移除黑名单",
+                remark: op === 6 ? "加入黑名单后，你将不再接收到对方的任何消息" : "确认移除黑名单吗",
+            })
+            if(!confirmState) return;
             updateBlackContacts(pra).then(res => {
                 console.log('updateBlackContacts--', res)
                     const { errCode } = res?.commonResult || {}
