@@ -89,6 +89,7 @@ import eventFriend from "@/event/friend";
 import eventBase from "@/event/base";
 import eventFile from "@/event/file";
 import eventCommon from "@/event/common";
+import { notificationReply } from "@/event/msg";
 
 export default {
   components: {
@@ -189,6 +190,11 @@ export default {
       // console.log(args, 148888);
       // 退出程序并注销必须登出
       eventCommon.fnLoginout();
+    });
+
+    ipcRenderer.on("notificationReply", (e, args) => {
+      console.log("notificationReply-2-", args)
+      notificationReply(args)
     });
 
     // ipcRenderer.on("eventTestClick", (e, args) => {

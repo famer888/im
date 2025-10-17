@@ -11,6 +11,7 @@ import {
     fnLongToNumInObj,
     enumMsgType,
     getNow,
+    strIsSafe,
 } from "@/utils/base";
 import { sendMessage } from "@/utils/messageBuild";
 import {
@@ -18,10 +19,10 @@ import {
     isNetworkImageUrl,
     checkDirectory,
 } from "@/utils/fileTools";
-import { getUserDataDirectory, getWorkingDir } from "@/utils/tools";
+import { getUserDataDirectory, getWorkingDir, filterSensitiveWords } from "@/utils/tools";
 import { fnMsgDecryption } from "@/utils/encryption-decryption";
 import { getKeys } from "@/utils/upload";
-import { fnEmojiToText } from "@/utils/widget/editor";
+import { fnEmojiToText, fnTextSendInfoGet } from "@/utils/widget/editor";
 
 // 事件
 import eventBase from "./base";
@@ -1387,6 +1388,37 @@ const fnSendingInfoListAdd = (info) => {
 
     sendingInfoList.push(info);
 };
+
+export const notificationReply = (data) => {
+    const { id, type, mute, value } = data;
+    if(!value) return;
+    let msgText = value;
+    // 获取敏感词
+    msgText = filterSensitiveWords(msgText); 
+    // 发送失败 发送的内容都是敏感词
+    if (msgText === "") {
+        window.$toast(this.$t("发送的内容全是敏感词"));
+        return;
+    }
+    // 可能是xss攻击语句，限制发送
+    if (!strIsSafe(msgText)) {
+        console.log("当前消息被限制发送", msgText);
+        return;
+    }
+    // 消息处理，或拆分成多个
+    let textListSend = fnTextSendInfoGet(msgText);
+
+    // 发送
+     eventBase.fnCommunicationSendMsg({
+        operator: "msgSend",
+        data: {
+          id,
+          type,
+          list: textListSend,
+          mute,
+        },
+    });
+}
 
 /**
  * 文件信息列表 格式化
