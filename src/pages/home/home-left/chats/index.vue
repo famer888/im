@@ -879,7 +879,7 @@ export default {
       box-sizing: border-box;
       height: 20px;
       width: 100%;
-      padding-right: 20px;
+      padding-right: 30px;
     }
     
     .chats-82 .sendUserName {
