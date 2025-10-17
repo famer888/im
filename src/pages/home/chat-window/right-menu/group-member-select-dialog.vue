@@ -9,7 +9,10 @@
                 <ComSearch class="search" placeholder="搜索名称" :searchText="searchText" @onChange="searchChange"></ComSearch>
             </div>
             <ul class="member-list">
-                <li class="member-item" :class="{ disable: item.type < 2 }" v-for="(item, index) in memberInfoList" :key="index" @click="selectMember(item)">
+                <li class="member-item" 
+                    :class="{ disable: item.type < 1 || (memberType > 0 && item.type === 1) }" 
+                    v-for="(item, index) in memberInfoList" :key="index" @click="selectMember(item)"
+                >
                     <div class="left">
                         <ComImage type="member" :src="item.icon" class="member-avatar" />
                         <span class="name">{{ item.name || item.nickName }}</span>
@@ -35,7 +38,7 @@ import ComCheckbox from "@/components/Checkbox";
 
 export default {
     name: "inviteMemberJoinGroup",
-    props: ["memberList", "title"],
+    props: ["memberList", "title", "memberType"],
     components: { ComSearch, ComCheckbox },
     data() {
         return {
@@ -75,7 +78,7 @@ export default {
             )
         },
         selectMember(info) {
-            if(info.type < 2) return;
+            if(info.type < 1 || (this.memberType > 0 && info.type === 1)) return;
             const isExist = this.selectMembers.find(item => item.id === info.id)
             if (isExist) {
                 this.selectMembers = this.selectMembers.filter(item => item.id !== info.id)

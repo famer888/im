@@ -55,6 +55,7 @@
     <ComGroupMemberSelectDilog
         v-if="showSelectMemberDialog"
         :memberList="memberInfoList"
+        :memberType="chatContent.memberType"
         title="移出"
         @close="showSelectMemberDialog = false"
         @confirm="handelRemoveMember"
