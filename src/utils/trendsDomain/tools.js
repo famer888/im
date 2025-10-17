@@ -1,6 +1,6 @@
 const os = require("os");
 
-export const isTestEnv = process.env.VUE_APP_PACKNAME === "68-new-test" 
+export const isTestEnv = process.env.VUE_APP_PACKNAME === "ocs-im-new-test" 
 
 // 节流
 export function throttle(func, wait) {  
@@ -77,3 +77,7 @@ export function getFirstPathSegment(urlString) {
     }  
     return null; // 如果没有路径段，则返回null或其他适当的值  
 } 
+
+export function isWebSocketUrl(url) {
+  return url.startsWith('ws://') || url.startsWith('wss://');
+}

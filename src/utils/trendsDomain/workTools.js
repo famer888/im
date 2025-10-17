@@ -1,20 +1,24 @@
 import { setPublicCache, getPublicCacheSync } from "../publicCache";
 import { reportErrorDomain } from "./manageReport";
 import { getDomainNumThreshold } from "./manageDomain";
+import { isWebSocketUrl } from "./tools";
 const os = require("os");
 
 // 获取域名列表中第一个正常的域名
-export async function getDomainListFirstNormal(urlList){
-    let result = ""
-    for(let i = 0; i < urlList.length; i++) {
-        let url = urlList[0]
-        const state = await checkDomainIsNormal(url)
-        if(state === 1) {
-            result = url
-            break;
-        } 
-    }
-    return result
+export const getDomainListFirstNormal = (urlList) => {
+    return new Promise( async resolve => {
+        let result = ""
+        for(let i = 0; i < urlList.length; i++) {
+            let url = urlList[0]
+            const state = await checkDomainIsNormal(url)
+            if(state === 1) {
+                result = url
+                break;
+            } 
+        }
+        resolve(result) 
+    })
+ 
 }
 
 // 获取域名列表所有正常的域名
@@ -40,7 +44,30 @@ export async function getDomainListAllNormal(urlList, opts){
 // 检测域名是否可用
 export function checkDomainIsNormal(url) {  
     let timerTimeout = null
+
     return new Promise((resolve, reject) => {
+        timerTimeout = setTimeout(() => {
+            reportErrorDomain(url, {errorDesc: "域名检测异常,异常原因:检测超时"}) 
+            resolve(3)
+        }, 2000);
+
+        // 检测webSocket域名
+        if(isWebSocketUrl(url)) {
+            console.log('checkWssDomain-2-', url)
+            checkWssDomain(url).then(res => {
+                console.log('checkWssDomain-3-', res)
+                clearTimeout(timerTimeout)
+                if(res.state === 1) {
+                  resolve(1)
+                } else {
+                 reportErrorDomain(url, {errorDesc: `域名检测异常,异常原因:${res.error}`, httpStatus: 0}) 
+                   resolve(0)
+                }
+            })
+            return;
+        }
+
+       // 检测http域名
         fetch(url, {  
             method: 'GET',  
             mode: 'cors', // 注意这里使用了'cors'，这要求服务器支持CORS  
@@ -62,13 +89,22 @@ export function checkDomainIsNormal(url) {
             reportErrorDomain(url, {errorDesc: `域名检测异常,异常原因:${error?.message || error}`, httpStatus}) 
             resolve(0)
         }); 
-        timerTimeout = setTimeout(() => {
-            reportErrorDomain(url, {errorDesc: "域名检测异常,异常原因:检测超时"}) 
-            resolve(3)
-        }, 2000);
     })
 }  
 
+// 检测webSocket域名是否正常
+function checkWssDomain(url) {
+    return new Promise((resolve) => {
+        const ws = new WebSocket(url);
+        const fn = (state, error) => {
+            ws.close()
+            resolve({state, error})
+        }
+        ws.onopen = () => fn(1, "");
+        ws.onerror = (e) => fn(0, '连接失败' + e);
+        ws.onclose = (e) => fn(0, '连接失败' + e);
+    })
+}
 
 export function getDeviceType() {
     let v =  os.type()+"-"+os.release()
