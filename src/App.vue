@@ -153,3 +153,18 @@ export default {
   },
 };
 </script>
+
+<style>
+/* 文本溢出超两行显示省略号 */
+.text-clamp-2{
+    white-space: normal;
+    word-wrap: break-word;
+    word-break: break-all;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.5;
+}
+</style>

@@ -7,7 +7,7 @@
     <slot></slot>
     <div class="content">
       <div>
-        <h2>{{ msgInfo.fileName }}</h2>
+        <h2 class="text-clamp-2">{{ msgInfo.fileName }}</h2>
         <span>{{ fileSizeFormat(msgInfo.fileSize) }}</span>
       </div>
       <img :src="getFileIcon(msgInfo.fileName)" />
