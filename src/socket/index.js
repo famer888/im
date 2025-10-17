@@ -163,7 +163,7 @@ const reconnect = () => {
 };
 
 const getNewWebSocketUrl = async () => {
-    let newUrl = (await getNewNormalDomain("session")) || "";
+    let newUrl = (await getNewNormalDomain("webSession")) || "";
     if (!newUrl) {
         newUrl = wsUrl;
     }

@@ -115,7 +115,7 @@ export const getDomainListByApi = throttle(
 // 获取预埋域名
 export const getPrepareDomainPool = async (moduleType) => {
     let urls = []
-    if(moduleType === "session") {
+    if(moduleType === "webSession") {
         urls = []
     } else if(moduleType === "domain"){
         urls = [process.env.VUE_APP_BASE_DOMAIN]
@@ -130,7 +130,7 @@ export const getOssDomainPool =  async (moduleType) => {
         const ossDomainUrl = process.env.VUE_APP_OSS_HOST_DOMAIN;
         let domainUrlData = await fetchFileContent(ossDomainUrl);
         return domainUrlData
-    } else if( moduleType === "session" ) {
+    } else if( moduleType === "webSession" ) {
         return []
     } else {
         const ossBizUrl = process.env.VUE_APP_OSS_HOST_BIZ;
