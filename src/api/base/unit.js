@@ -246,7 +246,7 @@ const requestApi = async (opt) => {
                     resolve(errCode);
                 }
 
-                if (errCode != 200) {
+                if (errCode != 200 && errCode != 1023) {
                     console.error(
                         `接口报错：${message?.commonResult?.errMsg}。接口地址：${url}，`,
                         message,
