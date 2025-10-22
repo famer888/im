@@ -228,6 +228,13 @@ export const fnFriendRelKeyGet = async ({
 }) => {
     // 登录的id
     const loginId = eventCommon.fnCommonInfoRU({ getId: "loginId" });
+    const optsStr = JSON.stringify({
+        id,
+        msgEncryptionVersion,
+        source,
+        isSelf,
+        loginId,
+   })
 
     // 账户配置信息
     const { accountConfig } = eventCommon.fnConfigRU();
@@ -249,7 +256,7 @@ export const fnFriendRelKeyGet = async ({
                 },
             };
         } catch (error) {
-            console.error("解密-生成秘钥异常-1-", accountConfig)
+            console.error("解密-生成秘钥异常-1-", optsStr, accountConfig)
         }
        
     }
@@ -368,12 +375,12 @@ export const fnFriendRelKeyGet = async ({
                 Cache(`${loginId}-friend-key-objs`, friendKeyObjs);
             } else {
                 // 解密错误
-                console.error("解密-获取密钥失败-1-", keyPair, params);
+                console.error("解密-获取密钥失败-1-",optsStr, keyPair, params);
                 return null;
             }
         } else {
             // 解密错误
-            console.error("解密-获取密钥失败-2-", keyPair, params );
+            console.error("解密-获取密钥失败-2-",optsStr, keyPair, params );
             return null;
         }
     }
@@ -409,7 +416,7 @@ export const fnFriendRelKeyGet = async ({
 
             return data;
         } catch (error) {
-            console.error('解密-生成秘钥异常-3-',privateKey, appKeyPairOwn, webKeyPair, appKeyPair)
+            console.error('解密-生成秘钥异常-3-',optsStr, privateKey, appKeyPairOwn, webKeyPair, appKeyPair)
         }
     } else {
         try {
@@ -427,7 +434,7 @@ export const fnFriendRelKeyGet = async ({
             // 好友的 app 密钥
             return secret(privateKey, appKeyPair.publicKey).toUpperCase();
         } catch (error) {
-            console.error('解密-生成秘钥异常-4-',privateKey, appKeyPairOwn, webKeyPair, appKeyPair)
+            console.error('解密-生成秘钥异常-4-',optsStr, privateKey, appKeyPairOwn, webKeyPair, appKeyPair)
         }
        
     }
@@ -446,6 +453,15 @@ export const fnMsgDecryption = async ({
     source,
     isSelf,
 }) => {
+    const optsStr = JSON.stringify({
+        id,
+        type,
+        msgType,
+        msgEncryptionVersion,
+        content,
+        attachmentKey,
+        source,
+        isSelf})
     // 新的内容
     let contentNew = content;
 
@@ -461,7 +477,7 @@ export const fnMsgDecryption = async ({
 
             // 如果群密钥没获取到，则直接结束
             if (!relKey) {
-                console.error("群消息 解密失败-1-");
+                console.error("群消息 解密失败-1-", optsStr);
                 return {};
             }
 
@@ -470,7 +486,7 @@ export const fnMsgDecryption = async ({
                 contentNew = _decrypt(content, relKey);
             } catch (err) {
                 // 消息解密失败
-                console.error("群消息 解密失败-2-");
+                console.error("群消息 解密失败-2-", optsStr, relKey);
                 return {};
             }
         } else if (type === "channel") {
@@ -478,7 +494,7 @@ export const fnMsgDecryption = async ({
 
             // 如果群密钥没获取到，则直接结束
             if (!relKey) {
-                console.error("群消息 解密失败-1-");
+                console.error("群消息 解密失败-1-", optsStr, relKey);
                 return {};
             }
 
@@ -487,7 +503,7 @@ export const fnMsgDecryption = async ({
                 contentNew = _decrypt(content, relKey);
             } catch (err) {
                 // 消息解密失败
-                console.error("群消息 解密失败-2-");
+                console.error("群消息 解密失败-2-", optsStr, relKey);
                 return {};
             }
         } else {
@@ -500,7 +516,7 @@ export const fnMsgDecryption = async ({
 
             // 如果好友密钥没获取到，则直接结束
             if (!relKey) {
-                console.error("好友消息 解密失败");
+                console.error("好友消息 解密失败", optsStr, relKey);
                 return {};
             }
 
@@ -509,7 +525,7 @@ export const fnMsgDecryption = async ({
                 contentNew = _decrypt(content, relKey);
             } catch (err) {
                 // 消息解密失败
-                console.error("消息 解密失败");
+                console.error("消息 解密失败", optsStr, relKey);
                 return {};
             }
         }
@@ -521,7 +537,7 @@ export const fnMsgDecryption = async ({
                     "all"
                 );
             } catch (err) {
-                console.error("fileKey 解密失败");
+                console.error("fileKey 解密失败", optsStr,attachmentKey, relKey);
             }
         }
     } else {
