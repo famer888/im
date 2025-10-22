@@ -18,6 +18,9 @@ let wsUrl = "";
 
 let timer;
 
+// 延时提示断开
+let timerLoginoutTip = null;
+
 // 是否连接
 let isContact = false;
 
@@ -69,7 +72,7 @@ const onError = () => {
 
 const onClose = () => {
     if (isContact) {
-        console.log("websocket ===> 关闭重连");
+        console.log("websocket ===> 关闭重连" + wsUrl);
         reconnect(wsUrl);
     }
 };
@@ -77,6 +80,8 @@ const onClose = () => {
 const onOpen = () => {
     webSocket.binaryType = "arraybuffer";
     CReqChatLogin();
+    clearTimeout(timerLoginoutTip);
+    timerLoginoutTip = null;
 
     // socket连接成功
     eventBase.fnCommunicationSendMsg({
@@ -90,6 +95,8 @@ const onOpen = () => {
 const onMessage = (event) => {
     // 拿到任何消息都说明当前连接是正常的
     eventWsReceivedMsg(event.data);
+    clearTimeout(timerLoginoutTip);
+    timerLoginoutTip = null;
 
     // socket连接成功
     eventBase.fnCommunicationSendMsg({
@@ -138,17 +145,20 @@ export const webSocketSend = (value) => {
     }
 };
 
-const reconnect = () => {
+ const reconnect = () => {
     if (isContact) {
         const networkStatusType = eventCommon.fnNetworkStatusTypeRU();
-        if (networkStatusType !== "networkAnomaly") {
-            // socket重新连接中
-            eventBase.fnCommunicationSendMsg({
-                operator: "network",
-                data: {
-                    networkStatusType: "socketLoginout",
-                },
-            });
+        if (networkStatusType !== "networkAnomaly" && !timerLoginoutTip) {
+            timerLoginoutTip = setTimeout(() => {
+                 // socket重新连接中
+                eventBase.fnCommunicationSendMsg({
+                    operator: "network",
+                    data: {
+                        networkStatusType: "socketLoginout",
+                    },
+                });
+                timerLoginoutTip = null;
+            }, 9000)
         }
 
         // 没连接上会一直重连，设置延迟避免请求过多
