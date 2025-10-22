@@ -85,6 +85,7 @@ let userData = app.getPath("userData");
 let imagesCacheDir = `${userData}/images`;
 let voicesCacheDir = `${userData}/voices`;
 let mainWindowIsFocused = true;
+let downTimers = {};
 
 ipcMain.handle("get-user-data-path", () => {
     return userData;
@@ -526,20 +527,33 @@ const downloadStatusCheck = (event, args) => {
     data.item.isPaused() ? data.item.resume() : data.item.pause();
 };
 
+const clearDownTimer = (timerName) => {
+    if(!timerName) return;
+    const timer = downTimers[timerName];
+    if(timer) {
+        clearTimeout(timer);
+        downTimers[timerName] = null;
+    }
+}
+
 /**
  * 下载处理
  */
 const downloadHandler = (event, item, webContents) => {
+   let data = {};
+   let timerName = "";
     try {
-        const data = downloadFileMap.get(item.getURL());
+         data = downloadFileMap.get(item.getURL());
 
         if (!data) {
             let defalutPath = nodePath.join(userData, `/Local Storage/bad`);
             item.setSavePath(defalutPath);
             return;
         }
+        timerName = `${data.groupId || data.channelId || data.userId }_${data.msgId}`
         item.setSavePath(data.fileLocalPath);
         item.once("done", (event, state) => {
+           clearDownTimer(timerName)
             mainWindow.send(
                 state === "completed"
                     ? "downloadFileDone"
@@ -550,6 +564,8 @@ const downloadHandler = (event, item, webContents) => {
         });
     } catch (error) {
         console.log("downloadHandler-error-", error);
+        clearDownTimer(timerName)
+        mainWindow.send( "downloadFileFailed", data);
     }
 };
 
@@ -738,8 +754,20 @@ const handleFileDownload = (args) => {
         local,
         isOpen,
         msgId,
+        timeout, // 超时时长毫秒
     } = args;
     const url = trendsFileUrl || fileUrl;
+    
+    // 处理下载超时
+    if(timeout) {
+        const timerName = `${groupId || channelId || userId }_${msgId}`
+        downTimers[timerName] = setTimeout(() => {
+            mainWindow.send(
+                "downloadFileFailed",
+                args,
+            );
+        }, timeout)
+    }
 
     const getRandomFileName = (chatType) => {
         let name = Date.now();
