@@ -814,7 +814,7 @@ export default {
       if(index >= 0) {
        this.chats[index].detail = info;
       }
-      let cacheList = await Cache(`${loginId}MessageChannelList`);
+      let cacheList = await Cache(`${loginId}MessageChannelList`) || [];
       const cacheIndex = cacheList.findIndex(item => item.channelId === info.channelId)
       if(cacheIndex >= 0) {
         cacheList[cacheIndex].detail = info;

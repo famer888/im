@@ -353,7 +353,7 @@ export default {
     async handleFriendRemarks() {
       let remarks = [];
       const ContactList = await Cache(`${loginId}-ContactList`);
-      if(!ContactList.length) return;
+      if(!ContactList?.length) return;
       ContactList.forEach(item => {
         const {id, name} = item
         if(id && name) {
