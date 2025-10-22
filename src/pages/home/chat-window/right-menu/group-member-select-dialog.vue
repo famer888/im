@@ -6,11 +6,11 @@
                     <span class="title">{{title}}</span>
                     <img class="close" src="@/assets/images/common/close-icon.png" @click="$emit('close')" />
                 </div>
-                <ComSearch class="search" placeholder="搜索名称" :searchText="searchText" @onChange="searchChange"></ComSearch>
+                <ComSearch class="search" placeholder="名称" :searchText="searchText" @onChange="searchChange"></ComSearch>
             </div>
             <ul class="member-list">
-                <li class="member-item" 
-                    :class="{ disable: item.type < 1 || (memberType > 0 && item.type === 1) }" 
+                <li class="member-item"
+                    :class="{ disable: item.type < 1 || (memberType > 0 && item.type === 1) }"
                     v-for="(item, index) in memberInfoList" :key="index" @click="selectMember(item)"
                 >
                     <div class="left">
@@ -191,7 +191,7 @@ export default {
 
     .disable {
         opacity: 0.5;
-        pointer-events: none; 
+        pointer-events: none;
     }
 
     .primaryBtn {

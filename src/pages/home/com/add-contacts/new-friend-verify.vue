@@ -8,6 +8,7 @@
                     <span class="name">{{ userInfo.nickName }}</span>
                     <p class="source">对方通过{{getAddType(info.type)}}添加</p>
                 </div>
+                <div v-if="bfMyBlack" class="block">已拉黑该用户</div>
             </div>
             <div class="info-middle">
                 <div class="info-item">
@@ -79,7 +80,11 @@ export default {
                     const { errCode } = res?.commonResult || {}
                 if (errCode == 200) {
                     this.bfMyBlack = op === 6;
-                    window.$toast( this.bfMyBlack ? "移除成功" : "加入成功");
+                    // window.$toast( this.bfMyBlack ? "移除成功" : "加入成功");
+                    op === 7 && window.$toast("移除成功");
+                    if (this.info) {
+                        this.info.bfMyBlack = this.bfMyBlack;
+                    }
                 } else {
                     res?.errorDesc && window.$toast(res.errorDesc);
                 }
@@ -160,6 +165,7 @@ export default {
 
         .info {
             margin-left: 10px;
+            flex: 1;
 
             .name {
                 font-size: 14px;
@@ -171,6 +177,11 @@ export default {
                 color: #B9BABE;
                 margin-top: 12px;
             }
+        }
+
+        .block {
+            font-size: 12px;
+            color: #FB2826;
         }
     }
 

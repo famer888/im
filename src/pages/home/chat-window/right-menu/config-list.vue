@@ -54,7 +54,7 @@
       <li v-if="chatContent.memberType == 0">
         <span>{{ $t("进群需审核") }}</span>
         <ComSwitch :value="bfJoinCheck" @input="handelBfJoinCheckChange" />
-      </li> 
+      </li>
       <!-- <li>
         <span> {{ $t("禁止成员互添加好友") }}</span>
         <ComSwitch :value="bfJoinFriend" @input="handelBfJoinFriendChange" />
@@ -78,7 +78,7 @@
           删除联系人
         </li>
     </template>
-   
+
   </ul>
 </template>
 <script>
@@ -131,7 +131,6 @@ export default {
       isDisturb,
       bfMyBlack,
     } = this.chatContent;
-
     // 阅后即焚 是否开启
     this.bfReadCancel = bfReadCancel;
 
@@ -240,14 +239,14 @@ export default {
             op: this.bfMyBlack ? 7 : 6,
         }
         const confirmState = await window.$confirm({
-            title: op === 6 ? "加入黑名单" : "移除黑名单",
-            remark: op === 6 ? "加入黑名单后，你将不再接收到对方的任何消息" : "确认移除黑名单吗",
+            title: pra.op === 6 ? "加入黑名单" : "移除黑名单",
+            remark: pra.op === 6 ? "加入黑名单后，你将不再接收到对方的任何消息" : "确认移除黑名单吗",
         })
         if(!confirmState) return;
         updateBlackContacts(pra).then(res => {
             const { errCode } = res?.commonResult || {}
             if (errCode == 200) {
-                this.bfMyBlack = pra.op === 6;
+                this.chatContent.bfMyBlack = this.bfMyBlack = pra.op === 6;
                 window.$toast( this.bfMyBlack ? "加入成功" : "移除成功");
             } else {
                 res?.errorDesc && window.$toast(res.errorDesc);

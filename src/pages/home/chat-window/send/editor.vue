@@ -87,7 +87,7 @@
       :msgCancelTime="chatContent.msgCancelTime || 30"
       :chatContent="chatContent"
     />
-    <ComCreateLink 
+    <ComCreateLink
       v-if="createLinkVisible"
       :selectText="selectText"
       :chatContent="chatContent"
@@ -264,7 +264,7 @@ export default {
       const { linkText, linkValue } = opts;
       this.handleInputFocus();
       let selectText = fnGetSelectInnerHTML();
-      let inputValue = this.$refs.input.innerHTML 
+      let inputValue = this.$refs.input.innerHTML
       let linkData = `<a href="${linkValue}">${linkText}</a>`
        inputValue =inputValue.replace(selectText, linkData)
 
@@ -274,7 +274,7 @@ export default {
       this.createLinkVisible = false;
       this.handlePlaceholderVisibleSet()
     },
-   
+
     handleCreatTextLink() {
        this.handleInputFocus();
       this.selectText = fnGetSelectContent();
@@ -602,9 +602,10 @@ export default {
           if (atLastIndex === 0) {
             atListVisible = true;
           } else if (
-            anchorNode.data.slice(atLastIndex - 1, atLastIndex) === " "
+            anchorNode.data.slice(atLastIndex - 1, atLastIndex) === " " ||
+            anchorNode.data.slice(atLastIndex - 1, atLastIndex) === "@"
           ) {
-            // 不是第一个的情况下，前面要有空格
+            // 不是第一个的情况下，前面要有空格或者@
             atListVisible = true;
           }
         }
@@ -1255,7 +1256,7 @@ export default {
       }
 
       a {
-        padding: 0; 
+        padding: 0;
 
         &:hover {
           background: none;
