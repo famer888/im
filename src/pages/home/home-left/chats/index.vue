@@ -28,7 +28,7 @@
                 infoActive &&
                 infoActive.id === item.id &&
                 infoActive.type === item.type,
-              disturb: item.bfDisturb,
+              disturb: item.bfDisturb || item.isDisturb,
               topBackground: item.bfTop,
             }"
             @mousedown="(e) => handleClick(item, e)"
