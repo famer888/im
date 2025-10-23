@@ -1057,9 +1057,15 @@ export default {
      * 复制
      */
     handleCopy(info) {
-      const { chatType, content } = info;
+      let { chatType, content, atUsers } = info;
 
       if ([0, 50, 51, 52, 16].includes(chatType)) {
+        // 将at的真实昵称替换为备注
+        if(atUsers?.length && content.includes("@")) {
+          atUsers.forEach(item => {
+            content = content.replace(item.nickName, item.name)
+          })
+        }
         copyText(textToEmojiText(content));
       } else if (chatType === 1) {
         copyImg(info.local);
