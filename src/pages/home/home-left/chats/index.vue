@@ -213,7 +213,7 @@ export default {
     listNew() {
       const list = this.list.filter((item) => {
         const name = item.name || item.nickName || item.channelName;
-        if(item.id !== "invitation" && !name ) return false
+        if( !name ) return false
         // 归档
         if (this.archiveListShow) {
           // 归档之后，可以进行单独的搜索
