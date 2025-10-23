@@ -174,7 +174,11 @@ export default {
       provideSearchText: this.handleSearchText,
     };
   },
- 
+  computed: {
+    isSearchSpecifiedChat() {
+      return Boolean(this.searchSpecifiedChat?.id)
+    }
+  },
   methods: {
      /**
      * 更新未读总数
