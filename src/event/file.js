@@ -11,7 +11,7 @@ import {
     getVideoPreviewLocal,
 } from "@/utils/upload";
 import { openFile } from "@/utils/server";
-import { getNewFileDownUrl } from "@/utils/trendsDomain/manageOssDownUpload";
+import { getNewFileDownUrl, getOssFirstNormalUrl } from "@/utils/trendsDomain/manageOssDownUpload";
 import { reportErrorDomain } from "@/utils/trendsDomain/manageReport";
 
 
@@ -457,7 +457,7 @@ const fnOperatorFile = async ({ id, type, info, openDialog, isDir }) => {
     
     if(!info.local) {
         // 优先使用动态域名    
-        params.trendsFileUrl = await getNewFileDownUrl(fileUrl, 0, 0);
+        params.trendsFileUrl = await getOssFirstNormalUrl(fileUrl, 0, 0);
     }
     if (openDialog) {
         console.log('openFileDialog')

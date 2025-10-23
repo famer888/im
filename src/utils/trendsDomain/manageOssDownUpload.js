@@ -26,7 +26,7 @@ export const getOssDomain = async () => {
     eventCommon.fnDomainsAttribSet({key : "ossDefaultUrl", value: newDomain});
 }
 
-export const getNewImgDownUrl = async (oriUrl) => {
+export const getOssFirstNormalUrl = async (oriUrl) => {
   let newUrl = "";
   const { ossDefaultUrl } = eventCommon.fnDomainsGet() || {};
   let newDomain = ossDefaultUrl || "";

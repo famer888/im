@@ -56,7 +56,7 @@ import { remote, ipcRenderer } from "@/platform";
 // 工具
 import { getFileSuffix, isMac } from "@/utils/base";
 import { getNewFileDownUrl } from "@/utils/trendsDomain/manageOssDownUpload";
-import { getNewImgDownUrl } from "@/utils/trendsDomain/manageOssDownUpload";
+import { getOssFirstNormalUrl } from "@/utils/trendsDomain/manageOssDownUpload";
 
 // 事件
 import eventFile from "@/event/file";
@@ -169,7 +169,7 @@ export default {
                 fileUrl.slice(fileUrl.lastIndexOf("/") + 1) + suffix;
 
             // 优先使用动态域名    
-            const trendsFileUrl = await getNewImgDownUrl(fileUrl)     
+            const trendsFileUrl = await getOssFirstNormalUrl(fileUrl)     
 
             // 文件下载
             ipcRenderer.send("fileDownload", {

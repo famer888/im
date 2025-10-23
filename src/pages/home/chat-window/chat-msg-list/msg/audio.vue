@@ -24,7 +24,7 @@ import { remote, ipcRenderer } from "@/platform";
 
 // 工具
 import { getFileSuffix } from "@/utils/base";
-import { getNewFileDownUrl } from "@/utils/trendsDomain/manageOssDownUpload";
+import { getOssFirstNormalUrl } from "@/utils/trendsDomain/manageOssDownUpload";
 
 // 控件
 import ComLoading from "@/components/com-loading";
@@ -67,7 +67,7 @@ export default {
       const fileName = fileUrl.slice(fileUrl.lastIndexOf("/") + 1) + suffix;
 
       // 优先使用动态域名    
-      const trendsFileUrl = await getNewFileDownUrl(fileUrl, 0, 0);
+      const trendsFileUrl = await getOssFirstNormalUrl(fileUrl, 0, 0);
 
       // 文件下载
       ipcRenderer.send("fileDownload", {

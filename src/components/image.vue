@@ -11,7 +11,7 @@
   <script>
 import groupIcon from "@/assets/images/logo/default_group_icon.png";
 import friendIcon from "@/assets/images/logo/logo-58.png";
-import { getNewImgDownUrl } from "@/utils/trendsDomain/manageOssDownUpload"
+import { getOssFirstNormalUrl } from "@/utils/trendsDomain/manageOssDownUpload"
 import { checkImageLoad } from "@/utils/fileTools";
 import { copyToClipboard } from "@/utils/base";
 import eventCommon from "@/event/common";
@@ -77,7 +77,7 @@ export default {
       const src = this.src || "";
       if(!this.replaceDomainNum && src.includes('http') && !src.includes('default')) {
         this.replaceDomainNum += 1;
-        const newUrl = await getNewImgDownUrl(this.src)
+        const newUrl = await getOssFirstNormalUrl(this.src)
         if(newUrl) {
           this.url = newUrl;
         }
