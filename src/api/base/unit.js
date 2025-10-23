@@ -132,7 +132,7 @@ export const getSignHeader = () => {
     }
     client.sessionId=myClient.sessionId
 
-    console.log(client, 'NEW_SIGN:', NEW_SIGN, 'SECRET_NAME:', SECRET_NAME)
+    // console.log(client, 'NEW_SIGN:', NEW_SIGN, 'SECRET_NAME:', SECRET_NAME)
 
     let clientStr = JSON.stringify(client);
 

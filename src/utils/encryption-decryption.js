@@ -101,11 +101,17 @@ export const fnChannelRelKeyGet = async (id) => {
 
     // 密钥不存在，则需要api获取
     if (!keyInfos) {
+             console.log('GetKeyPair-1-', {
+            targetId: id,
+            flag: 3,
+            channelKeyVersion: 1,
+        })
         const keyPair = await GetKeyPair({
             targetId: id,
             flag: 3,
             channelKeyVersion: 1,
         });
+        console.log('GetKeyPair-2-', keyPair)
 
         if (keyPair && !_.isEmpty(keyPair.channelKeyPair)) {
             keyInfos = keyPair.channelKeyPair;
