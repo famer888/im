@@ -1150,9 +1150,10 @@ export default {
       if( !channelId ) return
       const prams = {
         pageNum: 1,
-        pageSize: 500,
+        pageSize: 10,
         channelId
       }
+       console.log('getChannelUsers-1-', prams)
       getChannelUsers(prams).then(res => {
         console.log('getChannelUsers--', res)
         channelUserList = res.data?.rowList ||[]

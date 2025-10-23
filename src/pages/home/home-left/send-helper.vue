@@ -37,16 +37,20 @@ export default {
 .message-send-helper-box {
   position: absolute;
   top: 40%;
+  width: 100%;
   transform: translateY(-50%);
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 
   .login-icon {
-    width: 66%;
+    width: 160px;
   }
 
   .login-num-icon {
     margin-top: 20px;
-    width: 25%;
+    height: 26px;
   }
 
   .version {
