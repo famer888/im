@@ -166,6 +166,7 @@ export default {
       searchAddContactsIng: false, // 搜索添加联系人中
       contactsUnreadCount: 0,
       searchSpecifiedChat: {}, // 搜索指定的聊天
+      unreadCount: 0, // 未读总数
     };
   },
   provide() {
@@ -173,13 +174,13 @@ export default {
       provideSearchText: this.handleSearchText,
     };
   },
-  computed: {
-    /**
-     * 未读总数
-     */
-    unreadCount() {
+ 
+  methods: {
+     /**
+     * 更新未读总数
+    */
+    updateUnreadCount() {
       let count = 0;
-      // console.log(this.chats, this.unreadObj, '--------------123')
       for (const item of this.chats) {
         const idStr = item.id + item.type;
         const isExist = eventCommon.fnDisturbIdStrListRU({
@@ -190,13 +191,8 @@ export default {
           count += this.unreadObj[idStr].count || 0;
         }
       }
-      return count;
+      this.unreadCount = count;
     },
-    isSearchSpecifiedChat() {
-      return Boolean(this.searchSpecifiedChat?.id)
-    }
-  },
-  methods: {
     backClick() {
       if(this.isSearchSpecifiedChat) {
         this.searchText = "";
@@ -718,6 +714,7 @@ export default {
           });
         }
       }
+      this.updateUnreadCount();
     },
     /**
      * 处理事件 聊天窗口删除
@@ -1202,6 +1199,16 @@ export default {
     },
   },
   watch: {
+    unreadObj: {
+       handler(newV, oldV) {
+        this.updateUnreadCount()
+      },
+      immediate: true,
+      deep: true,
+    },
+    chats() {
+      this.updateUnreadCount()
+    },
     groups: {
       handler(newGroups, oldGroups) {
         this.$emit("setGroups", newGroups);
