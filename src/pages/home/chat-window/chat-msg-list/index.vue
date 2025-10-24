@@ -132,6 +132,7 @@
                     v-if="n.quoteMessage !== undefined"
                     :msgInfo="n.quoteMessage"
                     :memberInfos="memberInfos"
+                    :chatContent="chatContent"
                     @onClick="
                       () =>
                         handleMoveToId({
@@ -174,6 +175,7 @@
                     v-if="n.quoteMessage !== undefined"
                     :msgInfo="n.quoteMessage"
                     :memberInfos="memberInfos"
+                    :chatContent="chatContent"
                     @onClick="
                       () =>
                         handleMoveToId({
@@ -213,6 +215,7 @@
                     v-if="n.quoteMessage !== undefined"
                     :msgInfo="n.quoteMessage"
                     :memberInfos="memberInfos"
+                    :chatContent="chatContent"
                     @onClick="
                       () =>
                         handleMoveToId({
@@ -255,6 +258,7 @@
                     v-if="n.quoteMessage !== undefined"
                     :msgInfo="n.quoteMessage"
                     :memberInfos="memberInfos"
+                    :chatContent="chatContent"
                     @onClick="
                       () =>
                         handleMoveToId({
@@ -298,6 +302,7 @@
                     v-if="n.quoteMessage !== undefined"
                     :msgInfo="n.quoteMessage"
                     :memberInfos="memberInfos"
+                    :chatContent="chatContent"
                     @onClick="
                       () =>
                         handleMoveToId({
@@ -374,6 +379,7 @@
                     v-if="n.quoteMessage !== undefined"
                     :msgInfo="n.quoteMessage"
                     :memberInfos="memberInfos"
+                    :chatContent="chatContent"
                     @onClick="
                       () =>
                         handleMoveToId({
@@ -417,6 +423,7 @@
                     v-if="n.quoteMessage !== undefined"
                     :msgInfo="n.quoteMessage"
                     :memberInfos="memberInfos"
+                    :chatContent="chatContent"
                     @onClick="
                       () =>
                         handleMoveToId({

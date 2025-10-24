@@ -19,7 +19,8 @@
       :src="getFileIcon(msgInfo.fileName)"
     />
     <div>
-      <h3 v-if="quoteName">{{ quoteName }}</h3>
+      <h3 v-if="chatContent?.type === 'channel'">{{ chatContent.channelName }}</h3>
+      <h3 v-else-if="quoteName">{{ quoteName }}</h3>
       <p v-if="tagList.length && quoteName" class="text">
         <ComLableEle
           v-for="(item, index) in tagList"
@@ -50,7 +51,7 @@ export default {
   components: {
     ComLableEle,
   },
-  props: ["msgInfo", "memberInfos"],
+  props: ["msgInfo", "memberInfos", "chatContent"],
   data() {
     return {
       content: "",
