@@ -182,6 +182,7 @@ export default {
         "bfDisturbSet", // 设置免打扰
         "channelDisturbSet", // 频道接收通知设置
         "clearAll",
+        "updateChannelIdentity", // 频道身份变更
       ],
       this.handleEventHandling
     );
@@ -282,21 +283,21 @@ export default {
         ].includes(operator)
       ) {
         let curGroup = null;
-        if (info) {
-          curGroup = this.groupList.find((item) => item.id == info.id);
-        }
-        this.infoActive = {
-          ...info,
-          memberCount: curGroup ? curGroup.memberCount : "",
-        };
         let channelDetail = {};
         if (info?.type === "channel" || info?.comType === "detailsChannel") {
-          const res = await getChannelDetail({ channelId: info.channelId });
-          channelDetail = res.data;
-          eventBase.fnCommunicationSendMsg({
-                operator: "channelDetailCache",
-                data: channelDetail,
+          getChannelDetail({ channelId: info.channelId }).then( res => {
+            channelDetail = res.data;
+            eventBase.fnCommunicationSendMsg({
+                  operator: "channelDetailCache",
+                  data: channelDetail,
+            });
+            this.infoActive = {
+              ...info,
+              ...channelDetail,
+            };
           });
+        } else if (info) {
+          curGroup = this.groupList.find((item) => item.id == info.id);
         }
 
         this.infoActive = {
@@ -304,6 +305,26 @@ export default {
           memberCount: curGroup ? curGroup.memberCount : "",
           ...channelDetail,
         };
+      } else if (operator === "updateChannelIdentity") {
+        console.log('updateChannelIdentity--', this.infoActive, info )
+        // 如果不是当前窗口，直接结束
+        if (
+          this.infoActive.id !== Number(info.channelId) 
+        ) {
+          return;
+        }
+         console.log('updateChannelIdentity-2-' )
+         getChannelDetail({ channelId: Number(info.channelId) }).then( res => {
+            const channelDetail = res.data;
+            eventBase.fnCommunicationSendMsg({
+                  operator: "channelDetailCache",
+                  data: channelDetail,
+            });
+            this.infoActive = {
+              ...this.infoActive,
+              adminPrivacy: channelDetail.adminPrivacy,
+            };
+          });
       } else if (operator === "closeOperator") {
         for (const id of info.ids) {
           switch (id) {
