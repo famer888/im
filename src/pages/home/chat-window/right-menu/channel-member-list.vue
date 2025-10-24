@@ -8,13 +8,14 @@
         @click="searchText = ''"
       />
       <input type="text" :placeholder="$t('搜索')" v-model="searchText" />
-      <span @click="handleGroupForceInit">
+      <!-- 去除频道的强制刷新群成员 -->
+      <!-- <span @click="handleGroupForceInit">
         <img
           src="@/assets/images/refresh.png"
           :class="{ updating: isUpdating }"
         />
         <span>{{ $t("群成员列表强制刷新") }}</span>
-      </span>
+      </span> -->
     </div>
     <ul
       :style="{
@@ -107,7 +108,7 @@ export default {
           item.userInfoDTO.nickName.toLowerCase().includes(this.searchText.toLowerCase())
         );
       }
-      
+
     },
   },
   mounted() {
@@ -178,22 +179,22 @@ export default {
       });
     },
     /**
-     * 群强制更新
+     * 去除频道的群强制更新
      */
-    handleGroupForceInit() {
-      if (!this.isUpdating) {
-        this.isUpdating = true;
-        // console.log('强制更新初始化当前群信息')
-        groupEventForceInit({ groupIds: [this.chatContent.id] }).then((res) => {
-          const errCode = _.get(res, "commonResult.errCode");
+    // handleGroupForceInit() {
+    //   if (!this.isUpdating) {
+    //     this.isUpdating = true;
+    //     // console.log('强制更新初始化当前群信息')
+    //     groupEventForceInit({ groupIds: [this.chatContent.id] }).then((res) => {
+    //       const errCode = _.get(res, "commonResult.errCode");
 
-          if (errCode !== 200) {
-            this.isUpdating = false;
-            window.$toast("服务器繁忙，请稍后再试");
-          }
-        });
-      }
-    },
+    //       if (errCode !== 200) {
+    //         this.isUpdating = false;
+    //         window.$toast("服务器繁忙，请稍后再试");
+    //       }
+    //     });
+    //   }
+    // },
     handleOnlineTime(createTime) {
       // 小于1分钟，提示不久前在线
       // 小于1小时，提示多少分钟前在线
@@ -242,7 +243,7 @@ export default {
     position: relative;
     background: #f4f6f9;
     border-radius: 4px;
-    margin: 0 25px 10px 10px;
+    margin: 0 10px 10px 10px;
 
     > img {
       position: absolute;
