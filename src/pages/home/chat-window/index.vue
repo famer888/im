@@ -447,9 +447,9 @@ export default {
       getId: "loginId",
     });
 
+    // 获取好友列表
+    this.handleFriendList();
     if (type === "group") {
-       // 获取好友列表
-      this.handleFriendList();
       // 获取群成员列表
       this.handleMemberListGet();
       // 获取群公告信
@@ -650,8 +650,16 @@ export default {
           // 显示成员会话框
           if (info.values) {
             this.memberDialogInfo = info.values;
-          } else if (info.atName) {
+          } else if (info.atName && this.chatContent.type === "friend") {
             // 如果是at名，则找到该成员
+            this.memberDialogInfo = friendList.find(
+              (item) => item.nickName === info.atName || item.name === info.atName
+            );
+            if(!this.memberDialogInfo) {
+               window.$toast("抱歉，该用户/群/频道不存在");
+            }
+          } else {
+             // 如果是at名，则找到该成员
             this.memberDialogInfo = memberInfoList.find(
               (item) => item.nickName === info.atName || item.name === info.atName
             );

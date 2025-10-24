@@ -312,12 +312,10 @@ const fnNewFriendOrGroup = (text) => {
         fromUid: commonInfo.loginId,
         context: text,
     }).then(async (res) => {
-        let errText = i18n.t("查询失败");
-
         if (res) {
-            const { errCode, errMsg } = res.commonResult || {};
-
-            if (errCode == 200) {
+            const { errCode, errMsg, errorCode, errorDesc } = res.commonResult || {};
+            const code = errCode || errorCode || 0;
+            if (code == 200) {
                 // 好友
                 if (res.groupOrUserType == 1) {
                     const { userInfo } = res?.targetUser || {};
@@ -359,9 +357,9 @@ const fnNewFriendOrGroup = (text) => {
                 }
 
                 return;
-            } else if (errMsg) {
-                errText = errMsg;
-                window.$toast(i18n.t("抱歉，该用户/群似乎不存在"));
+            } else {
+                const msg = errMsg || errorDesc || "";
+                window.$toast( msg || i18n.t("抱歉，该用户/群似乎不存在"));
             }
         }
 
@@ -427,9 +425,24 @@ const fnConfigRU = (values) => {
 /**
  * at 点击
  */
-const fnAtClick = (text, currentGuoupId) => {
+const fnAtClick = async (text, currentGuoupId) => {
     // 登录id
     const loginId = commonInfo.loginId;
+    
+    // 判断是不是好友
+    const friendList = await Cache(`${loginId}-ContactList`)
+    const memberValues = friendList.find(
+            (item) => item.nickName === text || item.name === text
+        );
+    if(memberValues) {
+        eventBase.fnCommunicationSendMsg({
+            operator: "memberDialogShow",
+            data: {
+            values: memberValues,
+            },
+        });
+        return;
+    }
 
     // 判断是否是当前已有的群
     Cache(`${loginId}-GroupList`).then((res) => {
