@@ -183,6 +183,7 @@ export default {
         "channelDisturbSet", // 频道接收通知设置
         "clearAll",
         "updateChannelIdentity", // 频道身份变更
+        "channelUpdate", // 频道更新
       ],
       this.handleEventHandling
     );
@@ -274,7 +275,7 @@ export default {
      * 事件的处理
      */
     async handleEventHandling(info, operator, operatorType) {
-      // console.log({info, operator, operatorType},  '248 -----------> 主程序')
+    //   console.log({info, operator, operatorType},  '248 -----------> 主程序')
       if (
         [
           "activeChange",
@@ -309,11 +310,10 @@ export default {
         console.log('updateChannelIdentity--', this.infoActive, info )
         // 如果不是当前窗口，直接结束
         if (
-          this.infoActive.id !== Number(info.channelId) 
+          this.infoActive?.id !== Number(info.channelId)
         ) {
           return;
         }
-         console.log('updateChannelIdentity-2-' )
          getChannelDetail({ channelId: Number(info.channelId) }).then( res => {
             const channelDetail = res.data;
             eventBase.fnCommunicationSendMsg({
@@ -473,6 +473,7 @@ export default {
               ...this.infoActive,
               bfAddress: info.bfAddress,
             };
+            break;
           }
           case "bfTopSet": {
             // 置顶更新chatContent  bfTop
@@ -480,7 +481,18 @@ export default {
               ...this.infoActive,
               bfTop: info.bfTop,
             };
+            break;
           }
+          case "channelUpdate": {
+            // 频道信息更新
+            if(info.channelId && this.infoActive.type === "channel" && this.infoActive.id === info.channelId) {
+                // 如果当前聊天窗口是该频道，则更新chatContent
+                if(info.values) {
+                  this.infoActive = {...this.infoActive, ...info.values };
+                }
+            }
+            break;
+        }
           default:
         }
       }

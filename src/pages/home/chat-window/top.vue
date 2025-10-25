@@ -2,9 +2,9 @@
   <div class="comTop">
     <template v-if="chatContent && chatContent.id !== '10002'">
       <picture @click.stop="handleChatRightMenuVisibleChange">
-        <ComTextAvatar 
-          v-if="chatContent.type === 'channel'" 
-          class="textAvatar" 
+        <ComTextAvatar
+          v-if="showChannelTextIcon"
+          class="textAvatar"
           :id="chatContent.channelId"
           :value="chatContent.channelName"
         />
@@ -116,6 +116,9 @@ export default {
     };
   },
   computed: {
+    showChannelTextIcon() {
+      return this.chatContent.type === 'channel' && !this.chatContent.icon;
+    },
     allSelf() {
       return this.selectedList.filter((item) => !item.isSelf).length === 0;
     },

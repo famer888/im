@@ -11,6 +11,7 @@ import eventBase from "./base";
 import eventMsg from "./msg";
 import eventFriend from "./friend";
 import eventGroup from "./group";
+import eventChannel from "./channel";
 import eventCheduledCeletion from "./cheduled-deletion";
 import eventCommon from "@/event/common";
 
@@ -131,7 +132,7 @@ const fnSocketMessage = (arrayBuffer) => {
                 eventMsg.fnChannelMsgAdd(data.latestChannelMessage);
             }
             break;
-        } 
+        }
         // 频道消息撤回/删除
         case 4205: {
             // 远程其它端操作清除全部，clear为1，表示全部清除
@@ -151,7 +152,7 @@ const fnSocketMessage = (arrayBuffer) => {
                 },
             });
             break;
-        } 
+        }
         // 好友消息接收
         case 20102: {
             if (data.oneToOneMessage) {
@@ -266,7 +267,7 @@ const fnSocketMessage = (arrayBuffer) => {
                 }
             });
             eventBase.fnCommunicationSendMsg({operator: "newFriendReq"});
-            
+
             break;
         }
         case 20501: {
@@ -289,7 +290,7 @@ const fnSocketMessage = (arrayBuffer) => {
                 });
             }
 
-            if ([1022, 1021].includes(commonResult.errCode)) { 
+            if ([1022, 1021].includes(commonResult.errCode)) {
                 // 群被禁用，被禁言 信息发送失败,更新信息状态和添加提示
                 eventMsg.fnMsgSendFail({ id: Number(data.targetId), type: 'group',  customMsgId: String(Number(data.flag)) });
                 eventGroup.groupEventHandleMsg(data);
@@ -305,12 +306,47 @@ const fnSocketMessage = (arrayBuffer) => {
             eventMsg.fnGroupMsgReadRecord(receiptMessage)
         }
         case 4204: {
-            // 频道身份变更
+            // 频道事件消息
             const { latestChannelEventMessage = {} } = data || {};
+            const { channelInfo, channelId } = latestChannelEventMessage;
+            // 频道图像或名称更新
+            if (channelInfo && channelId) {
+                const { operateType, channelName, icon } = channelInfo;
+                // operateType: 1-修改名称, 2-修改图片
+                console.log('???')
+                if ([1, 2].includes(operateType)) {
+                    const updateData = {
+                        channelId: Number(channelId),
+                        id: Number(channelId),
+                    };
+
+                    if (operateType === 1 && channelName) {
+                        // 频道名称更新
+                        updateData.name = updateData.channelName = channelName;
+                    } else if (operateType === 2 && icon) {
+                        // 频道图标更新
+                        updateData.pic = updateData.icon = icon;
+                    }
+
+                    eventBase.fnCommunicationSendMsg({
+                        operator: "channelUpdate",
+                        data: {
+                            type: "channel",
+                            channelId: updateData.channelId,
+                            id: updateData.id,
+                            values: updateData,
+                        },
+                    });
+                    return;
+                }
+            }
+
+            // 频道身份变更
             eventBase.fnCommunicationSendMsg({
-                operator: "updateChannelIdentity", 
+                operator: "updateChannelIdentity",
                 data: latestChannelEventMessage
             });
+            break;
         }
 
         default:

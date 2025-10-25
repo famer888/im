@@ -34,7 +34,7 @@
           @onChange="(value) => (searchText = value)"
           @handleBack="handleBack"
           key="all-search"
-        > 
+        >
           <template #right v-if="navType === 1">
             <span class="add-cancel" v-if="addAction" @click="addAction = false">取消</span>
             <img class="add-btn" v-else @click="addAction = true" src="@/assets/images/headNav/add_blue.png" />
@@ -42,7 +42,7 @@
         </ComSearch>
       </div>
       <!-- 搜索加好友或群 -->
-      <ComSearchAddContacts 
+      <ComSearchAddContacts
         v-if="addAction && searchText && navType === 1"
         :searchText="searchText"
         :searchAddContactsIng.sync="searchAddContactsIng"
@@ -53,7 +53,7 @@
         <span class="unread" v-if="contactsUnreadCount">{{ contactsUnreadCount }}</span>
       </div>
       <section v-if="!searchAddContactsIng">
-        <ComSearchSpecifiedChat 
+        <ComSearchSpecifiedChat
           v-if="isSearchSpecifiedChat"
           :info="searchSpecifiedChat"
           :searchText="searchText"
@@ -122,6 +122,7 @@ import eventBase from "@/event/base";
 import eventCommon from "@/event/common";
 import eventGroup from "@/event/group";
 import eventFriend from "@/event/friend";
+import eventChannel from "@/event/channel";
 import eventChat from "@/event/chat";
 import eventMsg from "@/event/msg";
 
@@ -272,6 +273,7 @@ export default {
           "msgReadByMe", // 我已读消息
           "chatMsgListToBottom", // 置底
           "groupUpdate", // 群信息更新
+          "channelUpdate", // 频道信息更新
           "groupNotification", // 群通知
           "msgDelete", // 消息删除
           "friendRemarkUpdate", // 好友备注修改 备注名，描述
@@ -349,6 +351,11 @@ export default {
           this.eventHandlingGroupUpdate(info);
           break;
         }
+        case "channelUpdate": {
+          // 处理事件 频道详情数据同步
+          this.eventHandlingChannelUpdate(info);
+          break;
+        }
         case "groupNotification": {
           // 群通知
           this.eventHandlingGroupNotification(info, operatorType);
@@ -398,11 +405,11 @@ export default {
             request.onsuccess = function(event) {
                 console.log(`数据库 "${dbName}" 删除成功`);
             };
-              
+
             request.onerror = function(event) {
               console.error(`删除数据库失败:`, event.target.error);
             };
-            
+
             request.onblocked = function(event) {
               console.warn(`数据库 "${dbName}" 删除被阻塞（可能有其他连接未关闭）`);
             };
@@ -673,6 +680,21 @@ export default {
         chats: this.chats,
       });
       this.groups = _.cloneDeep(dataNew.groups);
+      // 聊天列表更新
+      if (dataNew.chats) {
+        this.chats = _.cloneDeep(dataNew.chats);
+      }
+    },
+    /**
+     * 处理事件 频道更新
+     */
+    eventHandlingChannelUpdate(info) {
+      const dataNew = eventChannel.fnChannelUpdate({
+        info: { ...info.values, channelId: info.channelId },
+        channels: this.channels,
+        chats: this.chats,
+      });
+      this.channels = _.cloneDeep(dataNew.channels);
       // 聊天列表更新
       if (dataNew.chats) {
         this.chats = _.cloneDeep(dataNew.chats);
