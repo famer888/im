@@ -90,7 +90,6 @@ export default {
           if (list?.length < this.pageSize) {
             this.noMore = true;
           }
-          console.log('this.listData', this.listData);
         }
       )
     },
