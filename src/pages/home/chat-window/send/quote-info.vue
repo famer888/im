@@ -21,7 +21,7 @@
         :src="getFileIcon(msgInfo.fileName)"
       />
       <div>
-        <h3>{{ msgInfo.isSelf ? $t("你") : msgInfo.user.nickName }}</h3>
+        <h3 v-if="msgInfo.type !== 'channle'">{{ msgInfo.isSelf ? $t("你") : msgInfo.user?.nickName }}</h3>
         <p v-if="tagList.length" class="text">
           <ComLableEle
             v-for="(item, index) in tagList"

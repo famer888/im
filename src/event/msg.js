@@ -1463,12 +1463,13 @@ const fnFileMsgListFormat = (list) => {
  * 获取引用文本
  */
 const fnQuoteTextGet = (quoteInfo, content) => {
+    console.log('quoteInfo--', quoteInfo)
     const loginInfo = eventCommon.fnCommonInfoRU({
         getId: "loginInfo",
     });
 
-    const name = quoteInfo.isSelf ? loginInfo.name : quoteInfo.user.nickName;
-    const uid = quoteInfo.isSelf ? loginInfo.id : Number(quoteInfo.user.uid);
+    const name = quoteInfo.isSelf ? loginInfo.name : quoteInfo.user?.nickName;
+    const uid = quoteInfo.isSelf ? loginInfo.id : Number(quoteInfo.user?.uid);
     const text = `${content}-||-type:${quoteInfo.chatType}-||-content:${ getQuoteContent(quoteInfo) }-||-uid:${uid}-||-msgId:${quoteInfo.MsgID}-||-name:${name}`;
     return text;
 };
