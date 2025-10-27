@@ -3,6 +3,41 @@ import eventCommon from "./common";
 import eventBase from "./base";
 import { getChannelList } from "@/api/imChannel";
 
+const handleChannelEvents = (data) => {
+    const { channelInfo, channelId } = data || {}
+    if(channelInfo?.operateType) {
+        switch(channelInfo.operateType) {
+            // 频道解散
+            case 4: 
+                eventRemoveLocalChannel(Number(channelId));
+                break;
+            default:
+                break;   
+        }
+    } else {
+        eventBase.fnCommunicationSendMsg({
+            operator: "updateChannelIdentity", 
+            data,
+        });
+    }
+
+}
+
+/**
+ * 移除本地的频道
+ */
+const eventRemoveLocalChannel = (channelId) => {
+    if(!channelId) return;
+    eventBase.fnCommunicationSendMsg({
+        operator: "deleteChat",
+        data: {
+            id: channelId,
+            type: "channel",
+            isDeleteLocal: true,
+        }
+    });
+}
+
 /**
  * 频道添加通知消息
  */
@@ -123,4 +158,5 @@ export default {
     fnGetAllChannel,
     fnChannelAdd,
     fnChannelAddMessageNotification,
+    handleChannelEvents,
 }

@@ -13,6 +13,7 @@ import eventFriend from "./friend";
 import eventGroup from "./group";
 import eventCheduledCeletion from "./cheduled-deletion";
 import eventCommon from "@/event/common";
+import eventChannel from "./channel";
 
 // 之前的时间
 let timeBefore = new Date().getTime();
@@ -305,12 +306,8 @@ const fnSocketMessage = (arrayBuffer) => {
             eventMsg.fnGroupMsgReadRecord(receiptMessage)
         }
         case 4204: {
-            // 频道身份变更
             const { latestChannelEventMessage = {} } = data || {};
-            eventBase.fnCommunicationSendMsg({
-                operator: "updateChannelIdentity", 
-                data: latestChannelEventMessage
-            });
+            eventChannel.handleChannelEvents(latestChannelEventMessage);
         }
 
         default:

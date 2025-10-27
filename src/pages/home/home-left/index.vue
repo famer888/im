@@ -288,6 +288,7 @@ export default {
           "updateNewFriendReqTotal", // 新朋友申请待处理总数更新
           "searchSpecifiedChat", // 搜索指定的聊天窗口记录
           "channelDetailCache", // 缓存频道的详情
+          "deleteChat", // 删除聊天窗口
         ],
         this.eventHandling
       );
@@ -296,7 +297,7 @@ export default {
      * 处理事件
      */
     eventHandling(info, operator, operatorType) {
-      // console.log({ info, operator, operatorType }, "homeLeft --------> 220");
+      console.log({ info, operator, operatorType }, "homeLeft --------> 220");
       if (!info) {
         return;
       }
@@ -408,6 +409,7 @@ export default {
             };
             Cache(`${loginId}MessageGroupList`,[]);
             Cache(`${loginId}MessageUserList`, []);
+            Cache(`${loginId}MessageChannelList`, []);
             this.chats = [];
             // for (const item of this.chats) {
             //   this.eventHandlingChatDelete({ ...item, isDeleteLocal: true });
@@ -435,6 +437,11 @@ export default {
         case "searchSpecifiedChat":
           // 搜索指定的聊天窗口记录
           this.searchSpecifiedChat = info || {};
+          break;
+        case "deleteChat": 
+          // 删除聊天窗口
+                console.log('eventHandlingChatDelete-1-')
+          this.eventHandlingChatDelete(info);
           break;
         default:
       }
@@ -724,6 +731,7 @@ export default {
      * 处理事件 聊天窗口删除
      */
     eventHandlingChatDelete(info) {
+      console.log('eventHandlingChatDelete-3-', info)
       const { id, type } = info;
       let chats = this.chats.filter(
         (item) => item.id !== id || item.type !== type
@@ -740,6 +748,12 @@ export default {
           `${loginId}MessageUserList`,
           chats.filter((item) => item.type === "friend")
         );
+
+         Cache(
+          `${loginId}MessageChannelList`,
+          chats.filter((item) => item.type === "channel")
+        );
+
         // 清除当前聊天框消息列表的数据
         eventMsg.fnMsgDelete({ info: { id, type, idsDelete: [] } });
         // 如果是当前窗口
@@ -1220,6 +1234,12 @@ export default {
       immediate: false,
       deep: true,
     },
+    navType(value) {
+      if(value === 0) {
+        this.addAction = false;
+        this.searchText = "";
+      }
+    }
   },
   created() {
     // 监听点击通知
