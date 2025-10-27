@@ -64,16 +64,24 @@ export default {
                 `<span class="highlight">${this.searchText}</span>`
             );
         },
+        sortList(arr) {
+            // 排序：最新的时间（sendTime更大）排在前面
+          return  arr.sort((a, b) => {
+            // 用 b 的时间戳减去 a 的时间戳，结果为正则 b 排在前，实现倒序
+            return  Number(b.sendTime) - Number(a.sendTime);
+            });
+        },
         searchMsg() {
             const { id, type, name } = this.info || {};
             const searchText = this.searchText;
             const isGroup = type === 'group';
-            console.log('handleSearchMessageSingle--', searchText, id, type, name, this.loginInfo)
+            // console.log('handleSearchMessageSingle--', searchText, id, type, name, this.loginInfo)
             if (!searchText || !id || !type) return;
 
             window.$db.searchTable({ id, type, searchText }).then(res => {
-                console.log('searchTable--', res)
-                const result = res.list || [];
+                // console.log('searchTable--', res)
+                let result = res.list || [];
+                result = this.sortList(result)
                 const formatResult = result.map((n) => {
                     const { id, name, icon } = this.loginInfo
                     const isOwn = n.sendUid === id
