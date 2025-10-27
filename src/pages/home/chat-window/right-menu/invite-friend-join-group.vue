@@ -6,7 +6,7 @@
                     <span class="title">邀请好友</span>
                     <img class="close" src="@/assets/images/common/close-icon.png" @click="$emit('close')" />
                 </div>
-                <ComSearch class="search" placeholder="名称" :searchText="searchText" @onChange="searchChange"></ComSearch>
+                <ComSearch class="search" placeholder="搜索" :searchText="searchText" @onChange="searchChange"></ComSearch>
                 <!-- <div class="form-link">
                     <span class="title">通过邀请链接加入群组</span>
                     <ComCheckbox></ComCheckbox>
@@ -243,7 +243,7 @@ export default {
 
     .disable {
         opacity: 0.5;
-        pointer-events: none; 
+        pointer-events: none;
     }
 
     .primaryBtn {
