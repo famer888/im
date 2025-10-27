@@ -4,9 +4,19 @@ import eventBase from "./base";
 import { getChannelList } from "@/api/imChannel";
 
 const handleChannelEvents = (data) => {
-    const { channelInfo, channelId } = data || {}
-    if(channelInfo?.operateType) {
-        switch(channelInfo.operateType) {
+    const { channelInfo, channelId } = data || {};
+    const { operateType } = channelInfo || {};
+    if(operateType) {
+        switch(operateType) {
+            // 修改频道名
+            case 1: 
+                const { channelName } = channelInfo; 
+                eventUpdateChannelInfo(1, {channelId, channelName});
+                break;
+            // 修改频道头像
+            case 2:
+                const { icon } = channelInfo; 
+                eventUpdateChannelInfo(2, {channelId, icon})
             // 频道解散
             case 4: 
                 eventRemoveLocalChannel(Number(channelId));
@@ -21,6 +31,32 @@ const handleChannelEvents = (data) => {
         });
     }
 
+}
+
+//  频道信息更新 operateType: 1-修改名称, 2-修改图片
+const eventUpdateChannelInfo = (operateType, {channelId, channelName, icon}) => {
+    const updateData = {
+        channelId: Number(channelId),
+        id: Number(channelId),
+    };
+    
+    if (operateType === 1 && channelName) {
+        // 频道名称更新
+        updateData.name = updateData.channelName = channelName;
+    } else if (operateType === 2 && icon) {
+        // 频道图标更新
+        updateData.pic = updateData.icon = icon;
+    }
+
+    eventBase.fnCommunicationSendMsg({
+        operator: "channelUpdate",
+        data: {
+            type: "channel",
+            channelId: updateData.channelId,
+            id: updateData.id,
+            values: updateData,
+        },
+    });
 }
 
 /**

@@ -14,7 +14,6 @@ import eventGroup from "./group";
 import eventChannel from "./channel";
 import eventCheduledCeletion from "./cheduled-deletion";
 import eventCommon from "@/event/common";
-import eventChannel from "./channel";
 
 // 之前的时间
 let timeBefore = new Date().getTime();
@@ -309,39 +308,6 @@ const fnSocketMessage = (arrayBuffer) => {
         case 4204: {
             const { latestChannelEventMessage = {} } = data || {};
             eventChannel.handleChannelEvents(latestChannelEventMessage);
-
-            const { channelInfo, channelId } = latestChannelEventMessage;
-            // 频道图像或名称更新
-            if (channelInfo && channelId) {
-                const { operateType, channelName, icon } = channelInfo;
-                // operateType: 1-修改名称, 2-修改图片
-                console.log('???')
-                if ([1, 2].includes(operateType)) {
-                    const updateData = {
-                        channelId: Number(channelId),
-                        id: Number(channelId),
-                    };
-
-                    if (operateType === 1 && channelName) {
-                        // 频道名称更新
-                        updateData.name = updateData.channelName = channelName;
-                    } else if (operateType === 2 && icon) {
-                        // 频道图标更新
-                        updateData.pic = updateData.icon = icon;
-                    }
-
-                    eventBase.fnCommunicationSendMsg({
-                        operator: "channelUpdate",
-                        data: {
-                            type: "channel",
-                            channelId: updateData.channelId,
-                            id: updateData.id,
-                            values: updateData,
-                        },
-                    });
-                    return;
-                }
-            }
         }
 
         default:
