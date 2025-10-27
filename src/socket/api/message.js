@@ -154,5 +154,6 @@ export function CReqRemoveMessage(data) {
     const message = method.create(params);
     const buffer = method.encode(message).finish();
     const rb = initHeader(buffer, msg);
+    console.log('CReqRemoveMessage--', msg)
     webSocketSend(rb);
 }
