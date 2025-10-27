@@ -203,7 +203,7 @@
                         this.chatContent.name || this.chatContent.nickName,
                         18
                       ) || $t("移动端")
-                    } ${$t('删除')}` 
+                    } ${$t('删除')}`
                   : $t("为所有人删除")
               }}
             </a>
@@ -411,7 +411,7 @@ export default {
       isGroupUpdate: false, // 是否群更新
       runTime: 0, // 运行时间
       isRun: null, // 定时器
-      readUsersInfo: [], // 消息的已读用户信息 
+      readUsersInfo: [], // 消息的已读用户信息
       readUserTotal: 0,
     };
   },
@@ -430,7 +430,7 @@ export default {
           type === "friend" ||
           this.rightClickSelectedInfo.isSelf ||
           memberType !== 2  ||
-          (type === "channel" && memberType !== 3) 
+          (type === "channel" && memberType !== 3)
         )
       );
     },
@@ -482,6 +482,7 @@ export default {
         "groupNotification", // 群通知
         "msgDelete", // 消息删除
         "groupUpdate", // 群更新
+        "channelUpdate", // 频道更新
         "groupQrCodeImageForward", // 群二维码图片转发
         "closeOperator", // 关闭操作
         "uploadFilesSet", // 上传文件设置
@@ -686,7 +687,7 @@ export default {
           }
           break;
         }
-        
+
         case "friendUpdate": {
           // 好友信息更新
           if(info.id) {
@@ -949,7 +950,7 @@ export default {
      */
     async handleMsgSelectedChange(values) {
       const { id, customMsgId } = values;
- 
+
       if (this.selectedIdList.some((item) => item.customMsgId == customMsgId)) {
         // 移除
         this.selectedList = this.selectedList.filter((item) => customMsgId !== item.customMsgId);
@@ -996,7 +997,7 @@ export default {
           data.width = data.width || 300
           data.height = data.height || 80
         }
-        
+
         let imgInfo = await this.getImageInfo(imgUrl)
         if (imgInfo) {
           data.text = imgUrl;
@@ -1047,7 +1048,7 @@ export default {
           if(type === "friend") {
             eventFriend.fnFriendDetailsGet(id);
           }
-          
+
           // 这里暂时加个延迟，临时解决rightMenu的mounted生命周期会执行两次
           setTimeout(() => {
              this.rightMenuVisible = true;
@@ -1143,7 +1144,7 @@ export default {
           const fInfo = friendList.find(i => i.id === gInfo.id)
           if(fInfo) {
             gInfo.nickName=fInfo.nickName || gInfo.nickName
-            gInfo.name=fInfo.name || gInfo.name 
+            gInfo.name=fInfo.name || gInfo.name
             gInfo.icon = fInfo.pic || gInfo.icon
           }
         })

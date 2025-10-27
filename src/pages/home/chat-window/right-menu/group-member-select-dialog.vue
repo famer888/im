@@ -8,6 +8,10 @@
                 </div>
                 <ComSearch class="search" placeholder="搜索" :searchText="searchText" @onChange="searchChange"></ComSearch>
             </div>
+            <div v-if="selectAllConfig?.show" @click="selectAll(!allSelected)" class="select-all">
+                <span>{{ selectAllConfig.text }}</span>
+                <ComCheckbox :value="allSelected"></ComCheckbox>
+            </div>
             <ul class="member-list">
                 <li class="member-item"
                     :class="{ disable: item.type < 1 || (memberType > 0 && item.type === 1) }"
@@ -38,10 +42,11 @@ import ComCheckbox from "@/components/Checkbox";
 
 export default {
     name: "inviteMemberJoinGroup",
-    props: ["memberList", "title", "memberType"],
+    props: ["memberList", "title", "memberType", "selectAllConfig"],
     components: { ComSearch, ComCheckbox },
     data() {
         return {
+            allSelected: false,
             memberInfoList: [],
             selectMembers: [],
             timerSearch: null,
@@ -52,6 +57,11 @@ export default {
         this.memberInfoList = this.memberList
     },
     methods: {
+        selectAll(selectedAll) {
+            // 不知道取反逻辑，先这样吧
+            this.selectMembers = selectedAll ? [...this.memberInfoList.filter(item => item.type >= 1 && (this.memberType <= 0 || item.type !== 1))] : [];
+            this.allSelected = selectedAll;
+        },
         confirmInvite() {
            this.$emit("confirm", this.selectMembers)
         },
@@ -111,6 +121,20 @@ export default {
         display: flex;
         flex-direction: column;
         align-items: center;
+        .select-all {
+            >span {
+                color: #3369FE;
+            }
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            padding: 10px 16px;
+            box-sizing: border-box;
+            cursor: pointer;
+            user-select: none;
+        }
     }
 
     .close {

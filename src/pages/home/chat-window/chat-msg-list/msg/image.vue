@@ -24,9 +24,9 @@
                         class="btnPay"
                         @click="handleOpenFile"
                     />
-                    <img              
+                    <img
                         :src="
-                          getUrl() 
+                          getUrl()
                         "
                         class="picture"
                         @error="handleFileDownload()"
@@ -168,8 +168,8 @@ export default {
             const fileName =
                 fileUrl.slice(fileUrl.lastIndexOf("/") + 1) + suffix;
 
-            // 优先使用动态域名    
-            const trendsFileUrl = await getOssFirstNormalUrl(fileUrl)     
+            // 优先使用动态域名
+            const trendsFileUrl = await getOssFirstNormalUrl(fileUrl)
 
             // 文件下载
             ipcRenderer.send("fileDownload", {
@@ -239,8 +239,8 @@ export default {
                 } else {
                     return msgInfo.local || msgInfo.localThumbUrl
                 }
-            } 
-            return msgInfo.local || msgInfo.localThumbUrl 
+            }
+            return msgInfo.local || msgInfo.localThumbUrl
         }
     },
 };
@@ -266,7 +266,8 @@ export default {
 
     > .content {
         height: 150px;
-
+        width: fit-content;
+        position: relative;
         > .btnPay {
             position: absolute;
             top: 75px;

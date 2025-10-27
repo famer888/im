@@ -57,6 +57,7 @@
         :memberList="memberInfoList"
         :memberType="chatContent.memberType"
         title="移出"
+        :selectAllConfig="{ text: '移出群成员', show: true }"
         @close="showSelectMemberDialog = false"
         @confirm="handelRemoveMember"
     >
@@ -127,7 +128,7 @@ export default {
           name.toLowerCase().includes(this.searchText.toLowerCase())
         );
       }
-      
+
     },
   },
   mounted() {

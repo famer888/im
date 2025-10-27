@@ -17,12 +17,13 @@
       <ul v-if="listVisible">
         <li class="channel-item" v-for="(item, index) in listData" :key="'channel'+index" :class="{ active: id === item.channelId }"
           @click="handleClick(item)">
-          <textAvatar class="textAvatar"  :value="item.channelName" :id="item.channelId" />
+          <textAvatar v-if="item.type === 'channel' && !item.pic" class="textAvatar"  :value="item.channelName" :id="item.channelId" />
+          <ComImage v-else :src="item.icon" :type="item.type" />
           <h3>{{ item.channelName.replaceAll("🪵", "?") }}</h3>
         </li>
       </ul>
     </InfiniteScroll>
- 
+
   </div>
 </template>
 <script>
@@ -61,6 +62,17 @@ export default {
   },
   mounted() {
     this.getListData()
+
+    // 监听频道更新事件
+    eventBase.fnCommunicationMonitoring(
+      "channels",
+      ["channelUpdate"],
+      this.handleChannelUpdate
+    );
+  },
+  beforeDestroy() {
+    // 移除事件监听
+    eventBase.fnCommunicationMonitoring("channels", null);
   },
   methods: {
     nextPage() {
@@ -107,6 +119,28 @@ export default {
         operator: 'activeChange',
         data,
       })
+    },
+    /**
+     * 处理频道更新事件
+     */
+    handleChannelUpdate(info) {
+      if (!info || !info.channelId) return;
+
+      const { channelId, values } = info;
+      const index = this.listData.findIndex((item) => item.channelId === channelId);
+
+      if (index !== -1) {
+        // 更新频道名称
+        if (values.channelName) {
+          this.listData[index].channelName = values.channelName;
+        }
+        // 更新频道图标
+        if (values.icon) {
+          this.listData[index].icon = values.icon;
+        }
+        // 触发视图更新
+        this.$set(this.listData, index, { ...this.listData[index] });
+      }
     },
   },
 }

@@ -36,11 +36,11 @@
               (e) => handleRightClickShowMenu(e, item, index)
             "
           >
-            <ComTextAvatar 
-              v-if="item.type === 'channel'" 
-              class="textAvatar" 
-              :color="item.logoColor" 
-              :value="item.channelName" 
+            <ComTextAvatar
+              v-if="item.type === 'channel' && !item.pic"
+              class="textAvatar"
+              :color="item.logoColor"
+              :value="item.channelName"
               :id="item.channelId"
             />
             <ComImage
@@ -54,7 +54,7 @@
               {{
                 item.id === "invitation"
                   ? $t("群通知")
-                  : item.name || item.nickName || item.channelName 
+                  : item.name || item.nickName || item.channelName
               }}
             </h3>
             <div
@@ -496,10 +496,10 @@ export default {
         let replaced = htmlString
           .replace(/<img[^>]*>/g, '[图片]')  // 替换图片标签
           .replace(/<video[^>]*>.*?<\/video>/g, '[视频]');  // 替换视频标签（包括内容）
-        
+
         // 移除所有其他 HTML 标签
         // const textOnly = replaced.replace(/<\/?[^>]+(>|$)/g, '');
-        
+
         return replaced;
     },
     /**
@@ -634,16 +634,16 @@ export default {
     overflow-y: auto;
     scrollbar-width: thin;
     scrollbar-color: #999 transparent;
-    
+
     &::-webkit-scrollbar {
       width: 6px;
     }
-    
+
     &::-webkit-scrollbar-thumb {
       background-color: #999;
       border-radius: 3px;
     }
-    
+
     > div {
       position: relative;
       overflow: hidden;
@@ -864,29 +864,29 @@ export default {
       font-size: 12px;
       vertical-align: middle;
     }
-    
+
     .has-emoj {
       display: flex;
       align-items: center;
     }
-    
+
     .at-me {
       color: #ff0000;
       font-size: 12px;
     }
-    
+
     .chats-82 {
       box-sizing: border-box;
       height: 20px;
       width: 100%;
       padding-right: 30px;
     }
-    
+
     .chats-82 .sendUserName {
       color: #aaaaaa;
       font-size: 12px;
     }
-    
+
     .has-at {
       width: 100px;
       white-space: nowrap;
@@ -921,7 +921,7 @@ export default {
     .chats-list {
       li {
         padding: 0 12px 0 50px;
-        
+
         &::after {
           left: 50px;
         }

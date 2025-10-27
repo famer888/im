@@ -154,9 +154,68 @@ const fnGetAllChannel = () => {
     })
 }
 
+/**
+ * 频道更新
+ */
+const fnChannelUpdate = ({ info, channels, chats }) => {
+    const loginId = eventCommon.fnCommonInfoRU({
+        getId: "loginId",
+    });
+
+    const dataNew = {
+        channels,
+    };
+
+    const index = channels.findIndex((item) => item.channelId === info.channelId);
+
+    if (index === -1) {
+        dataNew.channels.push(info);
+    } else {
+        dataNew.channels[index] = { ...dataNew.channels[index], ...info };
+    }
+
+    Cache(`${loginId}-ChannelList`, channels);
+
+    // 如果聊天信息不一致则更新聊天信息
+    const chatIndex = chats.findIndex(
+        (item) => item.id === info.channelId && item.type === "channel"
+    );
+
+    if (chatIndex !== -1) {
+        const updateInfo = { ...chats[chatIndex] };
+        let isUpdated = false;
+
+        // 更新频道名称
+        if (info.channelName && updateInfo.name !== info.channelName) {
+            updateInfo.name = info.channelName;
+            updateInfo.channelName = info.channelName;
+            isUpdated = true;
+        }
+
+        // 更新频道图标
+        if (info.icon && updateInfo.icon !== info.icon) {
+            updateInfo.icon = info.icon;
+            updateInfo.pic = info.icon;
+            isUpdated = true;
+        }
+
+        if (isUpdated) {
+            chats[chatIndex] = updateInfo;
+            dataNew.chats = chats;
+            Cache(
+                `${loginId}MessageChannelList`,
+                chats.filter((item) => item.type === "channel")
+            );
+        }
+    }
+
+    return dataNew;
+};
+
 export default {
     fnGetAllChannel,
     fnChannelAdd,
     fnChannelAddMessageNotification,
+    fnChannelUpdate,
     handleChannelEvents,
 }
