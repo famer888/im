@@ -295,6 +295,7 @@ export default {
             this.infoActive = {
               ...info,
               ...channelDetail,
+              channelDetailDone: +new Date(),
             };
           });
         } else if (info) {

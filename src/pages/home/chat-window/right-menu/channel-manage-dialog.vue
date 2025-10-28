@@ -4,7 +4,10 @@
       <picture @click="handleClose">
         <img src="@/assets/images/common/close-icon.png" />
       </picture>
-      <div class="title">所有者</div>
+      <div class="member-list">
+
+      </div>
+      <div class="title">{{ $t("管理员") }}（{{ managerList.length }}/20）</div>
       <div class="member-list">
         <div v-if="hostInfo" class="member-item cursor">
           <ComImage
@@ -16,16 +19,15 @@
             <div class="member-info-top">
               <div class="member-name">
                 {{ getItemName(hostInfo) }}
+
               </div>
+              <div class="badge">所有者</div>
             </div>
             <div class="member-online-state">
               {{ getOnlineState(hostInfo) }}
             </div>
           </div>
         </div>
-      </div>
-      <div class="title">{{ $t("管理员") }}（{{ managerList.length }}/20）</div>
-      <div class="member-list">
         <div
           v-for="(item, index) in managerList"
           :key="index"
@@ -81,7 +83,6 @@ export default {
     this.managerList = this.memberInfoList.filter((item) => {
       return item.memberType === 2;
     });
-
     // 群主信息设置
     this.handelHostInfoSet();
   },
@@ -119,7 +120,7 @@ export default {
     handelHostInfoSet() {
       // 设置群主信息
       this.hostInfo = this.memberInfoList.find(
-        (item) => item.memberType == 1 
+        (item) => item.memberType == 1
       );
 
       // 登录id
@@ -254,6 +255,16 @@ export default {
           overflow: hidden;
           text-overflow: ellipsis;
           font-size: 14px;
+
+        }
+        .badge {
+          font-size: 10px;
+          color: #fff;
+          padding: 2px 6px;
+          border-radius: 99px;
+          background: #3369fe;
+          flex-shrink: 0;
+          margin-left: 4px;
         }
 
         .member-info {
@@ -265,7 +276,7 @@ export default {
         .member-info-top {
           display: flex;
           align-items: center;
-          justify-content: space-between;
+        //   justify-content: space-between;
           width: 100%;
           overflow: hidden;
         }

@@ -26,8 +26,8 @@
           <img class="refresh-icon" src="@/assets/images/common/refresh.png" />
           {{ $t("重置二维码") }}
         </p>
-        <ComTextAvatar 
-          v-if="iconType === 'textAvatar'" 
+        <ComTextAvatar
+          v-if="iconType === 'textAvatar'"
           class="textAvatar"
           :id="id"
           :value="name"
@@ -38,22 +38,22 @@
     </section>
     <div v-if="codeUrl" class="buttons">
       <div class="btn-item">
-        <button @click="handleExportQrCode">
-          <img src="@/assets/images/system/down.png" />
-        </button>
-        <span class="btn-title">{{ $t("保存图片") }}</span> 
-      </div>
-      <div class="btn-item">
         <button @click="handleGroupQrCodeImageForward">
           <img src="@/assets/images/system/share.png" />
         </button>
-        <span class="btn-title">{{ $t("转发给朋友") }}</span> 
+        <span class="btn-title">{{ $t("转发给朋友") }}</span>
+      </div>
+      <div class="btn-item">
+        <button @click="handleExportQrCode">
+          <img src="@/assets/images/system/down.png" />
+        </button>
+        <span class="btn-title">{{ $t("保存图片") }}</span>
       </div>
       <div class="btn-item">
         <button @click="handleCopyLink">
           <img src="@/assets/images/system/link.png" />
         </button>
-        <span class="btn-title">{{ $t("复制链接") }}</span> 
+        <span class="btn-title">{{ $t("复制链接") }}</span>
       </div>
     </div>
   </div>
@@ -137,7 +137,7 @@ export default {
       //   let groupPic = this.$refs.groupPic.$el;
       //   canvasAddRadiusImg(canvas, ctx, groupPic, 110, 242, 50, 50, 25);
       // }
-      
+
       return canvas.toDataURL("image/png");
     },
     /**
@@ -306,7 +306,7 @@ export default {
        margin-left: 0;
       }
     }
-    
+
     button {
       width: 54px;
       height: 54px;

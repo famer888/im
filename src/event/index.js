@@ -308,12 +308,12 @@ const fnSocketMessage = (arrayBuffer) => {
         case 4204: {
             // 频道事件消息
             const { latestChannelEventMessage = {} } = data || {};
+            console.log('???');
             const { channelInfo, channelId } = latestChannelEventMessage;
             // 频道图像或名称更新
             if (channelInfo && channelId) {
                 const { operateType, channelName, icon } = channelInfo;
                 // operateType: 1-修改名称, 2-修改图片
-                console.log('???')
                 if ([1, 2].includes(operateType)) {
                     const updateData = {
                         channelId: Number(channelId),
@@ -340,7 +340,6 @@ const fnSocketMessage = (arrayBuffer) => {
                     return;
                 }
             }
-
             // 频道身份变更
             eventBase.fnCommunicationSendMsg({
                 operator: "updateChannelIdentity",
