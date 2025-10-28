@@ -306,55 +306,8 @@ const fnSocketMessage = (arrayBuffer) => {
             eventMsg.fnGroupMsgReadRecord(receiptMessage)
         }
         case 4204: {
-            // 频道事件消息
             const { latestChannelEventMessage = {} } = data || {};
-            const { channelInfo, channelId, eventType, subscriberInfo } = latestChannelEventMessage;
-
-            // 处理频道订阅者加入事件
-            // eventType: 2 = CHANNEL_SUBSCRIBER_EVENT (频道订阅者事件)
-            // subscriberInfo.operateType: 0 = SUBSCRIBER_JOIN (加入通道)
-            if (eventType === 2 && subscriberInfo?.operateType === 0) {
-                // 调用频道订阅者加入处理函数
-                eventChannel.fnHandleChannelSubscriberJoin(latestChannelEventMessage);
-                break;
-            }
-
-            // 频道图像或名称更新
-            if (channelInfo && channelId) {
-                const { operateType, channelName, icon } = channelInfo;
-                // operateType: 1-修改名称, 2-修改图片
-                if ([1, 2].includes(operateType)) {
-                    const updateData = {
-                        channelId: Number(channelId),
-                        id: Number(channelId),
-                    };
-
-                    if (operateType === 1 && channelName) {
-                        // 频道名称更新
-                        updateData.name = updateData.channelName = channelName;
-                    } else if (operateType === 2 && icon) {
-                        // 频道图标更新
-                        updateData.pic = updateData.icon = icon;
-                    }
-
-                    eventBase.fnCommunicationSendMsg({
-                        operator: "channelUpdate",
-                        data: {
-                            type: "channel",
-                            channelId: updateData.channelId,
-                            id: updateData.id,
-                            values: updateData,
-                        },
-                    });
-                    break;
-                }
-            }
-            // 频道身份变更
-            eventBase.fnCommunicationSendMsg({
-                operator: "updateChannelIdentity",
-                data: latestChannelEventMessage
-            });
-            break;
+            eventChannel.handleChannelEvents(latestChannelEventMessage);
         }
 
         default:

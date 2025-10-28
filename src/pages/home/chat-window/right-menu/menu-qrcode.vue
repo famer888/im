@@ -94,36 +94,51 @@ export default {
       window.$toast(this.$t("复制成功"));
     },
     /**
-     * 绘制二维码图片
+     * 绘制二维码图片（适配不同分辨率）
      */
     handleDrawQrCodeImage() {
-      // 获取qrcode的DOM元素
-      const qrcodeElementBox = this.$refs.qrcode.$el;
+      // 1. 获取设备像素比（DPR），默认1
+      const dpr = window.devicePixelRatio || 1;
+      // 基础尺寸（逻辑像素，对应CSS显示尺寸）
+      const baseWidth = 270;
+      const baseHeight = 300;
 
-      const qrcodeElement = qrcodeElementBox.querySelector("canvas");
+      // 2. 创建Canvas，实际尺寸 = 基础尺寸 * DPR（确保像素足够）
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
+      canvas.width = baseWidth * dpr;   // 物理像素宽度
+      canvas.height = baseHeight * dpr; // 物理像素高度
 
-      canvas.width = 270;
-      canvas.height = 300;
+      // 3. 缩放Canvas上下文，确保绘制内容按DPR等比例放大
+      ctx.scale(dpr, dpr);
 
-      // 添加背景色
+      // 4. 设置Canvas的CSS样式，固定显示尺寸（与基础尺寸一致）
+      canvas.style.width = `${baseWidth}px`;
+      canvas.style.height = `${baseHeight}px`;
+
+      // 5. 绘制背景（坐标和尺寸用基础尺寸，ctx已缩放，自动适配DPR）
       ctx.fillStyle = "#F5F5F5";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillRect(0, 0, baseWidth, baseHeight); // 用baseWidth而非canvas.width
       ctx.fillStyle = "#FFFFFF";
-      ctx.fillRect(0, 0, canvas.width, canvas.height - 35);
+      ctx.fillRect(0, 0, baseWidth, baseHeight - 35);
 
-      // 将二维码元素绘制到canvas上
-      let codeW = qrcodeElement.offsetWidth;
-      let codeH = qrcodeElement.offsetHeight;
-      let codeX = (canvas.width - codeW) / 2;
-      ctx.drawImage(qrcodeElement, codeX, 15, codeW, codeH);
+      // 6. 绘制二维码（关键：使用原始Canvas的实际尺寸，而非DOM尺寸）
+      const qrcodeElementBox = this.$refs.qrcode.$el;
+      const qrcodeElement = qrcodeElementBox.querySelector("canvas");
+      // 二维码原始像素尺寸（非offsetWidth，避免DOM样式影响）
+      const codeW = qrcodeElement.width;
+      const codeH = qrcodeElement.height;
+      // 计算居中位置（基于基础尺寸）
+      const codeX = (baseWidth - codeW) / 2; 
+      const codeY = 15;
+      // 绘制二维码（尺寸用原始像素，ctx缩放后自动适配DPR）
+      ctx.drawImage(qrcodeElement, codeX, codeY, codeW, codeH);
 
-      //绘制文本信息
+      // 7. 绘制文本（字体大小和位置基于基础尺寸，ctx缩放后适配DPR）
       canvasAddTest(canvas, ctx, "二维码长期有效", {
         y: 212,
         color: "#787878",
-        fontSize: "10px",
+        fontSize: "10px", // 逻辑像素，实际渲染为10*dpr物理像素
       });
 
       canvasAddTest(canvas, ctx, this.name, {
@@ -132,9 +147,10 @@ export default {
         fontSize: "14px",
       });
 
-      //绘制头像
+      // 8. 绘制头像（若需要，坐标和尺寸基于基础尺寸）
       // if(this.iconType !== "textAvatar") {
       //   let groupPic = this.$refs.groupPic.$el;
+      //   // 坐标和尺寸用基础尺寸（110,242是逻辑像素，ctx缩放后自动适配）
       //   canvasAddRadiusImg(canvas, ctx, groupPic, 110, 242, 50, 50, 25);
       // }
 

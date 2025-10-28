@@ -103,7 +103,7 @@ export default {
               return window.$toast('群ID异常')
             }
             const data = {
-                id: Number(info.groupId) ,
+                id: Number(info.groupId),
                 pic: info.pic || "",
                 name: info.name || info.nickName,
                 type: "group",
@@ -175,6 +175,7 @@ export default {
                 addToken: this.targetGroup.addToken,
                 msg: "申请加入群聊",
             }).then((res) => {
+                console.log('groupJoin--', res)
                 const { errMsg, errCode } = res?.commonResult || {};
                 if (errCode != 200) {
                     window.$toast(errMsg || res?.errorDesc || this.$t("加入群聊失败"));
@@ -184,6 +185,10 @@ export default {
                         window.$toast("请耐心等待群主审核");
                     } else {
                         window.$toast("加入群成功");
+                        setTimeout(() => {
+                           this.$emit("close");
+                           this.handleToChat(this.targetGroupInfo);
+                        }, 500)
                     }
                 }
             });
