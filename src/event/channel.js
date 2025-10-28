@@ -4,15 +4,21 @@ import eventBase from "./base";
 import { getChannelList, getChannelDetail } from "@/api/imChannel";
 
 const handleChannelEvents = (data) => {
-    const { channelInfo, channelId, eventType } = data || {};
+    const { channelInfo, channelId, eventType, subscriberInfo } = data || {};
     const { operateType } = channelInfo || {};
+    const { operateType: subscriberOperateType } = subscriberInfo || {};
+
+    // 频道订阅变更事件
+    if (eventType === 2) {
+        switch(subscriberOperateType) {
+          case 0:
+            // 频道订阅者加入事件
+            fnHandleChannelSubscriberJoin(data);
+            return;
+        }
+    }
     if(operateType) {
         switch(operateType) {
-            // 频道订阅事件
-            case 0:
-                // 频道订阅者加入事件
-                eventType === 2 && fnHandleChannelSubscriberJoin(data);
-                break;
             // 修改频道名
             case 1:
                 const { channelName } = channelInfo;
