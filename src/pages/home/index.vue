@@ -324,6 +324,7 @@ export default {
             this.infoActive = {
               ...this.infoActive,
               adminPrivacy: channelDetail.adminPrivacy,
+              channelDetailDone: +new Date(),
             };
           });
       } else if (operator === "closeOperator") {
