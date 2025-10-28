@@ -308,8 +308,17 @@ const fnSocketMessage = (arrayBuffer) => {
         case 4204: {
             // 频道事件消息
             const { latestChannelEventMessage = {} } = data || {};
-            console.log('???');
-            const { channelInfo, channelId } = latestChannelEventMessage;
+            const { channelInfo, channelId, eventType, subscriberInfo } = latestChannelEventMessage;
+
+            // 处理频道订阅者加入事件
+            // eventType: 2 = CHANNEL_SUBSCRIBER_EVENT (频道订阅者事件)
+            // subscriberInfo.operateType: 0 = SUBSCRIBER_JOIN (加入通道)
+            if (eventType === 2 && subscriberInfo?.operateType === 0) {
+                // 调用频道订阅者加入处理函数
+                eventChannel.fnHandleChannelSubscriberJoin(latestChannelEventMessage);
+                break;
+            }
+
             // 频道图像或名称更新
             if (channelInfo && channelId) {
                 const { operateType, channelName, icon } = channelInfo;
@@ -337,7 +346,7 @@ const fnSocketMessage = (arrayBuffer) => {
                             values: updateData,
                         },
                     });
-                    return;
+                    break;
                 }
             }
             // 频道身份变更
