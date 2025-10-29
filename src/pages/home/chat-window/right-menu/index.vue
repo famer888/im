@@ -25,13 +25,12 @@
       @openDialogMsgClear="handleDialogMsgClearSet"
     />
     <template v-if="isChannel">
-        <ul v-if="chatContent.adminPrivacy" class="managerLabel">
+        <ul class="managerLabel">
           <li @click="handleOpenChannelManageDialog">
             {{ $t("管理员") }}
           </li>
         </ul>
         <ComChannelMemberList
-          v-if="chatContent.adminPrivacy"
           :chatContent="chatContent"
           :memberInfoList="channelUserList"
           :friendList="friendList"
