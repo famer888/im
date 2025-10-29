@@ -10,7 +10,7 @@
           :value="info.channelName"
         />
       <span>{{ info.channelName }}</span>
-      <p>{{ info.remark }}</p>
+      <p class="text-clamp-2">{{ info.remark }}</p>
       <button  @click="handleJoinChannel">
         加入频道
       </button>
@@ -143,6 +143,8 @@ export default {
       font-size: 12px;
       color: #999;
       margin-top: 10px;
+      padding: 0 10px;
+      box-sizing: border-box;
     }
 
     > button {
