@@ -34,6 +34,19 @@ export const getChannelUsers = (data) => {
     );
 };
 
+// 查询频道管理列表
+export const getChannelManages = (data) => {
+    return requestAxios(
+        `/channel/channelAdminRight/pageAdmin`,
+        data,
+        {
+            headers: {
+                ...getSignHeader(),
+            },
+        }
+    );
+};
+
 // 查询频道详情
 export const getChannelDetail = (data) => {
     return requestAxios(`/channel/getChannelById`, data, {

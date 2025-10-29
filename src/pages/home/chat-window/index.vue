@@ -318,12 +318,13 @@
 </template>
 <script>
 import { Cache } from "@/cache";
-import { getChannelUsers } from "@/api/imChannel";
+import { getChannelUsers, getChannelManages } from "@/api/imChannel";
 
 // 工具
 import { setMaxLengthStr, textToEmojiText, formatTimeStamp, copyToClipboard, freeTime } from "@/utils/base";
 import { copyText, copyImg } from "@/utils/clipboard";
 import { getEnvType } from "@/utils";
+import { formatChannelManages } from "@/utils/formats";
 
 // 控件
 import ComTop from "./top";
@@ -467,7 +468,7 @@ export default {
           }
         }, 1000)
 
-    } else if(type === "channel" && adminPrivacy) {
+    } else if(type === "channel") {
       this.handleChannelMemberGet();
     } else {
       // 获取好友详情
@@ -1161,18 +1162,22 @@ export default {
       memberInfoList = groupMember;
     },
     handleChannelMemberGet() {
-      const { channelId } = this.chatContent;
+      const { channelId, adminPrivacy } = this.chatContent;
       if( !channelId ) return
       const prams = {
         pageNum: 1,
         pageSize: 10,
         channelId
       }
-       console.log('getChannelUsers-1-', prams)
-      getChannelUsers(prams).then(res => {
-        console.log('getChannelUsers--', res)
-        channelUserList = res.data?.rowList ||[]
-      })
+      if(adminPrivacy) {
+        getChannelUsers(prams).then(res => {
+          channelUserList = res.data?.rowList ||[]
+        })
+      } else {
+        getChannelManages(prams).then(res => {
+            channelUserList = formatChannelManages(res.data?.rowList || []) 
+        })
+      }
     },
     /**
      * 获取群成员
