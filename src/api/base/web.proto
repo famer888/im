@@ -387,6 +387,7 @@ message ContactsRecordBase {
     string              signature           = 6; //个性签名
     string              groupName           = 7; //群名称
     bool                bfIdSearch          = 8; //是否显示68号
+    string              channelName         = 9; //频道名称
 }
 
 // 联系人列表req [/contacts/contactsList]
@@ -412,6 +413,7 @@ message ContactsDetailReq {
     ClientInfo clientInfo = 1; // web端信息
     int64 targetUid = 2; // 目标用户ID
     int64 groupId = 3; // 群组Id
+    int64 channelId = 4; // 频道Id
 }
 //联系人详情resp
 message ContactsDetailResp {
@@ -445,6 +447,7 @@ message UpdateContactsResp {
 //联系人申请列表req [/contacts/contactsApplyList]（add v1.0.0暂未使用）
 message ContactsApplyListReq {
     ClientInfo  clientInfo     = 1; // 客户端信息
+    int32       version        = 2; // 接口版本
 }
 //联系人申请列表resp
 message ContactsApplyListResp {
@@ -978,4 +981,16 @@ message FindContactsListReq {
 message FindContactsListResp {
     CommonResult        commonResult    = 1; // 结果信息
     repeated ContactsDetailBase  detailList  = 2; //联系人详情列表
+}
+
+
+// 解散群 [groupUrl/group/disableGroup] v1.6.0
+message DisableGroupReq {
+    ClientInfo  clientInfo  = 1; // 客户端信息
+    int64       groupId     = 2; // 群id
+}
+
+// 解散群
+message DisableGroupResp {
+    CommonResult   commonResult   = 1; // 结果信息
 }
