@@ -600,3 +600,22 @@ export const completionUrl = (url) => {
   }
   return url
 }
+
+/**
+ * 判断一个值是否为 null、undefined 或 NaN
+ * @param {*} value - 待判断的值
+ * @returns {boolean} 是则返回 true，否则返回 false
+ */
+export const isNUN = (value) => {
+  // null 或 undefined 直接判断
+  if (value === null || value === undefined) {
+    return true;
+  }
+  // NaN 需用 is
+  // NaN() 判断（因为 NaN !== NaN）
+  if (typeof value === 'number' && isNaN(value)) {
+    return true;
+  }
+  // 其他情况均为有效值
+  return false;
+}
