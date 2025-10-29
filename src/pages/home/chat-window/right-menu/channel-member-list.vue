@@ -31,7 +31,7 @@
       >
         <ComImage :src="item.userInfoDTO.icon" type="friend" />
         <div>
-          <h2>{{ item.userInfoDTO.nickName }}</h2>
+          <h2>{{ getRemark(item.userInfoDTO) || item.userInfoDTO.nickName }}</h2>
           <p>
             {{ item.userInfoDTO.lastTime ? $t("在线") : handleOnlineTime(item.userInfoDTO.lastTime) }}
           </p>
@@ -53,6 +53,7 @@ import { groupEventForceInit } from "@/api/imGroup";
 
 // 事件
 import eventBase from "@/event/base";
+import eventCommon from '@/event/common';
 
 // 获取频道
 import { getChannelUsers } from "@/api/imChannel";
@@ -126,6 +127,14 @@ export default {
     eventBase.fnCommunicationMonitoring("rightMenuMemberList", null);
   },
   methods: {
+    getRemark(info) {
+       if(!info?.uid) return "";
+       const friendRemarks = eventCommon.fnFriendRemarksGet();
+       const data = friendRemarks.find(item => item.id === info.uid)
+       if(data) {
+        return data.name;
+       }
+    },
     handleChannelMemberGet() {
       const { channelId } = this.chatContent;
       if( !channelId ) return
