@@ -62,7 +62,7 @@
               </span>
               <ComMsgSystemNotification
                 :groupOwner="groupOwner"
-                v-if="[50, 51, 52].includes(n.chatType)"
+                v-if="[50, 51, 52].includes(n.chatType) || isChannelSystemMsg(n)"
                 :msgInfo="n"
                 @rightClick="
                   (e) => handleEmitInfo({ e, info: n }, 'rightClickMenuDisplay')
@@ -434,8 +434,8 @@
                   />
                   <ComTimeStatusLabel :msgInfo="n" :chatContent="chatContent" />
                 </ComMsgPoker>
-                <ComMsgRichText 
-                  v-else-if="n.msgType === 16" 
+                <ComMsgRichText
+                  v-else-if="n.msgType === 16"
                   :content="n.content"
                   @rightClick="
                     (e) => handleEmitInfo({ e, info: n }, 'rightClickMenuDisplay')
@@ -602,6 +602,9 @@ export default {
     }
   },
   methods: {
+    isChannelSystemMsg(msgInfo) {
+        return this.chatContent?.type === "channel" && msgInfo?.chatType === 6;
+    },
     updateKey() {
       // const { type, id } = this.chatContent || {};
       // if(type === "friend") {
@@ -810,7 +813,7 @@ export default {
           const customMsgIdList = idsDelete.filter(item => item.customMsgId).map((item) => item.customMsgId);
 
           const msgIdList = idsDelete.filter(item => !item.customMsgId).map((item) => item.msgId);
-          
+
           // 删除数据
           for (let i = 0; i < blockList.length; i++) {
             if(customMsgIdList.length > 0){
@@ -871,7 +874,7 @@ export default {
                 this.blockListShowPageNum = res.pageNumCurrent;
                 this.pageCount = res.pageCount;
                 this.pageLastMsgCount = res.pageLastMsgCount;
-    
+
                 // 设置已存在
                 pageNumListOld = this.blockList.map((item) => item.pageNum);
 
@@ -978,7 +981,7 @@ export default {
 
         // 最后一个模块 如果是最后一页
         if (blockInfoLast.pageNum === this.pageCount) {
-          
+
           // 之前的最后一条信息
           const msgInfoLastBefore =
             blockInfoLast.list[blockInfoLast.list.length - 1];
@@ -1362,6 +1365,8 @@ export default {
       if (res) {
         // 赋值列表
         this.blockList = res;
+        console.log('>>>>', this.blockList);
+
         if (pages.length > 1) {
           await this.handleMsgListForPageGet(pages.slice(1));
         }

@@ -1,32 +1,43 @@
 import { Cache } from "@/cache";
 import eventCommon from "./common";
 import eventBase from "./base";
-import { getChannelList } from "@/api/imChannel";
+import { getChannelList, getChannelDetail } from "@/api/imChannel";
 
 const handleChannelEvents = (data) => {
-    const { channelInfo, channelId } = data || {};
+    const { channelInfo, channelId, eventType, subscriberInfo } = data || {};
     const { operateType } = channelInfo || {};
+    const { operateType: subscriberOperateType } = subscriberInfo || {};
+
+    // 频道订阅变更事件
+    if (eventType === 2) {
+        switch(subscriberOperateType) {
+          case 0:
+            // 频道订阅者加入事件
+            fnHandleChannelSubscriberJoin(data);
+            return;
+        }
+    }
     if(operateType) {
         switch(operateType) {
             // 修改频道名
-            case 1: 
-                const { channelName } = channelInfo; 
+            case 1:
+                const { channelName } = channelInfo;
                 eventUpdateChannelInfo(1, {channelId, channelName});
                 break;
             // 修改频道头像
             case 2:
-                const { icon } = channelInfo; 
+                const { icon } = channelInfo;
                 eventUpdateChannelInfo(2, {channelId, icon})
             // 频道解散
-            case 4: 
+            case 4:
                 eventRemoveLocalChannel(Number(channelId));
                 break;
             default:
-                break;   
+                break;
         }
     } else {
         eventBase.fnCommunicationSendMsg({
-            operator: "updateChannelIdentity", 
+            operator: "updateChannelIdentity",
             data,
         });
     }
@@ -39,7 +50,7 @@ const eventUpdateChannelInfo = (operateType, {channelId, channelName, icon}) => 
         channelId: Number(channelId),
         id: Number(channelId),
     };
-    
+
     if (operateType === 1 && channelName) {
         // 频道名称更新
         updateData.name = updateData.channelName = channelName;
@@ -248,10 +259,97 @@ const fnChannelUpdate = ({ info, channels, chats }) => {
     return dataNew;
 };
 
+/**
+ * 处理频道订阅者加入事件
+ */
+const fnHandleChannelSubscriberJoin = async (latestChannelEventMessage) => {
+    const loginId = eventCommon.fnCommonInfoRU({
+        getId: "loginId",
+    });
+
+    const { channelId, subscriberInfo } = latestChannelEventMessage;
+
+    // 检查是否是本人加入（通过事件推送，说明是本人）
+    // subscriberInfo.operateType: 0 = SUBSCRIBER_JOIN
+    if (!channelId || !subscriberInfo || subscriberInfo.operateType !== 0) {
+        return;
+    }
+
+    try {
+        // 查询频道详情
+        const res = await getChannelDetail({ channelId: Number(channelId) });
+        const channelDetail = res?.data;
+
+        if (!channelDetail) {
+            console.error("获取频道详情失败");
+            return;
+        }
+
+        // 格式化频道信息
+        const channelInfo = fnChannelFormat({
+            channelId: Number(channelId),
+            channelName: channelDetail.channelName,
+            icon: channelDetail.icon,
+            logoColor: channelDetail.logoColor,
+            createTime: channelDetail.createTime,
+            updateTime: channelDetail.updateTime,
+            adminPrivacy: channelDetail.adminPrivacy,
+        });
+
+        // 1. 更新频道列表缓存
+        const ChannelLists = (await Cache(`${loginId}-ChannelList`)) || [];
+        const existIndex = ChannelLists.findIndex(item => item.channelId === Number(channelId));
+
+        // 如果频道列表中已存在，则忽略
+        if (existIndex === -1) {
+            ChannelLists.unshift(channelInfo);
+            await Cache(`${loginId}-ChannelList`, ChannelLists);
+        }
+
+        // 2. 更新聊天列表缓存
+        const MessageChannelList = (await Cache(`${loginId}MessageChannelList`)) || [];
+        const chatExistIndex = MessageChannelList.findIndex(
+            item => item.id === Number(channelId) && item.type === "channel"
+        );
+
+        // 如果聊天列表中不存在，则添加
+        if (chatExistIndex === -1) {
+            const chatItem = {
+                ...channelInfo,
+                id: Number(channelId),
+                type: "channel",
+                name: channelDetail.channelName,
+                channelName: channelDetail.channelName,
+                pic: channelDetail.icon,
+                icon: channelDetail.icon,
+                logoColor: channelDetail.logoColor,
+                time: Date.now(),
+                sendTime: Date.now(),
+                content: "你已加入该频道",
+                unreadCount: 0,
+            };
+
+            MessageChannelList.unshift(chatItem);
+            await Cache(`${loginId}MessageChannelList`, MessageChannelList);
+
+            // 3. 通知界面添加新频道会话
+            eventBase.fnCommunicationSendMsg({
+                operator: "msgNew",
+                operatorType: "channelJoin",
+                data: chatItem,
+            });
+        }
+
+    } catch (error) {
+        console.error("处理频道订阅者加入事件失败:", error);
+    }
+};
+
 export default {
     fnGetAllChannel,
     fnChannelAdd,
     fnChannelAddMessageNotification,
     fnChannelUpdate,
+    fnHandleChannelSubscriberJoin,
     handleChannelEvents,
 }

@@ -438,7 +438,6 @@ export default {
   },
   mounted() {
     const { id, type, adminPrivacy } = this.chatContent;
-
     memberInfoList = [];
     channelUserList = [];
     this.memberInfos = {};
@@ -468,8 +467,8 @@ export default {
           }
         }, 1000)
 
-    } else if(type === "channel") {
-      this.handleChannelMemberGet();
+    } else if(type === "channel" && adminPrivacy) {
+    //   this.handleChannelMemberGet();
     } else {
       // 获取好友详情
       eventFriend.fnFriendDetailsGet(id);
@@ -1171,11 +1170,13 @@ export default {
       }
       if(adminPrivacy) {
         getChannelUsers(prams).then(res => {
-          channelUserList = res.data?.rowList ||[]
+            channelUserList = res.data?.rowList || [];
+            this.keyComRightMenu++;
         })
       } else {
         getChannelManages(prams).then(res => {
             channelUserList = formatChannelManages(res.data?.rowList || []) 
+            this.keyComRightMenu++;
         })
       }
     },
@@ -1237,6 +1238,18 @@ export default {
       }
     },
   },
+  watch: {
+    'chatContent.channelDetailDone': {
+      handler(doneFetching) {
+        // 为了确保adminPrivacy的值是最新的，所以需要在这里获取，而不是在mounted中获取
+        const { id, type, adminPrivacy } = this.chatContent;
+        if(type === "channel" && adminPrivacy && doneFetching) {
+            this.handleChannelMemberGet();
+        }
+      },
+      immediate: true,
+    }
+  }
 };
 </script>
 <style lang="scss">

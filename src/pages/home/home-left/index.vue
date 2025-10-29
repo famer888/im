@@ -299,7 +299,7 @@ export default {
      * 处理事件
      */
     eventHandling(info, operator, operatorType) {
-      console.log({ info, operator, operatorType }, "homeLeft --------> 220");
+    //   console.log({ info, operator, operatorType }, "homeLeft --------> 220");
       if (!info) {
         return;
       }
@@ -445,7 +445,7 @@ export default {
           // 搜索指定的聊天窗口记录
           this.searchSpecifiedChat = info || {};
           break;
-        case "deleteChat": 
+        case "deleteChat":
           // 删除聊天窗口
                 console.log('eventHandlingChatDelete-1-')
           this.eventHandlingChatDelete(info);

@@ -295,6 +295,7 @@ export default {
             this.infoActive = {
               ...info,
               ...channelDetail,
+              channelDetailDone: +new Date(),
             };
           });
         } else if (info) {
@@ -323,6 +324,7 @@ export default {
             this.infoActive = {
               ...this.infoActive,
               adminPrivacy: channelDetail.adminPrivacy,
+              channelDetailDone: +new Date(),
             };
           });
       } else if (operator === "closeOperator") {
