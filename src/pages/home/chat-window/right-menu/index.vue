@@ -3,7 +3,7 @@
     <div class="right-menu-content">
       <div class="mask" v-if="chatContent.isDisable"></div>
      <template v-if="chatContent.type === 'channel'">
-       <ChannelLink v-if="chatContent.linkType !== 1"  :chatContent="chatContent"  @showQrCode="channelQrcodeVisilbe = true" />
+       <ChannelLink v-if="chatContent.linkType !== 1 || [1, 2].includes(chatContent.memberType)"  :chatContent="chatContent"  @showQrCode="channelQrcodeVisilbe = true" />
        <ComChannelQrcode v-if="channelQrcodeVisilbe" :chatContent="chatContent"  @close="channelQrcodeVisilbe = false" />
      </template> 
     <template v-else-if="isGroup">
