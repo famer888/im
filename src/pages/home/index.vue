@@ -37,6 +37,9 @@
             <GroupNotification
               v-else-if="infoActive.comType === 'notificationGroup'"
             />
+            <ChannelNotice
+              v-else-if="infoActive.comType === 'channelNotice'"
+            />
             <ChatContent
               v-else-if="
                 infoActive.comType === 'chat' ||
@@ -103,6 +106,7 @@ export default {
     DetailsFriend: () => import("./details/friend.vue"),
     DetailsChannel: () => import("./details/channel.vue"),
     GroupNotification: () => import("./group-invitation.vue"),
+    ChannelNotice: () => import("./channel-notice.vue"),
     AddContactsDetail: () => import("./com/add-contacts/add-contacts-detail.vue"),
     NewFriendExamine: () => import("./com/add-contacts/new-friend-examine.vue"),
   },

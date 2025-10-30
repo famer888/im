@@ -47,6 +47,15 @@ export const getChannelManages = (data) => {
     );
 };
 
+// 获取频道事件请求列表
+export const getChannelEventList = (data) => {
+    return requestAxios(`/channel/channelEventReq/listChannelEventReq`, data, {
+        headers: {
+            ...getSignHeader(),
+        },
+    });
+};
+
 // 查询频道详情
 export const getChannelDetail = (data) => {
     return requestAxios(`/channel/getChannelById`, data, {

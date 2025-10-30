@@ -106,9 +106,7 @@ const fnChannelNoticeMessage = async (data) => {
     }
 
     // 添加频道通知到统一的"频道通知"会话
-    if (content) {
-        await fnAddChannelNoticeToChat(content, channelId);
-    }
+    fnAddChannelNoticeToChat(content, channelId);
 }
 
 /**
@@ -117,66 +115,33 @@ const fnChannelNoticeMessage = async (data) => {
 const fnAddChannelNoticeToChat = async (content, channelId) => {
     const timestamp = Date.now();
     const customMsgId = generateUniqueId();
+    const loginId = eventCommon.fnCommonInfoRU({ getId: "loginId" });
 
-    // 获取频道信息
-    let channelName = "";
-    if (channelId) {
-        const channelInfo = await fnGetChannelInfo(channelId);
-        channelName = channelInfo?.channelName || "";
-    }
-
-    // 构建通知消息内容
-    const noticeContent = channelName ? `【${channelName}】${content}` : content;
-
-    // 消息类型为0，表示文本消息
-    const chatType = 0;
-    const msgType = 0;
-
-    // 构建 sendUser 对象（发送者信息）
-    const sendUser = {
-        icon: "/images/default_chat_icon.png",
-        nickName: channelName || "频道通知",
-        uid: 0,
-    };
 
     // 构建消息数据（用于显示在会话列表和聊天记录）
-    const msgData = {
-        id: 10006,
-        friendId: 10006,
-        type: "friend",
-        name: "频道通知",
-        content: noticeContent,
-        text: noticeContent,
-        time: timestamp,
-        sendTime: timestamp,
-        msgType: msgType,
-        chatType: chatType,
-        source: 0,
-        isSelf: false,
-        customMsgId: customMsgId,
-        MsgID: customMsgId,
-        msgId: customMsgId,
-        sendUser: sendUser,
-        user: sendUser,  // 用于消息列表显示
-        sendUserName: channelName || "频道通知",
-        UserID: 0,
-        sendUid: 0,
-        receiveUid: eventCommon.fnCommonInfoRU({ getId: "loginId" }),
-        readStatus: 0,
-        errorType: 0,
-        ChatType: chatType,
-        Content: noticeContent,
-    };
 
     // 发送msgNew通知，这会触发创建或更新会话
     eventBase.fnCommunicationSendMsg({
         operator: "msgNew",
         operatorType: "channelNotice",
-        data: msgData,
+        data: {
+            id: "channelNotice",
+            friendId: "channelNotice",
+            type: "friend",
+            name: "频道通知",
+            content,  // 会话列表显示
+            time: timestamp,
+            sendTime: timestamp,
+            receiveUid: loginId,
+        },
     });
 
-    // 保存消息到数据库（用于聊天记录）
-    eventBase.fnMsgAddToDB(msgData, 10006);
+
+    // 通知频道通知列表更新
+    eventBase.fnCommunicationSendMsg({
+        operator: "channelNoticeUpdate",
+        data: {},
+    });
 }
 /**
  * 移除本地的频道

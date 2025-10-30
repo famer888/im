@@ -525,12 +525,16 @@ export default {
         return;
       }
       // console.log(item, 'chats ---------> 506')
+
+
+      const comType = item.id === "invitation" ? "notificationGroup" : item.id === "channelNotice" ? "channelNotice" : "chat";
+
       // 通讯
       eventBase.fnCommunicationSendMsg({
         operator: "activeChange",
         data: {
           ...item,
-          comType: item.id === "invitation" ? "notificationGroup" : "chat",
+          comType,
           unreadObj: this.unreadObj[item.id + item.type],
         },
       });
