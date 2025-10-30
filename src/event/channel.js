@@ -104,16 +104,32 @@ const fnChannelNoticeMessage = async (data) => {
     }
 
     // 添加频道通知到统一的"频道通知"会话
-    fnAddChannelNoticeToChat(content, channelId);
+    fnAddChannelNoticeToChat(content, channelNoticeMsg?.unReadNum);
 }
 
 /**
  * 添加频道通知到统一的"频道通知"会话
  */
-const fnAddChannelNoticeToChat = async (content) => {
+const fnAddChannelNoticeToChat = async (content, unReadNum) => {
     const timestamp = Date.now();
     const loginId = eventCommon.fnCommonInfoRU({ getId: "loginId" });
+    const customMsgId = generateUniqueId();
+    const idStr = "channelNoticefriend"; // id + type
 
+    // 更新未读数到缓存
+    const res = await Cache(`${loginId}-unread`);
+    const resUnread = (res && res.unread) || {};
+
+    // 设置未读对象
+    const unreadObj = {
+        count: unReadNum || 0,
+        time: timestamp,
+        unreadID: customMsgId,
+    };
+
+    // 更新缓存中的未读数
+    resUnread[idStr] = unreadObj;
+    await Cache(`${loginId}-unread`, { unread: resUnread });
 
     // 构建消息数据（用于显示在会话列表和聊天记录）
 
@@ -130,6 +146,9 @@ const fnAddChannelNoticeToChat = async (content) => {
             time: timestamp,
             sendTime: timestamp,
             receiveUid: loginId,
+            customMsgId,
+            unreadCount: unReadNum || 0,  // 未读数
+            unreadObj,  // 未读对象，同步到其他组件
         },
     });
 

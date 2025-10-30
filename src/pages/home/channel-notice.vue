@@ -132,7 +132,6 @@ export default {
           return channel;
         }
       }
-
       // 2. 从缓存的聊天列表中查找
       const chatList = await Cache(`${loginId}MessageChannelList`);
       if (chatList && chatList.length > 0) {
