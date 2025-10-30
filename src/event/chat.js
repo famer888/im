@@ -90,7 +90,7 @@ const fnChatWindowUpdate = async (info) => {
         // 如果不存在则获取信息后，再变更
         if (updateInfo.type === "friend") {
             // 如果是 系统账户的消息
-            if ([10001, 10005].includes(updateInfo.id)) {
+            if ([10001, 10005, 10006].includes(updateInfo.id)) {
                 chatInfo = {
                     pic: _.get(updateInfo, "sendUser.icon"),
                     name:
@@ -146,10 +146,14 @@ const fnChatWindowUpdate = async (info) => {
         returnInfo.chatList = list;
         returnInfo.chatTopSize = chatTopSize;
 
-        const cacheNames = {"group": "MessageGroupList", "friend": "MessageUserList", "channel": "MessageChannelList"}
+        const cacheNames = {
+            "group": "MessageGroupList",
+            "friend": "MessageUserList",
+            "channel": "MessageChannelList"
+        }
         // 同步到本地
         Cache(
-            `${loginId}${ 
+            `${loginId}${
                 cacheNames[updateInfo.type] || "MessageUserList"
             }`,
             returnInfo.chatList.filter((item) => item.type === updateInfo.type)
