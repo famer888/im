@@ -77,16 +77,14 @@ const eventUpdateChannelInfo = (operateType, {channelId, channelName, icon}) => 
 
 // 频道通知
 const fnChannelNoticeMessage = async (data) => {
-
     const { channelInfo, subscriberInfo, eventType, channelNoticeMsg, channelId } = data || {};
     const text = (origin, replace) => i18n.t(origin) || i18n.t(replace) || replace;
     const { operateType } = channelInfo || {};
     const { operateType: subscriberOperateType } = subscriberInfo || {};
-    let content = '', notificationType = '';
+    let content = '';
     switch(true) {
       // 加入频道
       case eventType === 2 && subscriberOperateType === 0:
-        notificationType = "channelJoin";
         content = text(channelNoticeMsg?.noticeMsg, '你已加入该频道');
         break;
       // 管理员变更
@@ -112,9 +110,8 @@ const fnChannelNoticeMessage = async (data) => {
 /**
  * 添加频道通知到统一的"频道通知"会话
  */
-const fnAddChannelNoticeToChat = async (content, channelId) => {
+const fnAddChannelNoticeToChat = async (content) => {
     const timestamp = Date.now();
-    const customMsgId = generateUniqueId();
     const loginId = eventCommon.fnCommonInfoRU({ getId: "loginId" });
 
 

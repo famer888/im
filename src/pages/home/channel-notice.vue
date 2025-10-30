@@ -1,8 +1,13 @@
 <template>
   <div class="channelNotice">
     <h1>{{ $t("频道通知") }}</h1>
-    <ul class="notify-box">
-      <li v-for="(item, index) in list" :key="index">
+    <ul class="notify-box" ref="notifyBox" @scroll="handleScroll">
+      <li
+        v-for="(item, index) in list"
+        :key="index"
+        :class="{ 'clickable': item.jumpPage }"
+        @click="handleChannelClick(item)"
+      >
         <ComTextAvatar
           v-if="!item.icon"
           class="textAvatar"
@@ -19,18 +24,22 @@
         </div>
         <p class="line-notify">{{ item.content }}</p>
       </li>
+      <li v-if="loading" class="loading-tip">{{ $t("加载中...") }}</li>
+      <li v-if="!hasMore && list.length > 0" class="no-more-tip">{{ $t("没有更多了") }}</li>
     </ul>
-    <div v-if="list.length === 0" class="none-data-tip">
+    <div v-if="list.length === 0 && !loading" class="none-data-tip">
       {{ $t("暂无通知") }}
     </div>
   </div>
 </template>
 <script>
 import { chatTime, generateUniqueId } from "@/utils/base";
-import { getChannelEventList } from "@/api/imChannel";
+import { getChannelEventList, getChannelDetail } from "@/api/imChannel";
+import { Cache } from "@/cache";
 
 // 事件
 import eventBase from "@/event/base";
+import eventCommon from "@/event/common";
 
 // 组件
 import ComTextAvatar from "@/components/text-avatar.vue";
@@ -45,7 +54,9 @@ export default {
       list: [],
       chatTime,
       pageNum: 1,
-      pageSize: 100,
+      pageSize: 20,
+      loading: false,
+      hasMore: true,
     };
   },
   async mounted() {
@@ -55,15 +66,126 @@ export default {
     eventBase.fnCommunicationMonitoring(
       "channelNoticeUpdate",
       ["channelNoticeUpdate"],
-      () => this.getChannelNoticeList()
+      () => this.refreshList()
     );
   },
   beforeDestroy() {
     eventBase.fnCommunicationMonitoring("channelNoticeUpdate", null);
   },
   methods: {
-    async getChannelNoticeList() {
+    // 点击频道通知，跳转到频道
+    async handleChannelClick(item) {
+      // 如果 jumpPage 不为真或者不等于频道ID，则不跳转
+      if (!item.jumpPage || !item.id) {
+        return;
+      }
+
       try {
+        // 获取频道信息，优先从本地列表查找，再从缓存查找
+        let channelInfo = await this.findChannelInfo(item.id);
+
+        if (!channelInfo) {
+          // 如果本地和缓存都没有，从服务器获取
+          const res = await getChannelDetail({ channelId: item.id });
+          if (res && res.data) {
+            channelInfo = {
+              channelId: res.data.channelId,
+              channelName: res.data.channelName,
+              icon: res.data.icon,
+              logoColor: res.data.logoColor,
+              adminPrivacy: res.data.adminPrivacy,
+            };
+          }
+        }
+
+        if (channelInfo) {
+          // 跳转到频道聊天窗口
+          eventBase.fnCommunicationSendMsg({
+            operator: 'activeChange',
+            data: {
+              ...channelInfo,
+              id: channelInfo.channelId,
+              name: channelInfo.channelName,
+              pic: channelInfo.icon,
+              type: 'channel',
+              comType: 'chat',
+            },
+          });
+        } else {
+          window.$toast(this.$t("频道信息获取失败"));
+        }
+      } catch (error) {
+        console.error("跳转频道失败:", error);
+        window.$toast(this.$t("频道跳转失败"));
+      }
+    },
+
+    // 查找频道信息：本地列表 -> 缓存
+    async findChannelInfo(channelId) {
+      const loginId = eventCommon.fnCommonInfoRU({ getId: "loginId" });
+
+      // 1. 从缓存的频道列表中查找
+      const channelList = await Cache(`${loginId}-ChannelList`);
+      if (channelList && channelList.length > 0) {
+        const channel = channelList.find(item => item.channelId === channelId);
+        if (channel) {
+          return channel;
+        }
+      }
+
+      // 2. 从缓存的聊天列表中查找
+      const chatList = await Cache(`${loginId}MessageChannelList`);
+      if (chatList && chatList.length > 0) {
+        const chatChannel = chatList.find(item => item.id === channelId && item.type === 'channel');
+        if (chatChannel) {
+          return {
+            channelId: chatChannel.id,
+            channelName: chatChannel.name || chatChannel.channelName,
+            icon: chatChannel.icon || chatChannel.pic,
+            logoColor: chatChannel.logoColor,
+            adminPrivacy: chatChannel.adminPrivacy,
+          };
+        }
+      }
+
+      return null;
+    },
+
+    // 滚动处理
+    handleScroll(e) {
+      const el = e.target;
+      const scrollHeight = el.scrollHeight;
+      const scrollTop = el.scrollTop;
+      const clientHeight = el.clientHeight;
+
+      // 触底阈值为50px
+      if (scrollHeight - scrollTop - clientHeight < 50) {
+        this.loadMore();
+      }
+    },
+
+    // 加载更多
+    async loadMore() {
+      if (this.loading || !this.hasMore) {
+        return;
+      }
+
+      this.pageNum++;
+      await this.getChannelNoticeList(true);
+    },
+
+    // 刷新列表
+    async refreshList() {
+      this.pageNum = 1;
+      this.hasMore = true;
+      await this.getChannelNoticeList(false);
+    },
+
+    async getChannelNoticeList(isLoadMore = false) {
+      if (this.loading) return;
+
+      try {
+        this.loading = true;
         const res = await getChannelEventList({
           pageNum: this.pageNum,
           pageSize: this.pageSize,
@@ -71,7 +193,7 @@ export default {
 
         if (res && res.data && res.data.rowList) {
           // 格式化数据
-          this.list = res.data.rowList.map(item => ({
+          const newList = res.data.rowList.map(item => ({
             id: item.channelId,
             jumpPage: item.jumpPage,
             eventReqId: item.eventReqId || item.channelEventReqId,
@@ -81,12 +203,33 @@ export default {
             content: item.noticeMsg,
             sendTime: Number(item.createTime || item.updateTime || Date.now()),
           }));
+
+          if (isLoadMore) {
+            // 追加数据
+            this.list = [...this.list, ...newList];
+          } else {
+            // 替换数据
+            this.list = newList;
+          }
+
+          // 判断是否还有更多数据
+          if (newList.length < this.pageSize) {
+            this.hasMore = false;
+          }
         } else {
-          this.list = [];
+          if (!isLoadMore) {
+            this.list = [];
+          }
+          this.hasMore = false;
         }
       } catch (error) {
         console.error("获取频道通知列表失败:", error);
-        this.list = [];
+        if (!isLoadMore) {
+          this.list = [];
+        }
+        this.hasMore = false;
+      } finally {
+        this.loading = false;
       }
     },
   },
@@ -153,6 +296,10 @@ export default {
         }
       }
 
+      &.clickable {
+        cursor: pointer;
+      }
+
       > img,
       > .textAvatar {
         position: absolute;
@@ -196,6 +343,23 @@ export default {
         text-overflow: ellipsis;
         overflow: hidden;
         white-space: nowrap;
+      }
+    }
+
+    .loading-tip,
+    .no-more-tip {
+      text-align: center;
+      padding: 16px 0;
+      font-size: 12px;
+      color: #999;
+      height: auto !important;
+
+      &::after {
+        display: none !important;
+      }
+
+      &:hover {
+        background: transparent !important;
       }
     }
   }
