@@ -1165,7 +1165,7 @@ export default {
       if( !channelId ) return
       const prams = {
         pageNum: 1,
-        pageSize: 10,
+        pageSize: 20,
         channelId
       }
       if(adminPrivacy) {
@@ -1242,8 +1242,8 @@ export default {
     'chatContent.channelDetailDone': {
       handler(doneFetching) {
         // 为了确保adminPrivacy的值是最新的，所以需要在这里获取，而不是在mounted中获取
-        const { id, type, adminPrivacy } = this.chatContent;
-        if(type === "channel" && adminPrivacy && doneFetching) {
+        const { id, type } = this.chatContent;
+        if(type === "channel" && doneFetching) {
             this.handleChannelMemberGet();
         }
       },

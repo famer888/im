@@ -1003,7 +1003,7 @@ const createMainWindow = async () => {
 
       // 监听 通知显示
     ipcMain.on("alertNotification", (event, args) => {
-        console.log('alertNotification-1-', mainWindow.isMinimized(), !mainWindowIsFocused)
+        // console.log('alertNotification-1-', mainWindow.isMinimized(), !mainWindowIsFocused)
         if (
             mainWindow.isMinimized() 
             // || !mainWindowIsFocused
