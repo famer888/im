@@ -136,7 +136,6 @@ export default {
           }
         })
       }
-
       // 拆分html
       const tagList = splitHtmlStringToObjects(htmlString);
       // at的名称列表
@@ -200,6 +199,7 @@ export default {
     padding-right: 75px;
     line-height: 22px;
     white-space: pre-wrap;
+    letter-spacing: 0.5px;
 
     .at {
       margin: 0;
