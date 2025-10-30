@@ -738,7 +738,7 @@ export default {
         if (this.navType !== 0) {
           this.navType = 0;
         }
-      } else if (info.comType === "notificationGroup") {
+      } else if (["channelNotice", "notificationGroup"].includes(info.comType)) {
         if (this.unreadObj[idStr]) {
           delete this.unreadObj[idStr];
           this.unreadObj = _.cloneDeep(this.unreadObj);

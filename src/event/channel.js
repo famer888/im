@@ -2,18 +2,23 @@ import { Cache } from "@/cache";
 import eventCommon from "./common";
 import eventBase from "./base";
 import { getChannelList, getChannelDetail } from "@/api/imChannel";
+import i18n from "@/assets/lang/i18n";
+import { generateUniqueId } from "@/utils/base";
 
 const handleChannelEvents = (data) => {
-    const { channelInfo, channelId, eventType, subscriberInfo } = data || {};
+    const { channelInfo, channelId, eventType, subscriberInfo, channelNoticeMsg } = data || {};
     const { operateType } = channelInfo || {};
     const { operateType: subscriberOperateType } = subscriberInfo || {};
 
+    // 频道通知消息
+    channelNoticeMsg?.isNotice && fnChannelNoticeMessage(data);
     // 频道订阅变更事件
     if (eventType === 2) {
         switch(subscriberOperateType) {
           case 0:
             // 频道订阅者加入事件
             fnHandleChannelSubscriberJoin(data);
+            // 频道系统消息
             return;
         }
     }
@@ -70,6 +75,90 @@ const eventUpdateChannelInfo = (operateType, {channelId, channelName, icon}) => 
     });
 }
 
+// 频道通知
+const fnChannelNoticeMessage = async (data) => {
+    const { channelInfo, subscriberInfo, eventType, channelNoticeMsg, channelId } = data || {};
+    const text = (origin, replace) => i18n.t(origin) || i18n.t(replace) || replace;
+    const { operateType } = channelInfo || {};
+    const { operateType: subscriberOperateType } = subscriberInfo || {};
+    let content = '';
+    switch(true) {
+      // 加入频道
+      case eventType === 2 && subscriberOperateType === 0:
+        content = text(channelNoticeMsg?.noticeMsg, '你已加入该频道');
+        break;
+      // 管理员变更
+      case eventType === 2 && subscriberOperateType === 1:
+        content = text(channelNoticeMsg?.noticeMsg, '管理员变更');
+        break;
+      // 启用频道
+      case eventType === 2 && subscriberOperateType === 5:
+        content = text(channelNoticeMsg?.noticeMsg, '频道已启用');
+        break;
+      // 禁用频道
+      case eventType === 1 && operateType === 6:
+        content = text(channelNoticeMsg?.noticeMsg, '频道已禁用');
+        break;
+      default:
+        return;
+    }
+
+    // 添加频道通知到统一的"频道通知"会话
+    fnAddChannelNoticeToChat(content, channelNoticeMsg?.unReadNum);
+}
+
+/**
+ * 添加频道通知到统一的"频道通知"会话
+ */
+const fnAddChannelNoticeToChat = async (content, unReadNum) => {
+    const timestamp = Date.now();
+    const loginId = eventCommon.fnCommonInfoRU({ getId: "loginId" });
+    const customMsgId = generateUniqueId();
+    const idStr = "channelNoticefriend"; // id + type
+
+    // 更新未读数到缓存
+    const res = await Cache(`${loginId}-unread`);
+    const resUnread = (res && res.unread) || {};
+
+    // 设置未读对象
+    const unreadObj = {
+        count: unReadNum || 0,
+        time: timestamp,
+        unreadID: customMsgId,
+    };
+
+    // 更新缓存中的未读数
+    resUnread[idStr] = unreadObj;
+    await Cache(`${loginId}-unread`, { unread: resUnread });
+
+    // 构建消息数据（用于显示在会话列表和聊天记录）
+
+    // 发送msgNew通知，这会触发创建或更新会话
+    eventBase.fnCommunicationSendMsg({
+        operator: "msgNew",
+        operatorType: "channelNotice",
+        data: {
+            id: "channelNotice",
+            friendId: "channelNotice",
+            type: "friend",
+            name: "频道通知",
+            content,  // 会话列表显示
+            time: timestamp,
+            sendTime: timestamp,
+            receiveUid: loginId,
+            customMsgId,
+            unreadCount: unReadNum || 0,  // 未读数
+            unreadObj,  // 未读对象，同步到其他组件
+        },
+    });
+
+
+    // 通知频道通知列表更新
+    eventBase.fnCommunicationSendMsg({
+        operator: "channelNoticeUpdate",
+        data: {},
+    });
+}
 /**
  * 移除本地的频道
  */
