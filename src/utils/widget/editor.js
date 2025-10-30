@@ -125,8 +125,11 @@ export const fnTextGetAt = (str, atList, isLeader) => {
     let names = [];
 
     for (const item of atList) {
-        const memberName = item.name || item.nickName;
-        if (str.includes(memberName) && memberName.includes("@")) {
+        let memberName = "";
+        if(str.includes(item.name)) memberName = item.name;
+        else if(str.includes(item.nickName)) memberName = item.nickName;
+        
+        if (memberName && str.includes("@")) {
             const index = str.indexOf(memberName);
 
             // 如果前面是at
@@ -137,7 +140,7 @@ export const fnTextGetAt = (str, atList, isLeader) => {
                     lastIndex === str.length ||
                     [" ", "@"].includes(str[lastIndex])
                 ) {
-                    names.push(memberName);
+                    names.push(item.name || item.nickName);
                 }
             }
         }
