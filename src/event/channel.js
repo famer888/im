@@ -91,10 +91,12 @@ const fnAddChannelNoticeToChat = async (data) => {
         // 更新未读数到缓存
         const res = await Cache(`${loginId}-unread`);
         const resUnread = (res && res.unread) || {};
+        // 这里ws的unReadNum跟本地的不一致，因为有些事件他们没有计算未读
+        const unReadCount = (unReadNum?.toNumber ? unReadNum.toNumber() : unReadNum) || (resUnread?.channelNoticefriend?.count || 0) + 1
 
         // 设置未读对象
         const unreadObj = {
-            count: unReadNum || 0,
+            count: unReadCount,
             time: timestamp,
             unreadID: customMsgId,
         };
@@ -119,7 +121,7 @@ const fnAddChannelNoticeToChat = async (data) => {
                 sendTime: timestamp,
                 receiveUid: loginId,
                 customMsgId,
-                unreadCount: unReadNum || 0,  // 未读数
+                unreadCount: unReadCount,  // 未读数
                 unreadObj,  // 未读对象，同步到其他组件
                 pic: require("@/assets/images/logo/channel-notice.webp"),
             },
