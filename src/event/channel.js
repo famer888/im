@@ -11,7 +11,7 @@ const handleChannelEvents = (data) => {
     const { operateType: subscriberOperateType } = subscriberInfo || {};
 
     // 频道通知消息
-    channelNoticeMsg?.isNotice && fnChannelNoticeMessage(data);
+    fnAddChannelNoticeToChat(data);
     // 频道订阅变更事件
     if (eventType === 2) {
         switch(subscriberOperateType) {
@@ -75,42 +75,13 @@ const eventUpdateChannelInfo = (operateType, {channelId, channelName, icon}) => 
     });
 }
 
-// 频道通知
-const fnChannelNoticeMessage = async (data) => {
-    const { channelInfo, subscriberInfo, eventType, channelNoticeMsg, channelId } = data || {};
-    const text = (origin, replace) => i18n.t(origin) || i18n.t(replace) || replace;
-    const { operateType } = channelInfo || {};
-    const { operateType: subscriberOperateType } = subscriberInfo || {};
-    let content = '';
-    switch(true) {
-      // 加入频道
-      case eventType === 2 && subscriberOperateType === 0:
-        content = text(channelNoticeMsg?.noticeMsg, '你已加入该频道');
-        break;
-      // 管理员变更
-      case eventType === 2 && subscriberOperateType === 1:
-        content = text(channelNoticeMsg?.noticeMsg, '管理员变更');
-        break;
-      // 启用频道
-      case eventType === 2 && subscriberOperateType === 5:
-        content = text(channelNoticeMsg?.noticeMsg, '频道已启用');
-        break;
-      // 禁用频道
-      case eventType === 1 && operateType === 6:
-        content = text(channelNoticeMsg?.noticeMsg, '频道已禁用');
-        break;
-      default:
-        return;
-    }
-
-    // 添加频道通知到统一的"频道通知"会话
-    fnAddChannelNoticeToChat(content, channelNoticeMsg?.unReadNum);
-}
-
 /**
  * 添加频道通知到统一的"频道通知"会话
  */
-const fnAddChannelNoticeToChat = async (content, unReadNum) => {
+const fnAddChannelNoticeToChat = async (data) => {
+    const { channelInfo, subscriberInfo, eventType, channelNoticeMsg, channelId } = data || {};
+    if (!channelNoticeMsg?.isNotice) return null;
+    const { noticeMsg, unReadNum } = channelNoticeMsg || {};
     const timestamp = Date.now();
     const loginId = eventCommon.fnCommonInfoRU({ getId: "loginId" });
     const customMsgId = generateUniqueId();
@@ -142,7 +113,7 @@ const fnAddChannelNoticeToChat = async (content, unReadNum) => {
             friendId: "channelNotice",
             type: "friend",
             name: "频道通知",
-            content,  // 会话列表显示
+            content: noticeMsg,  // 会话列表显示
             time: timestamp,
             sendTime: timestamp,
             receiveUid: loginId,
