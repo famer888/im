@@ -79,57 +79,59 @@ const eventUpdateChannelInfo = (operateType, {channelId, channelName, icon}) => 
  * 添加频道通知到统一的"频道通知"会话
  */
 const fnAddChannelNoticeToChat = async (data) => {
-    const { channelInfo, subscriberInfo, eventType, channelNoticeMsg, channelId } = data || {};
-    if (!channelNoticeMsg?.isNotice) return null;
-    const { noticeMsg, unReadNum } = channelNoticeMsg || {};
-    const timestamp = Date.now();
-    const loginId = eventCommon.fnCommonInfoRU({ getId: "loginId" });
-    const customMsgId = generateUniqueId();
-    const idStr = "channelNoticefriend"; // id + type
+    const { channelInfo, subscriberInfo, eventType, channelNoticeMsg, msg } = data || {};
+    const isChannelCreatedNotice = eventType === 2 && subscriberInfo?.operateType === 0;
+    if (channelNoticeMsg?.isNotice || isChannelCreatedNotice) {
+        const { noticeMsg, unReadNum } = channelNoticeMsg || {};
+        const timestamp = Date.now();
+        const loginId = eventCommon.fnCommonInfoRU({ getId: "loginId" });
+        const customMsgId = generateUniqueId();
+        const idStr = "channelNoticefriend"; // id + type
 
-    // 更新未读数到缓存
-    const res = await Cache(`${loginId}-unread`);
-    const resUnread = (res && res.unread) || {};
+        // 更新未读数到缓存
+        const res = await Cache(`${loginId}-unread`);
+        const resUnread = (res && res.unread) || {};
 
-    // 设置未读对象
-    const unreadObj = {
-        count: unReadNum || 0,
-        time: timestamp,
-        unreadID: customMsgId,
-    };
-
-    // 更新缓存中的未读数
-    resUnread[idStr] = unreadObj;
-    await Cache(`${loginId}-unread`, { unread: resUnread });
-
-    // 构建消息数据（用于显示在会话列表和聊天记录）
-
-    // 发送msgNew通知，这会触发创建或更新会话
-    eventBase.fnCommunicationSendMsg({
-        operator: "msgNew",
-        operatorType: "channelNotice",
-        data: {
-            id: "channelNotice",
-            friendId: "channelNotice",
-            type: "friend",
-            name: "频道通知",
-            content: noticeMsg,  // 会话列表显示
+        // 设置未读对象
+        const unreadObj = {
+            count: unReadNum || 0,
             time: timestamp,
-            sendTime: timestamp,
-            receiveUid: loginId,
-            customMsgId,
-            unreadCount: unReadNum || 0,  // 未读数
-            unreadObj,  // 未读对象，同步到其他组件
-            pic: require("@/assets/images/logo/channel-notice.webp"),
-        },
-    });
+            unreadID: customMsgId,
+        };
+
+        // 更新缓存中的未读数
+        resUnread[idStr] = unreadObj;
+        await Cache(`${loginId}-unread`, { unread: resUnread });
+
+        // 构建消息数据（用于显示在会话列表和聊天记录）
+
+        // 发送msgNew通知，这会触发创建或更新会话
+        eventBase.fnCommunicationSendMsg({
+            operator: "msgNew",
+            operatorType: "channelNotice",
+            data: {
+                id: "channelNotice",
+                friendId: "channelNotice",
+                type: "friend",
+                name: "频道通知",
+                content: noticeMsg || msg,  // 会话列表显示
+                time: timestamp,
+                sendTime: timestamp,
+                receiveUid: loginId,
+                customMsgId,
+                unreadCount: unReadNum || 0,  // 未读数
+                unreadObj,  // 未读对象，同步到其他组件
+                pic: require("@/assets/images/logo/channel-notice.webp"),
+            },
+        });
 
 
-    // 通知频道通知列表更新
-    eventBase.fnCommunicationSendMsg({
-        operator: "channelNoticeUpdate",
-        data: {},
-    });
+        // 通知频道通知列表更新
+        eventBase.fnCommunicationSendMsg({
+            operator: "channelNoticeUpdate",
+            data: {},
+        });
+    }
 }
 /**
  * 移除本地的频道
