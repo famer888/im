@@ -37,6 +37,20 @@ const handleChannelEvents = (data) => {
             case 4:
                 eventRemoveLocalChannel(Number(channelId));
                 break;
+            // 频道启用
+            case 5:
+                eventToggleChannelDisabled({
+                    channelId: Number(channelId),
+                    isDisable: false,
+                });
+                break;
+            // 频道禁用
+            case 6:
+                eventToggleChannelDisabled({
+                    channelId: Number(channelId),
+                    isDisable: true,
+                });
+                break;
             default:
                 break;
         }
@@ -71,6 +85,23 @@ const eventUpdateChannelInfo = (operateType, {channelId, channelName, icon}) => 
             channelId: updateData.channelId,
             id: updateData.id,
             values: updateData,
+        },
+    });
+}
+
+/**
+ * 频道启用/禁用事件处理
+ */
+const eventToggleChannelDisabled = async ({ channelId, isDisable }) => {
+
+    // 通过eventBase发送消息给其他订阅者
+    eventBase.fnCommunicationSendMsg({
+        operator: "channelToggleDisabled",
+        data: {
+            id: channelId,
+            type: "channel",
+            channelId,
+            isDisable,
         },
     });
 }
