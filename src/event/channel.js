@@ -149,6 +149,7 @@ const fnAddChannelNoticeToChat = async (content, unReadNum) => {
             customMsgId,
             unreadCount: unReadNum || 0,  // 未读数
             unreadObj,  // 未读对象，同步到其他组件
+            pic: require("@/assets/images/logo/channel-notice.webp"),
         },
     });
 
