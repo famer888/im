@@ -7,7 +7,9 @@ import axiosApi from "./api/base/axios";
 import i18n from "./assets/lang/i18n";
 import ComImage from "@/components/image.vue";
 import { fnPopUpMountToWindow } from "@/utils/pop-up";
+import infiniteScroll from 'vue-infinite-scroll';
 
+Vue.use(infiniteScroll);
 Vue.use(VueRouter);
 Vue.component("ComImage", ComImage);
 Vue.use(axiosApi);

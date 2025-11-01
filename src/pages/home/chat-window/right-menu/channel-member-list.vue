@@ -8,14 +8,6 @@
         @click="searchText = ''"
       />
       <input type="text" :placeholder="$t('搜索')" v-model="searchText" />
-      <!-- 去除频道的强制刷新群成员 -->
-      <!-- <span @click="handleGroupForceInit">
-        <img
-          src="@/assets/images/refresh.png"
-          :class="{ updating: isUpdating }"
-        />
-        <span>{{ $t("群成员列表强制刷新") }}</span>
-      </span> -->
     </div>
     <ul
       :style="{
@@ -23,6 +15,9 @@
         opacity: isUpdating ? 0.6 : 1,
         minHeight: memberListHeight + 'px',
       }"
+      v-infinite-scroll="nextPage" 
+      :infinite-scroll-disabled="loading || isEnd" 
+      infinite-scroll-distance="50" 
     >
       <li
         v-for="item in searchList"
@@ -58,30 +53,24 @@ import eventCommon from '@/event/common';
 // 获取频道
 import { getChannelUsers } from "@/api/imChannel";
 
+// 工具
+import { formatChannelManages } from "@/utils/formats";
+
 export default {
-  props: ["chatContent", "showIndex", "memberInfoList", "friendList"],
+  props: ["chatContent", "showIndex", "friendList"],
   data() {
     return {
       searchText: "",
-      pageSize: 40,
       isUpdating: false,
       memberListHeight: 0,
       memberList: [],
       pageNum: 1,
+      pageSize: 20,
+      loading: false, // 加载中
+      isEnd: false, // 是否加载完全部成员 
     };
   },
-  watch: {
-    memberInfoList: {
-      handler(newInfo, oldInfo) {
-        this.memberList = newInfo
-      },
-      immediate: false,
-      deep: true
-    }
-  },
-  created() {
-    this.memberList = _.cloneDeep(this.memberInfoList)
-  },
+  inject: ["provideChannelUserList"],
   computed: {
     /**
      * 搜索后的列表
@@ -113,13 +102,17 @@ export default {
     },
   },
   mounted() {
+    this.memberList = this.provideChannelUserList();
     // 初始化高度
-    this.memberListHeight = this.memberInfoList.length * 50;
+    this.memberListHeight = this.memberList.length * 50;
 
     // 添加监听 设置通信事件的监听机制
     eventBase.fnCommunicationMonitoring(
       "rightMenuMemberList",
-      ["friendRemarkUpdate"],
+      [
+        "friendRemarkUpdate",
+        "channelNextPageEnd",
+      ],
       this.eventHandling
     );
   },
@@ -127,6 +120,37 @@ export default {
     eventBase.fnCommunicationMonitoring("rightMenuMemberList", null);
   },
   methods: {
+    // 下一页
+    nextPage() {
+      console.log('nextPage--', this.isEnd)
+      if(!this.loading && !this.isEnd && this.memberList.length) {
+        this.loading = true;
+        this.pageNum += 1;
+        this.handleChannelMemberGet();
+      }
+    },
+    async handleChannelMemberGet() {
+      const { channelId, adminPrivacy } = this.chatContent;
+      if( !channelId ) return
+      const prams = {
+        pageNum: this.pageNum,
+        pageSize: this.pageSize,
+        channelId
+      }
+      let newList = [];
+      if(adminPrivacy) {
+       const res = await getChannelUsers(prams);
+        newList = res.data?.rowList || [];
+      } else {
+       const res = getChannelManages(prams)
+        newList = formatChannelManages(res.data?.rowList || []);
+      }
+      this.loading = false;
+      if(newList?.length < this.pageSize) {
+        this.isEnd = true;
+      }
+      this.memberList = this.sortList([...this.memberList, ...newList]);
+    },
     getRemark(info) {
        if(!info?.uid) return "";
        const friendRemarks = eventCommon.fnFriendRemarksGet();
@@ -135,17 +159,33 @@ export default {
         return data.name;
        }
     },
-    handleChannelMemberGet() {
-      const { channelId } = this.chatContent;
-      if( !channelId ) return
-      const prams = {
-        pageNum: 1,
-        pageSize: 500,
-        channelId
-      }
-      getChannelUsers(prams).then(res => {
-        // channelUserList = res.data?.rowList ||[]
-      })
+    /**
+     * 排序方法：先按memberType升序，再按lastTime降序（最近的排前面）
+     * @param {Array} list - 需要排序的数组
+     * @returns {Array} 排序后的新数组（不修改原数组）
+     */
+    sortList(list) {
+      // 深拷贝数组，避免修改原数组
+      const sortedList = [...list];
+      
+      sortedList.sort((a, b) => {
+        // 1. 先按 memberType 升序排序
+        if (a.memberType !== b.memberType) {
+          // 处理可能的 undefined 情况（确保 undefined 排在最后）
+          if (a.memberType === undefined) return 1;
+          if (b.memberType === undefined) return -1;
+          return a.memberType - b.memberType; // 数字类型升序
+        }
+        
+        // 2. memberType 相同则按 lastTime 降序排序（最近的排前面）
+        const timeA = a.userInfoDTO?.lastTime || 0; // 处理可能的 undefined
+        const timeB = b.userInfoDTO?.lastTime || 0;
+        
+        // 时间戳大的排前面（降序）
+        return timeB - timeA;
+      });
+      
+      return sortedList;
     },
 
     /**
@@ -187,23 +227,6 @@ export default {
         },
       });
     },
-    /**
-     * 去除频道的群强制更新
-     */
-    // handleGroupForceInit() {
-    //   if (!this.isUpdating) {
-    //     this.isUpdating = true;
-    //     // console.log('强制更新初始化当前群信息')
-    //     groupEventForceInit({ groupIds: [this.chatContent.id] }).then((res) => {
-    //       const errCode = _.get(res, "commonResult.errCode");
-
-    //       if (errCode !== 200) {
-    //         this.isUpdating = false;
-    //         window.$toast("服务器繁忙，请稍后再试");
-    //       }
-    //     });
-    //   }
-    // },
     handleOnlineTime(createTime) {
       // 小于1分钟，提示不久前在线
       // 小于1小时，提示多少分钟前在线

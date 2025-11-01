@@ -83,6 +83,7 @@
     "vue-context": "^6.0.0",
     "vue-datepicker-local": "^1.0.19",
     "vue-i18n": "^8.24.0",
+    "vue-infinite-scroll": "^2.0.2",
     "vue-router": "^3.4.9",
     "vue-scroll-picker": "^0.8.2"
   },
