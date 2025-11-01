@@ -7,7 +7,7 @@
       <div class="member-list">
 
       </div>
-      <div class="title">{{ $t("管理员") }}（{{ managerList.length }}/20）</div>
+      <div class="title">{{ $t("管理员") }}（{{ managerList.length + 1 }}/20）</div>
       <div class="member-list">
         <div v-if="hostInfo" class="member-item cursor">
           <ComImage
@@ -60,10 +60,11 @@
 
 <script>
 // api
-import { deleteManage } from "@/api/imChannel";
+import { deleteManage, getChannelManages } from "@/api/imChannel";
 
 // 工具
 import { longToNum } from "@/utils/base";
+import { formatChannelManages } from "@/utils/formats";
 
 // 事件
 import eventCommon from "@/event/common";
@@ -85,8 +86,25 @@ export default {
     });
     // 群主信息设置
     this.handelHostInfoSet();
+    this.getManageList();
   },
   methods: {
+    getManageList() {
+      const prams = {
+        pageNum: 1,
+        pageSize: 200,
+        channelId: this.channelId,
+      }
+      getChannelManages(prams).then(res => {
+            let list = formatChannelManages(res.data?.rowList || []) 
+            // 管理员列表
+            this.managerList = list.filter((item) => {
+              return item.memberType === 2;
+            });
+            // 群主信息设置
+            this.handelHostInfoSet();
+        })
+    },
        /**
      * 成员的会话框 显示
      */
