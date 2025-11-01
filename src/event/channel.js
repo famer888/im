@@ -11,7 +11,7 @@ const handleChannelEvents = (data) => {
     const { operateType: subscriberOperateType } = subscriberInfo || {};
 
     // 频道通知消息
-    channelNoticeMsg?.isNotice && fnChannelNoticeMessage(data);
+    fnAddChannelNoticeToChat(data);
     // 频道订阅变更事件
     if (eventType === 2) {
         switch(subscriberOperateType) {
@@ -36,6 +36,20 @@ const handleChannelEvents = (data) => {
             // 频道解散
             case 4:
                 eventRemoveLocalChannel(Number(channelId));
+                break;
+            // 频道启用
+            case 5:
+                eventToggleChannelDisabled({
+                    channelId: Number(channelId),
+                    isDisable: false,
+                });
+                break;
+            // 频道禁用
+            case 6:
+                eventToggleChannelDisabled({
+                    channelId: Number(channelId),
+                    isDisable: true,
+                });
                 break;
             default:
                 break;
@@ -75,89 +89,82 @@ const eventUpdateChannelInfo = (operateType, {channelId, channelName, icon}) => 
     });
 }
 
-// 频道通知
-const fnChannelNoticeMessage = async (data) => {
-    const { channelInfo, subscriberInfo, eventType, channelNoticeMsg, channelId } = data || {};
-    const text = (origin, replace) => i18n.t(origin) || i18n.t(replace) || replace;
-    const { operateType } = channelInfo || {};
-    const { operateType: subscriberOperateType } = subscriberInfo || {};
-    let content = '';
-    switch(true) {
-      // 加入频道
-      case eventType === 2 && subscriberOperateType === 0:
-        content = text(channelNoticeMsg?.noticeMsg, '你已加入该频道');
-        break;
-      // 管理员变更
-      case eventType === 2 && subscriberOperateType === 1:
-        content = text(channelNoticeMsg?.noticeMsg, '管理员变更');
-        break;
-      // 启用频道
-      case eventType === 2 && subscriberOperateType === 5:
-        content = text(channelNoticeMsg?.noticeMsg, '频道已启用');
-        break;
-      // 禁用频道
-      case eventType === 1 && operateType === 6:
-        content = text(channelNoticeMsg?.noticeMsg, '频道已禁用');
-        break;
-      default:
-        return;
-    }
+/**
+ * 频道启用/禁用事件处理
+ */
+const eventToggleChannelDisabled = async ({ channelId, isDisable }) => {
 
-    // 添加频道通知到统一的"频道通知"会话
-    fnAddChannelNoticeToChat(content, channelNoticeMsg?.unReadNum);
+    // 通过eventBase发送消息给其他订阅者
+    eventBase.fnCommunicationSendMsg({
+        operator: "channelToggleDisabled",
+        data: {
+            id: channelId,
+            type: "channel",
+            channelId,
+            isDisable,
+        },
+    });
 }
 
 /**
  * 添加频道通知到统一的"频道通知"会话
  */
-const fnAddChannelNoticeToChat = async (content, unReadNum) => {
-    const timestamp = Date.now();
-    const loginId = eventCommon.fnCommonInfoRU({ getId: "loginId" });
-    const customMsgId = generateUniqueId();
-    const idStr = "channelNoticefriend"; // id + type
+const fnAddChannelNoticeToChat = async (data) => {
+    const { channelInfo, subscriberInfo, eventType, channelNoticeMsg, msg } = data || {};
+    const isChannelCreatedNotice = eventType === 2 && subscriberInfo?.operateType === 0;
+    if (channelNoticeMsg?.isNotice || isChannelCreatedNotice) {
+        const { noticeMsg, unReadNum } = channelNoticeMsg || {};
+        const timestamp = Date.now();
+        const loginId = eventCommon.fnCommonInfoRU({ getId: "loginId" });
+        const customMsgId = generateUniqueId();
+        const idStr = "channelNoticefriend"; // id + type
 
-    // 更新未读数到缓存
-    const res = await Cache(`${loginId}-unread`);
-    const resUnread = (res && res.unread) || {};
+        // 更新未读数到缓存
+        const res = await Cache(`${loginId}-unread`);
+        const resUnread = (res && res.unread) || {};
+        // 这里ws的unReadNum跟本地的不一致，因为有些事件他们没有计算未读
+        const unReadCount = (unReadNum?.toNumber ? unReadNum.toNumber() : unReadNum) || (resUnread?.channelNoticefriend?.count || 0) + 1
 
-    // 设置未读对象
-    const unreadObj = {
-        count: unReadNum || 0,
-        time: timestamp,
-        unreadID: customMsgId,
-    };
-
-    // 更新缓存中的未读数
-    resUnread[idStr] = unreadObj;
-    await Cache(`${loginId}-unread`, { unread: resUnread });
-
-    // 构建消息数据（用于显示在会话列表和聊天记录）
-
-    // 发送msgNew通知，这会触发创建或更新会话
-    eventBase.fnCommunicationSendMsg({
-        operator: "msgNew",
-        operatorType: "channelNotice",
-        data: {
-            id: "channelNotice",
-            friendId: "channelNotice",
-            type: "friend",
-            name: "频道通知",
-            content,  // 会话列表显示
+        // 设置未读对象
+        const unreadObj = {
+            count: unReadCount,
             time: timestamp,
-            sendTime: timestamp,
-            receiveUid: loginId,
-            customMsgId,
-            unreadCount: unReadNum || 0,  // 未读数
-            unreadObj,  // 未读对象，同步到其他组件
-        },
-    });
+            unreadID: customMsgId,
+        };
+
+        // 更新缓存中的未读数
+        resUnread[idStr] = unreadObj;
+        await Cache(`${loginId}-unread`, { unread: resUnread });
+
+        // 构建消息数据（用于显示在会话列表和聊天记录）
+
+        // 发送msgNew通知，这会触发创建或更新会话
+        eventBase.fnCommunicationSendMsg({
+            operator: "msgNew",
+            operatorType: "channelNotice",
+            data: {
+                id: "channelNotice",
+                friendId: "channelNotice",
+                type: "friend",
+                name: "频道通知",
+                content: noticeMsg || msg,  // 会话列表显示
+                time: timestamp,
+                sendTime: timestamp,
+                receiveUid: loginId,
+                customMsgId,
+                unreadCount: unReadCount,  // 未读数
+                unreadObj,  // 未读对象，同步到其他组件
+                pic: require("@/assets/images/logo/channel-notice.webp"),
+            },
+        });
 
 
-    // 通知频道通知列表更新
-    eventBase.fnCommunicationSendMsg({
-        operator: "channelNoticeUpdate",
-        data: {},
-    });
+        // 通知频道通知列表更新
+        eventBase.fnCommunicationSendMsg({
+            operator: "channelNoticeUpdate",
+            data: {},
+        });
+    }
 }
 /**
  * 移除本地的频道

@@ -4,7 +4,10 @@
      v-if="chatContent.type === 'channel' && !chatContent.adminPrivacy"
      @click="channelDisturbSet"
      >
-      {{ (chatContent.isDisturb || chatContent.detail?.isDisturb) ? '永久静音' : '接收通知' }} 
+      {{ (chatContent.isDisturb || chatContent.detail?.isDisturb) ? '永久静音' : '接收通知' }}
+    </div>
+    <div v-else-if="chatContent.type === 'channel' && chatContent.isDisable" class="shutupTip disable">
+        <img class="disabled-icon" src="@/assets/images/chat/disabled-1.png" alt="">{{ $t("该频道已禁用") }}
     </div>
     <div
       v-else-if="(chatContent.bfShutup && chatContent.memberType > 1) || chatContent.isDisable"

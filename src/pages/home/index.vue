@@ -188,6 +188,7 @@ export default {
         "clearAll",
         "updateChannelIdentity", // 频道身份变更
         "channelUpdate", // 频道更新
+        "channelToggleDisabled", // 频道启用/禁用
       ],
       this.handleEventHandling
     );
@@ -292,6 +293,7 @@ export default {
         if (info?.type === "channel" || info?.comType === "detailsChannel") {
           getChannelDetail({ channelId: info.channelId }).then( res => {
             channelDetail = res.data;
+            // console.log('channelDetail--', channelDetail);
             eventBase.fnCommunicationSendMsg({
                   operator: "channelDetailCache",
                   data: channelDetail,
@@ -299,6 +301,7 @@ export default {
             this.infoActive = {
               ...info,
               ...channelDetail,
+              isDisable: channelDetail.status === 3,
               channelDetailDone: +new Date(),
             };
           });
@@ -498,6 +501,14 @@ export default {
                 }
             }
             break;
+        }
+        case "channelToggleDisabled": {
+          // 频道启用/禁用
+          this.infoActive = {
+            ...this.infoActive,
+            isDisable: info.isDisable,
+          };
+          break;
         }
           default:
         }
