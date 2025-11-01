@@ -1,6 +1,6 @@
 <template>
   <section class="comMemberList">
-    <div class="search">
+    <div class="search" v-if="chatContent.adminPrivacy">
       <img src="@/assets/images/headNav/search-icon.png" />
       <img
         v-show="searchText"
@@ -77,8 +77,12 @@ export default {
      * 搜索后的列表
      */
     searchList() {
+      let memberList = this.memberList || []
+      if(this.chatContent.memberType === 3) {
+        memberList = memberList.filter(item => item.memberType !== 1)
+      }
       if (!this.searchText) {
-        return this.memberList;
+        return memberList;
       }
       const regex = /^\d{2}[a-zA-Z0-9]{6}\d{2}$/
       const regex2 = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,10}$/
@@ -90,11 +94,11 @@ export default {
         console.log('匹配到68id')
        // 如果搜索的字符是符合68id规则的 则按照68id来搜索，因为群成员里不会返回68id，所以检测此id是否是好友，
        // 在的判断此好友是否在这个群里，按照此逻辑搜索过滤
-       return this.memberList.filter(item => {
+       return memberList.filter(item => {
             return item.id == friend.id
           })
       } else {
-        return this.memberList.filter(
+        return memberList.filter(
         (item) =>
           item.userInfoDTO.nickName.toLowerCase().includes(this.searchText.toLowerCase())
         );
