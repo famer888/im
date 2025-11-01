@@ -321,7 +321,7 @@ import { Cache } from "@/cache";
 import { getChannelUsers, getChannelManages } from "@/api/imChannel";
 
 // 工具
-import { setMaxLengthStr, textToEmojiText, formatTimeStamp, copyToClipboard, freeTime } from "@/utils/base";
+import { setMaxLengthStr, textToEmojiText, formatTimeStamp, copyToClipboard, freeTime, channelMemberSort } from "@/utils/base";
 import { copyText, copyImg } from "@/utils/clipboard";
 import { getEnvType } from "@/utils";
 import { formatChannelManages } from "@/utils/formats";
@@ -1170,12 +1170,12 @@ export default {
       }
       if(adminPrivacy) {
         getChannelUsers(prams).then(res => {
-            channelUserList = res.data?.rowList || [];
+            channelUserList = channelMemberSort(res.data?.rowList || []);
             this.keyComRightMenu++;
         })
       } else {
         getChannelManages(prams).then(res => {
-            channelUserList = formatChannelManages(res.data?.rowList || []) 
+            channelUserList = formatChannelManages(channelMemberSort(res.data?.rowList || [])) 
             this.keyComRightMenu++;
         })
       }

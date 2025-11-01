@@ -619,3 +619,32 @@ export const isNUN = (value) => {
   // 其他情况均为有效值
   return false;
 }
+
+ /**
+ * 频道成员排序方法：先按memberType升序，再按lastTime降序（最近的排前面）
+ * @param {Array} list - 需要排序的数组
+ * @returns {Array} 排序后的新数组（不修改原数组）
+ */
+export const channelMemberSort = (list) => {
+      // 深拷贝数组，避免修改原数组
+      const sortedList = [...list];
+      
+      sortedList.sort((a, b) => {
+        // 1. 先按 memberType 升序排序
+        if (a.memberType !== b.memberType) {
+          // 处理可能的 undefined 情况（确保 undefined 排在最后）
+          if (a.memberType === undefined) return 1;
+          if (b.memberType === undefined) return -1;
+          return a.memberType - b.memberType; // 数字类型升序
+        }
+        
+        // 2. memberType 相同则按 lastTime 降序排序（最近的排前面）
+        const timeA = a.userInfoDTO?.lastTime || 0; // 处理可能的 undefined
+        const timeB = b.userInfoDTO?.lastTime || 0;
+        
+        // 时间戳大的排前面（降序）
+        return timeB - timeA;
+      });
+      
+      return sortedList;
+}
