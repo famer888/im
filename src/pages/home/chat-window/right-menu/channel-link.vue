@@ -4,7 +4,7 @@
     <div class="info">
       <a class="link" @click="copyTest(chatContent?.link)">{{chatContent?.link || ""}}</a>
       <div class="code-entrance" @click="$emit('showQrCode')">
-        <img class="code-icon" src="@/assets/images/channel/qrcode.png" />
+        <img class="code-icon" src="@/assets/images/chat/code.png" />
         <img class="more-icon" src="@/assets/images/channel/more.png" />
       </div>
     </div>
