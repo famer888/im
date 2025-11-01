@@ -75,7 +75,7 @@
     </div>
     <button @click="handleSendMsgText()">{{ $t("发送") }}</button>
     <ComAtList
-      v-if="atListVisible"
+      v-if="atListVisible && chatContent.type !== 'channel'"
       :type="chatContent.type"
       :searchText="searchText"
       :isLeader="isLeader"
