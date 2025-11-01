@@ -25,7 +25,7 @@
       @openDialogMsgClear="handleDialogMsgClearSet"
     />
     <template v-if="isChannel">
-        <ul class="managerLabel">
+        <ul class="managerLabel" v-if="chatContent.adminPrivacy">
           <li @click="handleOpenChannelManageDialog">
             {{ $t("管理员") }}
           </li>
