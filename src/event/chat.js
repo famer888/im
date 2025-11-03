@@ -122,8 +122,7 @@ const fnChatWindowUpdate = async (info) => {
         // 频道信息同步
         if (updateInfo.type === "channel") {
             chatInfo = channels.find((item) => item.channelId === updateInfo.id);
-            // console.log("chatInfo--", chatInfo)
-            if (!chatInfo) {
+            if (!chatInfo?.channelId || !chatInfo?.channelName) {
                 const res = await getChannelDetail({ channelId: updateInfo.id });
                 console.log("chatInfo-2-", res)
                 chatInfo = res?.data || {};
