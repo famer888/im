@@ -11,7 +11,7 @@
         />
       <span>{{ info.channelName }}</span>
       <p class="text-clamp-2">{{ info.remark }}</p>
-      <button  @click="handleJoinChannel">
+      <button  @click="handleJoinChannel" v-if="!info.memberType">
         加入频道
       </button>
     </div>
