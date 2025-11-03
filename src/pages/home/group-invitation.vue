@@ -73,18 +73,44 @@ export default {
     };
   },
   created() {
+    // 监听群通知事件
+    eventBase.fnCommunicationMonitoring(
+      "groupInvitationUpdate",
+      ["groupInvitationUpdate"],
+      (data) => {
+        this.handleGroupNotification(data);
+      }
+    );
     this.handleUpdateList();
-
-    // eventBase.fnCommunicationMonitoring("groupNotification", () => {
-    //   setTimeout(() => {
-    //     this.handleUpdateList();
-    //   }, 100);
-    // });
   },
   beforeDestroy() {
-    // eventBase.fnCommunicationMonitoring("groupNotification", null);
+    // 移除监听
+    eventBase.fnCommunicationMonitoring("groupInvitationUpdate", null);
   },
   methods: {
+    // 处理群通知消息
+    handleGroupNotification(eventList) {
+      if (!Array.isArray(eventList) || eventList.length === 0) {
+        return;
+      }
+
+      // 遍历事件列表，更新对应群的申请状态
+      eventList.forEach((event) => {
+        const { groupId, fromUid, receiveUid, groupReqStatus, groupReqType } = event;
+
+        // 查找列表中匹配的申请记录
+        const index = this.list.findIndex((item) => item.groupId === groupId);
+
+        // 如果找到匹配的记录，更新状态
+        if (index !== -1) {
+          const listNew = _.cloneDeep(this.list);
+          listNew[index].groupReqStatus = groupReqStatus;
+          listNew[index].updateTime = Date.now();
+          this.list = listNew;
+        }
+      });
+    },
+
     handleUpdateList() {
       getGroupReqList({ pageNum: this.pageNum, pageSize: 100 }).then((res) => {
         if (res && res.groupReqs) {

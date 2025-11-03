@@ -405,6 +405,9 @@ const fnRnGroupEvent = async (data, isGroupInitEvent) => {
             }
         }, 30 + i * 30);
     }
+
+    // 检查并发送群邀请更新通知（筛选入群消息，目标成员为自身，状态为1）
+    fnCheckAndNotifyGroupInvitation(data, loginId);
 };
 
 /**
@@ -2461,6 +2464,68 @@ const fnGroupEventExecIdObjGet = () => {
         if (res) {
             groupEventExecIdObj = res;
         }
+    });
+};
+
+/**
+ * 筛选入群消息并发送群邀请更新通知
+ * 用于处理当前用户成功加入群聊的情况，通知群通知页面更新状态
+ */
+const fnCheckAndNotifyGroupInvitation = (data, loginId) => {
+    // 获取群消息事件列表
+    const groupReqEventMsgDto = data.groupReqEventMsgDto || [];
+
+    if (groupReqEventMsgDto.length === 0) {
+        return;
+    }
+
+    // 筛选符合条件的入群事件
+    const validJoinEvents = groupReqEventMsgDto
+        .filter((item) => {
+            const { groupReqStatus, groupReqType, commonMsgDto, groupMember } = item;
+
+            // 检查是否为入群事件 (groupReqType === 1 或 2 或 15)
+            // 且状态为1（已同意/已加入）
+            if (![1, 2, 15].includes(groupReqType) || groupReqStatus !== 1) {
+                return false;
+            }
+
+            // 检查目标成员是否包含当前登录用户
+            const isSelfJoined = groupMember && groupMember.some(
+                (member) => Number(member.user.uid) === loginId
+            );
+
+            if (!isSelfJoined) {
+                return false;
+            }
+
+            // 获取群ID
+            const groupId = commonMsgDto?.groupBaseInfo?.groupId;
+            if (!groupId) {
+                return false;
+            }
+
+            return true;
+        })
+        .map((item) => {
+            const { fromUid, receiveUid, groupReqStatus, groupReqType, commonMsgDto } = item;
+            return {
+                groupId: Number(commonMsgDto.groupBaseInfo.groupId),
+                fromUid: Number(fromUid),
+                receiveUid: Number(receiveUid),
+                groupReqStatus,
+                groupReqType
+            };
+        });
+
+    // 如果没有符合条件的事件，直接返回
+    if (validJoinEvents.length === 0) {
+        return;
+    }
+    // 如果操作类型有效，发送一次群邀请更新通知
+    eventBase.fnCommunicationSendMsg({
+        operator: "groupInvitationUpdate",
+        data: validJoinEvents
     });
 };
 
