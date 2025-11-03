@@ -44,14 +44,11 @@
 <script>
 import _ from "lodash";
 // api
-import { groupEventForceInit } from "@/api/imGroup";
+import { getChannelUsers, getChannelManages } from "@/api/imChannel";
 
 // 事件
 import eventBase from "@/event/base";
 import eventCommon from '@/event/common';
-
-// 获取频道
-import { getChannelUsers } from "@/api/imChannel";
 
 // 工具
 import { formatChannelManages } from "@/utils/formats";
