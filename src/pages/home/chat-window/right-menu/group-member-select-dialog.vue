@@ -24,7 +24,7 @@
                     <div class="right">
                         <template>
                             <div class="tag-item" v-if="item.type === 0">群主</div>
-                            <div class="tag-item orange" v-else-if="item.type === 1">管理</div>
+                            <div class="tag-item orange" v-else-if="item.type === 1">管理员</div>
                         </template>
                         <ComCheckbox :value="getSelectState(item)"></ComCheckbox>
                     </div>
@@ -193,11 +193,13 @@ export default {
         .left {
             display: flex;
             align-items: center;
+            flex-shrink: 1;
         }
 
         .right {
            display: flex;
            align-items: center;
+           flex-shrink: 0;
         }
 
         .member-avatar {
@@ -210,6 +212,11 @@ export default {
             font-size: 14px;
             color: #494949;
             margin-left: 10px;
+            word-break: break-all;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+            overflow: hidden;
         }
     }
 
