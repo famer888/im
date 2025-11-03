@@ -54,12 +54,121 @@ let groupInitInterfaceGetueue = [];
 let compensateParams = {};
 
 /**
+ * 检查退群/解散群事件是否应该被执行的守卫函数
+ * 如果是退群或解散群聊事件，检查本地存储包括数据库缓存和会话列表
+ * 如果存在，继续执行；如果不存在，则不执行并发送回执确认
+ */
+const fnGroupEventGuard = async (data, loginId) => {
+    try {
+        // 判断是否为群请求事件（包含退群和解散群事件）
+        if (!data.groupReqEventMsgDto || data.groupReqEventMsgDto?.length === 0) {
+            return true; // 不是请求事件，允许执行
+        }
+
+        // 获取群ID
+        const groupId = Number(
+            data.groupReqEventMsgDto[0]?.commonMsgDto?.groupBaseInfo?.groupId
+        );
+
+        // 获取事件类型和发起人ID
+        let groupReqType = null; // 退群/解散群事件类型
+        let exitEventFromUid = null; // 发起人ID
+
+        // 检查是否为6踢出群(groupReqType 6)groupReqType groupReqType 13）事件
+        const exitOrDismissEvent = data.groupReqEventMsgDto.find((item) => [6, 7, 13].includes(item.groupReqType));
+
+        if (!exitOrDismissEvent) {
+            // 不是退群或解散群事件，直接允许执行
+            return true;
+        }
+
+        groupReqType = exitOrDismissEvent.groupReqType;
+        exitEventFromUid = Number(exitOrDismissEvent.commonMsgDto.fromUid);
+
+        // 检查是否存在群事件执行ID（表示群在本地有记录）
+        const hasEventRecord =
+            groupEventExecIdObj[groupId + "broadcast"] ||
+            groupEventExecIdObj[groupId + "unicast"] ||
+            groupEventExecIdObj[groupId + "update"];
+
+        // 如果有事件记录，说明本地存在该群，允许执行
+        if (hasEventRecord) {
+            return true;
+        }
+
+        // 本地不存在该群事件记录，需要清理本地缓存和会话列表
+        // console.log("群不存在本地事件记录，清理本地数据", groupId, groupReqType);
+
+        // 1. 清理群成员列表缓存
+        const groupMemberList = await Cache(
+            `${loginId}_${groupId}_groupMemberList`
+        );
+        if (groupMemberList && groupMemberList.length > 0) {
+            await Cache(`${loginId}_${groupId}_groupMemberList`, []);
+        }
+
+        // 2. 从群列表中移除该群
+        const groupList = (await Cache(`${loginId}-GroupList`)) || [];
+        const hasInGroupList = groupList.some((item) => item.id === groupId);
+        if (hasInGroupList) {
+            const updatedGroupList = groupList.filter((item) => item.id !== groupId);
+            await Cache(`${loginId}-GroupList`, updatedGroupList);
+        }
+
+        // 3. 判断是否需要删除会话列表
+        let shouldDeleteChat = false;
+
+        if (groupReqType === 13) {
+            // 群解散事件：无论谁解散，都删除会话列表
+            shouldDeleteChat = true;
+        } else if ([6, 7].includes(groupReqType) && exitEventFromUid === loginId) {
+            // 群成员退出事件：只有当退出的是本人时才删除会话列表
+            shouldDeleteChat = true;
+        }
+
+        // 4. 从会话列表中移除该群（如果需要）
+        if (shouldDeleteChat) {
+            eventBase.fnCommunicationSendMsg({
+                operator: "deleteChat",
+                data: {
+                    id: groupId,
+                    type: "group",
+                    isDeleteLocal: true,
+                },
+            });
+        }
+
+        // 5. 发送回执确认收到事件（避免服务器重复推送）
+        data.groupReqEventMsgDto.forEach((item) => {
+            receiveGroupEvent({
+                groupId,
+                receiptStatus: 0,
+                msgType: item.commonMsgDto.msgType,
+                msgId: [Number(item.commonMsgDto.msgId)],
+            });
+        });
+
+        return false;
+    } catch (error) {
+        // 守卫函数出错时，允许事件继续执行，避免阻塞正常流程
+        console.error("fnGroupEventGuard error:", error);
+        return true;
+    }
+};
+
+/**
  * 群相关事件
  */
 const fnRnGroupEvent = async (data, isGroupInitEvent) => {
     const loginId = eventCommon.fnCommonInfoRU({
         getId: "loginId",
     });
+
+    // 执行守卫检查：对于退群和解散群事件，如果本地不存在该群，则不执行（守卫内部会发送回执）
+    const shouldExecute = await fnGroupEventGuard(data, loginId);
+    if (!shouldExecute) {
+        return;
+    }
 
     let typeStr = "update";
     // console.log("=================收到群事件", data, isGroupInitEvent, _.cloneDeep(groupEventExecIdObj));
@@ -405,6 +514,9 @@ const fnRnGroupEvent = async (data, isGroupInitEvent) => {
             }
         }, 30 + i * 30);
     }
+
+    // 检查并发送群邀请更新通知（筛选入群消息，目标成员为自身，状态为1）
+    fnCheckAndNotifyGroupInvitation(data, loginId);
 };
 
 /**
@@ -2461,6 +2573,68 @@ const fnGroupEventExecIdObjGet = () => {
         if (res) {
             groupEventExecIdObj = res;
         }
+    });
+};
+
+/**
+ * 筛选入群消息并发送群邀请更新通知
+ * 用于处理当前用户成功加入群聊的情况，通知群通知页面更新状态
+ */
+const fnCheckAndNotifyGroupInvitation = (data, loginId) => {
+    // 获取群消息事件列表
+    const groupReqEventMsgDto = data.groupReqEventMsgDto || [];
+
+    if (groupReqEventMsgDto.length === 0) {
+        return;
+    }
+
+    // 筛选符合条件的入群事件
+    const validJoinEvents = groupReqEventMsgDto
+        .filter((item) => {
+            const { groupReqStatus, groupReqType, commonMsgDto, groupMember } = item;
+
+            // 检查是否为入群事件 (groupReqType === 1 或 2 或 15)
+            // 且状态为1（已同意/已加入）
+            if (![1, 2, 15].includes(groupReqType) || groupReqStatus !== 1) {
+                return false;
+            }
+
+            // 检查目标成员是否包含当前登录用户
+            const isSelfJoined = groupMember && groupMember.some(
+                (member) => Number(member.user.uid) === loginId
+            );
+
+            if (!isSelfJoined) {
+                return false;
+            }
+
+            // 获取群ID
+            const groupId = commonMsgDto?.groupBaseInfo?.groupId;
+            if (!groupId) {
+                return false;
+            }
+
+            return true;
+        })
+        .map((item) => {
+            const { fromUid, receiveUid, groupReqStatus, groupReqType, commonMsgDto } = item;
+            return {
+                groupId: Number(commonMsgDto.groupBaseInfo.groupId),
+                fromUid: Number(fromUid),
+                receiveUid: Number(receiveUid),
+                groupReqStatus,
+                groupReqType
+            };
+        });
+
+    // 如果没有符合条件的事件，直接返回
+    if (validJoinEvents.length === 0) {
+        return;
+    }
+    // 如果操作类型有效，发送一次群邀请更新通知
+    eventBase.fnCommunicationSendMsg({
+        operator: "groupInvitationUpdate",
+        data: validJoinEvents
     });
 };
 
