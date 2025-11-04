@@ -5,7 +5,7 @@
                 <span>添加验证</span>
                 <img class="close" src="@/assets/images/common/close-icon.png" @click="$emit('close')" />
             </div>
-            <textarea class="input" v-model="verifyValue" :placeholder="placeholder" rows="3"></textarea>
+            <textarea class="input" v-model="verifyValue" :placeholder="placeholder" rows="3"  maxlength="20"></textarea>
             <div class="primaryBtn" @click="confirm">完成</div>
         </div>
     </div>
