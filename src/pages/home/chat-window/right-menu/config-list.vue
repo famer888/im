@@ -48,7 +48,7 @@
     </template>
     <template v-if="!isChannel && !isGroup">
       <li>
-        <span> 加入黑名单</span>
+        <span>加入黑名单</span>
         <ComSwitch :value="bfMyBlack" @input="handelBfMyBlackChange" />
       </li>
     </template>
@@ -62,7 +62,7 @@
         <ComSwitch :value="bfJoinFriend" @input="handelBfJoinFriendChange" />
       </li> -->
     </template>
-    <li class="clearHistory" v-if="!isChannel || (isChannel && chatContent.memberType !== 3)" @click="$emit('openDialogMsgClear')">
+    <li class="clearHistory" :class="{ [chatContent.type]: true }" v-if="!isChannel || (isChannel && chatContent.memberType !== 3)" @click="$emit('openDialogMsgClear')">
       {{ $t("清空聊天记录") }}
     </li>
 
@@ -76,7 +76,7 @@
     </template>
     <template v-else-if="isChannel"></template>
     <template v-else>
-        <li class="clearHistory" @click="handelDeleteFriend">
+        <li class="clearHistory" @click="handelDeleteFriend" :class="{ [chatContent.type]: true }">
           删除联系人
         </li>
     </template>
@@ -499,6 +499,9 @@ export default {
       justify-content: center !important;
       color: #f44e5a;
       cursor: pointer;
+      &.friend {
+        justify-content: flex-start !important;
+      }
     }
   }
 }
