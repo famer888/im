@@ -99,27 +99,18 @@ function aesEncode(data, key) {
 }
 
 export const getSignHeader = () => {
-    const NEW_SIGN = "f58c15f54e8f7826";
 
     // const SECRET_NAME = "4669ae8d7010521fcaf4855dbfbb1303";
-    // let client = eventCommon.fnClientInfoGet();
     let myClient = eventCommon.fnClientInfoGet();
-    // client.appVer = 163;
+    // let client = eventCommon.fnClientInfoGet();
     // client.sysMac = getApiMacAddressSync();
-    
 
-    // const SECRET_NAME ="da4a207e3ea1d2d7911c2002397c60d0";
-    // let client = {
-    //     "language": 2,
-    //     "sysModel": "iPhone 30 Simulator",
-    //     "sessionId": "fb67f512beea5f00000038fbb5ef3df7",
-    //     "sysMac": "e72c8fecc70838e5a960c0299160a18bcoin",
-    //     "appVer": 580,
-    //     "plat": 0,
-    //     "packageCode": 1000
-    // }
+    // const NEW_SIGN = "3f5dbac7bdac7d48";
+    // const SECRET_NAME ="efca147af514c2799a7a3958b66e8ab7";
 
+    const NEW_SIGN = "f58c15f54e8f7826";
     const SECRET_NAME ="e884263661036ec9e123ea63d78e6e28";
+
     let client = {
         "language": 2,
         "sysModel": "android",
