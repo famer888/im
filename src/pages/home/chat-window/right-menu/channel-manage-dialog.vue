@@ -42,12 +42,12 @@
               </div>
             </div>
             <div class="member-online-state">
-              {{ getOnlineState(item) }}
+              {{ item.setter }}
             </div>
           </div>
           <span
-            v-if="loginIsHost"
-            class="remove-manage"
+            v-if="item.removeAuthorize"
+            class="remove-manage cursor"
             @click="removeManage(item)"
           >
             移除
@@ -75,17 +75,18 @@ export default {
   data() {
     return {
       managerList: [],
-      loginIsHost: false, // 是否是群主
       hostInfo: null, // 群主信息
     };
   },
   mounted() {
+    // 群主信息设置
+    this.handelHostInfoSet();
     // 管理员列表
     this.managerList = this.memberInfoList.filter((item) => {
       return item.memberType === 2;
     });
-    // 群主信息设置
-    this.handelHostInfoSet();
+    // 处理管理员权限
+    this.processManagerListAuthorization();
     this.getManageList();
   },
   methods: {
@@ -96,13 +97,15 @@ export default {
         channelId: this.channelId,
       }
       getChannelManages(prams).then(res => {
-            let list = formatChannelManages(res.data?.rowList || []) 
+            let list = formatChannelManages(res.data?.rowList || [])
             // 管理员列表
             this.managerList = list.filter((item) => {
               return item.memberType === 2;
             });
             // 群主信息设置
             this.handelHostInfoSet();
+            // 处理管理员权限
+            this.processManagerListAuthorization();
         })
     },
        /**
@@ -140,14 +143,33 @@ export default {
       this.hostInfo = this.memberInfoList.find(
         (item) => item.memberType == 1
       );
-
-      // 登录id
+    },
+    /**
+     * 处理管理员列表权限
+     * 为每个管理员添加removeAuthorize字段
+     */
+    processManagerListAuthorization() {
+      // 获取登录id
       const loginId = eventCommon.fnCommonInfoRU({
         getId: "loginId",
       });
 
-      // 登录信息是否为群主
-      this.loginIsHost = longToNum(this.hostInfo?.userInfoDTO?.uid) === loginId;
+      // 判断当前登录用户是否是群主
+      const loginIsHost = longToNum(this.hostInfo?.userInfoDTO?.uid) === loginId;
+
+      // 为每个管理员设置removeAuthorize
+      this.managerList = this.managerList.map((item) => {
+        // 如果是群主，所有管理员的removeAuthorize都为true
+        if (loginIsHost) {
+          this.$set(item, 'removeAuthorize', true);
+        } else {
+          // 如果不是群主，对比当前登录id和item.setterUid
+          // 如果相同，removeAuthorize为true，否则为false
+          const removeAuth = longToNum(item.setterUid) === loginId;
+          this.$set(item, 'removeAuthorize', removeAuth);
+        }
+        return item;
+      });
     },
     removeManage(item) {
       const channelId = this.channelId;
