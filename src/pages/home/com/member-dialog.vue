@@ -69,7 +69,7 @@
         <span v-if="bfFriend" @click="handleToFriendChat">
           {{ $t("发送消息") }}
         </span>
-        <span v-else-if="memberDetail.addToken" @click="verifierVisble = true">
+        <span v-else-if="memberDetail.addToken" @click="showAddVerifyDialog">
           添加
         </span>
       </div>
@@ -116,6 +116,7 @@ export default {
       text: "",
       maxWidth: 280,
       memberDetail: {},
+      loginInfo: {},
     };
   },
   created() {
@@ -131,6 +132,9 @@ export default {
   mounted() {
     const loginId = eventCommon.fnCommonInfoRU({
       getId: "loginId",
+    });
+    this.loginInfo = eventCommon.fnCommonInfoRU({
+        getId: "loginInfo",
     });
 
     const { id, name, nickName, depict, bfFriend, channelId } = this.memberInfo;
@@ -178,6 +182,11 @@ export default {
           console.log("friendUpdate--", info, this.memberDetail)
         }
       }
+    },
+    showAddVerifyDialog() {
+          const msg = '我是' + this.loginInfo?.name || ''
+          this.verifyValue = msg.length > 20 ? msg.slice(0, 20) + '...' : msg;
+          this.verifierVisble = true;
     },
     // 好友验证消息输入框确认回调
     verifyConfirm(msg) {
