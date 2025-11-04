@@ -18,8 +18,11 @@ const handleChannelEvents = (data) => {
           case 0:
             // 频道订阅者加入事件
             fnHandleChannelSubscriberJoin(data);
-            // 频道系统消息
-            return;
+            break;
+          case 2: 
+            // 退出/被移除频道
+            eventRemoveLocalChannel(Number(channelId));
+            break;
         }
     }
     if(operateType) {
