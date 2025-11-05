@@ -210,7 +210,7 @@ export default {
   },
   props: ["list", "unreadObj", "unreadCount", "infoActive", "disturbIdStrList", "archiveListShow"],
   computed: {
-    listNew() {
+    chats() {
       const list = this.list.filter((item) => {
         const name = item.name || item.nickName || item.channelName;
         if( !name ) return false
@@ -233,8 +233,10 @@ export default {
         }
         return false;
       });
-
-      return list.slice(this.showIndex, this.showIndex + 80).map((item) => {
+      return list;
+    },
+    listNew() {
+      return this.chats.slice(this.showIndex, this.showIndex + 80).map((item) => {
         return {
           ...item,
           name: item.name?.replaceAll("🪵", "?"),
