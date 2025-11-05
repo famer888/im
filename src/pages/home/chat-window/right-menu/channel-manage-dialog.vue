@@ -7,7 +7,7 @@
       <div class="member-list">
 
       </div>
-      <div class="title">{{ $t("管理员") }}（{{ managerList.length + 1 }}/20）</div>
+      <div class="title">{{ $t("管理员") }}（{{ managerList.length + 1 }}/50）</div>
       <div class="member-list">
         <div v-if="hostInfo" class="member-item cursor">
           <ComImage
@@ -48,7 +48,7 @@
           <span
             v-if="item.removeAuthorize"
             class="remove-manage cursor"
-            @click="removeManage(item)"
+            @click.stop="removeManage(item)"
           >
             移除
           </span>

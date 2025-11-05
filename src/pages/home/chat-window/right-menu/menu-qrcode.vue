@@ -1,5 +1,5 @@
 <template>
-  <div class="comGroupQrCode">
+  <div class="comGroupQrCode" :class="chatType">
     <div class="head">
       <picture>
         <img
@@ -26,12 +26,12 @@
           <img class="refresh-icon" src="@/assets/images/common/refresh.png" />
           {{ $t("重置二维码") }}
         </p>
-        <ComTextAvatar
+        <!-- <ComTextAvatar
           v-if="iconType === 'textAvatar'"
           class="textAvatar"
           :id="id"
           :value="name"
-        />
+        /> -->
         <!-- <ComImage v-else ref="groupPic" :src="pic" type="group" /> -->
       </template>
       <span v-else>{{ $t("二维码链接异常") }}</span>
@@ -77,7 +77,7 @@ import eventBase from "@/event/base";
 
 export default {
   components: { QrcodeVue, ComTextAvatar },
-  props:  ["codeUrl", "isResetCode", "pic", "name", "title", "id", "iconType"],
+  props:  ["codeUrl", "isResetCode", "pic", "name", "title", "id", "iconType", "chatType"],
   data() {
     return {
       showMoreDetail: false,
@@ -129,7 +129,7 @@ export default {
       const codeW = qrcodeElement.width;
       const codeH = qrcodeElement.height;
       // 计算居中位置（基于基础尺寸）
-      const codeX = (baseWidth - codeW) / 2; 
+      const codeX = (baseWidth - codeW) / 2;
       const codeY = 15;
       // 绘制二维码（尺寸用原始像素，ctx缩放后自动适配DPR）
       ctx.drawImage(qrcodeElement, codeX, codeY, codeW, codeH);
@@ -353,6 +353,15 @@ export default {
       font-size: 12px;
       color: #000;
       font-weight: 300;
+    }
+  }
+
+  // channel 类型特殊样式
+  &.channel {
+    > .head {
+      justify-content: flex-start;
+      font-weight: normal;
+      padding-left: 50px;
     }
   }
 }

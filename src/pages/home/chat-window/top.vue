@@ -8,7 +8,7 @@
           :id="chatContent.channelId"
           :value="chatContent.channelName"
         />
-        <ComImage v-else :src="chatContent.pic" :type="chatContent.type" />
+        <ComImage v-else :src="chatContent.pic || chatContent.icon" :type="chatContent.type" />
       </picture>
       <div class="userinfo-channel" v-if="chatContent.type === 'channel'">
           <div class="nickname">{{ name }}</div>
