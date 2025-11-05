@@ -60,11 +60,29 @@ export default {
               content: '您加入了该频道'
            })
           this.handleClose();
+          setTimeout(() => {
+            this.goChannelChatWindow(this.info)
+          }, 200)
         }
       }).catch(err => {
         console.error(err)
         window.$toast("加入频道失败");
       });
+    },
+    // 跳转频道聊天窗
+    goChannelChatWindow(info) {
+      const data = {
+        ...info,
+        id: info.channelId,
+        name: info.channelName,
+        type: 'channel',
+        comType: 'detailsChannel',
+      }
+
+      eventBase.fnCommunicationSendMsg({
+        operator: 'activeChange',
+        data,
+      })
     },
     /**
      * 关闭
