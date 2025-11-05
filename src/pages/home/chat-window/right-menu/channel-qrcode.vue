@@ -1,11 +1,12 @@
 <template>
-    <MenuQrcode 
+    <MenuQrcode
       title="通过二维码邀请"
       :logoColor="chatContent.logoColor"
       :codeUrl="qrcodeUrl"
-      :pic="chatContent.pic" 
+      :pic="chatContent.pic"
       :name="chatContent.channelName"
        iconType="textAvatar"
+       chatType="channel"
       :id="chatContent.channelId"
       :isResetCode="[0].includes(chatContent.memberType) || chatContent.bfResetQrcode"
       @close="$emit('close')"
@@ -47,7 +48,7 @@ export default {
         }
       });
     },
-   
+
   },
 };
 </script>
