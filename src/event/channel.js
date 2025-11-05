@@ -19,7 +19,7 @@ const handleChannelEvents = (data) => {
             // 频道订阅者加入事件
             fnHandleChannelSubscriberJoin(data);
             break;
-          case 2: 
+          case 2:
             // 退出/被移除频道
             eventRemoveLocalChannel(Number(channelId));
             break;
@@ -114,8 +114,9 @@ const eventToggleChannelDisabled = async ({ channelId, isDisable }) => {
  */
 const fnAddChannelNoticeToChat = async (data) => {
     const { channelInfo, subscriberInfo, eventType, channelNoticeMsg, msg } = data || {};
-    const isChannelCreatedNotice = eventType === 2 && subscriberInfo?.operateType === 0;
-    if (channelNoticeMsg?.isNotice || isChannelCreatedNotice) {
+    // const isChannelCreatedNotice = eventType === 2 && subscriberInfo?.operateType === 0;
+    // console.log(`[DEBUG] 创建频道:${channelInfo?.operateType === 0 && eventType === 1} 加入频道:${eventType === 2 && subscriberInfo?.operateType === 0}, 通知消息:${channelNoticeMsg?.isNotice}`);
+    if (channelNoticeMsg?.isNotice) {
         const { noticeMsg, unReadNum } = channelNoticeMsg || {};
         const timestamp = Date.now();
         const loginId = eventCommon.fnCommonInfoRU({ getId: "loginId" });
