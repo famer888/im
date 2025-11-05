@@ -445,7 +445,9 @@ export default {
           pageSize,
         },
         () => {
-          this.handleUpdateFirendsForApi(pageNum);
+          setTimeout(() => {
+              this.handleUpdateFirendsForApi(pageNum);
+          }, 2000)
         }
       ).then(async (res) => {
         if (res) {
@@ -477,9 +479,9 @@ export default {
             } else {
               friendListPageReqCompleteList.push(1);
 
-              // 最多并行4个请求
-              const pageNumList = friendListPageReqList.slice(0, 4);
-              friendListPageReqList = friendListPageReqList.slice(4);
+              // 最多并行4个请求(并行请求拉爆了服务器，改为了1)
+              const pageNumList = friendListPageReqList.slice(0, 1);
+              friendListPageReqList = friendListPageReqList.slice(1);
               for (const item of pageNumList) {
                 this.handleUpdateFirendsForApi(item);
               }
