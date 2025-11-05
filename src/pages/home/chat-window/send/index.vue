@@ -4,6 +4,12 @@
         <img class="disabled-icon" src="@/assets/images/chat/disabled-1.png" alt="">{{ $t("该频道已禁用") }}
     </div>
     <div class="shutupTip disable channel-disable"
+        v-else-if="chatContent.type === 'channel' && !chatContent.memberType"
+        @click="handleJoinChannel"
+    >
+        加入频道
+    </div>
+    <div class="shutupTip disable channel-disable"
         v-else-if="chatContent.type === 'channel' && !chatContent.adminPrivacy"
         @click="channelDisturbSet"
     >
@@ -38,12 +44,13 @@
 
 // 事件
 import eventBase from "@/event/base";
+import eventChannel from '@/event/channel';
 
 // 控件
 import ComEditor from "./editor.vue";
 
 // api
-import { updateMember } from "@/api/imChannel.js"
+import { updateMember, subscribeChannel } from "@/api/imChannel.js"
 
 export default {
   components: {
@@ -59,6 +66,54 @@ export default {
     // console.log(this.getRandomColor(), '>>>>>>>>>> getRandomColor')
   },
   methods: {
+       /**
+     * 申请加入频道
+     */
+   handleJoinChannel() {
+      const { channelId, link, channelName, logoColor } = this.chatContent
+
+      subscribeChannel({
+        channelId,
+        link,
+      }).then(async (res) => {
+        console.log('subscribeChannel--', res)
+        if (res?.code != 200) {
+          window.$toast(res?.msg || "加入频道失败");
+        } else {
+          // 关闭
+          window.$toast(res?.msg || "加入频道成功");
+           await eventChannel.fnChannelAdd(this.info);
+           eventChannel.fnChannelAddMessageNotification({
+              channelName,
+              logoColor,
+              channelId,
+              content: '您加入了该频道'
+           })
+           setTimeout(() => {
+              this.goChannelChatWindow(this.chatContent)
+           }, 200)
+        }
+      }).catch(err => {
+        console.error(err)
+        window.$toast("加入频道失败");
+      });
+    },
+    // 跳转频道聊天窗
+    goChannelChatWindow(info) {
+      const data = {
+        ...info,
+        id: info.channelId,
+        name: info.channelName,
+        type: 'channel',
+        comType: 'detailsChannel',
+      }
+
+      eventBase.fnCommunicationSendMsg({
+        operator: 'activeChange',
+        data,
+      })
+    },
+    // 频道免打扰设置
     channelDisturbSet() {
       const { channelId, isDisturb } = this.chatContent
       const params = {
