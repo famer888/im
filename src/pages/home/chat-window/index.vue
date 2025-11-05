@@ -467,7 +467,7 @@ export default {
           }
         }, 1000)
 
-    } else if(type === "channel" && adminPrivacy) {
+    } else if(type === "channel") {
     //   this.handleChannelMemberGet();
     } else {
       // 获取好友详情

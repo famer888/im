@@ -179,6 +179,7 @@ function requestAxios(url, params, opts) {
         const finalHeaders = {
             "Content-Type": "application/octet-stream",
             ...headers,
+             'Accept': 'application/json' // 最终生效的 Accept 头，仅保留 JSON 
         };
 
         const httpDefault = {
