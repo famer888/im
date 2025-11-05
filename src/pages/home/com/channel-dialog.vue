@@ -1,19 +1,25 @@
 <template>
   <div class="comChannelDialog">
     <div>
-      <picture @click="handleClose">
-        <img src="@/assets/images/common/close-icon.png" />
-      </picture>
-       <ComTextAvatar 
-          class="textAvatar" 
+       <ComTextAvatar
+          class="textAvatar"
           :id="info.channelId"
           :value="info.channelName"
         />
       <span>{{ info.channelName }}</span>
-      <p class="text-clamp-2">{{ info.remark }}</p>
-      <button  @click="handleJoinChannel" v-if="!info.memberType">
-        加入频道
-      </button>
+      <p class="subscriber-count">{{ info.memberCount || 0 }}位订阅者</p>
+      <div class="remark-container">
+        <div class="remark-content" ref="remarkContent" :class="{ 'expanded': isRemarkExpanded }">
+          {{ info.remark }}
+        </div>
+        <span class="toggle-btn" v-if="showToggleBtn" @click="toggleRemark">
+          {{ isRemarkExpanded ? '折叠' : '更多' }}
+        </span>
+      </div>
+      <div class="button-group" v-if="!info.memberType">
+        <button class="cancel-btn" @click="handleClose">取消</button>
+        <button class="join-btn" @click="handleJoinChannel">加入频道</button>
+      </div>
     </div>
   </div>
 </template>
@@ -32,9 +38,21 @@ export default {
   data() {
     return {
       memberCountRemark: "",
+      isRemarkExpanded: false,
+      showToggleBtn: false,
     };
   },
   mounted() {
+    this.$nextTick(() => {
+      this.checkRemarkOverflow();
+    });
+  },
+  watch: {
+    'info.remark'() {
+      this.$nextTick(() => {
+        this.checkRemarkOverflow();
+      });
+    }
   },
   methods: {
     /**
@@ -78,6 +96,29 @@ export default {
             },
         });
     },
+    /**
+     * 切换remark展开/折叠
+     */
+    toggleRemark() {
+      this.isRemarkExpanded = !this.isRemarkExpanded;
+    },
+    /**
+     * 检测remark是否超过两行
+     */
+    checkRemarkOverflow() {
+      const el = this.$refs.remarkContent;
+      if (el) {
+        // 暂时移除展开状态来准确检测
+        const wasExpanded = this.isRemarkExpanded;
+        this.isRemarkExpanded = false;
+        this.$nextTick(() => {
+          // scrollHeight > clientHeight 表示有内容溢出
+          this.showToggleBtn = el.scrollHeight > el.clientHeight;
+          // 恢复展开状态
+          this.isRemarkExpanded = wasExpanded;
+        });
+      }
+    },
   },
 };
 </script>
@@ -96,14 +137,14 @@ export default {
   justify-content: center;
 
   > div {
-    width: 400px;
-    min-height: 236px;
+    width: 300px;
     display: flex;
     flex-direction: column;
     align-items: center;
     background: #fff;
     border-radius: 8px;
     padding-top: 26px;
+    padding-bottom: 20px;
     position: relative;
 
     > picture {
@@ -139,36 +180,110 @@ export default {
       margin-top: 10px;
     }
 
-    > p {
+    .subscriber-count {
       font-size: 12px;
-      color: #999;
-      margin-top: 10px;
-      padding: 0 10px;
-      box-sizing: border-box;
+      color: #666;
+      margin-top: 6px;
     }
 
-    > button {
-      width: 206px;
-      height: 32px;
-      background: #3369fe;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #fff;
-      border-radius: 4px;
-      margin-top: 32px;
-      border: 0;
-      cursor: pointer;
+    .remark-container {
+      width: 100%;
+      margin-top: 10px;
+      padding: 0 20px;
+      box-sizing: border-box;
+      position: relative;
 
-      &:hover {
-        opacity: 0.8;
+      .remark-content {
+        font-size: 12px;
+        color: #999;
+        line-height: 18px;
+        height: 90px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 5;
+        line-clamp: 5;
+        -webkit-box-orient: vertical;
+        word-break: break-all;
+
+        &.expanded {
+          height: 144px;
+          max-height: 144px;
+          overflow-y: auto;
+          display: block;
+          -webkit-line-clamp: unset;
+          line-clamp: unset;
+
+          &::-webkit-scrollbar {
+            width: 6px;
+          }
+
+          &::-webkit-scrollbar-thumb {
+            border-radius: 10px;
+            background: #e5e5e5;
+          }
+
+          &::-webkit-scrollbar-track {
+            background: transparent;
+          }
+        }
+      }
+
+      .toggle-btn {
+        position: absolute;
+        right: 20px;
+        bottom: 0;
+        font-size: 12px;
+        color: #178aff;
+        cursor: pointer;
+        user-select: none;
+        background: #fff;
+        padding-left: 4px;
+
+        &:hover {
+          opacity: 0.8;
+        }
+      }
+    }
+
+    .button-group {
+      width: 100%;
+      display: flex;
+      margin-top: 20px;
+      padding: 0 20px;
+      box-sizing: border-box;
+      gap: 10px;
+
+      > button {
+        flex: 1;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        border-radius: 4px;
+        border: 0;
+        cursor: pointer;
+        font-size: 14px;
+
+        &:hover {
+          opacity: 0.8;
+        }
+      }
+
+      .cancel-btn {
+        background: #9197ad;
+      }
+
+      .join-btn {
+        background: #178aff;
       }
     }
   }
   .textAvatar {
-    width: 50px;
-    height: 50px;
-    font-size: 16px;
+    width: 80px;
+    height: 80px;
+    font-size: 24px;
   }
 }
 </style>

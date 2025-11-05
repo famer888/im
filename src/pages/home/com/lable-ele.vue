@@ -61,7 +61,7 @@ export default {
         })
        if(!confirmState) return;
       }
-        
+
       try {
         let href = completionUrl(linkUrl)
         const hrefData = new URL(href);
