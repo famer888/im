@@ -144,7 +144,7 @@ export default {
        const res = await getChannelUsers(prams);
         newList = res.data?.rowList || [];
       } else {
-       const res = getChannelManages(prams)
+       const res = await getChannelManages(prams)
         newList = formatChannelManages(res.data?.rowList || []);
       }
       this.loading = false;
