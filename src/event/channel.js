@@ -35,7 +35,8 @@ const handleChannelEvents = (data) => {
             // 修改频道头像
             case 2:
                 const { icon } = channelInfo;
-                eventUpdateChannelInfo(2, {channelId, icon})
+                eventUpdateChannelInfo(2, {channelId, icon});
+                break;
             // 频道解散
             case 4:
                 eventRemoveLocalChannel(Number(channelId));

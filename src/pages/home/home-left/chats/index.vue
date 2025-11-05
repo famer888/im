@@ -37,7 +37,7 @@
             "
           >
             <ComTextAvatar
-              v-if="item.type === 'channel' && !item.pic"
+              v-if="item.type === 'channel' && !item.pic && !item.icon"
               class="textAvatar"
               :color="item.logoColor"
               :value="item.channelName"
@@ -45,7 +45,7 @@
             />
             <ComImage
               v-else
-              :src="item.id === 'invitation' ? defaultImgSrc() : item.pic"
+              :src="item.id === 'invitation' ? defaultImgSrc() : (item.pic || item.icon)"
               :type="item.type"
               class="icon"
             />
