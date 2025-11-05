@@ -103,7 +103,7 @@ export default {
       this.isRemarkExpanded = !this.isRemarkExpanded;
     },
     /**
-     * 检测remark是否超过两行
+     * 检测remark是否超过5行
      */
     checkRemarkOverflow() {
       const el = this.$refs.remarkContent;
@@ -197,7 +197,7 @@ export default {
         font-size: 12px;
         color: #999;
         line-height: 18px;
-        height: 90px;
+        max-height: 90px;
         overflow: hidden;
         text-overflow: ellipsis;
         display: -webkit-box;
