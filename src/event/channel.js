@@ -412,6 +412,11 @@ const fnHandleChannelSubscriberJoin = async (latestChannelEventMessage) => {
             item => item.id === Number(channelId) && item.type === "channel"
         );
 
+        const timestamp = Number(latestChannelEventMessage?.msgTime) || Date.now();
+        const customMsgId = Number(latestChannelEventMessage?.msgId) || generateUniqueId();
+        const chatType = 50; // 系统通知消息类型
+        const content = latestChannelEventMessage?.msg || "你已加入该频道";
+
         // 如果聊天列表中不存在，则添加
         if (chatExistIndex === -1) {
             const chatItem = {
@@ -423,9 +428,9 @@ const fnHandleChannelSubscriberJoin = async (latestChannelEventMessage) => {
                 pic: channelDetail.icon,
                 icon: channelDetail.icon,
                 logoColor: channelDetail.logoColor,
-                time: Date.now(),
-                sendTime: Date.now(),
-                content: "你已加入该频道",
+                time: timestamp,
+                sendTime: timestamp,
+                content,
                 unreadCount: 0,
             };
 
@@ -439,6 +444,28 @@ const fnHandleChannelSubscriberJoin = async (latestChannelEventMessage) => {
                 data: chatItem,
             });
         }
+
+        // 4. 生成符合ComMsgSystemNotification的系统通知消息并存入数据库
+        const systemNotificationMsg = {
+            id: Number(channelId),
+            channelId: Number(channelId),
+            chatType: chatType,
+            msgType: chatType,
+            type: "channel",
+            content,
+            sendTime: timestamp,
+            msgTime: timestamp,
+            time: timestamp,
+            customMsgId: customMsgId,
+            msgId: "",
+            sendUid: loginId,
+            isSelf: true,
+            errorType: 0,
+            source: 0,
+        };
+
+        // 存入数据库
+        eventBase.fnMsgAddToDB(systemNotificationMsg);
 
     } catch (error) {
         console.error("处理频道订阅者加入事件失败:", error);
