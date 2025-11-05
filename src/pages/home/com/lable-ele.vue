@@ -38,6 +38,42 @@ export default {
   props: ["info", "isNotification"],
   methods: {
     filterSensitiveWords,
+    /**
+     * 跳转频道聊天窗
+     */
+    goChannelChatWindow(info) {
+      const data = {
+        ...info,
+        id: info.channelId,
+        name: info.channelName,
+        type: 'channel',
+        showTip: true,
+        comType: 'detailsChannel',
+      }
+
+      eventBase.fnCommunicationSendMsg({
+        operator: 'activeChange',
+        data,
+      })
+    },
+    goChannelLink(linkRes) {
+      const channelInfo = linkRes?.data || {};
+          // 公开的频道链接或者已加入频道直接跳转窗口
+          if(!channelInfo.linkType || channelInfo.memberType) {
+            this.goChannelChatWindow(channelInfo)
+          }
+          // 私密频道打开加入窗口
+          else if(channelInfo) {
+            eventBase.fnCommunicationSendMsg({
+              operator: "openChannelDialog",
+              data: {
+                values: channelInfo,
+              },
+            });
+          } else {
+             window.$toast(linkRes?.msg || "此频道已失效或过期");
+          }
+    },
     handleAtClick(e) {
       e.stopPropagation();
       this.$emit("atClick", this.info.content);
@@ -46,7 +82,7 @@ export default {
       try {
         if (!link) return null;
         const res = await isChannelLink({ link });
-        return res.data;
+        return res;
       } catch (error) {
         return null;
       }
@@ -84,17 +120,9 @@ export default {
           //   console.log(res, '查看群信息')
           // })
         }
-        let channelInfo = await this.validChannelLink(linkUrl);
-        if (channelInfo) {
-          eventBase.fnCommunicationSendMsg({
-            operator: "openChannelDialog",
-            data: {
-              values: {
-                ...channelInfo,
-                link: linkUrl,
-              },
-            },
-          });
+        let linkRes = await this.validChannelLink(linkUrl);
+        if (linkRes) {
+          this.goChannelLink(linkRes)
         } else {
           // 其它链接直接打开
           window.open(hrefData.href);
