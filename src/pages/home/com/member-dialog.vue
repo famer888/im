@@ -214,7 +214,7 @@ export default {
                   window.$toast('已向对方发送添加申请')
                   this.verifierVisble = false;
               } else {
-                  window.$toast('发送失败，请稍后尝试')
+                  window.$toast(res?.errorDesc || '发送失败，请稍后尝试')
               }
               console.log('contactsRelation--', res, errCode)
           })
