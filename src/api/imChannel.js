@@ -9,11 +9,13 @@ import { decrypt } from "./base/index";
 import axios from "axios";
 const crypto = require("crypto");
 import eventCommon from "@/event/common.js";
-// const bodyAesKey = "5cfa3aa8651afbc4";
-const bodyAesKey = "b7983e3f466c952e";
+
+const bodyAesKey = process.env.VUE_APP_SECRET_KEY;
+const domainUrl =  process.env.VUE_APP_OPEN_CHAT_DOMAIN;
 
 // 获取频道列表
 export const getChannelList = (data) => {
+    console.log('getChannelList--', data)
     return requestAxios(`/channel/channelList`, data, {
         headers: {
             ...getSignHeader(),
@@ -172,7 +174,7 @@ function requestAxios(url, params, opts) {
         pageNum: 1,
         pageSize: 10,
     };
-
+    // console.log('bodyAesKey', bodyAesKey)
     const encryptedBody = postEncrypted(bodyAesKey, reqBody);
 
     return new Promise(async (resolve, reject) => {
@@ -184,7 +186,7 @@ function requestAxios(url, params, opts) {
 
         const httpDefault = {
             method,
-            url: "https://test-gateway.68chat.co" + url,
+            url: domainUrl + url,
             data: encryptedBody,
             timeout: 5000,
             headers: finalHeaders, // 设置请求头

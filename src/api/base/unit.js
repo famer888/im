@@ -23,20 +23,14 @@ import eventCommon from "@/event/common.js";
 
 // 测试环境
 export const AES_KEY = process.env.VUE_APP_AES_KEY;
-// export const NEW_SIGN = process.env.VUE_APP_NEW_SIGN;
-// export const SECRET_NAME = process.env.VUE_APP_SECRET_NAME;
-// 正式|预生产
-// export const AES_KEY = 'nzV7S12FDcc5h2S7';
-// 测试环境
-// export const baseBuildUrl = 'https://test-webbiz.68chat.co'
-// dev环境
-// export const baseBuildUrl = 'http://devlogin.zsae86.com:8083'
 // 正式环境
 export const baseBuildUrl = process.env.VUE_APP_BASE_API;
-// 预生产环境
-// export const baseBuildUrl = 'http://35.220.152.12:8080'
-// 联调环境
-// export const baseBuildUrl = 'http://34.150.29.102:11001'
+
+// openchat的head加密密钥
+const HEAD_AES_KEY = process.env.VUE_APP_HEAD_AES_KEY;
+// openchat的SECRET_NAME
+const SECRET_NAME = process.env.VUE_APP_SECRET_NAME;
+
 
 export const baseUrl = (moduleName) => {
     let moduleCode = moduleName || "webBiz";
@@ -99,40 +93,19 @@ function aesEncode(data, key) {
 }
 
 export const getSignHeader = () => {
-
-    // const SECRET_NAME = "4669ae8d7010521fcaf4855dbfbb1303";
-    let myClient = eventCommon.fnClientInfoGet();
-    // let client = eventCommon.fnClientInfoGet();
-    // client.sysMac = getApiMacAddressSync();
-
-    // const NEW_SIGN = "3f5dbac7bdac7d48";
-    // const SECRET_NAME ="efca147af514c2799a7a3958b66e8ab7";
-
-    const NEW_SIGN = "f58c15f54e8f7826";
-    const SECRET_NAME ="e884263661036ec9e123ea63d78e6e28";
-
-    let client = {
-        "language": 2,
-        "sysModel": "android",
-        "sessionId": "nlocal::6fb6cebaa04a4d9caf204c5ea9e35aa88c591db8f7689e38916028db23699a10982f43eb6c3cfab92404193ea14e88b2",
-        // "sessionId": "fb67f512beea5f00000038fbb5ef3df7",
-        "sysMac": "e72c8fecc70838e5a960c0299160a18bcoin",
-        "appVer": 620,
-        "plat": 0,
-        "packageCode": 1000
-    }
-    client.sessionId=myClient.sessionId
-
-    // console.log(client, 'NEW_SIGN:', NEW_SIGN, 'SECRET_NAME:', SECRET_NAME)
-
+    let client = eventCommon.fnClientInfoGet();
+    client.sysMac = getApiMacAddressSync();
+    client.packageCode = 6000;
+    
+    console.log('HEAD_AES_KEY:', HEAD_AES_KEY, 'SECRET_NAME:', SECRET_NAME, client)
     let clientStr = JSON.stringify(client);
 
     const timestamp = Date.now();
     const tenStr = `${clientStr}//${timestamp}`;
     const oneStr = `${SECRET_NAME},${timestamp}`;
 
-    const ten = encrypt(tenStr, NEW_SIGN);
-    const one = encrypt(oneStr, NEW_SIGN);
+    const ten = encrypt(tenStr, HEAD_AES_KEY);
+    const one = encrypt(oneStr, HEAD_AES_KEY);
 
     const tenOrigin = clientStr + "//" + timestamp;
     const result = {
