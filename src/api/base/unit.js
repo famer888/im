@@ -97,7 +97,7 @@ export const getSignHeader = () => {
     client.sysMac = getApiMacAddressSync();
     client.packageCode = 6000;
     
-    console.log('HEAD_AES_KEY:', HEAD_AES_KEY, 'SECRET_NAME:', SECRET_NAME, client)
+    // console.log('HEAD_AES_KEY:', HEAD_AES_KEY, 'SECRET_NAME:', SECRET_NAME, client)
     let clientStr = JSON.stringify(client);
 
     const timestamp = Date.now();
