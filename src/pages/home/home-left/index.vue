@@ -850,11 +850,13 @@ export default {
       const index = this.chats.findIndex(item => item.channelId === info.channelId)
       if(index >= 0) {
        this.chats[index].detail = info;
+       Object.assign(this.chats[index], info);
       }
       let cacheList = await Cache(`${loginId}MessageChannelList`) || [];
       const cacheIndex = cacheList.findIndex(item => item.channelId === info.channelId)
       if(cacheIndex >= 0) {
         cacheList[cacheIndex].detail = info;
+        Object.assign(cacheList[index], info);
         Cache(`${loginId}MessageChannelList`, cacheList);
       }
     },
