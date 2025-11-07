@@ -595,12 +595,12 @@ export default {
      * 懒渲染滚动
      */
     handleListScrollChange() {
-      if (this.navType === 0) {
         let scrollTop = this.$refs["list"].scrollTop;
-        if (this.groups.length > 0) {
-          scrollTop -= 26;
+        if (this.chats.length > 0) {
+          // scrollTop -= 26;
           scrollTop = scrollTop < 0 ? 0 : scrollTop;
         }
+        // 滚动条位置上方渲染的个数
         let beforeNum = Math.floor(scrollTop / 59);
 
         // Chats
@@ -608,12 +608,10 @@ export default {
           let index = beforeNum - 40;
           index = index < 0 ? 0 : index;
           index = index > this.chats.length ? this.chats.length : index;
-
           if (index !== this.showIndex) {
             this.showIndex = index;
           }
         }
-      }
     },
     defaultImgSrc() {
       return require("@/assets/images/logo/group-icon.png");
