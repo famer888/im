@@ -15,9 +15,9 @@
         opacity: isUpdating ? 0.6 : 1,
         minHeight: memberListHeight + 'px',
       }"
-      v-infinite-scroll="nextPage" 
-      :infinite-scroll-disabled="loading || isEnd" 
-      infinite-scroll-distance="50" 
+      v-infinite-scroll="nextPage"
+      :infinite-scroll-disabled="loading || isEnd"
+      infinite-scroll-distance="50"
     >
       <li
         v-for="item in searchList"
@@ -65,7 +65,7 @@ export default {
       pageNum: 1,
       pageSize: 20,
       loading: false, // 加载中
-      isEnd: false, // 是否加载完全部成员 
+      isEnd: false, // 是否加载完全部成员
     };
   },
   inject: ["provideChannelUserList"],
@@ -75,7 +75,7 @@ export default {
      */
     searchList() {
       let memberList = this.memberList || []
-      if(this.chatContent.memberType === 3) {
+      if(!this.chatContent.memberType || this.chatContent.memberType === 3) {
         memberList = memberList.filter(item => item.memberType !== 1)
       }
       if (!this.searchText) {
@@ -132,7 +132,7 @@ export default {
       }
     },
     async handleChannelMemberGet() {
-      const { channelId, adminPrivacy } = this.chatContent;
+      const { channelId, adminPrivacy, memberType } = this.chatContent;
       if( !channelId ) return
       const prams = {
         pageNum: this.pageNum,

@@ -107,59 +107,52 @@ export default {
       return this.$t("消息转发");
     },
     list() {
-      const friendIdMap = {};
-      const groupIdMap = {};
-      const channelIdMap = {};
+      const searchLower = this.searchText.toLowerCase();
+      const hasSearch = this.searchText !== "";
+      const hasTypeFilter = this.selectedType !== null;
 
-      this.chats.forEach(({ type, id }) => {
-        if (type === "friend") {
-          friendIdMap[id] = true;
-        } else if (type === "group") {
-          groupIdMap[id] = true;
-        } else if (type === "channel") {
-          channelIdMap[id] = true;
+      // 使用 Map 进行高效去重，key 为唯一标识
+      const uniqueMap = new Map();
+
+      // 辅助函数：检查是否匹配搜索条件
+      const matchSearch = (item) => {
+        if (!hasSearch) return true;
+        const { name, nickName, channelName } = item;
+        return name?.toLowerCase().includes(searchLower) ||
+               nickName?.toLowerCase().includes(searchLower) ||
+               channelName?.toLowerCase().includes(searchLower);
+      };
+
+      // 辅助函数：添加项到 Map（自动去重）
+      const addItem = (item, type) => {
+        if (hasTypeFilter && type !== this.selectedType) return;
+        if (!matchSearch(item)) return;
+
+        const key = `${type}_${item.channelId || item.groupId || item.id}`;
+
+        if (!uniqueMap.has(key)) {
+          uniqueMap.set(key, { ...item, type });
+        }
+      };
+
+      // 按优先级顺序处理：chats 优先（最近聊天）
+      this.chats.forEach(item => addItem(item, item.type));
+
+      // 处理好友列表
+      this.friendList.forEach(item => addItem(item, "friend"));
+
+      // 处理群组列表
+      this.groups.forEach(item => addItem(item, "group"));
+
+      // 处理频道列表（只包含有管理员权限的）
+      this.channels.forEach(item => {
+        if (item.adminPrivacy) {
+          addItem(item, "channel");
         }
       });
-
-      const friendList = this.friendList
-        .filter(({ id }) => !friendIdMap[id])
-        .map((item) => {
-          return {
-            ...item,
-            type: "friend",
-          };
-        });
-      const groups = this.groups
-        .filter(({ id }) => !groupIdMap[id] && id !== "invitation")
-        .map((item) => ({
-          ...item,
-          type: "group",
-        }));
-      const channels = this.channels
-        .filter(({ id }) => !channelIdMap[id])
-        .map((item) => ({
-          ...item,
-          type: "channel",
-        }));
-
-      // 根据selectedType过滤数据
-      let allItems = [...this.chats, ...friendList, ...groups, ...channels];
-
-      if (this.selectedType !== null) {
-        allItems = allItems.filter(item => item.type === this.selectedType);
-      }
-
-      // 搜索过滤
-      return this.searchText !== ""
-        ? allItems.filter(
-            ({ name, nickName, channelName }) => {
-              const searchLower = this.searchText.toLowerCase();
-              return name?.toLowerCase().includes(searchLower) ||
-                nickName?.toLowerCase().includes(searchLower) ||
-                channelName?.toLowerCase().includes(searchLower)
-            }
-          )
-        : allItems;
+      uniqueMap.delete("channel_channelNotice");
+      uniqueMap.delete("group_invitation");
+      return Array.from(uniqueMap.values());
     },
     listLazy() {
       return this.list.slice(this.scrollShowIndex, this.scrollShowIndex + 20);
@@ -174,9 +167,7 @@ export default {
     // 聊天列表
     Cache(`${loginId}MessageGroupList`).then((res) => {
       if (res && res.length > 0) {
-        // id = invitation 表示是群通知的会话框，则不需要
-        let list = res.filter((item) => item.id !== "invitation");
-        this.chats = eventChat.fnChatListSort([...this.chats, ...list]).list;
+        this.chats = eventChat.fnChatListSort([...this.chats, ...res]).list;
       }
     });
 
@@ -200,12 +191,15 @@ export default {
 
     // 获取频道列表
     Cache(`${loginId}-ChannelList`).then((res) => {
-      this.channels = res ? res : [];
+      // 只显示有管理员以上权限的频道
+      this.channels = res ? res.filter(item => item.adminPrivacy) : [];
     });
 
     Cache(`${loginId}MessageChannelList`).then((res) => {
       if (res && res.length > 0) {
-        this.chats = eventChat.fnChatListSort([...this.chats, ...res]).list;
+        // 只显示有管理员以上权限的频道聊天
+        const filteredChannels = res.filter(item => item.adminPrivacy);
+        this.chats = eventChat.fnChatListSort([...this.chats, ...filteredChannels]).list;
       }
     });
 

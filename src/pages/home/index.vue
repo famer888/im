@@ -302,12 +302,16 @@ export default {
                   operator: "channelDetailCache",
                   data: channelDetail,
             });
-            this.infoActive = {
-              ...info,
-              ...channelDetail,
-              isDisable: channelDetail.status === 3,
-              channelDetailDone: +new Date(),
-            };
+            // 快速切换时接口未返回，就别赋值了，否则会覆盖掉当前的值
+            if ((this.infoActive?.channelId || this.infoActive?.id) === channelDetail?.channelId) {
+              this.infoActive = {
+                ...info,
+                ...channelDetail,
+                isDisable: channelDetail.status === 3,
+                channelDetailDone: +new Date(),
+              };
+            }
+
           });
         } else if (info) {
           curGroup = this.groupList.find((item) => item.id == info.id);
@@ -332,9 +336,11 @@ export default {
                   operator: "channelDetailCache",
                   data: channelDetail,
             });
+            // 这里直接展开...channelDetail就不需要设置那么多属性了
             this.infoActive = {
               ...this.infoActive,
               adminPrivacy: channelDetail.adminPrivacy,
+              memberType: channelDetail.memberType,
               channelDetailDone: +new Date(),
             };
           });

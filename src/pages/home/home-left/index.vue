@@ -67,7 +67,7 @@
             :archiveListShow="archiveListShow"
             :infoActive="
               infoActive &&
-              ['friend', 'group', 'notificationGroup'].includes(infoActive.type)
+              ['friend', 'group', 'notificationGroup', 'channel'].includes(infoActive.type)
                 ? infoActive
                 : null
             "
