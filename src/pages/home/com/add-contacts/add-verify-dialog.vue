@@ -20,6 +20,13 @@ export default {
             verifyValue: this.defalutValue || ""
         }
     },
+    watch: {
+        verifyValue(v) {
+            if(v.length > 20) {
+                this.verifyValue = v.slice(0, 20);
+            }
+        }
+    },
     methods: {
         confirm() {
             this.$emit("confirm", this.verifyValue)
