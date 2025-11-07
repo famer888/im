@@ -918,6 +918,11 @@ const fnMsgSend = async (info) => {
             if (!item.url && item.text) {
                 item.url = item.text
             }
+            if(item.chatType===1 && item.content.includes('||')) {
+                const url = item.content.split('||')[0]
+                item.text = url
+                item.content = url
+            }
             if (type == 'group') {
                 //  获取群群文件加密key
                 if (item.fileKey) {
