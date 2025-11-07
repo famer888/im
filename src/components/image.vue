@@ -3,7 +3,6 @@
     :src="url === '' ? icon : url"
     :style="isError && errorStyle ? errorStyle : null"
     @error="renderErr()"
-    :onerror="renderErr()"
     @click="handleClick"
     @contextmenu.prevent="handleContextmenu"
   />
@@ -69,8 +68,12 @@ export default {
     handleContextmenu(e) {
       this.$emit("onContextmenu", e);
     },
+    bindRenderError() {
+
+    },
     renderErr() {
-      // this.url = this.icon;
+
+      this.url = this.icon;
       //  this.isError = true;
     },
     async loadErr() {
