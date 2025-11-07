@@ -120,7 +120,8 @@ export default {
           // })
         }
         let linkRes = await this.validChannelLink(linkUrl);
-        if (linkRes?.code == 200) {
+        console.log('validChannelLink--',linkRes )
+        if (linkRes) {
           this.goChannelLink(linkRes)
         } else {
           // 其它链接直接打开
