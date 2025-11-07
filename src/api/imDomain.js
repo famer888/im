@@ -2,6 +2,7 @@ import Vue from "vue";
 import { getUrl, baseUrl } from "./base/unit";
 import axios from "axios";
 import { reportErrorDomain } from "@/utils/trendsDomain/manageReport";
+import { repairToken } from "@/utils/trendsDomain/manageToken";
 import {
     _encrypt,
     _decrypt,
@@ -75,6 +76,7 @@ const postAxios = async (url, data, opts) => {
         result = await requestAxios(url, prams, opts);
     } catch (error) {
         console.error("postAxios-3-", error);
+        repairToken();
     }
 
     if (secretKey && result) {

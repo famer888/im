@@ -7,7 +7,7 @@ import {
     getTrendsOssFirstNormal,
     getPrepareOssFirstNormal,
 } from "./manageDomain";
-import { isPastTimestamp, getMacAddress } from "./tools";
+import { isPastTimestamp, getMacAddress, throttle } from "./tools";
 import eventCommon from "@/event/common.js";
 
 const getToken = (domain) => {
@@ -80,3 +80,11 @@ export const updateToken = async () => {
         }
         return result
 }
+
+// 处理接口解密异常，修复一下token
+export const repairToken = throttle(
+    () => {
+        updateToken()
+    },
+    30000
+)
