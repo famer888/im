@@ -284,6 +284,42 @@ function fnHandTipAddFriend(info) {
     });
 }
 
+// 私聊增加提示消息
+const fnFriendAddMsgTip = (content, info) => {
+      let customMsgId = generateUniqueId();
+       const loginId = eventCommon.fnCommonInfoRU({
+        getId: "loginId",
+    });
+    let sendTime = getNow();
+    const params = {
+        ChatType: 52,
+        Content: "{}",
+        chatType: 52,
+        content,
+        customMsgId: customMsgId,
+        errorType: info.commonResult.errCode,
+        errMsg: info.commonResult.errMsg,
+        msgType: 52,
+        sendTime: sendTime,
+        sendUid: loginId,
+        targetId: Number(info.targetId),
+        source: 0,
+        id: Number(info.targetId),
+        type: 'friend',
+        messageProtocolId: info.messageProtocolId
+    };
+
+    eventBase.fnMsgAddToDB({ ...params }, Number(info.targetId));
+
+    eventBase.fnCommunicationSendMsg({
+        operator: "msgNew",
+        operatorType: "notification",
+        data: {
+            ...params,
+        },
+    });
+}
+
 /**
  * 请求到的数据格式化
  */
@@ -634,5 +670,6 @@ export default {
     fnFriendUpdate,
     initFriendRemarkName,
     fnRemarkUpdate,
-    fnHandTipAddFriend
+    fnHandTipAddFriend,
+    fnFriendAddMsgTip,
 };
