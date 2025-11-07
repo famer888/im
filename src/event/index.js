@@ -258,6 +258,7 @@ const fnSocketMessage = (arrayBuffer) => {
                 getId: "loginId",
             });
             const { friendReqNum = 0 } = data || {};
+            console.log('friendReqNum--', friendReqNum)
             const total = Number(friendReqNum);
             Cache(`${loginId}-newFriendReqTotal`, { total })
             eventBase.fnCommunicationSendMsg({
@@ -283,32 +284,33 @@ const fnSocketMessage = (arrayBuffer) => {
         case 29999: {
             // 退出登录
             let { commonResult } = data;
-            if (commonResult.errCode == 100) {
+            const errCode = commonResult.errCode;
+            if (errCode == 100) {
                 // 登出前要先导出
                 ipcRenderer.send("auto-export-db", {}).then(res => {
                     eventCommon.fnLoginout();
                 });
-            }
-
-            if ([1022, 1021].includes(commonResult.errCode)) {
+            } else if ([1022, 1021].includes(errCode)) {
                 // 群被禁用，被禁言 信息发送失败,更新信息状态和添加提示
                 eventMsg.fnMsgSendFail({ id: Number(data.targetId), type: 'group',  customMsgId: String(Number(data.flag)) });
                 eventGroup.groupEventHandleMsg(data);
-            }
-            if (commonResult.errCode == 5113) {
+            } else if (errCode == 5113) {
                 eventFriend.fnHandTipAddFriend(data)
+            } else if (errCode == 5114) {
+                eventFriend.fnFriendAddMsgTip('消息已发出，但对方绝收', data);
             }
             break;
         }
         case 20403: {
             // 群消息已读用户
             const { receiptMessage = [] } = data || {};
-            eventMsg.fnGroupMsgReadRecord(receiptMessage)
+            // eventMsg.fnGroupMsgReadRecord(receiptMessage)
         }
         case 4204: {
             const { latestChannelEventMessage = {} } = data || {};
             eventChannel.handleChannelEvents(latestChannelEventMessage);
         }
+       
 
         default:
     }
