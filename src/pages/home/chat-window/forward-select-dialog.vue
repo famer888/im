@@ -148,7 +148,6 @@ export default {
       if (this.selectedType !== null) {
         allItems = allItems.filter(item => item.type === this.selectedType);
       }
-      console.log('>>>>', allItems.length);
 
       // 搜索过滤
       return this.searchText !== ""

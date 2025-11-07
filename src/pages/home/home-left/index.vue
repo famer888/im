@@ -125,6 +125,7 @@ import eventFriend from "@/event/friend";
 import eventChannel from "@/event/channel";
 import eventChat from "@/event/chat";
 import eventMsg from "@/event/msg";
+import { _ } from "core-js";
 
 // 聊天窗口置顶数量
 let chatTopSize = 0;
@@ -847,16 +848,17 @@ export default {
      */
     async eventChannelDetailCache(info) {
       if(!info?.channelId) return;
+      const cloneInfo = _.cloneDeep(info);
       const index = this.chats.findIndex(item => item.channelId === info.channelId)
       if(index >= 0) {
        this.chats[index].detail = info;
-       Object.assign(this.chats[index], info);
+       Object.assign(this.chats[index], cloneInfo);
       }
       let cacheList = await Cache(`${loginId}MessageChannelList`) || [];
       const cacheIndex = cacheList.findIndex(item => item.channelId === info.channelId)
       if(cacheIndex >= 0) {
         cacheList[cacheIndex].detail = info;
-        Object.assign(cacheList[index], info);
+        Object.assign(cacheList[cacheIndex], cloneInfo);
         Cache(`${loginId}MessageChannelList`, cacheList);
       }
     },
