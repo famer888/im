@@ -292,6 +292,7 @@ export default {
           "searchSpecifiedChat", // 搜索指定的聊天窗口记录
           "channelDetailCache", // 缓存频道的详情
           "deleteChat", // 删除聊天窗口
+          "channelDisturbSet",  // 频道接收通知设置
         ],
         this.eventHandling
       );
@@ -451,8 +452,27 @@ export default {
                 console.log('eventHandlingChatDelete-1-')
           this.eventHandlingChatDelete(info);
           break;
+        case "channelDisturbSet":
+          const {id, isDisturb} = info;
+          if(id) {
+            this.eventSetChannelDisable(id, isDisturb);
+          }
+          break;
         default:
       }
+    },
+    // 设置消息列表的频道静音状态
+    eventSetChannelDisable(channelId, state) {
+        let chats = _.cloneDeep(this.chats);
+       const index = chats.findIndex(item => item.channelId === channelId);
+       if(index >= 0) {
+          chats[index].isDisturb = state;
+          this.chats = chats;
+          Cache(
+            `${loginId}MessageChannelList`,
+            chats.filter((item) => item.type === "channel")
+          );
+       };
     },
     eventUpdateMsgStatus(info) {
       // 信息发送成功还是失败更新会话列表里的readStatus
