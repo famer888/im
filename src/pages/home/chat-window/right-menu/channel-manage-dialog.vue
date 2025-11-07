@@ -32,6 +32,7 @@
           v-for="(item, index) in managerList"
           :key="index"
           class="member-item cursor"
+          :class="{ 'has-remove-btn': item.removeAuthorize }"
           @click="handleMemberDialogShow(item)"
         >
           <ComImage :src="item.userInfoDTO.icon" type="friend" class="member-avatar" />
@@ -42,7 +43,7 @@
               </div>
             </div>
             <div class="member-online-state">
-              {{ item.setter }}
+                {{ item.setter }}
             </div>
           </div>
           <span
@@ -272,6 +273,12 @@ export default {
           background: #f5f5f5;
         }
 
+        &.has-remove-btn {
+          .member-info {
+            padding-right: 42px;
+          }
+        }
+
         .remove-manage {
           position: absolute;
           right: 10px;
@@ -325,6 +332,13 @@ export default {
           text-align: left;
           font-size: 12px;
           color: #b9babe;
+          word-break: break-all;
+          display: -webkit-box;
+          -webkit-box-orient: vertical;
+          -webkit-line-clamp: 2;
+          line-clamp: 2;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
       }
 

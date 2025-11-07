@@ -336,9 +336,11 @@ export default {
                   operator: "channelDetailCache",
                   data: channelDetail,
             });
+            // 这里直接展开...channelDetail就不需要设置那么多属性了
             this.infoActive = {
               ...this.infoActive,
               adminPrivacy: channelDetail.adminPrivacy,
+              memberType: channelDetail.memberType,
               channelDetailDone: +new Date(),
             };
           });
