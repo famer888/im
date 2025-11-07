@@ -10,7 +10,12 @@
       <p class="subscriber-count">{{ info.memberCount || 0 }}位订阅者</p>
       <div class="remark-container">
         <div class="remark-content" ref="remarkContent" :class="{ 'expanded': isRemarkExpanded }">
-          {{ info.remark }}
+          <ComLableEle
+            v-for="(item, index) in remarkTagList"
+            :key="index"
+            :info="item"
+            @atClick="handleAtClick"
+          />
         </div>
         <span class="toggle-btn" v-if="showToggleBtn" @click="toggleRemark">
           {{ isRemarkExpanded ? '折叠' : '更多' }}
@@ -26,35 +31,277 @@
 <script>
 import { subscribeChannel } from "@/api/imChannel";
 
+// 工具
+import { repalceLink, repalceLinkNoPrefix } from "@/utils/base";
+import {
+  strSplitAt,
+  strReplaceEmojiImgLabel,
+  splitHtmlStringToObjects,
+} from "@/utils/widget";
+
 // 事件
 import eventBase from "@/event/base";
 import eventChannel from "@/event/channel";
 
 import ComTextAvatar from '@/components/text-avatar';
+import ComLableEle from "@/pages/home/com/lable-ele.vue";
 
 export default {
   props: ["info", "chatContent"],
-  components: { ComTextAvatar },
+  components: { ComTextAvatar, ComLableEle },
   data() {
     return {
       memberCountRemark: "",
       isRemarkExpanded: false,
       showToggleBtn: false,
+      remarkTagList: [],
     };
   },
   mounted() {
+    this.processRemark();
     this.$nextTick(() => {
       this.checkRemarkOverflow();
     });
   },
   watch: {
     'info.remark'() {
+      this.processRemark();
       this.$nextTick(() => {
         this.checkRemarkOverflow();
       });
     }
   },
   methods: {
+    /**
+     * 处理remark文本，支持链接和@提及
+     */
+    processRemark() {
+      if (!this.info?.remark) {
+        this.remarkTagList = [];
+        return;
+      }
+
+      let htmlString = this.info.remark;
+
+      // 字符串替换为表情图片标签
+      htmlString = strReplaceEmojiImgLabel(htmlString);
+
+      // 连接处理
+      htmlString = repalceLink(htmlString);
+
+      // 拆分html
+      const tagList = splitHtmlStringToObjects(htmlString);
+
+      // 提取所有@开头的文本作为可能的@提及列表
+      const atNameList = this.extractAtNames(htmlString);
+
+      // text再进行递归拆分，把@、链接和换行符都拆出来
+      let tagListNew = [];
+      for (const item of tagList) {
+        if (item.type === "text") {
+          // 先处理换行符，按\n拆分
+          const lineItems = this.splitByNewline(item.content);
+
+          for (const lineItem of lineItems) {
+            if (lineItem.type === "break") {
+              tagListNew.push(lineItem);
+              continue;
+            }
+
+            // 对每一行进行@拆分
+            const arr = strSplitAt(lineItem.content, atNameList).map((content) => {
+              return {
+                type: "text",
+                content,
+              };
+            });
+
+            // 对每个拆分后的文本，再判断是否存在没有 https 的链接
+            for (const n of arr) {
+              if (n.content[0] !== "@") {
+                // 不是@开头的，需要进一步处理链接
+                const tagListTextAndA = splitHtmlStringToObjects(
+                  repalceLinkNoPrefix(n.content)
+                );
+                tagListNew = [...tagListNew, ...tagListTextAndA];
+              } else {
+                // 是@开头的，直接保留
+                tagListNew.push(n);
+              }
+            }
+          }
+        } else {
+          tagListNew.push(item);
+        }
+      }
+
+      // 递归处理：如果还有text类型且包含未处理的内容，继续处理
+      tagListNew = this.recursiveProcessText(tagListNew, atNameList);
+
+      // 识别链接类型：外部链接标记为 customLink
+      tagListNew = this.identifyLinkTypes(tagListNew);
+
+      this.remarkTagList = tagListNew;
+    },
+    /**
+     * 按换行符拆分文本
+     */
+    splitByNewline(text) {
+      if (!text.includes('\n')) {
+        return [{ type: "text", content: text }];
+      }
+
+      const lines = text.split('\n');
+      const result = [];
+
+      for (let i = 0; i < lines.length; i++) {
+        if (lines[i]) {
+          result.push({ type: "text", content: lines[i] });
+        }
+        // 如果不是最后一行，添加换行符
+        if (i < lines.length - 1) {
+          result.push({ type: "break" });
+        }
+      }
+
+      return result;
+    },
+    /**
+     * 递归处理文本节点，直到所有链接和@都被拆分
+     */
+    recursiveProcessText(tagList, atNameList) {
+      let hasUnprocessed = false;
+      let result = [];
+
+      for (const item of tagList) {
+        if (item.type === "text" && item.content) {
+          const content = item.content;
+
+          // 检查是否还有未处理的链接（包含http或域名模式）
+          const hasLink = /https?:\/\/[^\s]+/.test(content) ||
+                         /([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}(\/[^\s]*)?/.test(content);
+
+          // 检查是否还有未处理的@（非单独的@开头）
+          const hasAt = content.includes('@') && content[0] !== '@';
+
+          if ((hasLink || hasAt) && content[0] !== '@') {
+            hasUnprocessed = true;
+
+            // 先处理链接
+            let processed = repalceLinkNoPrefix(content);
+            const tempList = splitHtmlStringToObjects(processed);
+
+            // 再对拆分后的text进行@处理
+            for (const temp of tempList) {
+              if (temp.type === "text" && temp.content[0] !== '@') {
+                const atSplit = strSplitAt(temp.content, atNameList).map((c) => ({
+                  type: "text",
+                  content: c,
+                }));
+                result = [...result, ...atSplit];
+              } else {
+                result.push(temp);
+              }
+            }
+          } else {
+            result.push(item);
+          }
+        } else {
+          result.push(item);
+        }
+      }
+
+      // 如果还有未处理的内容，继续递归
+      if (hasUnprocessed) {
+        return this.recursiveProcessText(result, atNameList);
+      }
+
+      return result;
+    },
+    /**
+     * 提取文本中所有@开头的可能名称
+     */
+    extractAtNames(text) {
+      const atList = [];
+      const matches = text.match(/@[^\s@]+/g);
+      if (matches) {
+        atList.push(...matches);
+      }
+      return atList;
+    },
+    /**
+     * 识别链接类型：区分外部链接和内部链接（群聊、频道）
+     */
+    identifyLinkTypes(tagList) {
+      const result = [];
+
+      for (const item of tagList) {
+        if (item.type === "link") {
+          const linkType = this.checkLinkType(item.href);
+
+          // 如果是外部链接，改为 customLink 类型
+          if (linkType === 'external') {
+            result.push({
+              ...item,
+              type: 'customLink',
+            });
+          } else {
+            // 内部链接（频道或群聊）保持为 link 类型
+            result.push(item);
+          }
+        } else {
+          result.push(item);
+        }
+      }
+
+      return result;
+    },
+    /**
+     * 根据 URL 模式判断链接类型
+     */
+    checkLinkType(url) {
+      try {
+        const href = url.startsWith('http') ? url : `https://${url}`;
+        const urlObj = new URL(href);
+
+        // 判断是否是群聊链接
+        if (
+          urlObj.origin === "https://ocs.com" &&
+          urlObj.searchParams.has("qrCode") &&
+          urlObj.searchParams.has("IdCode")
+        ) {
+          return 'group';
+        }
+
+        // 判断是否是频道链接（根据域名或路径特征）
+        // 可以根据实际的频道链接格式调整这里的判断逻辑
+        if (
+          urlObj.hostname.includes('68chat.co') ||
+          urlObj.hostname === 'ocs.com' ||
+          urlObj.pathname.includes('/channel/')
+        ) {
+          return 'channel';
+        }
+
+        // 其他为外部链接
+        return 'external';
+      } catch (error) {
+        console.error('URL 解析错误:', error);
+        return 'external';
+      }
+    },
+    /**
+     * 点击了@的内容
+     */
+    handleAtClick(text) {
+      const atText = text.replace("@", "");
+      eventBase.fnCommunicationSendMsg({
+        operator: "atClick",
+        data: {
+          text: atText,
+        },
+      });
+    },
     /**
      * 申请加入频道
      */
@@ -245,6 +492,34 @@ export default {
             background: transparent;
           }
         }
+      }
+
+      // 支持@提及和链接样式
+      :deep(.at) {
+        color: #3369fe;
+        cursor: pointer;
+
+        &:hover {
+          opacity: 0.8;
+        }
+      }
+
+      // 内部链接（频道、群聊）样式
+      :deep(a) {
+        color: #3369fe;
+        text-decoration: none;
+        cursor: pointer;
+
+        &:hover {
+          text-decoration: underline;
+        }
+      }
+
+      :deep(img) {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        vertical-align: middle;
       }
 
       .toggle-btn {
