@@ -136,7 +136,7 @@ export default {
           type: "group",
         }));
       const channels = this.channels
-        .filter(({ id }) => !channelIdMap[id])
+        .filter(({ id, adminPrivacy }) => !channelIdMap[id] && adminPrivacy)
         .map((item) => ({
           ...item,
           type: "channel",
@@ -200,12 +200,15 @@ export default {
 
     // 获取频道列表
     Cache(`${loginId}-ChannelList`).then((res) => {
-      this.channels = res ? res : [];
+      // 只显示有管理员以上权限的频道
+      this.channels = res ? res.filter(item => item.adminPrivacy) : [];
     });
 
     Cache(`${loginId}MessageChannelList`).then((res) => {
       if (res && res.length > 0) {
-        this.chats = eventChat.fnChatListSort([...this.chats, ...res]).list;
+        // 只显示有管理员以上权限的频道聊天
+        const filteredChannels = res.filter(item => item.adminPrivacy);
+        this.chats = eventChat.fnChatListSort([...this.chats, ...filteredChannels]).list;
       }
     });
 
