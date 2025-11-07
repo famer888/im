@@ -247,7 +247,8 @@
             v-if="
               rightClickSelectedInfo &&
               ![50, 51, 52].includes(rightClickSelectedInfo.chatType) &&
-              selectedIdList.length === 0
+              selectedIdList.length === 0 &&
+              !isChannelOrdinaryMember
             "
           >
             <a @click="handleQuoteSet">
@@ -424,17 +425,21 @@ export default {
     },
     isDeleteAll() {
       const { type, memberType } = this.chatContent;
+      if(this.isChannelOrdinaryMember) return false;
       return (
         this.rightClickSelectedInfo &&
         this.rightClickSelectedInfo.readStatus !== -1 &&
         (
           type === "friend" ||
           this.rightClickSelectedInfo.isSelf ||
-          memberType !== 2  ||
-          (type === "channel" && memberType !== 3)
+          memberType !== 2  
         )
       );
     },
+    isChannelOrdinaryMember() {
+        const { type, memberType } = this.chatContent;
+        return type === 'channel' && memberType === 3;
+    }
   },
   mounted() {
     const { id, type, adminPrivacy } = this.chatContent;

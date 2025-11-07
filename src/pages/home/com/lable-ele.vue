@@ -57,22 +57,21 @@ export default {
       })
     },
     goChannelLink(linkRes) {
-      const channelInfo = linkRes?.data || {};
-          // 公开的频道链接或者已加入频道直接跳转窗口
-          if(!channelInfo.linkType || channelInfo.memberType) {
-            this.goChannelChatWindow(channelInfo)
-          }
-          // 私密频道打开加入窗口
-          else if(channelInfo) {
+      const channelInfo = linkRes?.data;
+        if(!channelInfo) {
+              window.$toast(linkRes?.msg || "此频道已失效或过期");
+        } else if(!channelInfo.linkType || channelInfo.memberType) {
+           // 公开的频道链接或者已加入频道直接跳转窗口
+          this.goChannelChatWindow(channelInfo)
+        } else if(channelInfo) {
+           // 私密频道打开加入窗口
             eventBase.fnCommunicationSendMsg({
               operator: "openChannelDialog",
               data: {
                 values: channelInfo,
               },
             });
-          } else {
-             window.$toast(linkRes?.msg || "此频道已失效或过期");
-          }
+        } 
     },
     handleAtClick(e) {
       e.stopPropagation();
