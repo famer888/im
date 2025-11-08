@@ -27,7 +27,19 @@
           :class="{ active: item.id + item.type === idActive }"
           @click="linkTo(item)"
         >
-          <ComImage class="img-head" :src="item.pic" :type="item.type" />
+          <TextAvatar
+            v-if="item.type === 'channel' && !item.pic && !item.isMessage"
+            class="img-head"
+            :value="item.name || item.channelName"
+            :id="item.id"
+            :color="item.logoColor"
+          />
+          <ComImage
+            v-else
+            class="img-head"
+            :src="item.pic"
+            :type="item.type"
+          />
           <h3
             v-html="
               getWordKeyHtml(item.name?.replaceAll('🪵', '?') || item.nickName)
@@ -53,6 +65,9 @@
 <script>
 import dayjs from "dayjs";
 
+// 组件
+import TextAvatar from "@/components/text-avatar";
+
 // 事件
 import eventCommon from "@/event/common";
 import eventBase from "@/event/base";
@@ -60,7 +75,10 @@ import eventBase from "@/event/base";
 let timer = null;
 
 export default {
-  props: ["searchText", "groups", "friendList", "noSearchMsg"],
+  components: {
+    TextAvatar,
+  },
+  props: ["searchText", "groups", "channels", "friendList", "noSearchMsg"],
   data() {
     return {
       idActive: "",
@@ -71,6 +89,7 @@ export default {
       searchScrollShowIndex: 0,
       groupIdList: [],
       friendIdList: [],
+      channelIdList: [],
     };
   },
   computed: {
@@ -90,6 +109,13 @@ export default {
           let info = {};
           if (item.type === "group") {
             info = this.groups.find(({ id }) => id === item.groupId) || {};
+          } else if (item.type === "channel") {
+            info = this.channels ? this.channels.find(({ channelId }) => channelId === item.id) || {} : {};
+            if (info.channelName) {
+              info.name = info.channelName;
+              info.pic = info.icon;
+              info.logoColor = info.logoColor;
+            }
           } else {
             info =
               this.friendList.find(
@@ -102,6 +128,7 @@ export default {
             name: item.name || info.name,
             nickName: item.nickName || info.nickName,
             pic: item.pic || info.pic,
+            logoColor: item.logoColor || info.logoColor,
           };
         }
         return item;
@@ -126,6 +153,7 @@ export default {
 
     this.groupIdList = this.groups.map((item) => item.id);
     this.friendIdList = this.friendList.map((item) => item.id);
+    this.channelIdList = this.channels ? this.channels.map((item) => item.channelId) : [];
 
     this.handleSearchFriendAndGroup();
     this.handleSearchMessage();
@@ -209,9 +237,40 @@ export default {
         topIndexs.push(friendList.length);
       }
 
+      // 频道列表
+      const channels = this.channels
+        ? this.channels
+            .filter((item) => {
+              if (item.channelName) {
+                return item.channelName
+                  .toUpperCase()
+                  .includes(this.searchText.toUpperCase());
+              }
+              return false;
+            })
+            .map((item) => {
+              return {
+                ...item,
+                id: item.channelId,
+                name: item.channelName,
+                pic: item.icon,
+                type: "channel",
+              };
+            })
+        : [];
+
+      if (channels.length > 0) {
+        const count = friendList.length + groups.length;
+        titles.push({
+          top: titles.length * 27 + count * 59 + "px",
+          name: this.$t("频道"),
+        });
+        topIndexs.push(count);
+      }
+
       // 消息
       if (this.searchMessage.length > 0) {
-        const count = friendList.length + groups.length;
+        const count = friendList.length + groups.length + channels.length;
         titles.push({
           top: titles.length * 27 + count * 59 + "px",
           name: this.$t("消息"),
@@ -219,7 +278,7 @@ export default {
         topIndexs.push(count);
       }
 
-      this.list = [...friendList, ...groups, ...this.searchMessage];
+      this.list = [...friendList, ...groups, ...channels, ...this.searchMessage];
       this.titles = titles;
       this.topIndexs = topIndexs;
     },
@@ -256,6 +315,14 @@ export default {
                     if (groupInfo) {
                       name = groupInfo.name;
                     }
+                  } else if (item.type === "channel") {
+                    const channelInfo = this.channels ? this.channels.find(
+                      (n) => n.channelId === item.id
+                    ) : null;
+
+                    if (channelInfo) {
+                      name = channelInfo.channelName;
+                    }
                   } else {
                     const friendInfo = this.friendList.find(
                       (n) => n.id === item.id
@@ -270,8 +337,12 @@ export default {
                     ...arr,
                     ...item.list
                       .filter((n) => {
-                        if (Boolean(n.groupId)) {
-                          if (!this.groupIdList.includes(n.groupId)) {
+                        if (item.type === "group") {
+                          if (!this.groupIdList.includes(item.id)) {
+                            return false;
+                          }
+                        } else if (item.type === "channel") {
+                          if (!this.channelIdList.includes(item.id)) {
                             return false;
                           }
                         } else {
@@ -299,7 +370,7 @@ export default {
                 }
               }
             }
-
+            console.log('>>>,', arr);
             this.searchMessage = arr;
             this.handleSearchFriendAndGroup();
           });
@@ -310,6 +381,8 @@ export default {
       }, 400);
     },
     getWordKeyHtml(content) {
+      if (!content) return "";
+      console.log("content", content);
       return content.replace(
         this.searchText,
         `<span>${this.searchText}</span>`
@@ -328,6 +401,13 @@ export default {
 
           if (info) {
             data.name = info.name;
+          }
+        } else if (data.type === "channel") {
+          const info = this.channels ? this.channels.find((item) => item.channelId === data.id) : null;
+
+          if (info) {
+            data.name = info.channelName;
+            data.pic = info.icon;
           }
         } else {
           const info = this.friendList.find((item) => item.id === data.id);
@@ -443,7 +523,7 @@ export default {
         }
       }
 
-      > img {
+      > img, label {
         position: absolute;
         left: 16px;
         top: 50%;

@@ -56,7 +56,12 @@ export default class dbBase {
                 const id = Number(
                     tableName.slice(tableName.indexOf(".man") + 4)
                 );
-                const type = tableName.includes("group") ? "group" : "friend";
+                let type = "friend";
+                if (tableName.includes("groupMessage")) {
+                    type = "group";
+                } else if (tableName.includes("channelMessage")) {
+                    type = "channel";
+                }
 
                 return new Promise(async (reject) => {
                     const list = await this.db[tableName]
@@ -96,7 +101,7 @@ export default class dbBase {
                             item.content
                                 .toUpperCase()
                                 .indexOf(searchText.toUpperCase()) !==
-                                -1 
+                                -1
                         );
                     }
                     return false;
@@ -167,26 +172,26 @@ export default class dbBase {
             )
             .map((item) => item.associationIdList);
 
-          
+
 
         // 二维数组，摊平为1维数组
         idListClearReferenced = idListClearReferenced.flat();
 
 
-  
+
         // 移除要被删除的
         idListClearReferenced = idListClearReferenced.filter(
             (id) => !customMsgIdList.includes(id)
         );
 
-        //////////////////////////////// 修改被引用a的数据    
+        //////////////////////////////// 修改被引用a的数据
 
         // 设置 更新引用id的id列表
         let idListUpdateAssociationId = msgInfoList
             .filter((item) => item.quoteMessage)
             .map((item) => item.quoteMessage.customMsgId);
 
-           
+
         // 移除要被删除的
         idListUpdateAssociationId = idListUpdateAssociationId.filter(
             (id) => !customMsgIdList.includes(id)
@@ -748,11 +753,11 @@ export default class dbBase {
             // 先按 sendTime 升序排序（如果 sendTime 是字符串或时间戳）
             if (a.sendTime < b.sendTime) return -1;
             if (a.sendTime > b.sendTime) return 1;
-    
+
             // 如果 sendTime 相同，则按 MsgID 升序排序
             if (a.MsgID < b.MsgID) return -1;
             if (a.MsgID > b.MsgID) return 1;
-    
+
             return 0; // 如果 sendTime 和 MsgID 都相同，则保持原顺序
         });
     }

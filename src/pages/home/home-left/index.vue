@@ -94,6 +94,7 @@
           v-else
           :searchText="searchText"
           :groups="groups"
+          :channels="channels"
           :friendList="friendList"
           :noSearchMsg="addAction"
           @clearSearch="searchText = ''"

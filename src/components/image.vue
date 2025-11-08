@@ -10,6 +10,7 @@
   <script>
 import groupIcon from "@/assets/images/logo/default_group_icon.png";
 import friendIcon from "@/assets/images/logo/logo-58.png";
+import channelIcon from "@/assets/images/logo/channel-notice.webp";
 import { getOssFirstNormalUrl } from "@/utils/trendsDomain/manageOssDownUpload"
 import { checkImageLoad } from "@/utils/fileTools";
 import { copyToClipboard } from "@/utils/base";
@@ -19,10 +20,15 @@ import eventCommon from "@/event/common";
 export default {
   props: ["src", "errorStyle", "type", "defaultUrl"],
   data() {
+    const defaultIcon = {
+      friend: friendIcon,
+      group: groupIcon,
+      channel: channelIcon,
+    }
     return {
       isError: false,
-      url: this.type === "group" ? groupIcon : friendIcon,
-      icon: this.type === "group" ? groupIcon : friendIcon,
+      url: defaultIcon[this.type] || friendIcon,
+      icon: defaultIcon[this.type] || friendIcon,
       replaceDomainNum: 0,
     };
   },
@@ -42,11 +48,11 @@ export default {
       const { ossDefaultUrl } = eventCommon.fnDomainsGet() || {};
       const src= ossDefaultUrl && this.src
                    ? this.src.replace("http://r22.zhenyoumei.top", ossDefaultUrl).replace("http://r33.zhenyoumei.top", ossDefaultUrl)
-                   : this.src;  
+                   : this.src;
       if (!src || src.includes("default")) {
          this.url = this.icon;
          return;
-      } 
+      }
       checkImageLoad(src).then(state => {
         if(state) {
           this.url = src;
@@ -89,4 +95,3 @@ export default {
   },
 };
 </script>
-  
