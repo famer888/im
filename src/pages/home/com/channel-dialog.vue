@@ -322,7 +322,7 @@ export default {
               channelName,
               logoColor,
               channelId,
-              content: '您加入了该频道'
+              content: '您已加入频道'
            })
           this.handleClose();
           setTimeout(() => {

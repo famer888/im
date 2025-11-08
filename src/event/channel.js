@@ -416,7 +416,7 @@ const fnHandleChannelSubscriberJoin = async (latestChannelEventMessage) => {
         const timestamp = Number(latestChannelEventMessage?.msgTime) || Date.now();
         const customMsgId = Number(latestChannelEventMessage?.msgId) || generateUniqueId();
         const chatType = 50; // 系统通知消息类型
-        const content = latestChannelEventMessage?.msg || "你已加入该频道";
+        const content = latestChannelEventMessage?.msg || "您已加入频道";
 
         // 如果聊天列表中不存在，则添加
         if (chatExistIndex === -1) {

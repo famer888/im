@@ -370,7 +370,6 @@ export default {
                 }
               }
             }
-            console.log('>>>,', arr);
             this.searchMessage = arr;
             this.handleSearchFriendAndGroup();
           });
@@ -382,7 +381,6 @@ export default {
     },
     getWordKeyHtml(content) {
       if (!content) return "";
-      console.log("content", content);
       return content.replace(
         this.searchText,
         `<span>${this.searchText}</span>`

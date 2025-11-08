@@ -10,7 +10,7 @@
         加入频道
     </div>
     <div class="shutupTip disable channel-disable"
-        v-else-if="chatContent.type === 'channel' && !chatContent.adminPrivacy"
+        v-else-if="chatContent.type === 'channel' && (!chatContent.adminPrivacy || !hasPublishMessageAuthority)"
         @click="channelDisturbSet"
     >
         {{ (chatContent.isDisturb || chatContent.detail?.isDisturb) ? '永久静音' : '接收通知' }}
@@ -59,6 +59,17 @@ export default {
     ComReplyInfo: () => import("./quote-info.vue"),
   },
   props: ["chatContent", "quoteInfo", "groupMemberUpdateNum", "editInfo"],
+  computed: {
+    /**
+     * 判断是否有发布消息权限
+     * adminPrivacy & 2 (bit 1) 表示发布消息权限
+     */
+    hasPublishMessageAuthority() {
+      const adminPrivacy = this.chatContent?.adminPrivacy;
+      if (!adminPrivacy) return false;
+      return (adminPrivacy & 2) !== 0;
+    }
+  },
   beforeDestroy() {
     eventBase.fnCommunicationMonitoring("comSend", null);
   },
@@ -87,7 +98,7 @@ export default {
               channelName,
               logoColor,
               channelId,
-              content: '您加入了该频道'
+              content: '您已加入频道'
            })
            setTimeout(() => {
               this.goChannelChatWindow(this.chatContent)

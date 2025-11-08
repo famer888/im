@@ -180,7 +180,7 @@
           <li
             v-if="
               ![50, 51, 52].includes(rightClickSelectedInfo?.chatType) &&
-              isDeleteAll
+              isDeleteAll && isChannelWithDeleteMessageAuthority
             "
           >
             <a
@@ -423,6 +423,16 @@ export default {
         return { id: item.id, msgId: item.msgId, customMsgId: item.customMsgId };
       });
     },
+    /**
+     * 判断是否是频道且有删除消息权限
+     * adminPrivacy & 4 (bit 2) 表示删除消息权限
+     */
+    isChannelWithDeleteMessageAuthority() {
+      if (this.chatContent?.type !== 'channel') return true;
+      const adminPrivacy = this.chatContent?.adminPrivacy;
+      if (!adminPrivacy) return false;
+      return (adminPrivacy & 4) !== 0;
+    },
     isDeleteAll() {
       const { type, memberType } = this.chatContent;
       if(this.isChannelOrdinaryMember) return false;
@@ -432,7 +442,7 @@ export default {
         (
           type === "friend" ||
           this.rightClickSelectedInfo.isSelf ||
-          memberType !== 2  
+          memberType !== 2
         )
       );
     },
@@ -1180,7 +1190,7 @@ export default {
         })
       } else {
         getChannelManages(prams).then(res => {
-            channelUserList = formatChannelManages(channelMemberSort(res.data?.rowList || [])) 
+            channelUserList = formatChannelManages(channelMemberSort(res.data?.rowList || []))
             this.keyComRightMenu++;
         })
       }
