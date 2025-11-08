@@ -150,7 +150,7 @@ export default {
           addItem(item, "channel");
         }
       });
-      uniqueMap.delete("channel_channelNotice");
+      uniqueMap.delete("friend_channelNotice");
       uniqueMap.delete("group_invitation");
       return Array.from(uniqueMap.values());
     },
