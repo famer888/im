@@ -81,10 +81,10 @@ export default {
             }, 500)
         },
         searchWatch(value) {
+            const searchValue = value.toLowerCase();
             this.memberInfoList = this.memberList.filter(item =>
-                (item?.name || "").includes(value)
-                || (item?.nickName || "").includes(value)
-                || (item?.identify || "").includes(value)
+                (item?.name || "").toLowerCase().includes(searchValue)
+                || (item?.nickName || "").toLowerCase().includes(searchValue)
             )
         },
         selectMember(info) {
