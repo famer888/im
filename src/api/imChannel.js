@@ -15,7 +15,6 @@ const domainUrl =  process.env.VUE_APP_OPEN_CHAT_DOMAIN;
 
 // 获取频道列表
 export const getChannelList = (data) => {
-    console.log('getChannelList--', data)
     return requestAxios(`/channel/channelList`, data, {
         headers: {
             ...getSignHeader(),
