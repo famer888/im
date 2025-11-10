@@ -16,7 +16,7 @@ let CryptoJS = require("./base/crypto-js.min.js");
 // 事件
 import eventCommon from "@/event/common.js";
 
-const getDomainUrl = () => {
+export const getDomainUrl = () => {
     const domains = eventCommon.fnDomainsGet();
     return domains?.domain || process.env.VUE_APP_BASE_DOMAIN;
 };

@@ -4,6 +4,7 @@ import * as $root_domain_url from "./domain_url.js";
 import * as $root_sys from "./sys.js";
 import * as $root_group from "./group.js";
 import * as $root_group_message from "./group_message.js";
+import * as $root_channel_api from "./channel_api.js";
 import { _decrypt, _encrypt, encrypt } from "./index";
 import { getUint32Bytes } from "../../socket/unit";
 require("./protobuf");
@@ -73,6 +74,8 @@ const getRoot = (protoType) => {
         root = $root_group;
     } else if (protoType === "group_message") {
         root = $root_group_message;
+    } else if (protoType === "channel_api") {
+        root = $root_channel_api;
     }
     return root;
 };

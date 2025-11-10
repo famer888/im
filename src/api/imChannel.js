@@ -103,6 +103,15 @@ export const deleteManage = (data) => {
     });
 };
 
+// 拉取历史消息
+export const getHistoryMsgs = (data) =>
+    getUrl({
+        protoType: "channel_api",
+        type: "MessageList",
+        url: `${domainUrl}/channel/channelMessage/list`,
+        data,
+    });
+
 export const getGameGlobalConfig = (data) =>
     requestAxios(
         `/channel/getChannelById`,
