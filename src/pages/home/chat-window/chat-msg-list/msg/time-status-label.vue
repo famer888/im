@@ -1,8 +1,8 @@
 <template>
   <div class="comTimeStatusLabel">
     <div class="read" v-if="chatContent.type === 'channel'">
-      <img v-if="msgInfo.isSelf" class="read-icon" src="@/assets/images/channel/read2.png" />
-      <img v-else class="read-icon" src="@/assets/images/channel/read1.png" />
+      <img v-if="msgInfo.isSelf" class="read-icon" src="@/assets/images/channel/read1.png" />
+      <img v-else class="read-icon" src="@/assets/images/channel/read2.png" />
       <span class="read-num">{{ msgInfo.readTotal }}</span>
     </div>
     <span>
