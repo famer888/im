@@ -42,7 +42,11 @@
             <span>{{ $t("最近") }}</span>
           </div>
           <section ref="list">
+            <div v-if="list.length === 0" class="empty-state">
+              {{ $t("暂无数据") }}
+            </div>
             <ul
+              v-else
               :style="{
                 paddingTop: this.scrollShowIndex * 60 + 'px',
                 height: list.length * 60 + 'px',
@@ -418,6 +422,15 @@ export default {
           height: 240px;
           overflow-y: auto;
           transition: height 0.3s ease-in-out;
+
+          > .empty-state {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            font-size: 14px;
+            color: #999;
+          }
 
           > ul {
             padding: 0;
