@@ -19,6 +19,18 @@ const handleChannelEvents = (data) => {
             // 频道订阅者加入事件
             fnHandleChannelSubscriberJoin(data);
             break;
+        case 1:
+            // 订阅者权限变更
+            // 暂时没有其他用处，用来显示'您已成为创建者'
+            if (data.subscriberInfo?.role === 0) {
+              const message = fnChannelAddMessageNotification({
+                channelId: Number(data.channelId),
+                content: data.msg || '您已成为创建者',
+                chatType: 50,
+              });
+              eventBase.fnMsgAddToDB({...message, customMsgId: Number(data.msgId) });
+            }
+            break;
           case 2:
             // 退出/被移除频道
             eventRemoveLocalChannel(Number(channelId));
@@ -242,6 +254,7 @@ const fnChannelAddMessageNotification = (info, notificationType) => {
     //     groupName: info.name,
     //     pic: info.pic,
     // });
+    return data;
 };
 
 const fnGetChannelInfo = async (channelId) => {

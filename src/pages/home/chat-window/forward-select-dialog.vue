@@ -239,7 +239,6 @@ export default {
           pageNum,
           pageSize
         });
-        console.log('res--', res);
 
         if (res && res.code === 200 && res.data) {
           const { rowList, total } = res.data;
