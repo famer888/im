@@ -475,6 +475,47 @@ const fnGroupMsgReadUpdate = async () => {
 }
 
 /**
+ * 频道消息已读 更新
+ */
+const fnChannelMsgReadUpdate = async (channelId, channelMsgReads) => {
+    if(!channelId || !channelMsgReads?.length) return;
+    let params = {
+        id: Number(channelId),
+        type: "channel",
+        list: [],
+    };
+    console.log('fnChannelMsgReadUpdate--', params, channelMsgReads)
+
+    for(let i=0; i< channelMsgReads.length; i++) {
+        const item = channelMsgReads[i];
+        const msgInfo = await window.$db.getMsgInfoForMsgId({
+            id: channelId,
+            type: "channel",
+            msgId: Number(item.msgId),
+        });
+            console.log('fnChannelMsgReadUpdate-2-', msgInfo)
+        if(!msgInfo?.customMsgId) return;
+        let readTotal = item?.total || 0;
+        let updated = { readTotal };
+        const param = {
+                    customMsgId: msgInfo.customMsgId,
+                    updated,
+                }
+        params.list.push(param)
+    }
+        console.log('fnChannelMsgReadUpdate-3-', params)
+    // 修改消息属性
+    // console.log("updateMsgProperty--", params)
+    window.$db.updateMsgProperty(params);
+
+    // 通讯
+    eventBase.fnCommunicationSendMsg({
+        operator: "msgListPropertyUpdate",
+        data: params,
+    });
+}
+
+/**
  * 处理事件 消息删除，没有删除的id则为 清空
  * 如果操作类型是通知则为msgId，自己操作则为本地id
  */
@@ -1639,4 +1680,5 @@ export default {
     fnGroupMsgReadRecord,
     fnGroupMsgReadUpdate,
     fnChannelMsgAdd,
+    fnChannelMsgReadUpdate,
 };

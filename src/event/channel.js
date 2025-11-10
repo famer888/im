@@ -1,7 +1,7 @@
 import { Cache } from "@/cache";
 import eventCommon from "./common";
 import eventBase from "./base";
-import { getChannelList, getChannelDetail } from "@/api/imChannel";
+import { getChannelList, getChannelDetail, getHistoryMsgs } from "@/api/imChannel";
 import i18n from "@/assets/lang/i18n";
 import { generateUniqueId } from "@/utils/base";
 
@@ -467,11 +467,22 @@ const fnHandleChannelSubscriberJoin = async (latestChannelEventMessage) => {
 
         // 存入数据库
         eventBase.fnMsgAddToDB(systemNotificationMsg);
+        // fnGetHistoryMsgs({channelId})
 
     } catch (error) {
         console.error("处理频道订阅者加入事件失败:", error);
     }
 };
+
+const fnGetHistoryMsgs = ({channelId, msgType}) => {
+    const praams = {
+        bizType: 2,
+        bizId: channelId,
+        msgType: msgType || 1,
+        latestSize: 30,
+    }
+    getHistoryMsgs(praams)
+}
 
 export default {
     fnGetAllChannel,
