@@ -69,7 +69,7 @@
         <span v-if="bfFriend" @click="handleToFriendChat">
           {{ $t("发送消息") }}
         </span>
-        <span v-else-if="memberDetail.addToken" @click="showAddVerifyDialog">
+        <span v-else-if="memberDetail.addToken && !notShowAddButton" @click="showAddVerifyDialog">
           添加
         </span>
       </div>
@@ -117,6 +117,7 @@ export default {
       maxWidth: 280,
       memberDetail: {},
       loginInfo: {},
+      notShowAddButton: false,
     };
   },
   created() {
@@ -137,8 +138,7 @@ export default {
         getId: "loginInfo",
     });
 
-    const { id, name, nickName, depict, bfFriend, channelId } = this.memberInfo;
-    console.log("memberInfo--", this.memberInfo)
+    const { id, name, nickName, depict, bfFriend, channelId, notShowAddButton } = this.memberInfo;
 
     this.name = name || "";
     this.nickName = nickName;
@@ -148,6 +148,7 @@ export default {
     this.oldName = this.name;
     this.oldDepict = this.depict;
     this.bfFriend = bfFriend;
+    this.notShowAddButton = notShowAddButton || false;
 
     this.$nextTick(() => {
       let h2 = document.querySelector('.name-h2')
@@ -228,7 +229,7 @@ export default {
           if (info) {
             this.name = info.name || info.nickName;
             this.bfFriend = true;
-            if (!this.memberInfo.bfFriend) { 
+            if (!this.memberInfo.bfFriend) {
               // 好友列表找到了该成员信息，但是传进来的群成员和自己的关系显示不明确，更新和群成员的关系
               this.provideUpdateGroupMember({...this.memberInfo, bfFriend: true})
             }

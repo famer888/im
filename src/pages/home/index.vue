@@ -295,7 +295,8 @@ export default {
             window.$toast("您已在频道");
             return;
           }
-          getChannelDetail({ channelId: info.channelId }).then( res => {
+          const channelId = operator === 'chatMsgListSearchScrollTo' ? info?.id : info?.channelId;
+          getChannelDetail({ channelId }).then( res => {
             channelDetail = res.data;
             // console.log('channelDetail--', channelDetail);
             eventBase.fnCommunicationSendMsg({
@@ -316,7 +317,6 @@ export default {
         } else if (info) {
           curGroup = this.groupList.find((item) => item.id == info.id);
         }
-
         this.infoActive = {
           ...info,
           memberCount: curGroup ? curGroup.memberCount : "",

@@ -187,6 +187,14 @@ export default {
      * 成员的会话框 显示
      */
     handleMemberDialogShow(info) {
+
+      // 判断是否不显示添加按钮
+      // 管理员(2)查看频道主(1)或其他管理员(2)、频道主(1)查看管理员(2)时，不显示添加按钮
+      const currentMemberType = this.chatContent.memberType; // 当前用户的身份
+      const targetMemberType = info.memberType; // 被查看用户的身份
+      const notShowAddButton = (currentMemberType === 2 && (targetMemberType === 1 || targetMemberType === 2)) ||
+        (currentMemberType === 1 && targetMemberType === 2);
+      console.log('notShowAddButton--', notShowAddButton);
       eventBase.fnCommunicationSendMsg({
         operator: "memberDialogShow",
         data: {
@@ -197,6 +205,7 @@ export default {
             nickName: info.userInfoDTO.nickName,
             // bfFriend: info.bfFriend,
             channelId: this.chatContent.id,
+            notShowAddButton: notShowAddButton,
           },
         },
       });

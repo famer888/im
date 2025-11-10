@@ -97,10 +97,10 @@ export default {
             }, 500)
         },
         searchWatch(value) {
+            const searchValue = value.toLowerCase();
             this.friendList = this.contactList.filter(item =>
-                (item?.name || "").includes(value)
-                || (item?.nickName || "").includes(value)
-                || (item?.identify || "").includes(value)
+                (item?.name || "").toLowerCase().includes(searchValue)
+                || (item?.nickName || "").toLowerCase().includes(searchValue)
             )
         },
         selectFriend(info) {
