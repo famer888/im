@@ -120,6 +120,7 @@ export const fnDbMsgListFormat = (list, isGroup) => {
             height: item.height,
             links: item.links || null,
             readUsers: item.readUsers || [],
+            readTotal: item.readTotal || 0,
         };
     });
 };

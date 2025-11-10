@@ -62,7 +62,8 @@ const fnSocketMessage = (arrayBuffer) => {
         4203: "PushChannelMessage", // 频道消息接收
         4205: "PushRecallChannelMessage", // 频道消息撤回/删除
         4201: "PushSendChannelMessageSuccessMessage", // 频道消息发送成功
-        4204: "PushChannelEventMessage", //频道身份变更
+        4204: "PushChannelEventMessage", // 频道身份变更
+        4206: "PushReadChannelMessage", // 频道已读
     };
 
     const code = new DataView(arrayBuffer.slice(2, 4)).getUint16();
@@ -310,7 +311,9 @@ const fnSocketMessage = (arrayBuffer) => {
             const { latestChannelEventMessage = {} } = data || {};
             eventChannel.handleChannelEvents(latestChannelEventMessage);
         }
-       
+        case 4206: {
+            eventMsg.fnChannelMsgReadUpdate(data.channelId, data.readChannelMessages)
+        }
 
         default:
     }
