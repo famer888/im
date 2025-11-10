@@ -15,7 +15,7 @@ const domainUrl =  process.env.VUE_APP_OPEN_CHAT_DOMAIN;
 
 // 获取频道列表
 export const getChannelList = (data) => {
-    console.log('getChannelList--', data)
+    // console.log('getChannelList--', data)
     return requestAxios(`/channel/channelList`, data, {
         headers: {
             ...getSignHeader(),
@@ -190,7 +190,7 @@ function requestAxios(url, params, opts) {
         const finalHeaders = {
             "Content-Type": "application/octet-stream",
             ...headers,
-             'Accept': 'application/json' // 最终生效的 Accept 头，仅保留 JSON 
+             'Accept': 'application/json' // 最终生效的 Accept 头，仅保留 JSON
         };
 
         const httpDefault = {
