@@ -82,10 +82,6 @@ export default {
   mounted() {
     // 群主信息设置
     this.handelHostInfoSet();
-    // 管理员列表
-    this.managerList = this.memberInfoList.filter((item) => {
-      return item.memberType === 2;
-    });
     // 处理管理员权限
     this.processManagerListAuthorization();
     this.getManageList();
@@ -103,6 +99,11 @@ export default {
             this.managerList = list.filter((item) => {
               return item.memberType === 2;
             });
+            if(!this.managerList.length) {
+              this.managerList = this.memberInfoList.filter((item) => {
+                return item.memberType === 2;
+              });
+            }
             // 群主信息设置
             this.handelHostInfoSet();
             // 处理管理员权限

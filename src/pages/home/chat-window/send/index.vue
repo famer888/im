@@ -4,7 +4,7 @@
         <img class="disabled-icon" src="@/assets/images/chat/disabled-1.png" alt="">{{ $t("该频道已禁用") }}
     </div>
     <div class="shutupTip disable channel-disable"
-        v-else-if="chatContent.type === 'channel' && !chatContent.memberType"
+        v-else-if="chatContent.type === 'channel' && chatContent.memberType === 0"
         @click="handleJoinChannel"
     >
         加入频道
