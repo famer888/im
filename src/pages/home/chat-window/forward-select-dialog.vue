@@ -80,6 +80,7 @@
 <script>
 import { Cache } from "@/cache";
 import ComTextAvatar from "@/components/text-avatar";
+import { getChannelList } from "@/api/imChannel";
 
 // 事件
 import eventCommon from "@/event/common";
@@ -144,10 +145,11 @@ export default {
       // 按优先级顺序处理：chats 优先（最近聊天）
       this.chats.forEach(item => {
         // 如果是频道类型且没有发布权限，记录 ID 并跳过
-        if (item.type === 'channel' && !(item.adminPrivacy & 2)) {
-          excludedChannelIds.add(item.channelId);
-          return;
-        }
+        // if (item.type === 'channel' && !(item.adminPrivacy & 2)) {
+        //   excludedChannelIds.add(item.channelId);
+        //   return;
+        // }
+        if (item.type === 'channel') return;
         addItem(item, item.type);
       });
 
@@ -202,13 +204,10 @@ export default {
       }
     });
 
-    // 获取频道列表
-    Cache(`${loginId}-ChannelList`).then((res) => {
-        if (res && res.length > 0) {
-            this.channels = res || [];
-        }
-    });
+    // 获取频道列表 - 使用远程递归获取
+    this.fetchChannelListRecursive();
 
+    // 获取频道聊天列表（保留缓存获取）
     Cache(`${loginId}MessageChannelList`).then((res) => {
       if (res && res.length > 0) {
         this.chats = eventChat.fnChatListSort([...this.chats, ...res]).list;
@@ -226,6 +225,52 @@ export default {
     );
   },
   methods: {
+    /**
+     * 递归获取频道列表
+     * @param {Number} pageNum - 当前页码
+     * @param {Array} allChannels - 累积的频道数据
+     */
+    async fetchChannelListRecursive(pageNum = 1, allChannels = []) {
+      try {
+        const pageSize = 20; // 每页获取数量
+        const sleepTime = 80; // 递归间隔时间（毫秒）
+
+        const res = await getChannelList({
+          pageNum,
+          pageSize
+        });
+
+        if (res && res.code === 200 && res.data) {
+          const { rowList, total } = res.data;
+
+          // 汇总数据
+          if (rowList?.length > 0) {
+            allChannels = [...allChannels, ...rowList];
+          }
+
+          // 计算总页数
+          const totalPages = Math.ceil(total / pageSize);
+
+          // 如果还有下一页，递归获取
+          if (pageNum < totalPages) {
+            // 延迟后继续获取下一页
+            await new Promise(resolve => setTimeout(resolve, sleepTime));
+            return await this.fetchChannelListRecursive(pageNum + 1, allChannels);
+          } else {
+            // 所有数据获取完成，赋值到 this.channels
+            this.channels = allChannels;
+            // console.log('频道列表获取完成，共', allChannels.length, '条数据');
+            return allChannels;
+          }
+        } else {
+          console.error('获取频道列表失败:', res);
+          return allChannels;
+        }
+      } catch (error) {
+        console.error('获取频道列表异常:', error);
+        return allChannels;
+      }
+    },
     handleListScrollChange() {
       const scrollTop = this.$refs["list"].scrollTop;
       const num = Math.ceil(scrollTop / 60);

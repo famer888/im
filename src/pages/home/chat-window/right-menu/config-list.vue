@@ -1,5 +1,5 @@
 <template>
-  <ul class="comConfigList">
+  <ul class="comConfigList" v-if="showChannelConfig">
     <li>
       <span> {{ $t("置顶聊天") }}</span>
       <ComSwitch :value="bfTop" @input="handelBfTopChange" />
@@ -119,6 +119,7 @@ export default {
       bfJoinFriend: true, // 是否可以加好友
       bfChannelReceive: false, // 频道消息接收
       bfMyBlack: false, // 是否黑名单好友
+      showChannelConfig: this.chatContent?.type !== 'channel',
     };
   },
   mounted() {
@@ -469,6 +470,16 @@ export default {
       }
     }
   },
+  watch: {
+    'chatContent.channelDetailDone': {
+      handler(doneFetching) {
+        if(doneFetching && this.isChannel) {
+          this.showChannelConfig = this.chatContent?.memberType > 0;
+        }
+      },
+      immediate: true,
+    }
+  }
 };
 </script>
 <style lang="scss">

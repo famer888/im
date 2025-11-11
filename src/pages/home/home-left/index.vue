@@ -1337,9 +1337,27 @@ export default {
     });
 
     // 频道列表同步
-    Cache(`${loginId}-ChannelList`).then((res) => {
-      this.channels = res || [];
-      // console.log('ChannelList ------------>', res)
+    // 俩列表不同步，这里做兼容处理
+    Promise.all([
+      Cache(`${loginId}MessageChannelList`),
+      Cache(`${loginId}-ChannelList`),
+    ]).then((res) => {
+      const messageChannelList = res[0] || [];
+      const channelList = res[1] || [];
+      let channels = [
+        ...messageChannelList,
+        ...channelList,
+      ];
+      // 以channelId去重，messageChannelList优先
+      const channelMap = new Map();
+      channels.forEach(item => {
+        const channelId = item.channelId || item.id;
+        if (!channelMap.has(channelId)) {
+          channelMap.set(channelId, item);
+        }
+      });
+      this.channels = Array.from(channelMap.values());
+    //   console.log('ChannelList ------------>', this.channels)
     });
 
     // 好友备注同步
