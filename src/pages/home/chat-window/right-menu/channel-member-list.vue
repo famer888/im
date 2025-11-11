@@ -195,6 +195,9 @@ export default {
       const notShowAddButton = (currentMemberType === 2 && (targetMemberType === 1 || targetMemberType === 2)) ||
         (currentMemberType === 1 && targetMemberType === 2);
       console.log('notShowAddButton--', notShowAddButton);
+      if (!currentMemberType > 0) {
+        return window.$toast(this.$t('非频道成员'));
+      }
       eventBase.fnCommunicationSendMsg({
         operator: "memberDialogShow",
         data: {
