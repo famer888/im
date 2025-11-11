@@ -174,13 +174,14 @@ const fnChatWindowUpdate = async (info) => {
  */
 const fnArchiveInfoUpdate = async () => {
     const res = await QueryArchiveReq();
-
+    const types = ['', 'friend', 'group', 'channel'];
     if (res && res.ArchiveInfo) {
         const list = res.ArchiveInfo.map((item) => {
+
             return {
                 status: Number(item.status),
                 id: Number(item.target),
-                type: Number(item.type) === 1 ? "friend" : "group",
+                type: types[Number(item.type)] || 'friend'
             };
         });
 
@@ -204,11 +205,12 @@ const fnArchiveInfoUpdate = async () => {
  * 归档 改变
  */
 const fnArchiveInfoChange = async (info, operatorType) => {
+    const types = { friend: 1, group: 2, channel: 3 };
     const params = {
         ArchiveInfo: [
             {
                 target: Number(info.id),
-                type: info.type === "group" ? 2 : 1,
+                type: types[info.type] || 1,
                 status: 1,
             },
         ],
