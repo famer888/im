@@ -305,7 +305,7 @@ const fnSocketMessage = (arrayBuffer) => {
         case 20403: {
             // 群消息已读用户
             const { receiptMessage = [] } = data || {};
-            // eventMsg.fnGroupMsgReadRecord(receiptMessage)
+            eventMsg.fnGroupMsgReadRecord(receiptMessage)
         }
         case 4204: {
             const { latestChannelEventMessage = {} } = data || {};
