@@ -42,10 +42,9 @@ export const sendMessage = async (params, flag) => {
 
     if(info.content) {
       // 替换br
-       info.content =  info.content.replace(/<br\s*\/?>|&lt;br\s*\/?&gt;/gi, '\n');
-       info.text = info.content;
+       info.content =  info.content.replace(/<br\s*\/?>/gi, '\n');
+       info.text = info.text.replace(/<br\s*\/?>/gi, '\n');
     }
-
     sendMessageList.push({ info, flag });
 };
 

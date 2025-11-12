@@ -9,6 +9,7 @@ import {
     ReceiveServerToClientReq,
     ReceiveKeyPairMessageReq,
     ReceiveGroupEventReceiptMessage,
+    SendReadChannelMessage,
 } from "@/api/base/imweb-web";
 
 import { initHeader } from "./request";
@@ -78,6 +79,15 @@ export function CReqMessageReceipt(receipts) {
     const buffer = SendReceiptMessageReq.encode(message).finish();
     const rb = initHeader(buffer, 10106);
     console.log("发出推送-10106-")
+    webSocketSend(rb);
+}
+
+// 频道消息已读
+export function CReqChannelMessageReceipt(channelId, msgId) {
+    const message = SendReadChannelMessage.create({channelId, msgId});
+    const buffer = SendReadChannelMessage.encode(message).finish();
+    const rb = initHeader(buffer, 4103);
+    console.log("发出推送-4103-")
     webSocketSend(rb);
 }
 

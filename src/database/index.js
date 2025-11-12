@@ -10,7 +10,7 @@ import {
 } from "@/utils/widget/chat-msg-list";
 
 // api
-import { CReqRemoveMessage, CReqMessageReceipt } from "@/socket/api/message";
+import { CReqRemoveMessage, CReqMessageReceipt, CReqChannelMessageReceipt } from "@/socket/api/message";
 
 // 事件
 import eventCommon from "@/event/common";
@@ -547,6 +547,13 @@ export default class dbBase {
                     });
                 }
             }
+
+            if(type === "channel") {
+                 const channelId = id;
+                const msgIds = msgReadList.map(item =>Number(item.MsgID))
+                CReqChannelMessageReceipt(channelId, msgIds)
+                return;
+            } 
 
             // 确认消息收到
             const arr = msgReadList.map((item) => {

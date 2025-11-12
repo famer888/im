@@ -36,7 +36,7 @@
             </span>
           </div>
           <div v-if="memberCount" class="count">
-            ({{ memberCount }}{{ $t("人") }})
+             ({{  chatContent.memberCount || memberCount }}{{ $t("人") }})
           </div>
         </div>
         <div class="other">
