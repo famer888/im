@@ -6,6 +6,7 @@ import { Local, getEnvType } from "@/utils";
 // api
 import { UpdateContacts, getChatSensitive } from "@/api/imBase";
 import { GroupUpdate, groupOrUserDetail } from "@/api/imGroup";
+import { updateMember } from "@/api/imChannel";
 
 // 事件
 import eventBase from "./base";
@@ -152,10 +153,10 @@ const fnDraftInfosRU = (data) => {
 };
 
 /**
- * 群/好友 免打扰 设置
+ * 群/好友/频道 免打扰 设置
  */
 const fnDisturbSet = (info) => {
-    const { id, type, bfDisturb } = info;
+    const { id, type, bfDisturb, isDisturb } = info;
     const loginId = commonInfo.loginId;
 
     // 同步本地免打扰
@@ -164,6 +165,7 @@ const fnDisturbSet = (info) => {
         id,
         type,
         bfDisturb: Boolean(bfDisturb),
+        ...type === 'channel' ? { isDisturb: Boolean(bfDisturb || isDisturb) } : {},
     });
 
     // 好友
@@ -185,7 +187,7 @@ const fnDisturbSet = (info) => {
                 }
             }
         });
-    } else {
+    } else if (type === "group") {
         // 群
         GroupUpdate({
             op: 4,
@@ -201,6 +203,27 @@ const fnDisturbSet = (info) => {
                     // 更新群信息
                     Cache(`${loginId}-GroupList`, groupList);
                 }
+            }
+        });
+    } else if (type === "channel") {
+        // 频道
+        updateMember({
+            channelId: id,
+            isDisturb: isDisturb !== undefined ? isDisturb : bfDisturb,
+        }).then(res => {
+            if (res?.code === 200) {
+                // 更新本地频道信息
+                Cache(`${loginId}MessageChannelList`).then((channelList) => {
+                    let channelInfo = null;
+                    if (channelList && channelList.length) {
+                        channelInfo = channelList.find((item) => item.channelId == id);
+                        if (channelInfo) {
+                            channelInfo.bfDisturb = channelInfo.isDisturb = isDisturb !== undefined ? isDisturb : bfDisturb;
+                            // 更新频道信息
+                            Cache(`${loginId}MessageChannelList`, channelList);
+                        }
+                    }
+                });
             }
         });
     }
@@ -428,7 +451,7 @@ const fnConfigRU = (values) => {
 const fnAtClick = async (text, currentGuoupId) => {
     // 登录id
     const loginId = commonInfo.loginId;
-    
+
     // 判断是不是好友
     const friendList = await Cache(`${loginId}-ContactList`)
     const memberValues = friendList.find(
@@ -546,12 +569,12 @@ const fnDomainsGet = () => {
 
 const fnDomainsSet = (data) => {
     domains = data;
-    Local(domainsName, data) 
+    Local(domainsName, data)
 }
 
 const fnDomainsAttribSet = ({key, value}) => {
     domains[key] = value
-    Local(domainsName, domains) 
+    Local(domainsName, domains)
 }
 
 // 好友备注

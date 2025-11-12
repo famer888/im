@@ -389,6 +389,7 @@ export default {
             this.infoActive = {
               ...this.infoActive,
               bfDisturb: info.bfDisturb,
+              isDisturb: info.isDisturb,
             };
             break;
           }
