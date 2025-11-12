@@ -373,10 +373,54 @@ const fnChannelUpdate = ({ info, channels, chats }) => {
     return dataNew;
 };
 
+// 队列用于顺序执行频道订阅者加入事件，每次间隔100ms
+let channelSubscriberJoinQueue = [];
+let isProcessingQueue = false;
+
+/**
+ * 处理队列中的频道订阅者加入任务
+ */
+const processChannelSubscriberJoinQueue = async () => {
+    if (isProcessingQueue || channelSubscriberJoinQueue.length === 0) {
+        return;
+    }
+
+    isProcessingQueue = true;
+
+    while (channelSubscriberJoinQueue.length > 0) {
+        const task = channelSubscriberJoinQueue.shift();
+        try {
+            await task();
+        } catch (error) {
+            console.error("执行频道订阅者加入任务失败:", error);
+        }
+
+        // 无论成功还是失败，都等待100ms后再继续下一个任务
+        if (channelSubscriberJoinQueue.length > 0) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
+    }
+
+    isProcessingQueue = false;
+};
+
 /**
  * 处理频道订阅者加入事件
  */
 const fnHandleChannelSubscriberJoin = async (latestChannelEventMessage) => {
+    // 将任务添加到队列中
+    channelSubscriberJoinQueue.push(async () => {
+        await fnHandleChannelSubscriberJoinInternal(latestChannelEventMessage);
+    });
+
+    // 开始处理队列
+    processChannelSubscriberJoinQueue();
+};
+
+/**
+ * 内部处理频道订阅者加入事件的函数
+ */
+const fnHandleChannelSubscriberJoinInternal = async (latestChannelEventMessage) => {
     const loginId = eventCommon.fnCommonInfoRU({
         getId: "loginId",
     });
