@@ -390,13 +390,34 @@ const fnHandleChannelSubscriberJoin = async (latestChannelEventMessage) => {
     }
 
     try {
-        // 查询频道详情
-        const res = await getChannelDetail({ channelId: Number(channelId) });
-        const channelDetail = res?.data;
+        // 优先从 MessageChannelList 缓存获取频道详情
+        const cachedMessageChannelList = (await Cache(`${loginId}MessageChannelList`)) || [];
+        let channelDetail = null;
 
-        if (!channelDetail) {
-            console.error("获取频道详情失败");
-            return;
+        // 查找缓存中的频道信息
+        const cachedChannel = cachedMessageChannelList.find(
+            item => item.id === Number(channelId) && item.type === "channel"
+        );
+
+        if (cachedChannel) {
+            // 从缓存中获取频道详情，映射字段格式
+            channelDetail = {
+                channelName: cachedChannel.name || cachedChannel.channelName,
+                icon: cachedChannel.pic || cachedChannel.icon,
+                logoColor: cachedChannel.logoColor,
+                createTime: cachedChannel.createTime,
+                updateTime: cachedChannel.updateTime,
+                adminPrivacy: cachedChannel.adminPrivacy,
+            };
+        } else {
+            // 缓存中没有，从 API 获取
+            const res = await getChannelDetail({ channelId: Number(channelId) });
+            channelDetail = res?.data;
+
+            if (!channelDetail) {
+                console.error("获取频道详情失败");
+                return;
+            }
         }
 
         // 格式化频道信息
