@@ -425,7 +425,7 @@ const fnHandleChannelSubscriberJoinInternal = async (latestChannelEventMessage) 
         getId: "loginId",
     });
 
-    const { channelId, subscriberInfo } = latestChannelEventMessage;
+    const { channelId, subscriberInfo, msg } = latestChannelEventMessage;
 
     // 检查是否是本人加入（通过事件推送，说明是本人）
     // subscriberInfo.operateType: 0 = SUBSCRIBER_JOIN
@@ -511,6 +511,7 @@ const fnHandleChannelSubscriberJoinInternal = async (latestChannelEventMessage) 
                 sendTime: timestamp,
                 content,
                 unreadCount: 0,
+                ...msg ? { content: msg } : {},
             };
 
             MessageChannelList.unshift(chatItem);
