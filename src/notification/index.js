@@ -1,6 +1,6 @@
 // 多进程窗口
 const { app, BrowserWindow, ipcMain, screen, globalShortcut } = require('electron');
-const path = require('path');  
+const path = require('path');
 
 let noticeWindow = null;
 let mainWindow = null;
@@ -12,7 +12,7 @@ const noticeItemConfig = {
 }
 const noticeConfig = {
   marginRight: 10,
-  marginBottom: 10, 
+  marginBottom: 10,
 }
 let listData =[
   // { avatar: 'https://xpz-xire86.oss-cn-hongkong.aliyuncs.com/test/common/pic/202411/18/de21a07e82122c47fa12c88ba13e2090.jpg', nickname: 'User1', textContent: 'This is the first text.' },
@@ -22,22 +22,22 @@ let listData =[
 const isDevelopment = process.env.NODE_ENV !== "production";
 
 
-export const createNoticeWindow = async (mainWindow) => {  
+export const createNoticeWindow = async (mainWindow) => {
   return new Promise (resolve => {
     const workArea = screen.getPrimaryDisplay().workAreaSize;
     const { width, height } = noticeItemConfig;
     const { marginRight, marginBottom} = noticeItemConfig;
-    // 创建新的浏览器窗口  
-    let childWindow = new BrowserWindow({  
-      width,  
+    // 创建新的浏览器窗口
+    let childWindow = new BrowserWindow({
+      width,
       height,
       x: workArea.width - width - marginRight,
-      y: workArea.height - height + marginBottom,  
+      y: workArea.height - height + marginBottom,
       // backgroundColor: 'transparent',
       // parent: mainWindow,
       transparent: true,
       frame: false,
-      webPreferences: {  
+      webPreferences: {
         scrollBounce: false,
         nodeIntegration: true,
         contextIsolation: false,
@@ -46,18 +46,17 @@ export const createNoticeWindow = async (mainWindow) => {
         nodeIntegrationInWorker: true,
         webviewTag: true,
         allowRunningInsecureContent: true,
-      }  
+      }
     });
     // 隐藏子窗口在任务栏上的显示
     childWindow.setSkipTaskbar(true);
     childWindow.loadFile(path.join(__dirname, isDevelopment? './public/notification.html': './notification.html'));
-    childWindow.setAlwaysOnTop(true);  
-    // 监听窗口关闭事件  
-    childWindow.on('closed', () => {  
-      // 清理引用  
-      // childWindow = null;  
-    });  
-
+    childWindow.setAlwaysOnTop(true);
+    // 监听窗口关闭事件
+    childWindow.on('closed', () => {
+      // 清理引用
+      // childWindow = null;
+    });
 
     globalShortcut.register("ctrl+shift+j", () => {
        childWindow.openDevTools();
@@ -65,7 +64,7 @@ export const createNoticeWindow = async (mainWindow) => {
 
     resolve(childWindow)
   })
-}  
+}
 
 const updateShowLocation = (boxH) => {
   if(!noticeWindow) return;
@@ -86,7 +85,7 @@ export const showNotification = async (mainWin, data) => {
     const oldIndex = listData.findIndex(item => item.id === data.id);
     if(oldIndex !== -1) {
       listData.splice(oldIndex, 1);
-    } 
+    }
     listData.push(data);
   }
   const prams = listData.slice(-3)
@@ -106,10 +105,10 @@ export const showNotification = async (mainWin, data) => {
     }
   });
 }
-    
-ipcMain.on('noticeCloseItem', (e, item) => {  
+
+ipcMain.on('noticeCloseItem', (e, item) => {
   closeNotification(item)
-});  
+});
 
 export const closeNotification = (item) => {
   const { id } = item || {};
@@ -120,26 +119,26 @@ export const closeNotification = (item) => {
   }
 }
 
-ipcMain.on('hidAll', (e) => {  
+ipcMain.on('hidAll', (e) => {
   closeNotice()
-});  
+});
 
-ipcMain.on('noticePageHeightChange', (e, opts) => {  
+ipcMain.on('noticePageHeightChange', (e, opts) => {
   const { height } = opts;
   updateShowLocation(height)
-});  
-ipcMain.on('notificationReply', (e, opts) => {  
+});
+ipcMain.on('notificationReply', (e, opts) => {
   const win = mainWindow;
   win.webContents.send("notificationReply", opts);
-});  
+});
 
-ipcMain.on('noticeGoChat', (e, item) => {  
+ipcMain.on('noticeGoChat', (e, item) => {
   const win = mainWindow;
   if (win.isMinimized()) win.restore();
   if (!win.isVisible()) win.show();
   win.focus();
   win.webContents.send("notification-clicked", item);
-});  
+});
 
 
 function  closeNotice() {
