@@ -198,6 +198,7 @@
      console.log("showList-1-")
     const groupIcon = "./images/default_chat_icon.png";
     const friendIcon = "./images/logo-58.png";
+    const channelIcon = "./images/channel-notice.webp";
     const closeIcon = "./images/notification/close.png";
     const groupChatIcon = "./images/notification/group_chat_icon.png";
     const {ipcRenderer} = require('electron');
@@ -246,7 +247,7 @@
       // 生成通知列表Html模版
       msglist.forEach(item => {
         const isGroup = item.type === 'group';
-        const defaultIcon = isGroup ? groupIcon : friendIcon;
+        const defaultIcon = { friend: friendIcon, group: groupIcon, channel: channelIcon }[item.type] || friendIcon;
         const iconSrc = `./images/notification/${msgTypeIcon[item.msgType]}.png`;
 
         html += `<li id="notice-item-${item.id}" class="list-item">
@@ -276,7 +277,7 @@
                       </div>
                     </div>
                     <img src="${closeIcon}" class="close-item"/>
-                    <button class="reply-button">回复</button>
+                    <button class="reply-button" style="${item.showReplyIcon ? '' : 'display: none;'}">回复</button>
                   </div>
                   <div class="reply-form">
                     <textarea class="reply-input" name="myTextarea" placeholder="Ctrl+Enter发送" rows="1"></textarea>

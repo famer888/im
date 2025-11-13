@@ -157,11 +157,16 @@ export default {
           // 对文本判断是否存在没有 https的链接
           for (const n of arr) {
             if (n.content[0] !== "@") {
-              const tagListTextAndA = splitHtmlStringToObjects(
-                repalceLinkNoPrefix(n.content)
-              );
-
-              tagListNew = [...tagListNew, ...tagListTextAndA];
+              const [previous, next] = (n.content || '').split('@');
+              let result = [];
+              if (n.content.includes('@')) {
+                result = [{ type: "text", content: previous }, { type: "text", content: `@${next}` }];
+              } else {
+                result = splitHtmlStringToObjects(
+                    repalceLinkNoPrefix(previous)
+                );
+              }
+              tagListNew = [...tagListNew, ...result];
             } else {
               tagListNew.push(n);
             }

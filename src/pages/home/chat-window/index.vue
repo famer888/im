@@ -77,14 +77,14 @@
     </template>
     <vue-context class="contact-menu-box" ref="rightClickMenu" :lazy="true">
       <div class="menu-content" v-if="rightClickSelectedInfo">
-        <li v-if="isRightClickMenuAt">
-          <a @click.prevent="handleEditorAddAt(rightClickSelectedInfo)">
+        <li v-if="isRightClickMenuAt" @click.prevent="handleEditorAddAt(rightClickSelectedInfo)">
+          <a>
             @{{ rightClickSelectedInfo.user.nickName }}
           </a>
         </li>
         <template v-else-if="imgErrorText">
-          <li>
-            <a @click.prevent="handleCopyError(rightClickSelectedInfo)">
+          <li @click.prevent="handleCopyError(rightClickSelectedInfo)">
+            <a>
               {{ $t("复制错误信息") }}
             </a>
           </li>
@@ -93,20 +93,19 @@
               ![50, 51, 52].includes(rightClickSelectedInfo?.chatType) &&
               isDeleteAll
             "
+            @click.prevent="
+              handleMesssgeDelete(
+                [
+                  {
+                    msgId: rightClickSelectedInfo.MsgID,
+                    customMsgId: rightClickSelectedInfo.customMsgId,
+                  },
+                ],
+                true
+              )
+            "
           >
-            <a
-              @click.prevent="
-                handleMesssgeDelete(
-                  [
-                    {
-                      msgId: rightClickSelectedInfo.MsgID,
-                      customMsgId: rightClickSelectedInfo.customMsgId,
-                    },
-                  ],
-                  true
-                )
-              "
-            >
+            <a>
               {{
                 chatContent.type === "friend"
                   ? `从本地和 ${
@@ -128,8 +127,9 @@
               [0, 1, 50, 51, 52, 16].includes(rightClickSelectedInfo?.chatType) &&
               selectedIdList.length === 0
             "
+            @click.prevent="handleCopy(rightClickSelectedInfo)"
           >
-            <a @click.prevent="handleCopy(rightClickSelectedInfo)">{{
+            <a>{{
               $t("复制")
             }}</a>
             <img class="icon" src="@/assets/images/menu/copy.png" alt=""/>
@@ -140,17 +140,16 @@
               [1, 3, 7].includes(rightClickSelectedInfo?.chatType) &&
               selectedIdList.length === 0
             "
+            @click.prevent="
+              handleOperatorFile({
+                id: chatContent.id,
+                type: chatContent.type,
+                info: rightClickSelectedInfo,
+                openDialog: true,
+              })
+            "
           >
-            <a
-              @click.prevent="
-                handleOperatorFile({
-                  id: chatContent.id,
-                  type: chatContent.type,
-                  info: rightClickSelectedInfo,
-                  openDialog: true,
-                })
-              "
-            >
+            <a>
               {{ $t("另存为") }}
             </a>
             <img class="icon" src="@/assets/images/menu/save.png" alt=""/>
@@ -161,18 +160,17 @@
               [1, 3, 7].includes(rightClickSelectedInfo?.chatType) &&
               selectedIdList.length === 0
             "
+            @click.prevent="
+              handleOperatorFile({
+                id: chatContent.id,
+                type: chatContent.type,
+                info: rightClickSelectedInfo,
+                openDialog: false,
+                isDir: true,
+              })
+            "
           >
-            <a
-              @click.prevent="
-                handleOperatorFile({
-                  id: chatContent.id,
-                  type: chatContent.type,
-                  info: rightClickSelectedInfo,
-                  openDialog: false,
-                  isDir: true,
-                })
-              "
-            >
+            <a>
               {{ $t("打开目录") }}
             </a>
              <img class="icon" src="@/assets/images/menu/open_dir.png" alt=""/>
@@ -182,20 +180,19 @@
               ![50, 51, 52].includes(rightClickSelectedInfo?.chatType) &&
               isDeleteAll && isChannelWithDeleteMessageAuthority
             "
+            @click.prevent="
+              handleMesssgeDelete(
+                [
+                  {
+                    msgId: rightClickSelectedInfo.MsgID,
+                    customMsgId: rightClickSelectedInfo.customMsgId,
+                  },
+                ],
+                true
+              )
+            "
           >
-            <a
-              @click.prevent="
-                handleMesssgeDelete(
-                  [
-                    {
-                      msgId: rightClickSelectedInfo.MsgID,
-                      customMsgId: rightClickSelectedInfo.customMsgId,
-                    },
-                  ],
-                  true
-                )
-              "
-            >
+            <a>
               {{
                 chatContent.type === "friend"
                   ? `${$t('从本地和')} ${
@@ -209,36 +206,36 @@
             </a>
              <img class="icon" src="@/assets/images/menu/delete.png" alt=""/>
           </li>
-          <li>
-            <a
-              @click="
-                handleMesssgeDelete(
-                  [
-                    {
-                      msgId: rightClickSelectedInfo.MsgID,
-                      customMsgId: rightClickSelectedInfo.customMsgId,
-                    },
-                  ],
-                  false
-                )
-              "
-            >
+          <li
+            @click="
+              handleMesssgeDelete(
+                [
+                  {
+                    msgId: rightClickSelectedInfo.MsgID,
+                    customMsgId: rightClickSelectedInfo.customMsgId,
+                  },
+                ],
+                false
+              )
+            "
+          >
+            <a>
               {{ $t("从本地删除") }}
             </a>
             <img class="icon" src="@/assets/images/menu/delete.png" alt=""/>
           </li>
-          <li v-if="rightClickSelectedInfo">
-            <a
-              @click="
-                handleMsgSelectedChange({
-                  id: rightClickSelectedInfo.customMsgId,
-                  isSelf: rightClickSelectedInfo.isSelf,
-                  chatType: rightClickSelectedInfo.chatType,
-                  msgId: rightClickSelectedInfo.MsgID,
-                  ...rightClickSelectedInfo
-                })
-              "
-            >
+          <li v-if="rightClickSelectedInfo"
+            @click="
+              handleMsgSelectedChange({
+                id: rightClickSelectedInfo.customMsgId,
+                isSelf: rightClickSelectedInfo.isSelf,
+                chatType: rightClickSelectedInfo.chatType,
+                msgId: rightClickSelectedInfo.MsgID,
+                ...rightClickSelectedInfo
+              })
+            "
+          >
+            <a>
               {{ $t("选中") }}
             </a>
             <img class="icon" src="@/assets/images/menu/select.png" alt=""/>
@@ -250,8 +247,9 @@
               selectedIdList.length === 0 &&
               !isChannelOrdinaryMember
             "
+            @click="handleQuoteSet"
           >
-            <a @click="handleQuoteSet">
+            <a>
               {{ $t("回复") }}
             </a>
             <img class="icon" src="@/assets/images/menu/forward.png" alt=""/>
@@ -274,8 +272,9 @@
               (selectedIdList.length === 0 ||
                 selectedIdList.includes(rightClickSelectedInfo.id))
             "
+            @click="handleForwardDialogShow()"
           >
-            <a @click="handleForwardDialogShow()">{{ $t("转发") }}</a>
+            <a>{{ $t("转发") }}</a>
             <img class="icon" src="@/assets/images/menu/share.png" alt=""/>
           </li>
           <li
@@ -283,8 +282,9 @@
             rightClickSelectedInfo &&
             ['test', 'uat'].includes(getEnvType())
             "
+            @click="copyMsgInfo(rightClickSelectedInfo)"
           >
-            <a @click="copyMsgInfo(rightClickSelectedInfo)">复制消息信息</a>
+            <a>复制消息信息</a>
             <img class="icon" src="@/assets/images/menu/copy.png" alt=""/>
           </li>
           <li

@@ -325,9 +325,18 @@ export default {
       } else if (operator === "updateChannelIdentity") {
         console.log('updateChannelIdentity--', this.infoActive, info )
         // 如果不是当前窗口，直接结束
-        if (
-          this.infoActive?.id !== Number(info.channelId)
-        ) {
+        if (this.infoActive?.id !== Number(info.channelId)) {
+          // 至少更新MessageChannelList中的adminPrivacy
+          const loginId = eventCommon.fnCommonInfoRU({
+            getId: "loginId",
+          });
+          const channel = (await Cache(`${loginId}MessageChannelList`)).find((item) => item.id === Number(info.channelId));
+          if (channel) {
+            eventBase.fnCommunicationSendMsg({
+              operator: "channelDetailCache",
+              data: {...channel, adminPrivacy: info.subscriberInfo?.privilege },
+            });
+          }
           return;
         }
          getChannelDetail({ channelId: Number(info.channelId) }).then( res => {
@@ -389,6 +398,7 @@ export default {
             this.infoActive = {
               ...this.infoActive,
               bfDisturb: info.bfDisturb,
+              isDisturb: info.isDisturb,
             };
             break;
           }

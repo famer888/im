@@ -77,9 +77,7 @@ export default {
             const isGroup = type === 'group';
             // console.log('handleSearchMessageSingle--', searchText, id, type, name, this.loginInfo)
             if (!searchText || !id || !type) return;
-
             window.$db.searchTable({ id, type, searchText }).then(res => {
-                // console.log('searchTable--', res)
                 let result = res.list || [];
                 result = this.sortList(result)
                 const formatResult = result.map((n) => {

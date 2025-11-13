@@ -207,7 +207,7 @@ const fnGroupMsgAdd = async (msg) => {
         content: msg.content,
         attachmentKey: msg.attachmentKey,
     });
- 
+
     // 如果解密失败，则终止执行
     if (!contentStr) {
         return;
@@ -417,9 +417,9 @@ const fnGroupMsgReadRecord = (receiptMessage) => {
         let groupMsgReadsOld = groupObj[item.msgId] || [];
 
         // 已读用户信息，需要新字段属性可在这里添加
-        const readInfoNew = { 
-            userId: sendUid, 
-            readTime: Number(item.receiptStatus?.time), 
+        const readInfoNew = {
+            userId: sendUid,
+            readTime: Number(item.receiptStatus?.time),
             readState,
         };
 
@@ -466,11 +466,11 @@ const fnGroupMsgReadUpdate = async () => {
                         customMsgId: msgInfo.customMsgId,
                         updated,
                     }
-            
+
             params.list.push(param)
         }
 
-      
+
         // 修改消息属性
         // console.log("updateMsgProperty--", params)
         window.$db.updateMsgProperty(params);
@@ -951,7 +951,7 @@ const fnMsgSend = async (info) => {
             }
             return true; // 保留该元素
         });
-        list = [...list, ...gameList]; 
+        list = [...list, ...gameList];
 
         for (let i = 0; i < forwardMessageList.length; i++) {
             let item = forwardMessageList[i]
@@ -1185,7 +1185,7 @@ const fnMsgSend = async (info) => {
                 },
             });
         }
-        
+
 
         // 置底
         eventBase.fnCommunicationSendMsg({
@@ -1226,13 +1226,13 @@ const fnMsgSend = async (info) => {
                     },
                 ],
             };
-    
+
             // 上传完成更新ui消息
             eventBase.fnCommunicationSendMsg({
                 operator: "msgListPropertyUpdate",
                 data: params,
             });
-    
+
             // 文件上传发送异常
             if (!fileInfos) {
                 break;
@@ -1242,9 +1242,9 @@ const fnMsgSend = async (info) => {
 
         // 添加发送信息到列表
         sendMsgList.push(curInfo);
-        
+
         // 到数据库
-        if(!editInfo) { 
+        if(!editInfo) {
             eventBase.fnMsgAddToDB({...dataDb, ...saveFileInfo}, type === "friend" ? id : null);
         }
 
@@ -1315,8 +1315,8 @@ const fnMsgSend = async (info) => {
  */
 const fnMsgSendSuccess = (msg, type) => {
     const { flag, msgId, groupId, channelId, receiveUid, sentOverTime } = msg;
-    const id = type === "group" ? Number(groupId) 
-               : type === "channel" ? Number(channelId) 
+    const id = type === "group" ? Number(groupId)
+               : type === "channel" ? Number(channelId)
                : Number(receiveUid);
     const customMsgId = Number(flag).toString();
     let updated = {
@@ -1446,7 +1446,7 @@ export const notificationReply = (data) => {
     if(!value) return;
     let msgText = value;
     // 获取敏感词
-    msgText = filterSensitiveWords(msgText); 
+    msgText = filterSensitiveWords(msgText);
     // 发送失败 发送的内容都是敏感词
     if (msgText === "") {
         window.$toast(this.$t("发送的内容全是敏感词"));
@@ -1590,7 +1590,7 @@ const fnAlertNotification = async (data, chatList) => {
     const { id, type } = data;
     const { msgType, avatar, content, nickName, remarkName, sendUid } = data;
     const loginId = eventCommon.fnCommonInfoRU({getId: "loginId"});
-
+    const showReplyIcon = await shouldShowReplyIcon(type, id, loginId);
     const isSelf = Number(sendUid) === loginId || !sendUid;
     // console.log("fnAlertNotification--", deviceConfig.isMessageReminderWhenMinimized, !isSelf, !eventCommon.fnDisturbIdStrListRU({ idStrIsExist: id + type }), ![51].includes(msgType))
     if (
@@ -1605,10 +1605,12 @@ const fnAlertNotification = async (data, chatList) => {
                 id,
                 type,
                 msgType,
+                showReplyIcon,
                 icon: type === "group" ? info.avatar : avatar,
                 content: msgType === 8 ? `[${i18n.t("群公告")}]${content}` : content,
                 userName: remarkName || nickName || "",
                 name: info.name || info.nickName,
+                loginId,
             };
             // console.log("alertNotification--", params)
             ipcRenderer.send("alertNotification", {
@@ -1618,6 +1620,15 @@ const fnAlertNotification = async (data, chatList) => {
         }
     }
 };
+
+const shouldShowReplyIcon = async(type, id, loginId) => {
+    if (type !== 'channel') return true;
+    // 查询cache messageChannelList对应项，判断adminPrivacy是否有回复权限
+    const messageChannelList = await Cache(`${loginId}MessageChannelList`);
+    const channel = messageChannelList.find(item => item.channelId === Number(id));
+    if (!channel) return false;
+    return (channel.adminPrivacy & 2) !== 0;
+}
 
 // 处理Icon,由于electron的Notification只接受本地图片地址
 const handleNotificationIcon = async (icon, id) => {

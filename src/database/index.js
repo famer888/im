@@ -96,7 +96,8 @@ export default class dbBase {
                 .filter((item) => {
                     if (typeof item.content === "string") {
                         return (
-                            [0].includes(item.msgType || item.chatType) &&
+                            // 放开群公告的搜索
+                            [0, 8].includes(item.msgType || item.chatType) &&
                             item.content &&
                             item.content
                                 .toUpperCase()
@@ -553,7 +554,7 @@ export default class dbBase {
                 const msgIds = msgReadList.map(item =>Number(item.MsgID))
                 CReqChannelMessageReceipt(channelId, msgIds)
                 return;
-            } 
+            }
 
             // 确认消息收到
             const arr = msgReadList.map((item) => {

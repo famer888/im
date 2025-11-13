@@ -312,6 +312,8 @@ export default {
           // 处理事件 免打扰设置
           if (info.type === "friend") {
             this.eventHandlingFriendUpdate(info);
+          } else if(info.type === 'channel') {
+            this.eventSetChannelDisable(info.id, info.isDisturb);
           } else {
             this.eventHandlingGroupUpdate({
               ...info,

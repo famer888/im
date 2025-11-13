@@ -167,7 +167,7 @@
       </li>
       <li v-if="chatInfoRightClick" @click="handleBfDisturbChange">
         {{
-          chatInfoRightClick.bfDisturb ? $t("取消消息免打扰") : $t("消息免打扰")
+          (chatInfoRightClick.bfDisturb || chatInfoRightClick.isDisturb) ? $t("取消消息免打扰") : $t("消息免打扰")
         }}
       </li>
       <li
@@ -309,9 +309,7 @@ export default {
       this.$emit('handleArchiveListShow', true)
     },
     handleBfDisturbChange() {
-      const { id, type, bfDisturb, name, nickName, pic } =
-        this.chatInfoRightClick;
-
+      const { id, type, bfDisturb, name, nickName, pic, isDisturb } = this.chatInfoRightClick;
       // 发送
       eventBase.fnCommunicationSendMsg({
         operator: "bfDisturbSet",
@@ -321,6 +319,7 @@ export default {
           bfDisturb: !bfDisturb,
           name: type == "group" ? name : name || nickName,
           icon: pic,
+          ...(type === 'channel' ? { isDisturb: !(isDisturb || bfDisturb) } : {}),
         },
       });
 
