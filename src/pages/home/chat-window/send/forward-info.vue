@@ -67,7 +67,7 @@ export default {
     msgList() {
       return this.forwardMessageList.map((item) => ({
         ...item,
-        newNickName: setMaxLengthStr(item.user.nickName, 30),
+        newNickName: setMaxLengthStr(item.user?.nickName, 30),
       }));
     },
   },
