@@ -101,15 +101,30 @@ export const deleteManage = (data) => {
         },
     });
 };
-
-// 拉取历史消息
-export const getHistoryMsgs = (data) =>
-    getUrl({
-        protoType: "channel_api",
-        type: "MessageList",
-        url: `${domainUrl}/channel/channelMessage/list`,
-        data,
+export const getHistoryMsgs = (data) => {
+    return requestAxios(`/message/channelMessage/list`, data, {
+        headers: {
+            ...getSignHeader(),
+            // 'Accept': 'application/json', 
+            'Accept': 'application/x-protobuf', 
+            'content-type': 'application/x-protobuf', 
+        },
     });
+};
+
+// // 拉取历史消息
+// export const getHistoryMsgs = (data) =>
+//     getUrl({
+//         protoType: "channel_api",
+//         type: "MessageList",
+//         url: `${domainUrl}/message/channelMessage/list`,
+//         data,
+//          headers: {
+//             ...getSignHeader(),
+//             'Accept': 'application/x-protobuf', 
+//             'content-type': 'application/x-protobuf', 
+//         },
+//     });
 
 export const getGameGlobalConfig = (data) =>
     requestAxios(
@@ -188,8 +203,8 @@ function requestAxios(url, params, opts) {
     return new Promise(async (resolve, reject) => {
         const finalHeaders = {
             "Content-Type": "application/octet-stream",
+             'Accept': 'application/json', // 最终生效的 Accept 头，仅保留 JSON
             ...headers,
-             'Accept': 'application/json' // 最终生效的 Accept 头，仅保留 JSON
         };
 
         const httpDefault = {
@@ -207,7 +222,9 @@ function requestAxios(url, params, opts) {
                     const responseData = Buffer.from(res.data);
                     const header = responseData.slice(0, 6);
                     const body = responseData.slice(6);
+                    // console.log('requestAxios--', body)
                     const result = aesDecode(body, bodyAesKey);
+                        //    console.log('requestAxios-2-', result)
                     resolve(JSON.parse(result));
                 } else {
                     reject(res);

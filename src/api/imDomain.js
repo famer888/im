@@ -36,6 +36,16 @@ export const getClientToken = (clientInfo, opts) => {
     return getUrl(pra);
 };
 
+
+
+// 拉取历史消息
+export const getHistoryMsgs2 = (payload) => {
+    return postAxios(`${getDomainUrl()}/channel/channelMessage/list`, payload.datas, {
+        headers: { accessToken: payload.headers.accessToken },
+        secretKey: payload.secretKey,
+    });
+};
+
 // 获取动态域名池
 export const getDomainListApi = (payload) => {
     return postAxios(`${getDomainUrl()}/api/v4/listDomain`, payload.datas, {
