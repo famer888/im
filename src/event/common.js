@@ -564,6 +564,41 @@ const fnFriendRemarksSet = (data) => {
     friendRemarks = data || [];
 }
 
+let onlineInfo = {
+    lastOfflineTime: 0, // 上一次离线的时间
+    powerOnlineTime: 0, // 本次启动的时间(登录后)
+}
+
+const fnInitOnlineInfo = async () => {
+    const loginId = commonInfo.loginId;
+    const timestamp = Date.now();
+    onlineInfo.powerOnlineTime = timestamp;
+    const time = await Cache(`${loginId}-last-online-time`);
+    console.log('fnInitOnlineInfo--', time)
+    onlineInfo.lastOfflineTime = time || 0;
+    
+    clearInterval(window.timerRecordOnlinetime);
+    window.timerRecordOnlinetime = setInterval(() => {
+      fnRecordOnlinetime()
+    }, 1000)
+}
+
+const fnOnlineInfoGet = (data) => {
+    return onlineInfo || {};
+}
+
+// 记录本次在线时间
+const fnRecordOnlinetime = () => {
+    const loginId = commonInfo.loginId;
+    if(!loginId) {
+        clearInterval(window.timerRecordOnlinetime);
+        return;
+    };
+    const timestamp = Date.now();
+    // console.log('fnRecordOnlinetime--',loginId, timestamp)
+    Cache(`${loginId}-last-online-time`, timestamp);
+}
+
 export default {
     fnIdCopyRU,
     fnCommonInfoRU,
@@ -587,4 +622,6 @@ export default {
     fnDomainsAttribSet,
     fnFriendRemarksGet,
     fnFriendRemarksSet,
+    fnInitOnlineInfo,
+    fnOnlineInfoGet,
 };

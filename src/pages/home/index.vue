@@ -560,7 +560,7 @@ export default {
      */
     handleNetworkInit() {
       const { deviceConfig } = eventCommon.fnConfigRU();
-
+      eventCommon.fnInitOnlineInfo()
       setWsUrl(deviceConfig.urls.session);
       websocketCreate();
     },

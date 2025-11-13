@@ -754,6 +754,37 @@ export default class dbBase {
         return [];
     }
 
+    // 获取最后的消息
+    async getLastMsg(type, id) {
+        try {
+             const tableName = handleTableNameGet(id, type);
+          let events = await this.db[tableName]
+          .orderBy("sendTime") // 以时间排序
+          .reverse()
+          .first();
+          return events
+        } catch (error) {
+            console.log(error)
+        }
+        return [];
+    }
+
+    // 查询指定范围内的某条消息
+    async rangeQueryMsg({id, type, msgId, limit}) {
+        try {
+             const tableName = handleTableNameGet(id, type);
+             let latestMsgIds = await this.db[tableName]
+                .orderBy("sendTime") // 以时间排序
+                .limit(limit) // 设置每页记录数
+                .toArray()
+            return latestMsgIds.find(item => Number(item.msgId) === msgId)
+        } catch (error) {
+            console.error('查询失败：', error);
+            return false;
+        }
+        
+    }
+
     // 消息列表排序
     msgListSort(events) {
         return events.sort((a, b) => {

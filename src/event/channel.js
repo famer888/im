@@ -5,11 +5,16 @@ import { getChannelList, getChannelDetail, getHistoryMsgs } from "@/api/imChanne
 import i18n from "@/assets/lang/i18n";
 import { generateUniqueId } from "@/utils/base";
 
-const handleChannelEvents = (data) => {
-    const { channelInfo, channelId, eventType, subscriberInfo, channelNoticeMsg } = data || {};
+
+const handleChannelEvents = async (data) => {
+    const { channelInfo, channelId, eventType, subscriberInfo, channelNoticeMsg, msgTime } = data || {};
     const { operateType } = channelInfo || {};
     const { operateType: subscriberOperateType } = subscriberInfo || {};
-
+    const state = isValidSocketMsg(Number(msgTime))
+    if(!state) {
+        // console.log('阻止了条重复推送', data)
+        return;
+    };
     // 频道通知消息
     fnAddChannelNoticeToChat(data);
     // 频道订阅变更事件
@@ -381,7 +386,7 @@ const fnHandleChannelSubscriberJoin = async (latestChannelEventMessage) => {
         getId: "loginId",
     });
 
-    const { channelId, subscriberInfo } = latestChannelEventMessage;
+    const { channelId, subscriberInfo, msgId } = latestChannelEventMessage;
 
     // 检查是否是本人加入（通过事件推送，说明是本人）
     // subscriberInfo.operateType: 0 = SUBSCRIBER_JOIN
@@ -471,7 +476,7 @@ const fnHandleChannelSubscriberJoin = async (latestChannelEventMessage) => {
             msgTime: timestamp,
             time: timestamp,
             customMsgId: customMsgId,
-            msgId: "",
+            msgId: msgId,
             sendUid: loginId,
             isSelf: true,
             errorType: 0,
@@ -480,22 +485,75 @@ const fnHandleChannelSubscriberJoin = async (latestChannelEventMessage) => {
 
         // 存入数据库
         eventBase.fnMsgAddToDB(systemNotificationMsg);
-        // fnGetHistoryMsgs({channelId})
+        // fnGetHistoryMsgs({channelId, msgId})
 
     } catch (error) {
         console.error("处理频道订阅者加入事件失败:", error);
     }
 };
 
-const fnGetHistoryMsgs = ({channelId, msgType}) => {
-    const praams = {
+const fnGetHistoryMsgs = ({channelId, msgType, msgId}) => {
+    const params = {
         bizType: 2,
-        bizId: channelId,
-        msgType: msgType || 1,
-        latestSize: 30,
+        bizId: Number(channelId),
+        // msgType: msgType || 1,
+        msgType: 0,
+        latestSize: 1,
+        // latestMsgId: Number(msgId),
+        latestMsgId: 2,
     }
-    getHistoryMsgs(praams)
+    console.log('getHistoryMsgs--', params)
+    getHistoryMsgs(params)
 }
+
+// 查询是否是重复的推送
+const isValidSocketMsg = (msgTime) => {
+    if(!msgTime) return true;
+    // console.log('isValidSocketMsg-1-',msgTime)
+    const { lastOfflineTime } = eventCommon.fnOnlineInfoGet();
+        // console.log('isValidSocketMsg-2-',msgTime, lastOfflineTime)
+    return msgTime > lastOfflineTime
+}
+
+// let lastChannelMsgs = {};
+// 根据消息ID查询是否是重复的推送
+// const isRepetitiveSocketMsg = async (channelId, msgId) => {
+//     console.log('isRepetitiveSocketMsg-1-',channelId, msgId)
+//     if(!channelId || !msgId) return false;
+//   const id = Number(channelId);  
+//   const type = "channel";
+//   const limit = 100;
+//   let lastMsg = lastChannelMsgs[id]
+//       console.log('isRepetitiveSocketMsg-2-',lastMsg)
+//   if(!lastMsg) {
+//     // 缓存没有则从数据库查询最后一条消息信息
+//          console.log('getLastMsg--', type, id)
+//     lastMsg = await window.$db.getLastMsg(type, id)
+//            console.log('getLastMsg-2-', lastMsg)
+//     lastChannelMsgs[id] = lastMsg
+//   }
+//         console.log('isRepetitiveSocketMsg-2-2-',msgId, lastMsg, lastMsg?.msgId,Number(lastMsg?.msgId),String(lastMsg?.msgId))
+//   if(!lastMsg) {
+//     return false
+//   }
+//   const lastMsgId = Number(lastMsg?.msgId) || Number(lastMsg?.msgId?.low) || 0
+//           console.log('isRepetitiveSocketMsg-2-3-',msgId, lastMsgId)
+//   if(msgId > lastMsgId) {
+//     return false
+//   } else if(msgId > (lastMsgId - limit)) {
+//        console.log('rangeQueryMsg--')
+//     const msgInfo = await window.$db.rangeQueryMsg({
+//         type,
+//         id,
+//         msgId,
+//         limit,
+//     })
+//      console.log('rangeQueryMsg-4-', msgInfo)
+//     return !!msgInfo
+//   } else {
+//     return true
+//   }
+// }
 
 export default {
     fnGetAllChannel,
@@ -504,4 +562,6 @@ export default {
     fnChannelUpdate,
     fnHandleChannelSubscriberJoin,
     handleChannelEvents,
+    // isRepetitiveSocketMsg,
+    isValidSocketMsg,
 }

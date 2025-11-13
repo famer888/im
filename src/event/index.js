@@ -137,7 +137,12 @@ const fnSocketMessage = (arrayBuffer) => {
         // 频道消息撤回/删除
         case 4205: {
             // 远程其它端操作清除全部，clear为1，表示全部清除
-            const { msgId, msgTargetId, clear } = data?.latestRecallChannelMessage || {};
+            const { msgId, msgTargetId, clear, clearTime } = data?.latestRecallChannelMessage || {};
+            const state =  eventChannel.isValidSocketMsg(Number(clearTime))
+            if(!state) {
+                // console.log('阻止了条重复推送[4205]', data)
+                return;
+            };
             if(!msgTargetId) return;
             let isClear = Boolean(clear);
             // 频道消息删除
@@ -278,7 +283,6 @@ const fnSocketMessage = (arrayBuffer) => {
             break;
         }
         case 20701: {
-            // let datas = handleDeleteItem(data, 4, 'event')
             eventGroup.fnRnGroupEvent(data);
             break;
         }
@@ -312,6 +316,12 @@ const fnSocketMessage = (arrayBuffer) => {
             eventChannel.handleChannelEvents(latestChannelEventMessage);
         }
         case 4206: {
+            const { msgTime } = data.latestChannelEventMessage|| {};
+            const state =  eventChannel.isValidSocketMsg(Number(msgTime))
+            if(!state) {
+                // console.log('阻止了条重复推送[4206]', data)
+                return;
+            };
             eventMsg.fnChannelMsgReadUpdate(data.channelId, data.readChannelMessages)
         }
 
@@ -320,17 +330,6 @@ const fnSocketMessage = (arrayBuffer) => {
 };
 
 
-// 测试方法，测试丢失群事件方法
-function handleDeleteItem(data, index, type) {
-    data = _.cloneDeep(data);
-    if (data.groupReqEventMsgDto.length > 0 && data.groupReqEventMsgDto.length > index && type === 'event') {
-        data.groupReqEventMsgDto.splice(index, 1);
-    }
-    if (data.groupUpdateEventMsgDto.length > 0 && data.groupUpdateEventMsgDto.length > index && type === 'update') {
-        data.groupUpdateEventMsgDto.splice(index, 1);
-    }
-    return data
-}
 //////////////////  定时执行
 
 let timerRunEvent = null;

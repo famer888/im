@@ -30,11 +30,14 @@ import eventCheduledCeletion from "./cheduled-deletion";
 import eventFriend from "./friend";
 import eventFile from "./file";
 import eventCommon from "./common";
+import eventChannel from "./channel";
 
 /**
  * 消息 添加
  */
 const fnMsgAdd = async ({ msg, contentStr, fileKey, type }) => {
+    const msgId = Number(msg.msgId)
+    console.log(`fnMsgAdd-1-msgId:${msgId}`)
     // console.log("fnMsgAdd--", { msg, contentStr, fileKey, type })
     let msgNew = { msgType: 0, ...msg, content: contentStr };
     delete msgNew.attachmentKey;
@@ -47,6 +50,7 @@ const fnMsgAdd = async ({ msg, contentStr, fileKey, type }) => {
     if ( String(msgNew.content).includes("-||-msgId:")) {
         msgNew = await fnMsgContentAddQuote(msgNew);
     }
+    console.log(`fnMsgAdd-2-msgId:${msgId}`)
     // 登录id
     const loginId = eventCommon.fnCommonInfoRU({
         getId: "loginId",
@@ -172,7 +176,7 @@ const fnMsgAdd = async ({ msg, contentStr, fileKey, type }) => {
         // 收款消息提示不支持
         msgNew.content = '[暂不支持该消息类型]'
     }
-
+    console.log(`fnMsgAdd-3-msgId:${msgId}`)
     // 收到的新消息，进行传递
     eventBase.fnCommunicationSendMsg({
         operator: "msgNew",
@@ -290,7 +294,12 @@ const fnChannelMsgAdd = async (msg) => {
     const channelId = Number(msg.channelId)
     const type = "channel"
 
-    
+    const state = eventChannel.isValidSocketMsg(Number(msg.msgTime))
+    if(!state) {
+        //  console.log('阻止了条重复推送-msg-', msg)
+        return;
+    };
+
     const { contentStr, fileKey } = await fnMsgDecryption({
         id: channelId,
         type,
@@ -299,10 +308,10 @@ const fnChannelMsgAdd = async (msg) => {
         content:msg.content,
         attachmentKey: msg.attachmentKey,
     });
+    //  console.log(channelId+'收到一条频道消息-msg-',contentStr, msg)
     if (!contentStr) {
         return;
     }
-
      fnMsgAdd({
         msg,
         contentStr,
@@ -484,7 +493,6 @@ const fnChannelMsgReadUpdate = async (channelId, channelMsgReads) => {
         type: "channel",
         list: [],
     };
-    console.log('fnChannelMsgReadUpdate--', params, channelMsgReads)
 
     for(let i=0; i< channelMsgReads.length; i++) {
         const item = channelMsgReads[i];
@@ -493,7 +501,6 @@ const fnChannelMsgReadUpdate = async (channelId, channelMsgReads) => {
             type: "channel",
             msgId: Number(item.msgId),
         });
-            console.log('fnChannelMsgReadUpdate-2-', msgInfo)
         if(!msgInfo?.customMsgId) return;
         let readTotal = item?.total || 0;
         let updated = { readTotal };
@@ -503,7 +510,6 @@ const fnChannelMsgReadUpdate = async (channelId, channelMsgReads) => {
                 }
         params.list.push(param)
     }
-        console.log('fnChannelMsgReadUpdate-3-', params)
     // 修改消息属性
     // console.log("updateMsgProperty--", params)
     window.$db.updateMsgProperty(params);
