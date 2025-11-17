@@ -93,8 +93,8 @@ export function CReqChannelMessageReceipt(channelId, msgId) {
 
 /**
  * 发送频道消息
- * @param {*} data 
- * @param {*} flag 
+ * @param {*} data
+ * @param {*} flag
  */
 export function CReqSendChatChannel(data, flag) {
     if (data.atUids && data.atUids.length && data.atUids[0] == undefined) {
