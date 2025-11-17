@@ -5,13 +5,23 @@
      <template v-if="chatContent.type === 'channel'">
        <ChannelLink v-if="chatContent.linkType !== 1 || [1, 2].includes(chatContent.memberType)"  :chatContent="chatContent"  @showQrCode="channelQrcodeVisilbe = true" />
        <ComChannelQrcode v-if="channelQrcodeVisilbe" :chatContent="chatContent"  @close="channelQrcodeVisilbe = false" />
-     </template> 
+     </template>
     <template v-else-if="isGroup">
+     <div class="group-info">
+        <picture>
+          <ComImage :src="chatContent.pic || chatContent.icon" :type="chatContent.type" />
+        </picture>
+        <div>
+            <div class="nickname">{{ chatContent.name || chatContent.nickName }}</div>
+            <div class="subscriber">{{chatContent.memberCount || chatContent.detail?.memberCount}}位成员</div>
+        </div>
+     </div>
+     <ComGroupNotice :notice="notice" :memberInfoList="memberInfoList" :chatContent="chatContent" />
      <ComGroupAliasQrcode
         :chatContent="chatContent"
         @showGroupQrCode="groupQrcodeVisilbe = true"
       />
-      <ComGroupNotice :notice="notice" :memberInfoList="memberInfoList" :chatContent="chatContent" />
+
       <ComGroupQrcode
         v-if="groupQrcodeVisilbe"
         :chatContent="chatContent"
@@ -156,7 +166,7 @@ export default {
     if(this.isGroupUpdate && this.memberInfoList.length) {
       this.getGroupMemberOnLineStatus(0)
     }
-    
+
     // 虚拟滚动监听
     this.$refs["rightMenu"].addEventListener(
       "scroll",
@@ -374,7 +384,29 @@ export default {
     z-index: 10;
   }
   }
-
+  .groupNotice {
+    border-bottom: 10px solid #f5f5f5;
+    max-height: 150px;
+  }
+  .group-info {
+    border-bottom: 1px solid #f5f5f5;
+    display: flex;
+    height: 56px;
+    box-sizing: content-box;
+    align-items: center;
+    img{
+        width: 60px;
+    }
+    .nickname {
+      font-size: 14px;
+      color: #333;
+      font-weight: 600;
+    }
+    .subscriber {
+      font-size: 12px;
+      color: #999;
+    }
+  }
   .managerLabel {
     cursor: pointer;
     padding: 14px 10px !important;

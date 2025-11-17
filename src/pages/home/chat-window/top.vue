@@ -55,7 +55,7 @@
       <div class="more" v-if="![10001, 10005].includes(chatContent.id)" @click.stop="handleChatRightMenuVisibleChange">
         <img src="@/assets/images/system/icon-menu.png" />
       </div>
-      <div class="right-menu-place" v-if="rightMenuVisible"></div>
+      <div class="right-menu-place" v-if="rightMenuVisible && sideBarType === 'inner'"></div>
       <section v-if="selectedList.length > 0" class="selected">
         <span v-if="!haveAnnouncement" @click="$emit('forwardDialogShow')">
           {{ $t("转发") }} {{ selectedList.length }}
@@ -105,7 +105,7 @@ import ComTextAvatar from '@/components/text-avatar';
 let timerNameClick = null;
 
 export default {
-  props: ["selectedList", "rightMenuVisible", "memberCount", "chatContent"],
+  props: ["selectedList", "rightMenuVisible", "memberCount", "chatContent", "sideBarType"],
   components: { ComTextAvatar },
   data() {
     return {

@@ -1,5 +1,5 @@
 <template>
-  <div class="chatContent" @dragenter="dropAreaVisible = true">
+  <div class="chatContent" :class="{ [`sidebar-${this.sidebarType}`]: rightMenuVisible }" @dragenter="dropAreaVisible = true">
     <template v-if="chatContent">
       <ComGroupTopNoticeDialog
         v-if="groupTopNoticeContent !== '' && chatContent.type === 'group'"
@@ -17,6 +17,7 @@
         :rightMenuVisible="rightMenuVisible"
         @topEvent="handleTopEvent"
         @forwardDialogShow="handleForwardDialogShow(true)"
+        :sideBarType="sidebarType"
       />
       <ComRightMenu
         v-if="rightMenuVisible && chatContent"
@@ -173,7 +174,7 @@
             <a>
               {{ $t("打开目录") }}
             </a>
-             <img class="icon" src="@/assets/images/menu/open_dir.png" alt=""/>
+            <img class="icon" src="@/assets/images/menu/open_dir.png" alt=""/>
           </li>
           <li
             v-if="
@@ -204,7 +205,7 @@
                   : $t("为所有人删除")
               }}
             </a>
-             <img class="icon" src="@/assets/images/menu/delete.png" alt=""/>
+            <img class="icon" src="@/assets/images/menu/delete.png" alt=""/>
           </li>
           <li
             @click="
@@ -300,15 +301,15 @@
             <div class="menu-two-box">
               <div v-if="!readUsersInfo.length && readUserTotal">群成员加载中</div>
               <div class="read-user-item" v-for="(item, index) in readUsersInfo" :key="index">
-                 <ComImage class="user-icon" :src="item.icon" type="friend" />
-                 <div class="info">
+                <ComImage class="user-icon" :src="item.icon" type="friend" />
+                <div class="info">
                     <span class="user-name">{{ item.name || item.nickName }}</span>
                     <span class="time">
                       <img v-if="item.readState === 1" src="@/assets/images/message/has-read.png"/>
                       <img v-else src="@/assets/images/message/has-resive.png"/>
                       {{ formatTimeStamp(item.readTime) }}
                     </span>
-                 </div>
+                </div>
               </div>
             </div>
           </li>
@@ -319,6 +320,7 @@
 </template>
 <script>
 import { Cache } from "@/cache";
+import { ipcRenderer } from "@/platform";
 import { getChannelUsers, getChannelManages } from "@/api/imChannel";
 
 // 工具
@@ -387,6 +389,8 @@ export default {
   },
   data() {
     return {
+      // none, inner, outer
+      sidebarType: 'none',
       selectedList: [], // 消息选中列表
       forwardSelectDialogVisible: false, // 选择转发的对话框是否显示
       rightMenuVisible: false, // 右菜单是否显示
@@ -956,7 +960,7 @@ export default {
       // 选中信息
       this.rightClickSelectedInfo = data;
       this.getMsgReadUsersInfo(data?.readUsers, info)
-
+      await ipcRenderer.invoke('toggleSideBar', false);
       // 打开右键菜单
       this.$refs.rightClickMenu && this.$refs.rightClickMenu.open(e);
     },
@@ -1263,6 +1267,13 @@ export default {
         }
       },
       immediate: true,
+    },
+    'rightMenuVisible': {
+      async handler(visible) {
+        const type = await ipcRenderer.invoke('toggleSideBar', visible);
+        this.sidebarType = type;
+      },
+      immediate: true,
     }
   }
 };
@@ -1275,6 +1286,9 @@ export default {
   position: relative;
   display: flex;
   flex-direction: column;
+  &.sidebar-outer {
+    padding-right: 256px;
+  }
 
   > p {
     font-size: 12px;

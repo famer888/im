@@ -10,6 +10,7 @@ import {
     nativeImage as NativeImage,
     powerMonitor,
     protocol,
+    screen,
     session,
     shell,
     Tray,
@@ -86,6 +87,8 @@ let imagesCacheDir = `${userData}/images`;
 let voicesCacheDir = `${userData}/voices`;
 let mainWindowIsFocused = true;
 let downTimers = {};
+let lastWidth = 600;
+let isTogglingSidebar = false;
 
 ipcMain.handle("get-user-data-path", () => {
     return userData;
@@ -757,7 +760,7 @@ const handleFileDownload = (args) => {
         timeout, // 超时时长毫秒
     } = args;
     const url = trendsFileUrl || fileUrl;
-    
+
     // 处理下载超时
     if(timeout) {
         const timerName = `${groupId || channelId || userId }_${msgId}`
@@ -894,7 +897,7 @@ const createMainWindow = async () => {
             event.returnValue = args;
             return;
         }
-        
+
         try {
             const clipboardEx = require("electron-clipboard-ex");
             // only support windows and mac
@@ -919,7 +922,7 @@ const createMainWindow = async () => {
         } catch (error) {
             console.log(error)
         }
-        
+
 
         args.hasFile = args.files && args.files.length > 0;
 
@@ -1005,7 +1008,7 @@ const createMainWindow = async () => {
     ipcMain.on("alertNotification", (event, args) => {
         // console.log('alertNotification-1-', mainWindow.isMinimized(), !mainWindowIsFocused)
         if (
-            mainWindow.isMinimized() 
+            mainWindow.isMinimized()
             // || !mainWindowIsFocused
         ) {
                   console.log('alertNotification-2-')
@@ -1016,6 +1019,53 @@ const createMainWindow = async () => {
     // 监听 通知显示
     ipcMain.on("notificationClose", (event, args) => {
         closeNotification(args)
+    });
+    // 监听宽度变化
+    mainWindow.on('resize', () => {
+      // 排除 toggleSideBar 进行的宽度设置造成的回调
+      if (!isTogglingSidebar && mainWindow && !mainWindow.isMaximized()) {
+          const bounds = mainWindow.getBounds();
+          lastWidth = bounds.width;
+      }
+    });
+
+    // 侧边栏显示隐藏
+    ipcMain.handle("toggleSideBar", async (event, visible) => {
+        let type = 'none';
+
+        try {
+            if (!mainWindow) {
+                return type;
+            }
+
+            isTogglingSidebar = true; // 设置标志，表示正在执行 toggle 操作
+
+            if (visible) {
+                // 显示侧边栏：存储当前宽度，判断是否最大化
+                const bounds = mainWindow.getBounds();
+                lastWidth = bounds.width; // 存储当前宽度
+
+                if (!mainWindow.isMaximized()) {
+                    // 如果没有最大化，增加256px
+                    const newWidth = bounds.width + 256;
+                    mainWindow.setSize(newWidth, bounds.height);
+                    type = 'outer';
+                } else {
+                    type = 'inner';
+                }
+            } else {
+                // 隐藏侧边栏：恢复到lastWidth
+                const bounds = mainWindow.getBounds();
+                mainWindow.setSize(lastWidth, bounds.height);
+                type = 'none';
+            }
+        } catch (error) {
+            type = 'none';
+        }
+
+        // 统一在函数尾部重置标志
+        isTogglingSidebar = false;
+        return type;
     });
 
     powerMonitor.on("suspend", () => {

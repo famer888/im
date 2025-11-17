@@ -1613,7 +1613,7 @@ export default {
       right: 0;
       z-index: 2;
       overflow-y: auto;
-      padding: 32px 10px 16px 10px;
+      padding: 10px 10px 16px 10px;
       box-sizing: border-box;
       font-family: PingFangSC-Bold;
 

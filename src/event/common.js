@@ -307,16 +307,13 @@ const fnCloseListRU = ({ addId, removeIds, isCloseLast, isCloseAll }) => {
     if (addId) {
         closeIds.push(addId);
     }
-
     // 移除
     if (removeIds && removeIds.length > 0) {
         ids = _.intersection(closeIds, removeIds);
     }
-
     if (ids.length > 0) {
         // 修改 关闭id列表
         closeIds = closeIds.filter((id) => !ids.includes(id));
-
         // 关闭操作
         eventBase.fnCommunicationSendMsg({
             operator: "closeOperator",
@@ -324,6 +321,17 @@ const fnCloseListRU = ({ addId, removeIds, isCloseLast, isCloseAll }) => {
                 ids,
             },
         });
+    } else {
+      // 这个函数实现有问题，切换过快，加减数不对称，导致无法关闭
+      // 我不想改这个全局函数，所以这里强制关闭
+      if (removeIds?.length && removeIds.includes('chatRightMenu')) {
+        eventBase.fnCommunicationSendMsg({
+          operator: "closeOperator",
+          data: {
+              ids: ['chatRightMenu'],
+          },
+      });
+      }
     }
 };
 
@@ -599,7 +607,7 @@ const fnInitOnlineInfo = async () => {
     const time = await Cache(`${loginId}-last-online-time`);
     console.log('fnInitOnlineInfo--', time)
     onlineInfo.lastOfflineTime = time || 0;
-    
+
     clearInterval(window.timerRecordOnlinetime);
     window.timerRecordOnlinetime = setInterval(() => {
       fnRecordOnlinetime()

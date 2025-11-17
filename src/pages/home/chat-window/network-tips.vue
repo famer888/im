@@ -56,7 +56,7 @@ export default {
   align-items: center;
   justify-content: center;
   height: 32px;
-  position: absolute;
+  // position: absolute;
   left: 0;
   right: 0;
   top: 83px;

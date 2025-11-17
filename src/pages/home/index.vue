@@ -290,6 +290,7 @@ export default {
       ) {
         let curGroup = null;
         let channelDetail = {};
+        ipcRenderer.invoke('toggleSideBar', false);
         if (info?.type === "channel" || info?.comType === "detailsChannel") {
           if(info.showTip && this.infoActive.channelId === info.channelId ) {
             window.$toast("您已在频道");
