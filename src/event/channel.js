@@ -4,6 +4,7 @@ import eventBase from "./base";
 import { getChannelList, getChannelDetail, getHistoryMsgs } from "@/api/imChannel";
 import i18n from "@/assets/lang/i18n";
 import { generateUniqueId } from "@/utils/base";
+import packet from "@/api/base/imweb-web";
 
 
 const handleChannelEvents = async (data) => {
@@ -551,25 +552,27 @@ const fnHandleChannelSubscriberJoinInternal = async (latestChannelEventMessage) 
 
         // 存入数据库
         eventBase.fnMsgAddToDB(systemNotificationMsg);
-        // fnGetHistoryMsgs({channelId, msgId})
 
     } catch (error) {
         console.error("处理频道订阅者加入事件失败:", error);
     }
 };
 
-const fnGetHistoryMsgs = ({channelId, msgType, msgId}) => {
-    const params = {
-        bizType: 2,
-        bizId: Number(channelId),
-        // msgType: msgType || 1,
-        msgType: 0,
-        latestSize: 1,
-        // latestMsgId: Number(msgId),
-        latestMsgId: 2,
-    }
+const fnGetHistoryMsgs = (params) => {
     console.log('getHistoryMsgs--', params)
-    getHistoryMsgs(params)
+   return getHistoryMsgs(params).then(res => {
+        console.log('getHistoryMsgs-2-', res)
+        const msgTotal = res.messageBytes?.length || 0;
+        let msgs = [];
+        if(msgTotal) {
+            for(let i = 0; i < msgTotal; i++) {
+                const arrayBuffer = res.messageBytes[i];
+                const data = packet['PushChannelMessage'].decode(arrayBuffer);
+                msgs.push(data);
+            }
+        }
+        return msgs;
+    })
 }
 
 // 查询是否是重复的推送
@@ -630,4 +633,5 @@ export default {
     handleChannelEvents,
     // isRepetitiveSocketMsg,
     isValidSocketMsg,
+    fnGetHistoryMsgs,
 }

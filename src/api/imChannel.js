@@ -13,6 +13,15 @@ import eventCommon from "@/event/common.js";
 const bodyAesKey = process.env.VUE_APP_SECRET_KEY;
 const domainUrl =  process.env.VUE_APP_OPEN_CHAT_DOMAIN;
 
+// 获取频道最后的一条消息信息
+export const getChannelLastMsgInfo = (data) => {
+    return requestAxios(`/message/channelMessage/latestId`, data, {
+        headers: {
+            ...getSignHeader(),
+        },
+    });
+};
+
 // 获取频道列表
 export const getChannelList = (data) => {
     return requestAxios(`/channel/channelList`, data, {
@@ -101,30 +110,21 @@ export const deleteManage = (data) => {
         },
     });
 };
-export const getHistoryMsgs = (data) => {
-    return requestAxios(`/message/channelMessage/list`, data, {
-        headers: {
+
+// // 拉取历史消息
+export const getHistoryMsgs = (data) =>
+    getUrl({
+        protoType: "channel_api",
+        type: "MessageList",
+        url: `${domainUrl}/message/channelMessage/list`,
+        customAesKey: bodyAesKey,
+        data,
+         headers: {
             ...getSignHeader(),
-            // 'Accept': 'application/json', 
             'Accept': 'application/x-protobuf', 
             'content-type': 'application/x-protobuf', 
         },
     });
-};
-
-// // 拉取历史消息
-// export const getHistoryMsgs = (data) =>
-//     getUrl({
-//         protoType: "channel_api",
-//         type: "MessageList",
-//         url: `${domainUrl}/message/channelMessage/list`,
-//         data,
-//          headers: {
-//             ...getSignHeader(),
-//             'Accept': 'application/x-protobuf', 
-//             'content-type': 'application/x-protobuf', 
-//         },
-//     });
 
 export const getGameGlobalConfig = (data) =>
     requestAxios(

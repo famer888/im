@@ -284,21 +284,32 @@ const fnFriendMsgAdd = async (msg) => {
     });
 };
 
-const fnChannelMsgAdd = async (msg) => {
 
-        // 登录id
-    const loginId = eventCommon.fnCommonInfoRU({
-        getId: "loginId",
-    });
-
+const fnChannelMsgAdd = async (msg, isOld) => {
     const channelId = Number(msg.channelId)
     const type = "channel"
+    const msgId = Number(msg.msgId)
+     if(msgId === 1) {
+         console.log('fnChannelMsgAdd-c-', msg)
+         // 频道消息删除
+       await fnMsgDelete({
+            info: {
+                id: Number(channelId),
+                type: "channel",
+                msgId,
+                idsDelete: [],
+                isOtherPlatformOperate: true, 
+            },
+        });
+    }
 
-    const state = eventChannel.isValidSocketMsg(Number(msg.msgTime))
-    if(!state) {
-        //  console.log('阻止了条重复推送-msg-', msg)
-        return;
-    };
+    if(!isOld) {
+        const state = eventChannel.isValidSocketMsg(Number(msg.msgTime))
+        if(!state) {
+            //  console.log('阻止了条重复推送-msg-', msg)
+            return;
+        };
+    }
 
     const { contentStr, fileKey } = await fnMsgDecryption({
         id: channelId,

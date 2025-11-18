@@ -521,10 +521,11 @@ const fnClientInfoGet = () => {
     const languageIndex = ["en", "zh", "zh-tw", "vi", "pt"].indexOf(
         deviceConfig.language || "zh"
     );
-
+    const appVer = "1.6.6".replaceAll(".", "");
     return {
         sessionId,
-        appVer: "1.6.6".replaceAll(".", ""),
+        appVer,
+        version: appVer,
         packageCode: 1000,
         language: languageIndex + 1, // 默认简体中文
         plat: process.platform === "darwin" ? 3 : 4,

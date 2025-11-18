@@ -495,6 +495,11 @@ import ComFloatRightBtns from "./float-right-btns.vue";
 // 事件
 import eventCommon from "@/event/common";
 import eventBase from "@/event/base";
+import eventChannel from "@/event/channel";
+import eventMsg from "@/event/msg";
+
+// api
+import { getChannelLastMsgInfo } from "@/api/imChannel";
 
 // 模块消息数量
 const blockMsgSize = 80;
@@ -997,8 +1002,13 @@ export default {
             };
           }
 
+          // 如果存在则替换
+          const existingIndex = blockInfoLast.list.findIndex(item => item.MsgID == infoNew.MsgID);
+          if (existingIndex > -1) {
+            blockInfoLast.list[existingIndex] = infoNew;
+          }
           // 如果模块消息没有满，则添加到模块
-          if (blockInfoLast.list.length < blockMsgSize) {
+          else if (blockInfoLast.list.length < blockMsgSize) {
             blockInfoLast.list.push(infoNew);
 
             // 最后页面 消息总数+1
@@ -1372,6 +1382,62 @@ export default {
         }
       }
     },
+    // 拉取频道历史消息
+    async getChannelHistoryMsg() {
+      const { channelId } = this.chatContent;
+      if(!channelId) return;
+
+      // api获取最后一条的数据信息
+        console.log('getChannelLastMsgInfo--')
+      const { data: lastMsgs} = await getChannelLastMsgInfo({
+        bizType: 2,
+         bizId: Number(channelId),
+      });
+      if(!lastMsgs?.length) return;
+      console.log('getChannelLastMsgInfo-1-', JSON.stringify(lastMsgs))
+      const lastMsgInfo = lastMsgs.find(item => item.msgType === 0);
+      console.log('getChannelLastMsgInfo-2-', lastMsgInfo)
+
+      // 没有消息执行清空
+      if(!lastMsgInfo) {
+        eventMsg.fnMsgDelete({
+            info: {
+                id: Number(channelId),
+                type: "channel",
+                msgId: 0,
+                idsDelete: [],
+                isOtherPlatformOperate: true, 
+            },
+        });
+        return;
+      };
+
+      // api获取历史消息
+       const latestMsgId = Number(lastMsgInfo.latestMsgId)
+       const latestSize = 30
+      const params = {
+        bizType: 2,
+        bizId: Number(channelId),
+        msgType: 0,
+        latestSize: latestMsgId > latestSize ? latestSize : latestMsgId-1,
+        latestMsgId: Number(lastMsgInfo.latestMsgId),
+        eventType: 2,
+      }
+      console.log('getChannelHistoryMsg--', params)
+      const msgs = await eventChannel.fnGetHistoryMsgs(params)
+
+      // 排序
+      msgs.sort((a, b) => {
+        return Number(a.latestChannelMessage.msgTime) - Number(b.latestChannelMessage.msgTime);
+      });
+      console.log('getChannelHistoryMsg-2-', JSON.stringify(msgs))
+
+      // 消息展示
+      for(let i = 0; i < msgs.length; i++) {
+        const item = msgs[i]
+        await eventMsg.fnChannelMsgAdd(item.latestChannelMessage, true);
+      }
+    },
     /**
      * 消息列表初始化
      */
@@ -1435,6 +1501,10 @@ export default {
 
               // 显示置低按钮
               this.handleToBottomBtnVisibleSet();
+
+              if(this.chatContent.type === 'channel') {
+                this.getChannelHistoryMsg();
+              }
             }, 100);
           }
         });
