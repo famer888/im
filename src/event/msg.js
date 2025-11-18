@@ -694,6 +694,7 @@ const fnUnreadMsgSet = async (info) => {
                                 values: {
                                     sendTime: info.sendTime,
                                 },
+                                lastMessage: info,
                             },
                         });
                     }, 100);

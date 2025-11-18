@@ -965,8 +965,10 @@ export default {
 
       // 如果消息不是自己发的，并且当前没有最后的的已读时间
       if (!info.isSelf) {
-        if (msgReadByMeTime === 0) {
-          msgReadByMeTime = info.sendTime;
+        // 这里不知道因为什么要这么判断，只生效一次，导致未读消息数量积压，实际上已经上报已读
+        // if (msgReadByMeTime === 0) {
+        if (msgReadByMeTime < info.sendTime) {
+          msgReadByMeTime = info.sendTime + 1;
         }
       }
 
@@ -1649,6 +1651,8 @@ export default {
                 },
               },
             });
+            // 更新最后消息事件
+            msgReadByMeTime = msgLastEnterVisual.sendTime + 1;
           }
         }
       }
