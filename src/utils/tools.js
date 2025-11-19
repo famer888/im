@@ -5,12 +5,19 @@ import i18n from "@/assets/lang/i18n";
 // 事件
 import eventCommon from "@/event/common";
 
+// 假发送
+const shouldPreventSendingMessage = (text) => {
+  if (!text) return false;
+  const sensitives = eventCommon.fnFakeSendSensitivesGet();
+  const match = sensitives.some(item => text.includes(item));
+  return match;
+}
 /**
  * 字符串过滤敏感词
  */
 const filterSensitiveWords = (str) => {
     // 白名单
-    const whiteArr = [i18n.t("我们已成为好友，打声招呼吧")]; 
+    const whiteArr = [i18n.t("我们已成为好友，打声招呼吧")];
     if(whiteArr.some(item => item === str)) return str;
 
     const arr = eventCommon.fnSensitiveWordsGet();
@@ -51,7 +58,7 @@ const getUserDataDirectory = ({ GroupID, UserID, ChannelID }) => {
             path = nodePath.join(
                 path,
                 `/Local Storage/${
-                    GroupID ? "group-" + GroupID 
+                    GroupID ? "group-" + GroupID
                             : ChannelID ? "channel-" + ChannelID
                             : "user-" + UserID
                 }/`
@@ -92,4 +99,5 @@ export {
     getCachDirectory,
     getUserDataDirectory,
     getWorkingDir,
+    shouldPreventSendingMessage,
 };

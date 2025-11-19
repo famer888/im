@@ -8,6 +8,7 @@ import { strIsSafe } from "@/utils/base";
 import eventCommon from "@/event/common";
 
 export const sendMessage = async (params, flag) => {
+    console.log('sendMessage--', params, flag)
     const loginInfo = eventCommon.fnCommonInfoRU({
         getId: "loginInfo",
     });
@@ -68,7 +69,7 @@ setInterval(() => {
                 type: "group",
             }).then((res) => {
                 if (res) {
-                    // console.log("CReqSendChatGroup--", res)
+                    console.log("CReqSendChatGroup--", res)
                     CReqSendChatGroup(res, flag);
                 }
             });
@@ -92,7 +93,7 @@ setInterval(() => {
                 type: "friend",
             }).then((res) => {
                 if (res) {
-                    // console.log("CReqChatSendPrivate--", res)
+                    console.log("CReqChatSendPrivate--", res)
                     CReqChatSendPrivate(res, flag);
                 }
             });

@@ -23,6 +23,7 @@ import { getUserDataDirectory, getWorkingDir, filterSensitiveWords } from "@/uti
 import { fnMsgDecryption } from "@/utils/encryption-decryption";
 import { getKeys } from "@/utils/upload";
 import { fnEmojiToText, fnTextSendInfoGet } from "@/utils/widget/editor";
+import { shouldPreventSendingMessage } from "@/utils/tools";
 
 // 事件
 import eventBase from "./base";
@@ -1299,9 +1300,11 @@ const fnMsgSend = async (info) => {
         delete item.params.local;
         delete item.params.localThumbUrl;
 
+        const fakeSend = shouldPreventSendingMessage(item.params?.text);
+
         // 发送
         sendMessage(
-            { ...item.params, msgType: item.params.chatType, ...item.fileInfos },
+            { ...item.params, msgType: item.params.chatType, ...item.fileInfos, fakeSend },
             item.customMsgId
         );
     }
@@ -1579,8 +1582,6 @@ const getQuoteContent = (quoteInfo) => {
 //         }
 //     }
 // };
-
-
 
 /**
  * 弹出提示

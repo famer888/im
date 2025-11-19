@@ -99,7 +99,6 @@
 <script>
 import { clipboard } from "electron";
 import { isElectron, ipcRenderer } from "@/platform";
-
 // 控件
 import ComActiveIcon from "@/components/active-icon";
 

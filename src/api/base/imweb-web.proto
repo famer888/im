@@ -35,7 +35,17 @@ enum MessageType {
 enum ChatMessageType {
     ONE_TO_ONE = 0; // 私聊
     GROUP = 1; // 群聊
+    CHANNEL = 2;  // 频道
 }
+
+// 消息业务类型
+enum MsgType {
+    CHAT_MSG      = 0; // 聊天消息
+    EVENT_MSG     = 1; // 事件消息
+    RECALL_MSG    = 2; // 撤回消息
+    RECEIPT_MSG   = 3; // 回执消息
+}
+
 //////----------通用message--------------------///
 
 
@@ -75,6 +85,7 @@ message OneToOneMessage {
     repeated LinkObj links = 21; // links 文本消息中带的链接数组
     int64 sentOverTime = 22; // 转发对应的原发送完成时间 只有转发时才传值
     int32           channel = 23; // 消息所属渠道 1-68，2-4E，3-97
+    bool           fakeSend = 24; // 是否是 假发送消息
 }
 
 // 群消息
@@ -98,6 +109,7 @@ message GroupMessage {
     int32 edit    = 18; // 消息是否编辑 0未编辑，1已编辑
     repeated LinkObj links = 19; // links 文本消息中带的链接数组
     int64 sentOverTime = 20; // 转发对应的原发送完成时间 只有转发时才传值
+    bool      fakeSend = 21; // 是否是 假发送消息
 }
 
 // 频道消息
@@ -575,6 +587,7 @@ message ChatSensitivePushMsg {
     repeated string addSensitives       = 1; // 新增集合
     repeated string delSensitives       = 2; // 删除集合
     int64           version             = 3; // 当前更新版本
+    repeated string fakeSendSensitives  = 4; // 假发送集合-每次全推送
 }
 
 // imWeb白名单翻译推送实体  7002

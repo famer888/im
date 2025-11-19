@@ -61,11 +61,31 @@ export const MessageType = $root.MessageType = (() => {
  * @enum {number}
  * @property {number} ONE_TO_ONE=0 ONE_TO_ONE value
  * @property {number} GROUP=1 GROUP value
+ * @property {number} CHANNEL=2 CHANNEL value
  */
 export const ChatMessageType = $root.ChatMessageType = (() => {
     const valuesById = {}, values = Object.create(valuesById);
     values[valuesById[0] = "ONE_TO_ONE"] = 0;
     values[valuesById[1] = "GROUP"] = 1;
+    values[valuesById[2] = "CHANNEL"] = 2;
+    return values;
+})();
+
+/**
+ * MsgType enum.
+ * @exports MsgType
+ * @enum {number}
+ * @property {number} CHAT_MSG=0 CHAT_MSG value
+ * @property {number} EVENT_MSG=1 EVENT_MSG value
+ * @property {number} RECALL_MSG=2 RECALL_MSG value
+ * @property {number} RECEIPT_MSG=3 RECEIPT_MSG value
+ */
+export const MsgType = $root.MsgType = (() => {
+    const valuesById = {}, values = Object.create(valuesById);
+    values[valuesById[0] = "CHAT_MSG"] = 0;
+    values[valuesById[1] = "EVENT_MSG"] = 1;
+    values[valuesById[2] = "RECALL_MSG"] = 2;
+    values[valuesById[3] = "RECEIPT_MSG"] = 3;
     return values;
 })();
 
@@ -373,6 +393,7 @@ export const OneToOneMessage = $root.OneToOneMessage = (() => {
      * @property {Array.<ILinkObj>|null} [links] OneToOneMessage links
      * @property {number|Long|null} [sentOverTime] OneToOneMessage sentOverTime
      * @property {number|null} [channel] OneToOneMessage channel
+     * @property {boolean|null} [fakeSend] OneToOneMessage fakeSend
      */
 
     /**
@@ -576,6 +597,14 @@ export const OneToOneMessage = $root.OneToOneMessage = (() => {
     OneToOneMessage.prototype.channel = 0;
 
     /**
+     * OneToOneMessage fakeSend.
+     * @member {boolean} fakeSend
+     * @memberof OneToOneMessage
+     * @instance
+     */
+    OneToOneMessage.prototype.fakeSend = false;
+
+    /**
      * Creates a new OneToOneMessage instance using the specified properties.
      * @function create
      * @memberof OneToOneMessage
@@ -646,6 +675,8 @@ export const OneToOneMessage = $root.OneToOneMessage = (() => {
             writer.uint32(/* id 22, wireType 0 =*/176).int64(message.sentOverTime);
         if (message.channel != null && Object.hasOwnProperty.call(message, "channel"))
             writer.uint32(/* id 23, wireType 0 =*/184).int32(message.channel);
+        if (message.fakeSend != null && Object.hasOwnProperty.call(message, "fakeSend"))
+            writer.uint32(/* id 24, wireType 0 =*/192).bool(message.fakeSend);
         return writer;
     };
 
@@ -774,6 +805,10 @@ export const OneToOneMessage = $root.OneToOneMessage = (() => {
                 }
             case 23: {
                     message.channel = reader.int32();
+                    break;
+                }
+            case 24: {
+                    message.fakeSend = reader.bool();
                     break;
                 }
             default:
@@ -929,6 +964,9 @@ export const OneToOneMessage = $root.OneToOneMessage = (() => {
         if (message.channel != null && message.hasOwnProperty("channel"))
             if (!$util.isInteger(message.channel))
                 return "channel: integer expected";
+        if (message.fakeSend != null && message.hasOwnProperty("fakeSend"))
+            if (typeof message.fakeSend !== "boolean")
+                return "fakeSend: boolean expected";
         return null;
     };
 
@@ -1165,6 +1203,8 @@ export const OneToOneMessage = $root.OneToOneMessage = (() => {
                 message.sentOverTime = new $util.LongBits(object.sentOverTime.low >>> 0, object.sentOverTime.high >>> 0).toNumber();
         if (object.channel != null)
             message.channel = object.channel | 0;
+        if (object.fakeSend != null)
+            message.fakeSend = Boolean(object.fakeSend);
         return message;
     };
 
@@ -1232,6 +1272,7 @@ export const OneToOneMessage = $root.OneToOneMessage = (() => {
             } else
                 object.sentOverTime = options.longs === String ? "0" : 0;
             object.channel = 0;
+            object.fakeSend = false;
         }
         if (message.msgId != null && message.hasOwnProperty("msgId"))
             if (typeof message.msgId === "number")
@@ -1297,6 +1338,8 @@ export const OneToOneMessage = $root.OneToOneMessage = (() => {
                 object.sentOverTime = options.longs === String ? $util.Long.prototype.toString.call(message.sentOverTime) : options.longs === Number ? new $util.LongBits(message.sentOverTime.low >>> 0, message.sentOverTime.high >>> 0).toNumber() : message.sentOverTime;
         if (message.channel != null && message.hasOwnProperty("channel"))
             object.channel = message.channel;
+        if (message.fakeSend != null && message.hasOwnProperty("fakeSend"))
+            object.fakeSend = message.fakeSend;
         return object;
     };
 
@@ -1354,6 +1397,7 @@ export const GroupMessage = $root.GroupMessage = (() => {
      * @property {number|null} [edit] GroupMessage edit
      * @property {Array.<ILinkObj>|null} [links] GroupMessage links
      * @property {number|Long|null} [sentOverTime] GroupMessage sentOverTime
+     * @property {boolean|null} [fakeSend] GroupMessage fakeSend
      */
 
     /**
@@ -1527,6 +1571,14 @@ export const GroupMessage = $root.GroupMessage = (() => {
     GroupMessage.prototype.sentOverTime = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
 
     /**
+     * GroupMessage fakeSend.
+     * @member {boolean} fakeSend
+     * @memberof GroupMessage
+     * @instance
+     */
+    GroupMessage.prototype.fakeSend = false;
+
+    /**
      * Creates a new GroupMessage instance using the specified properties.
      * @function create
      * @memberof GroupMessage
@@ -1594,6 +1646,8 @@ export const GroupMessage = $root.GroupMessage = (() => {
                 $root.LinkObj.encode(message.links[i], writer.uint32(/* id 19, wireType 2 =*/154).fork()).ldelim();
         if (message.sentOverTime != null && Object.hasOwnProperty.call(message, "sentOverTime"))
             writer.uint32(/* id 20, wireType 0 =*/160).int64(message.sentOverTime);
+        if (message.fakeSend != null && Object.hasOwnProperty.call(message, "fakeSend"))
+            writer.uint32(/* id 21, wireType 0 =*/168).bool(message.fakeSend);
         return writer;
     };
 
@@ -1715,6 +1769,10 @@ export const GroupMessage = $root.GroupMessage = (() => {
                 }
             case 20: {
                     message.sentOverTime = reader.int64();
+                    break;
+                }
+            case 21: {
+                    message.fakeSend = reader.bool();
                     break;
                 }
             default:
@@ -1855,6 +1913,9 @@ export const GroupMessage = $root.GroupMessage = (() => {
         if (message.sentOverTime != null && message.hasOwnProperty("sentOverTime"))
             if (!$util.isInteger(message.sentOverTime) && !(message.sentOverTime && $util.isInteger(message.sentOverTime.low) && $util.isInteger(message.sentOverTime.high)))
                 return "sentOverTime: integer|Long expected";
+        if (message.fakeSend != null && message.hasOwnProperty("fakeSend"))
+            if (typeof message.fakeSend !== "boolean")
+                return "fakeSend: boolean expected";
         return null;
     };
 
@@ -2077,6 +2138,8 @@ export const GroupMessage = $root.GroupMessage = (() => {
                 message.sentOverTime = object.sentOverTime;
             else if (typeof object.sentOverTime === "object")
                 message.sentOverTime = new $util.LongBits(object.sentOverTime.low >>> 0, object.sentOverTime.high >>> 0).toNumber();
+        if (object.fakeSend != null)
+            message.fakeSend = Boolean(object.fakeSend);
         return message;
     };
 
@@ -2141,6 +2204,7 @@ export const GroupMessage = $root.GroupMessage = (() => {
                 object.sentOverTime = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
             } else
                 object.sentOverTime = options.longs === String ? "0" : 0;
+            object.fakeSend = false;
         }
         if (message.sendUid != null && message.hasOwnProperty("sendUid"))
             if (typeof message.sendUid === "number")
@@ -2207,6 +2271,8 @@ export const GroupMessage = $root.GroupMessage = (() => {
                 object.sentOverTime = options.longs === String ? String(message.sentOverTime) : message.sentOverTime;
             else
                 object.sentOverTime = options.longs === String ? $util.Long.prototype.toString.call(message.sentOverTime) : options.longs === Number ? new $util.LongBits(message.sentOverTime.low >>> 0, message.sentOverTime.high >>> 0).toNumber() : message.sentOverTime;
+        if (message.fakeSend != null && message.hasOwnProperty("fakeSend"))
+            object.fakeSend = message.fakeSend;
         return object;
     };
 
@@ -4352,6 +4418,7 @@ export const ReceiptMessage = $root.ReceiptMessage = (() => {
                 return "type: enum value expected";
             case 0:
             case 1:
+            case 2:
                 break;
             }
         if (message.sendUid != null && message.hasOwnProperty("sendUid"))
@@ -4445,6 +4512,10 @@ export const ReceiptMessage = $root.ReceiptMessage = (() => {
         case "GROUP":
         case 1:
             message.type = 1;
+            break;
+        case "CHANNEL":
+        case 2:
+            message.type = 2;
             break;
         }
         if (object.sendUid != null)
@@ -21039,6 +21110,7 @@ export const ChatSensitivePushMsg = $root.ChatSensitivePushMsg = (() => {
      * @property {Array.<string>|null} [addSensitives] ChatSensitivePushMsg addSensitives
      * @property {Array.<string>|null} [delSensitives] ChatSensitivePushMsg delSensitives
      * @property {number|Long|null} [version] ChatSensitivePushMsg version
+     * @property {Array.<string>|null} [fakeSendSensitives] ChatSensitivePushMsg fakeSendSensitives
      */
 
     /**
@@ -21052,6 +21124,7 @@ export const ChatSensitivePushMsg = $root.ChatSensitivePushMsg = (() => {
     function ChatSensitivePushMsg(properties) {
         this.addSensitives = [];
         this.delSensitives = [];
+        this.fakeSendSensitives = [];
         if (properties)
             for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
                 if (properties[keys[i]] != null)
@@ -21081,6 +21154,14 @@ export const ChatSensitivePushMsg = $root.ChatSensitivePushMsg = (() => {
      * @instance
      */
     ChatSensitivePushMsg.prototype.version = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+
+    /**
+     * ChatSensitivePushMsg fakeSendSensitives.
+     * @member {Array.<string>} fakeSendSensitives
+     * @memberof ChatSensitivePushMsg
+     * @instance
+     */
+    ChatSensitivePushMsg.prototype.fakeSendSensitives = $util.emptyArray;
 
     /**
      * Creates a new ChatSensitivePushMsg instance using the specified properties.
@@ -21114,6 +21195,9 @@ export const ChatSensitivePushMsg = $root.ChatSensitivePushMsg = (() => {
                 writer.uint32(/* id 2, wireType 2 =*/18).string(message.delSensitives[i]);
         if (message.version != null && Object.hasOwnProperty.call(message, "version"))
             writer.uint32(/* id 3, wireType 0 =*/24).int64(message.version);
+        if (message.fakeSendSensitives != null && message.fakeSendSensitives.length)
+            for (let i = 0; i < message.fakeSendSensitives.length; ++i)
+                writer.uint32(/* id 4, wireType 2 =*/34).string(message.fakeSendSensitives[i]);
         return writer;
     };
 
@@ -21164,6 +21248,12 @@ export const ChatSensitivePushMsg = $root.ChatSensitivePushMsg = (() => {
                 }
             case 3: {
                     message.version = reader.int64();
+                    break;
+                }
+            case 4: {
+                    if (!(message.fakeSendSensitives && message.fakeSendSensitives.length))
+                        message.fakeSendSensitives = [];
+                    message.fakeSendSensitives.push(reader.string());
                     break;
                 }
             default:
@@ -21218,6 +21308,13 @@ export const ChatSensitivePushMsg = $root.ChatSensitivePushMsg = (() => {
         if (message.version != null && message.hasOwnProperty("version"))
             if (!$util.isInteger(message.version) && !(message.version && $util.isInteger(message.version.low) && $util.isInteger(message.version.high)))
                 return "version: integer|Long expected";
+        if (message.fakeSendSensitives != null && message.hasOwnProperty("fakeSendSensitives")) {
+            if (!Array.isArray(message.fakeSendSensitives))
+                return "fakeSendSensitives: array expected";
+            for (let i = 0; i < message.fakeSendSensitives.length; ++i)
+                if (!$util.isString(message.fakeSendSensitives[i]))
+                    return "fakeSendSensitives: string[] expected";
+        }
         return null;
     };
 
@@ -21256,6 +21353,13 @@ export const ChatSensitivePushMsg = $root.ChatSensitivePushMsg = (() => {
                 message.version = object.version;
             else if (typeof object.version === "object")
                 message.version = new $util.LongBits(object.version.low >>> 0, object.version.high >>> 0).toNumber();
+        if (object.fakeSendSensitives) {
+            if (!Array.isArray(object.fakeSendSensitives))
+                throw TypeError(".ChatSensitivePushMsg.fakeSendSensitives: array expected");
+            message.fakeSendSensitives = [];
+            for (let i = 0; i < object.fakeSendSensitives.length; ++i)
+                message.fakeSendSensitives[i] = String(object.fakeSendSensitives[i]);
+        }
         return message;
     };
 
@@ -21275,6 +21379,7 @@ export const ChatSensitivePushMsg = $root.ChatSensitivePushMsg = (() => {
         if (options.arrays || options.defaults) {
             object.addSensitives = [];
             object.delSensitives = [];
+            object.fakeSendSensitives = [];
         }
         if (options.defaults)
             if ($util.Long) {
@@ -21297,6 +21402,11 @@ export const ChatSensitivePushMsg = $root.ChatSensitivePushMsg = (() => {
                 object.version = options.longs === String ? String(message.version) : message.version;
             else
                 object.version = options.longs === String ? $util.Long.prototype.toString.call(message.version) : options.longs === Number ? new $util.LongBits(message.version.low >>> 0, message.version.high >>> 0).toNumber() : message.version;
+        if (message.fakeSendSensitives && message.fakeSendSensitives.length) {
+            object.fakeSendSensitives = [];
+            for (let j = 0; j < message.fakeSendSensitives.length; ++j)
+                object.fakeSendSensitives[j] = message.fakeSendSensitives[j];
+        }
         return object;
     };
 

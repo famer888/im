@@ -543,14 +543,17 @@ const fnClientInfoGet = () => {
 /////////////// 敏感词
 
 let sensitiveWords = [];
+let fakeSendSensitives = [];
 
 /**
  * 敏感词初始化
  */
 const fnSensitiveWordsInit = () => {
     getChatSensitive().then((res) => {
+        console.log('fnSensitiveWordsInit--', res)
         if (res && res.addSensitives) {
             sensitiveWords = res.addSensitives;
+            fakeSendSensitives = res.fakeSendSensitives;
         }
     });
 };
@@ -560,6 +563,10 @@ const fnSensitiveWordsInit = () => {
  */
 const fnSensitiveWordsGet = () => {
     return sensitiveWords;
+};
+
+const fnFakeSendSensitivesGet = () => {
+    return fakeSendSensitives;
 };
 
 ////////////// 动态域名
@@ -655,4 +662,5 @@ export default {
     fnFriendRemarksSet,
     fnInitOnlineInfo,
     fnOnlineInfoGet,
+    fnFakeSendSensitivesGet,
 };
