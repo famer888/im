@@ -99,7 +99,7 @@ export const getSignHeader = () => {
     let client = eventCommon.fnClientInfoGet();
     client.sysMac = getApiMacAddressSync();
     client.packageCode = 6000;
-    
+
     // console.log('HEAD_AES_KEY:', HEAD_AES_KEY, 'SECRET_NAME:', SECRET_NAME, client)
     let clientStr = JSON.stringify(client);
 
@@ -152,7 +152,7 @@ const replaceNewDomain = async (url) => {
     let newUrl = newDomain.replace(/\/$/, "") + getRemainingUrl(url);
     eventCommon.fnDomainsAttribSet({
         key: moduleCode,
-        value: newDomain, 
+        value: newDomain,
     })
     return newUrl;
 };
@@ -176,7 +176,6 @@ const requestApi = async (opt) => {
             clientInfo: eventCommon.fnClientInfoGet(),
             ...data,
         };
-
         let array = noEncrypt
             ? params
             : handleEncode({ protoType, type, params, aesKey });
@@ -189,6 +188,7 @@ const requestApi = async (opt) => {
             headers: { ...header, ...headers },
         })
             .then((response) => {
+                FairGuard.recieve(response);
                 if (response.status !== 200) {
                     reject({
                         errorCode: response.status,
@@ -287,3 +287,34 @@ const handleTrendsAesKeyPrams = async (header) => {
     aesKey = aesKey.toString();
     return { aesKey, header };
 };
+
+export const FairGuard = (() => {
+  const keys = new Set();
+  let reciveTime, maximumConsumeTime, lastConsumeKeys;
+  const tossCoin = () => {
+    // 5分钟内必须把keys消费掉
+    // 心跳间隔为3s一次，期望此函数生成20次必中，80次兜底
+
+  }
+  const recieve = (response) => {
+    const headers = response.headers;
+    const isFetchHeaders = Object.prototype.toString.call(headers) === '[object Headers]';
+    const tag = isFetchHeaders ? headers.get("f_tag") : headers["f_tag"];
+    const content = isFetchHeaders ? headers.get("f_content") : headers["f_content"];
+    console.log(">>>>>>>>>>>>>>>>>>>>> recieve", tag, typeof tag, content);
+    if (tag === "3" && content) {
+      keys.add(content);
+    }
+  }
+  const consume = () => {
+
+  }
+  const clear = () => {
+
+  }
+  return {
+    consume,
+    recieve,
+    clear,
+  }
+})();

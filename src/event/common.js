@@ -532,7 +532,7 @@ const fnClientInfoGet = () => {
 
     return {
         sessionId,
-        appVer: "1.6.6".replaceAll(".", ""),
+        appVer: "1.6.7".replaceAll(".", ""),
         packageCode: 1000,
         language: languageIndex + 1, // 默认简体中文
         plat: process.platform === "darwin" ? 3 : 4,
@@ -550,7 +550,6 @@ let fakeSendSensitives = [];
  */
 const fnSensitiveWordsInit = () => {
     getChatSensitive().then((res) => {
-        console.log('fnSensitiveWordsInit--', res)
         if (res && res.addSensitives) {
             sensitiveWords = res.addSensitives;
             fakeSendSensitives = res.fakeSendSensitives;

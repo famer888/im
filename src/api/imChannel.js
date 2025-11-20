@@ -9,7 +9,7 @@ import { decrypt } from "./base/index";
 import axios from "axios";
 const crypto = require("crypto");
 import eventCommon from "@/event/common.js";
-
+import { FairGuard } from "./base/unit";
 const bodyAesKey = process.env.VUE_APP_SECRET_KEY;
 const domainUrl =  process.env.VUE_APP_OPEN_CHAT_DOMAIN;
 
@@ -105,9 +105,9 @@ export const getHistoryMsgs = (data) => {
     return requestAxios(`/message/channelMessage/list`, data, {
         headers: {
             ...getSignHeader(),
-            // 'Accept': 'application/json', 
-            'Accept': 'application/x-protobuf', 
-            'content-type': 'application/x-protobuf', 
+            // 'Accept': 'application/json',
+            'Accept': 'application/x-protobuf',
+            'content-type': 'application/x-protobuf',
         },
     });
 };
@@ -121,8 +121,8 @@ export const getHistoryMsgs = (data) => {
 //         data,
 //          headers: {
 //             ...getSignHeader(),
-//             'Accept': 'application/x-protobuf', 
-//             'content-type': 'application/x-protobuf', 
+//             'Accept': 'application/x-protobuf',
+//             'content-type': 'application/x-protobuf',
 //         },
 //     });
 
@@ -219,6 +219,7 @@ function requestAxios(url, params, opts) {
             .then((res) => {
                 if (res.status === 200) {
                     // aesDecrypted()
+                    FairGuard.recieve(res);
                     const responseData = Buffer.from(res.data);
                     const header = responseData.slice(0, 6);
                     const body = responseData.slice(6);

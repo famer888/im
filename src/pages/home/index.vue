@@ -551,7 +551,7 @@ export default {
           const today = dayjs().format("YYYY-MM-DD");
 
           if (
-            (res.version > Number("1.6.6".replace(/\./g, "")) &&
+            (res.version > Number("1.6.7".replace(/\./g, "")) &&
               deviceConfig.upVersionDay !== today) ||
             res.flag === 2
           ) {
