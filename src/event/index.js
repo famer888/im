@@ -14,7 +14,7 @@ import eventGroup from "./group";
 import eventChannel from "./channel";
 import eventCheduledCeletion from "./cheduled-deletion";
 import eventCommon from "@/event/common";
-
+import { FairGuard } from "@/api/base/unit";
 // 之前的时间
 let timeBefore = new Date().getTime();
 
@@ -69,7 +69,6 @@ const fnSocketMessage = (arrayBuffer) => {
     const code = new DataView(arrayBuffer.slice(2, 4)).getUint16();
     const buffer = Buffer.from(arrayBuffer.slice(16));
     const method = packetStr[code];
-
     // 退出登录
     if(code === 20002) {
         console.log("20002-1--")
@@ -99,6 +98,7 @@ const fnSocketMessage = (arrayBuffer) => {
      * 如果不存在就不能解析
      */
     if (!method) {
+        code === 29901 && FairGuard.consume(code, { flag: 'HEARTBEAT' });
         return;
     }
 
@@ -116,6 +116,8 @@ const fnSocketMessage = (arrayBuffer) => {
     }
 
     console.log({ data });
+
+    FairGuard.consume(code, data);
 
     // 确认接收
     if (code !== 20701) {

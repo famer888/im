@@ -6,7 +6,7 @@ import * as $root_group from "./group.js";
 import * as $root_group_message from "./group_message.js";
 import * as $root_channel_api from "./channel_api.js";
 import { _decrypt, _encrypt, encrypt } from "./index";
-import { getUint32Bytes } from "../../socket/unit";
+import { getUint32Bytes, stringToAscii } from "../../socket/unit";
 require("./protobuf");
 import config from "@/config.js";
 import {
@@ -289,32 +289,97 @@ const handleTrendsAesKeyPrams = async (header) => {
 };
 
 export const FairGuard = (() => {
-  const keys = new Set();
-  let reciveTime, maximumConsumeTime, lastConsumeKeys;
-  const tossCoin = () => {
-    // 5分钟内必须把keys消费掉
-    // 心跳间隔为3s一次，期望此函数生成20次必中，80次兜底
+  const tasks = new Set();
+  const lastConsumeKeys = new Map();
+  let maximumConsumeTime, weight = 0;
+  const map = { 29901: 19901, 20101: 10101, 20201: 10201, 4201: 4101 };
+  const induded = `19901,10101,10201,4101`;
+  // const induded = `10101,10201,4101`;
+  // 数学期望计算：期望50次调用内必中
+  // P(命中) = P(Math.random() * M + weight > N)
+  // 初始weight=0，每次不命中后weight += W
+  // 第k次调用时的weight = (k-1) * W
+  // P(不命中|k) = max(0, (N - (k-1)*W) / M)
+  // 选择参数使第50次调用时P(不命中)接近0
+  const M = 1000; // 随机数范围放大因子
+  const N = 750;  // 初始阈值
+  const W = 10;   // 每次权重递增
+  const X = 950;  // 强制命中阈值
 
+  const tossCoin = () => {
+    // 当计算值大到X值或当前时间到达maximumConsumeTime，必中
+    if (weight >= X || Date.now() >= maximumConsumeTime) {
+      console.log(`[FairGuard]丢硬币命中, ${weight >= X ? '权重大于X' : '时间大于最大消费时间'}`);
+      weight = 0; // 重置权重
+      return true;
+    }
+    const randomValue = Math.random() * M + weight;
+    const isHit = randomValue > N;
+
+    // 每次计算权重weight增加W，增加命中率
+    if (!isHit) {
+      weight += W;
+    } else {
+      weight = 0; // 命中后重置权重
+    }
+    console.log(`[FairGuard]丢硬币中：${isHit ? '命中' : '未命中'}, 当前权重为: ${weight}, 随机值为: ${randomValue}`);
+    return isHit;
   }
   const recieve = (response) => {
     const headers = response.headers;
     const isFetchHeaders = Object.prototype.toString.call(headers) === '[object Headers]';
-    const tag = isFetchHeaders ? headers.get("f_tag") : headers["f_tag"];
-    const content = isFetchHeaders ? headers.get("f_content") : headers["f_content"];
-    console.log(">>>>>>>>>>>>>>>>>>>>> recieve", tag, typeof tag, content);
+    const tag = isFetchHeaders ? headers.get("f_tag") : _.get(headers, "f_tag");
+    const content = isFetchHeaders ? headers.get("f_content") : _.get(headers, "f_content");
     if (tag === "3" && content) {
-      keys.add(content);
+      if (tasks.size === 0 || maximumConsumeTime === undefined) {
+        maximumConsumeTime = Date.now() + 3000 * 50;
+      }
+      console.log(`[FairGuard]收到http请求头部内容为: ${content}, 当前tasks长度为: ${tasks.size}, 最大消费时间为: ${maximumConsumeTime}, 当前权重为: ${weight}`);
+      tasks.add(content);
     }
   }
-  const consume = () => {
-
+  const generate = (sendCode, flag) => {
+    try {
+      if (!induded.includes(sendCode) || tasks.size === 0) return [false, []];
+      if (!tossCoin()) return [false, []];
+      const task = Array.from(tasks).join(',');
+      lastConsumeKeys.set(`${sendCode}-${flag}`, task);
+      const acii = stringToAscii(task);
+      const len = getUint32Bytes(acii.length);
+      return [true, [len, acii]];
+    } catch (e) {
+      return [false, []];
+    }
   }
-  const clear = () => {
-
+  // 心跳 19901 | 29901
+  // 私聊 10101 | 20101
+  // 群聊 10201 | 20201
+  // 频道 4101 | 4201
+  // 锁在ws.send生成，钥匙在ws.onMessage生成并解锁，message和ack码必须一一对应，除心跳外，其他消息仍然需要flag解锁，防止tasks被意外清空
+  const consume = (ackCode, message) => {
+    try {
+      if (!map[ackCode]) return;
+      const key = `${map[ackCode]}-${message?.flag}`;
+      if (lastConsumeKeys.has(key)) {
+        const task = lastConsumeKeys.get(key);
+        task.split(',').forEach(item => {
+          tasks.has(item) && tasks.delete(item);
+        });
+        lastConsumeKeys.delete(key);
+        maximumConsumeTime = undefined;
+        weight = 0;
+        // 粗暴清空防止内存泄漏，反正你可以重新掷硬币
+        if (lastConsumeKeys.size > 100) {
+          lastConsumeKeys.clear();
+        }
+      }
+    } catch(e) {
+      console.log('errr', e);
+    }
   }
   return {
     consume,
     recieve,
-    clear,
+    generate,
   }
 })();

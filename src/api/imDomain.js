@@ -1,5 +1,5 @@
 import Vue from "vue";
-import { getUrl, baseUrl } from "./base/unit";
+import { getUrl, baseUrl, FairGuard } from "./base/unit";
 import axios from "axios";
 import { reportErrorDomain } from "@/utils/trendsDomain/manageReport";
 import { repairToken } from "@/utils/trendsDomain/manageToken";
@@ -84,6 +84,7 @@ const postAxios = async (url, data, opts) => {
     let result = "";
     try {
         result = await requestAxios(url, prams, opts);
+        FairGuard.recieve(result);
     } catch (error) {
         console.error("postAxios-3-", error);
         repairToken();

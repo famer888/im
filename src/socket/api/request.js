@@ -1,5 +1,5 @@
 import { _decrypt, _encrypt } from "@/api/base/index";
-import { AES_KEY } from "@/api/base/unit";
+import { AES_KEY, FairGuard } from "@/api/base/unit";
 import { getInt64, getUint32Bytes, getUint16Bytes, stringToAscii } from "../unit";
 import { getApiMacAddressSync, getAesKeySync } from '@/utils/trendsAesKey'
 import configs from "@/config.js";
@@ -28,21 +28,22 @@ const getSokectMacAddress = () => {
     try {
         let mac = getApiMacAddressSync()
         if(!mac){
-            throw new RangeError('sokect调用mac地址获取失败'); 
+            throw new RangeError('sokect调用mac地址获取失败');
             return
         }
         let macArr = stringToAscii(mac)
         let macArrLength = getUint32Bytes(macArr.length)
         return {macArr,macArrLength}
     } catch (error) {
-        throw new RangeError('Divisor cannot be zero');  
+        throw new RangeError('Divisor cannot be zero');
     }
-   
+
 }
 
-export function initHeader(buffer, cmd) {
+export function initHeader(buffer, cmd, flag) {
+    const [brt, rt] = FairGuard.generate(cmd, flag);
     let isJM = new Int8Array([1]);
-    let isZip = new Int8Array([-128]); //-128后端将转为bit格式10000000读取第1位位是否动态域名判断、最后一位作为是否压缩判断
+    let isZip = new Int8Array([brt ? -160 : -128]); //-128后端将转为bit格式10000000读取第1位位是否动态域名判断、最后一位作为是否压缩判断
     let mid = new getUint16Bytes(cmd);
     let key = configs.TRENDS_AES_KEY ? getAesKeySync() : AES_KEY
     let signed = encrypt(buffer,  key || AES_KEY)
@@ -50,21 +51,20 @@ export function initHeader(buffer, cmd) {
     let msg = null
     let len = 0
     const fn = () => {
-        isZip = new Int8Array([0]);
+        isZip = new Int8Array([brt ? 32 : 0]);
         len = getUint32Bytes(signed.length)
-        msg = ConcatInt8([isJM, isZip, mid, len, Cmd, signed])
+        msg = ConcatInt8([isJM, isZip, mid, len, Cmd, ...rt, signed])
     }
     if(!configs.TRENDS_AES_KEY || !key) {
-        fn() 
+        fn()
         return msg
     }
-    try {  
-        
+    try {
         let { macArr, macArrLength} = getSokectMacAddress()
         let contentLength = signed.length + macArr.length + macArrLength.length
         len = getUint32Bytes(contentLength)
-        msg = ConcatInt8([isJM, isZip, mid, len, Cmd, macArrLength, macArr, signed])
-    } catch (error) {  
+        msg = ConcatInt8([isJM, isZip, mid, len, Cmd, macArrLength, macArr, ...rt, signed])
+    } catch (error) {
         fn()
         console.error(error);
     }

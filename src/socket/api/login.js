@@ -40,6 +40,6 @@ export const SYS_HEARTBEAT = () => {
         clientInfo: eventCommon.fnClientInfoGet(),
     });
     const buffer = LoginReq.encode(message).finish();
-    const rb = initHeader(buffer, 19901);
+    const rb = initHeader(buffer, 19901, 'HEARTBEAT');
     webSocketSend(rb);
 };

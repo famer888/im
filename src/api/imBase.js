@@ -4,7 +4,7 @@
  *时间：2022年10月01日 16:28:44
  *版本：v1.3.0
  * */
-import { getUrl, baseBuildUrl, baseUrl, getSignHeader } from "./base/unit";
+import { getUrl, baseBuildUrl, baseUrl, getSignHeader, FairGuard } from "./base/unit";
 import axios from "axios";
 const crypto = require('crypto');
 import eventCommon from "@/event/common.js";
@@ -163,9 +163,9 @@ function postEncrypted(key, data) {
     return concatBuffers([header, length, signed]);
 }
 
-    
+
 function requestAxios(url, params, opts) {
-    const { 
+    const {
         method = "POST",
         headers ={}
     } = opts || {}
@@ -177,20 +177,21 @@ function requestAxios(url, params, opts) {
      const encryptedBody = postEncrypted(bodyAesKey, reqBody);
 
     return new Promise( async (resolve, reject) => {
-        
+
         const finalHeaders = {
             'Content-Type': 'application/octet-stream',
-             ...headers };  
+             ...headers };
         const httpDefault = {
             method,
             url: url,
             data:  encryptedBody,
             timeout: 5000,
-            headers: finalHeaders, // 设置请求头 
+            headers: finalHeaders, // 设置请求头
         };
         axios(httpDefault)
         .then((res) => {
             if(res.code === 200) {
+                FairGuard.recieve(res);
                 resolve(res.data);
             }else {
                 reject(res)

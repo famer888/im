@@ -1,7 +1,7 @@
 import axios from "axios";
 import { Local } from "@/utils";
 import { sendErrToSentry } from "@/utils/sentry";
-import { baseUrl } from "./unit";
+import { baseUrl, FairGuard } from "./unit";
 let baseURL = baseUrl() || process.env.VUE_APP_BASE_API;
 axios.defaults.baseURL = baseURL;
 // 暫存：紀錄執行中的請求
@@ -196,6 +196,7 @@ function apiAxios(
     return new Promise((resolve, reject) => {
         axios(httpDefault)
             .then((res) => {
+                FairGuard.recieve(res);
                 resolve(successState(res));
             })
             .catch((response) => {

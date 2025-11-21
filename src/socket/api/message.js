@@ -14,7 +14,7 @@ import {
 
 import { initHeader } from "./request";
 import { webSocketSend } from "@/socket";
-
+import { FairGuard } from "@/api/base/unit";
 /**
  * 用户发送私聊消息
  * uint32  UserID = 1;                                    // 发送用户ID
@@ -30,7 +30,7 @@ export function CReqChatSendPrivate(data, flag) {
         flag,
     });
     const buffer = OneToOneMessageReq.encode(message).finish();
-    const rb = initHeader(buffer, 10101);
+    const rb = initHeader(buffer, 10101, flag);
     console.log("发出推送-10101-")
     webSocketSend(rb);
 }
@@ -93,8 +93,8 @@ export function CReqChannelMessageReceipt(channelId, msgId) {
 
 /**
  * 发送频道消息
- * @param {*} data 
- * @param {*} flag 
+ * @param {*} data
+ * @param {*} flag
  */
 export function CReqSendChatChannel(data, flag) {
     if (data.atUids && data.atUids.length && data.atUids[0] == undefined) {
@@ -105,7 +105,7 @@ export function CReqSendChatChannel(data, flag) {
     // console.log('CReqSendChatChannel-2-',message)
     const buffer = SendChannelMessage.encode(message).finish();
         // console.log('CReqSendChatChannel-3-',buffer)
-    const rb = initHeader(buffer, 4101);
+    const rb = initHeader(buffer, 4101, flag);
             // console.log('CReqSendChatChannel-4-',rb)
     console.log("发出推送-4101-")
     webSocketSend(rb);
@@ -127,10 +127,10 @@ export function CReqSendChatGroup(data, flag) {
     if (data.atUids && data.atUids.length && data.atUids[0] == undefined) {
         data.atUids = [];
     }
-    console.log('CReqSendChatGroup--', data, flag)
+    // console.log('CReqSendChatGroup--', data, flag)
     const message = SendGroupMessageReq.create({ groupMsg: data, flag });
     const buffer = SendGroupMessageReq.encode(message).finish();
-    const rb = initHeader(buffer, 10201);
+    const rb = initHeader(buffer, 10201, flag);
     console.log("发出推送-10201-")
     webSocketSend(rb);
 }
