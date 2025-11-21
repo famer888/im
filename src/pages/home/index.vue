@@ -290,7 +290,7 @@ export default {
       ) {
         let curGroup = null;
         let channelDetail = {};
-        if (info?.type === "channel" || info?.comType === "detailsChannel") {
+        if (info?.type === "channel" && info?.comType === "detailsChannel") {
           if(info.showTip && this.infoActive.channelId === info.channelId ) {
             window.$toast("您已在频道");
             return;
