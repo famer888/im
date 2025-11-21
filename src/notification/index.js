@@ -93,10 +93,10 @@ export const showNotification = async (mainWin, data) => {
     noticeWindow = await createNoticeWindow();
     setTimeout(() => {
       updateShowLocation(noticeItemConfig.height)
-      noticeWindow.send('showList', prams);
+      sendNoticeWin('showList', prams);
     }, 1000);
   } else {
-    noticeWindow.send('showList', prams);
+    sendNoticeWin('showList', prams);
   }
 
   mainWindow.on("focus", function (event) {
@@ -104,6 +104,16 @@ export const showNotification = async (mainWin, data) => {
       closeNotice()
     }
   });
+}
+
+const sendNoticeWin = (name, data) => {
+  if(noticeWindow && !noticeWindow.isDestroyed()) {
+    try {
+    noticeWindow.send(name, data)
+    } catch (error) {
+      noticeWindow.webContents.send(name, data)
+    }
+  }
 }
 
 ipcMain.on('noticeCloseItem', (e, item) => {
