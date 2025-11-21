@@ -582,7 +582,41 @@ const fnMsgDelete = async ({ info }) => {
 
     // 通讯
     eventBase.fnCommunicationSendMsg(communicationInfo, true);
+
+    if(type === 'channel' && !isRemoteDeletion && !isOtherPlatformOperate) {
+        channelRecordDeleteHistory(info)
+    }
 };
+
+// 记录频道本地删除/清空消息
+const channelRecordDeleteHistory = async (info) => {
+    const isClear = !info.idsDelete?.length;
+    const loginId = eventCommon.fnCommonInfoRU({ getId: "loginId" });
+    let res = await Cache(`${loginId}-channel-msg-delete-history`);
+    const channelId = Number(info.id) 
+    const oldData = res[channelId];
+    const currentTime = Date.now();
+    let data = {
+            channelId,
+            idsDelete: oldData?.idsDelete || [],
+            clearTime: oldData?.clearTime || 0,
+    }
+    if(isClear) {
+        data.idsDelete = [];
+        data.clearTime = currentTime;
+    } else {
+        const ids = info.idsDelete.map(item => {
+            return {
+                msgId: item.msgId,
+                clearTime: currentTime,
+            }
+        })
+        data.idsDelete = [...data.idsDelete, ...ids].slice(-100);
+    }
+    res[channelId] = data;
+    console.log('channelRecordDeleteHistory--', res)
+    Cache(`${loginId}-channel-msg-delete-history`, res)
+}
 
 
 /**

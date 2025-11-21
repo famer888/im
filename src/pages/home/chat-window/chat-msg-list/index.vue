@@ -481,6 +481,7 @@ import dayjs from "dayjs";
 // 工具
 import { fnUpdateGroupKey, fnUpdateFriendKey } from "@/utils/encryption-decryption.js";
 import { chatPageDateformat, chatDate } from "@/utils/base";
+import { Cache } from "@/cache";
 import {
   fnIdsEnterVisualRangeGet,
   fnMsgListDeleteCalculate,
@@ -1385,9 +1386,12 @@ export default {
       }
     },
     // 拉取频道历史消息
-    async getChannelHistoryMsg() {
+    async getChannelHistoryMsg(recentMsgs) {
       const { channelId } = this.chatContent;
       if(!channelId) return;
+      const loginId = eventCommon.fnCommonInfoRU({
+        getId: "loginId",
+      });
 
       // api获取最后一条的数据信息
         console.log('getChannelLastMsgInfo--')
@@ -1414,25 +1418,54 @@ export default {
         return;
       };
 
+      const latestMsgId = Number(lastMsgInfo.latestMsgId);
+      const deleteHistoryS = await Cache(`${loginId}-channel-msg-delete-history`); //本地删除/清空的消息
+
+      // 判断如果本地是最新的则不拉取，由于离线会推最后一条消息，这里根据最后两条进行判断
+      console.log('recentMsgs--', recentMsgs, latestMsgId)
+      const lastOneMsgIsExist = recentMsgs.some(item => Number(item.MsgID) === latestMsgId); // 最后一条消息是否存在
+      const lastTwoMsgIsExist = recentMsgs.some(item => Number(item.MsgID) === (latestMsgId -1)); // 最后第二条消息是否存在
+      if(lastOneMsgIsExist && (latestMsgId <= 1 || lastTwoMsgIsExist)) {
+        return
+      }
+      
       // api获取历史消息
-       const latestMsgId = Number(lastMsgInfo.latestMsgId)
-       const latestSize = 30
+      const latestSize = 30
       const params = {
         bizType: 2,
         bizId: Number(channelId),
         msgType: 0,
-        latestSize: latestMsgId > latestSize ? latestSize : latestMsgId-1,
-        latestMsgId: Number(lastMsgInfo.latestMsgId),
+        latestSize: latestMsgId > latestSize ? latestSize : latestMsgId,
+        latestMsgId: Number(lastMsgInfo.latestMsgId) + 1,
         eventType: 2,
       }
       console.log('getChannelHistoryMsg--', params)
-      const msgs = await eventChannel.fnGetHistoryMsgs(params)
+      let msgs = await eventChannel.fnGetHistoryMsgs(params)
+      console.log('getChannelHistoryMsg-2-', msgs)
+      if(!msgs.length) return;
+
+      // 过滤历史本地删除/清空的消息
+      console.log('deleteHistoryS--', deleteHistoryS)
+      const { clearTime, idsDelete } = deleteHistoryS[Number(channelId)] || {};
+            console.log('deleteHistoryS-2-', clearTime, idsDelete)
+      if(clearTime) {
+       msgs = msgs.filter(item => Number(item.latestChannelMessage.msgTime) > clearTime)
+          console.log('deleteHistoryS-3-', msgs)
+      }
+      if(idsDelete?.length) {
+        msgs = msgs.filter(item => {
+          console.log('idsDelete--', idsDelete)
+          const deleteItem = idsDelete.find(i => Number(i.msgId) === Number(item.latestChannelMessage.msgId))
+          return !deleteItem || Number(item.latestChannelMessage.msgTime) > deleteItem.clearTime
+        })
+         console.log('deleteHistoryS-4-', msgs)
+      }
 
       // 排序
       msgs.sort((a, b) => {
         return Number(a.latestChannelMessage.msgTime) - Number(b.latestChannelMessage.msgTime);
       });
-      console.log('getChannelHistoryMsg-2-', JSON.stringify(msgs))
+      console.log('getChannelHistoryMsg-3-', msgs)
 
       // 消息展示
       for(let i = 0; i < msgs.length; i++) {
@@ -1470,8 +1503,9 @@ export default {
           msgBlockList: this.blockList,
         })
         .then((res) => {
+          console.log('blockList--', res)
           if (res) {
-            this.blockList = res.msgBlockList;
+            this.blockList = res?.msgBlockList || [];
             this.blockListShowPageNum = res.pageNumCurrent;
             this.pageCount = res.pageCount;
             this.pageLastMsgCount = res.pageLastMsgCount;
@@ -1503,11 +1537,15 @@ export default {
 
               // 显示置低按钮
               this.handleToBottomBtnVisibleSet();
-
-              if(this.chatContent.type === 'channel') {
-                this.getChannelHistoryMsg();
-              }
             }, 100);
+          }
+          
+          if(this.chatContent.type === 'channel') {
+            const msgList = this.blockList || [];
+            console.log('recentMsgList-1-', msgList)
+            const recentMsgList = msgList.at(-1)?.list || [];
+               console.log('recentMsgList-2-', recentMsgList)
+            this.getChannelHistoryMsg(recentMsgList.slice(-10));
           }
         });
 
