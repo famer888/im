@@ -7,10 +7,10 @@
                     <img class="close" src="@/assets/images/common/close-icon.png" @click="$emit('close')" />
                 </div>
                 <ComSearch class="search" placeholder="搜索" :searchText="searchText" @onChange="searchChange"></ComSearch>
-                <!-- <div class="form-link">
+                <div class="form-link" @click="copyGroupInviteLink">
+                    <img src="@/assets/images/system/link-bold.svg" />
                     <span class="title">通过邀请链接加入群组</span>
-                    <ComCheckbox></ComCheckbox>
-                </div> -->
+                </div>
             </div>
             <ul class="friend-list">
                 <li class="friend-item" :class="{ disable: item.isGroupMember || item.nickName === '账号已注销' }" v-for="(item, index) in friendList" :key="index" @click="selectFriend(item)">
@@ -33,11 +33,12 @@ import ComSearch from "../../com/search.vue";
 import ComCheckbox from "@/components/Checkbox";
 import { Cache } from "@/cache";
 import eventCommon from "@/event/common";
-import { GroupMember } from "@/api/imGroup.js";
+import { GroupMember, groupQrCode } from "@/api/imGroup.js";
+import { copyToClipboard } from "@/utils/base";
 
 export default {
     name: "inviteFriendJoinGroup",
-    props: ["groupId", "memberInfoList"],
+    props: ["groupId", "memberInfoList", "qrcodeUrl"],
     components: { ComSearch, ComCheckbox },
     data() {
         return {
@@ -142,6 +143,20 @@ export default {
                 })
             }
             return friendList
+        },
+        // 复制群邀请链接
+        async copyGroupInviteLink() {
+          try {
+            const qrUrl = this.qrcodeUrl || (await groupQrCode({ groupId: this.groupId, force: false }))?.qrUrl;
+            if (qrUrl) {
+              copyToClipboard(qrUrl);
+              window.$toast(this.$t("链接已复制在剪贴板"));
+            } else {
+              window.$toast(this.$t("获取邀请链接失败"));
+            }
+          } catch (error) {
+            window.$toast(this.$t("获取邀请链接失败"));
+          }
         }
     }
 }
@@ -197,9 +212,15 @@ export default {
     }
 
     .form-link {
+        >img {
+          width: 14px;
+          margin-right: 2px;
+        }
         display: flex;
         align-items: center;
-        justify-content: space-between;
+        margin-top: 10px;
+        cursor: pointer;
+        user-select: none;
 
         .title {
             font-size: 14px;
