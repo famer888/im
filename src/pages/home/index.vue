@@ -124,6 +124,7 @@ export default {
       intervalName: null,
       groupList: [],
       loginId: null,
+      getChannelDetailTimes: {}, // 记录频道详情获取的时间
     };
   },
   provide() {
@@ -276,6 +277,25 @@ export default {
         },
       });
     },
+    handleGetChannelDetail(info, channelId) {
+        getChannelDetail({ channelId }).then( res => {
+         let channelDetail = res?.data || {};
+          eventBase.fnCommunicationSendMsg({
+                operator: "channelDetailCache",
+                data: channelDetail,
+          });
+          // 快速切换时接口未返回，就别赋值了，否则会覆盖掉当前的值
+          if ((this.infoActive?.channelId || this.infoActive?.id) === channelDetail?.channelId) {
+            this.infoActive = {
+              ...info,
+              ...channelDetail,
+              isDisable: channelDetail.status === 3,
+              channelDetailDone: +new Date(),
+            };
+            this.getChannelDetailTimes[channelId] = Date.now();
+          }
+        });
+    },
     /**
      * 事件的处理
      */
@@ -288,39 +308,26 @@ export default {
           "chatMsgListSearchScrollTo",
         ].includes(operator)
       ) {
-        let curGroup = null;
-        let channelDetail = {};
-        if (info?.type === "channel" && info?.comType === "detailsChannel") {
+        let groupInfo = {};
+        if (info?.type === "channel" || info?.comType === "detailsChannel") {
           if(info.showTip && this.infoActive.channelId === info.channelId ) {
             window.$toast("您已在频道");
             return;
           }
           const channelId = operator === 'chatMsgListSearchScrollTo' ? info?.id : info?.channelId;
-          getChannelDetail({ channelId }).then( res => {
-            channelDetail = res.data;
-            // console.log('channelDetail--', channelDetail);
-            eventBase.fnCommunicationSendMsg({
-                  operator: "channelDetailCache",
-                  data: channelDetail,
-            });
-            // 快速切换时接口未返回，就别赋值了，否则会覆盖掉当前的值
-            if ((this.infoActive?.channelId || this.infoActive?.id) === channelDetail?.channelId) {
-              this.infoActive = {
-                ...info,
-                ...channelDetail,
-                isDisable: channelDetail.status === 3,
-                channelDetailDone: +new Date(),
-              };
-            }
-
-          });
+          const beforeTime = (this.getChannelDetailTimes[channelId] || 0) + 30000
+          if(beforeTime < Date.now()) {
+            this.handleGetChannelDetail(info, channelId);
+          }
         } else if (info) {
           curGroup = this.groupList.find((item) => item.id == info.id);
+          groupInfo = {
+            memberCount: curGroup.memberCount
+          } 
         }
         this.infoActive = {
           ...info,
-          memberCount: curGroup ? curGroup.memberCount : "",
-          ...channelDetail,
+          ...groupInfo,
         };
       } else if (operator === "updateChannelIdentity") {
         console.log('updateChannelIdentity--', this.infoActive, info )
