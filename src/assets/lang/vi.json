@@ -230,5 +230,7 @@
   "请输入链接地址": "Vui lòng nhập địa chỉ liên kết",
   "链接地址需http/https开头": "Địa chỉ liên kết bắt đầu bằng http/https",
   "数据已载入": "Dữ liệu đã được tải",
-  "打开": "Mở"
+  "打开": "Mở",
+  "邀请成功": "Mời thành công",
+  "用户昵称开启了入群需审核，对方同意后才会进入群聊": "đã bật phê duyệt tham gia nhóm. Họ sẽ vào nhóm sau khi được phê duyệt"
 }

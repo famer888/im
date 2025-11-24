@@ -55,7 +55,6 @@ export default {
     methods: {
         confirmInvite() {
             const members = this.selectFriends.map(item => item.id)
-            console.log("confirmInvite--", members, this.selectFriends)
             if (!members.length) {
                 window.$toast('请选择邀请的好友')
                 return;
@@ -69,7 +68,11 @@ export default {
             GroupMember(pra).then(res => {
                 const { errCode } = res?.commonResult || {}
                 if (errCode == 200) {
-                    window.$toast('邀请成功')
+                    if (Array.isArray(res?.needCheckUids) && res?.needCheckUids?.length > 0) {
+                      this.waitForUsersConfirm(res.needCheckUids)
+                    } else {
+                      window.$toast('邀请成功')
+                    }
                     this.selectFriends = [];
                     this.$emit("close");
                     // window.$confirm({
@@ -80,6 +83,21 @@ export default {
                     window.$toast('邀请失败')
                 }
             })
+        },
+        // 等待用户确认：用户开启了入群审核
+        waitForUsersConfirm(uids) {
+          const formatUids = uids.map(item => Number(item));
+          const contactsMap = new Map();
+          for(let item of this.contactList) {
+            if (formatUids.includes(item.id)) {
+              contactsMap.set(item.id, item);
+            }
+          }
+          const names = Array.from(contactsMap.values()).flatMap(item => item.nickName).join(',');
+          window.$confirm({
+            title: this.$t("邀请成功"),
+            remark: `${names}，${this.$t("用户昵称开启了入群需审核，对方同意后才会进入群聊")}`,
+          })
         },
         getSelectState(info) {
             const isExist = this.selectFriends.find(item => item.id === info.id)

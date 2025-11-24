@@ -230,5 +230,7 @@
   "请输入链接地址": "Please enter the link address",
   "链接地址需http/https开头": "The link address needs to start with http/https",
   "数据已载入": "Data loaded",
-  "打开": "open"
+  "打开": "open",
+  "邀请成功": "Invitation successful",
+  "用户昵称开启了入群需审核，对方同意后才会进入群聊": "has enabled group join approval. They will enter the group chat after approval"
 }

@@ -230,5 +230,7 @@
   "请输入链接地址": "Por favor, introduz o endereço do link",
   "链接地址需http/https开头": "O endereço de ligação precisa começar com http/https",
   "数据已载入": "Dados carregados",
-  "打开": "aberto"
+  "打开": "aberto",
+  "邀请成功": "Convite bem-sucedido",
+  "用户昵称开启了入群需审核，对方同意后才会进入群聊": "ativou a aprovação de entrada no grupo. Eles entrarão no grupo após a aprovação"
 }
