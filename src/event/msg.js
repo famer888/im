@@ -592,7 +592,7 @@ const fnMsgDelete = async ({ info }) => {
 const channelRecordDeleteHistory = async (info) => {
     const isClear = !info.idsDelete?.length;
     const loginId = eventCommon.fnCommonInfoRU({ getId: "loginId" });
-    let res = await Cache(`${loginId}-channel-msg-delete-history`);
+    let res = await Cache(`${loginId}-channel-msg-delete-history`) || {};
     const channelId = Number(info.id) 
     const oldData = res[channelId];
     const currentTime = Date.now();

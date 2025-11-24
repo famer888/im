@@ -1419,7 +1419,7 @@ export default {
       };
 
       const latestMsgId = Number(lastMsgInfo.latestMsgId);
-      const deleteHistoryS = await Cache(`${loginId}-channel-msg-delete-history`); //本地删除/清空的消息
+      const deleteHistoryS = await Cache(`${loginId}-channel-msg-delete-history`) || {}; //本地删除/清空的消息
 
       // 判断如果本地是最新的则不拉取，由于离线会推最后一条消息，这里根据最后两条进行判断
       console.log('recentMsgs--', recentMsgs, latestMsgId)
