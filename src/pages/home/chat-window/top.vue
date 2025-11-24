@@ -12,7 +12,7 @@
       </picture>
       <div class="userinfo-channel" v-if="chatContent.type === 'channel'">
           <div class="nickname">{{ name }}</div>
-          <div class="subscriber">{{chatContent.memberCount || chatContent.detail?.memberCount}}位订阅者</div>
+          <div class="subscriber">{{chatContent.memberCount}}位订阅者</div>
       </div>
       <div class="userinfo" v-else>
         <div class="nickname">
