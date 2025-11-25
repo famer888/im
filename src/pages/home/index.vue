@@ -320,7 +320,7 @@ export default {
             this.handleGetChannelDetail(info, channelId);
           }
         } else if (info) {
-          curGroup = this.groupList.find((item) => item.id == info.id);
+          const curGroup = this.groupList.find((item) => item.id == info.id);
           groupInfo = {
             memberCount: curGroup.memberCount
           } 
