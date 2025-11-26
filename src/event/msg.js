@@ -285,21 +285,32 @@ const fnFriendMsgAdd = async (msg) => {
     });
 };
 
-const fnChannelMsgAdd = async (msg) => {
 
-        // 登录id
-    const loginId = eventCommon.fnCommonInfoRU({
-        getId: "loginId",
-    });
-
+const fnChannelMsgAdd = async (msg, isOld) => {
     const channelId = Number(msg.channelId)
     const type = "channel"
+    const msgId = Number(msg.msgId)
+     if(msgId === 1) {
+         console.log('fnChannelMsgAdd-c-', msg)
+         // 频道消息删除
+       await fnMsgDelete({
+            info: {
+                id: Number(channelId),
+                type: "channel",
+                msgId,
+                idsDelete: [],
+                isOtherPlatformOperate: true, 
+            },
+        });
+    }
 
-    const state = eventChannel.isValidSocketMsg(Number(msg.msgTime))
-    if(!state) {
-        //  console.log('阻止了条重复推送-msg-', msg)
-        return;
-    };
+    if(!isOld) {
+        const state = eventChannel.isValidSocketMsg(Number(msg.msgTime))
+        if(!state) {
+            //  console.log('阻止了条重复推送-msg-', msg)
+            return;
+        };
+    }
 
     const { contentStr, fileKey } = await fnMsgDecryption({
         id: channelId,
@@ -572,7 +583,41 @@ const fnMsgDelete = async ({ info }) => {
 
     // 通讯
     eventBase.fnCommunicationSendMsg(communicationInfo, true);
+
+    if(type === 'channel' && !isRemoteDeletion && !isOtherPlatformOperate) {
+        channelRecordDeleteHistory(info)
+    }
 };
+
+// 记录频道本地删除/清空消息
+const channelRecordDeleteHistory = async (info) => {
+    const isClear = !info.idsDelete?.length;
+    const loginId = eventCommon.fnCommonInfoRU({ getId: "loginId" });
+    let res = await Cache(`${loginId}-channel-msg-delete-history`) || {};
+    const channelId = Number(info.id) 
+    const oldData = res[channelId];
+    const currentTime = Date.now();
+    let data = {
+            channelId,
+            idsDelete: oldData?.idsDelete || [],
+            clearTime: oldData?.clearTime || 0,
+    }
+    if(isClear) {
+        data.idsDelete = [];
+        data.clearTime = currentTime;
+    } else {
+        const ids = info.idsDelete.map(item => {
+            return {
+                msgId: item.msgId,
+                clearTime: currentTime,
+            }
+        })
+        data.idsDelete = [...data.idsDelete, ...ids].slice(-100);
+    }
+    res[channelId] = data;
+    console.log('channelRecordDeleteHistory--', res)
+    Cache(`${loginId}-channel-msg-delete-history`, res)
+}
 
 
 /**
@@ -684,6 +729,7 @@ const fnUnreadMsgSet = async (info) => {
                                 values: {
                                     sendTime: info.sendTime,
                                 },
+                                lastMessage: info,
                             },
                         });
                     }, 100);

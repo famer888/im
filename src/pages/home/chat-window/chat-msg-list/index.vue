@@ -481,6 +481,7 @@ import dayjs from "dayjs";
 // 工具
 import { fnUpdateGroupKey, fnUpdateFriendKey } from "@/utils/encryption-decryption.js";
 import { chatPageDateformat, chatDate } from "@/utils/base";
+import { Cache } from "@/cache";
 import {
   fnIdsEnterVisualRangeGet,
   fnMsgListDeleteCalculate,
@@ -495,6 +496,11 @@ import ComFloatRightBtns from "./float-right-btns.vue";
 // 事件
 import eventCommon from "@/event/common";
 import eventBase from "@/event/base";
+import eventChannel from "@/event/channel";
+import eventMsg from "@/event/msg";
+
+// api
+import { getChannelLastMsgInfo } from "@/api/imChannel";
 
 // 模块消息数量
 const blockMsgSize = 80;
@@ -960,8 +966,10 @@ export default {
 
       // 如果消息不是自己发的，并且当前没有最后的的已读时间
       if (!info.isSelf) {
-        if (msgReadByMeTime === 0) {
-          msgReadByMeTime = info.sendTime;
+        // 这里不知道因为什么要这么判断，只生效一次，导致未读消息数量积压，实际上已经上报已读
+        // if (msgReadByMeTime === 0) {
+        if (msgReadByMeTime < info.sendTime) {
+          msgReadByMeTime = info.sendTime + 1;
         }
       }
 
@@ -997,8 +1005,13 @@ export default {
             };
           }
 
+          // 如果存在则替换
+          const existingIndex = blockInfoLast.list.findIndex(item => item.MsgID == infoNew.MsgID);
+          if (existingIndex > -1) {
+            blockInfoLast.list[existingIndex] = infoNew;
+          }
           // 如果模块消息没有满，则添加到模块
-          if (blockInfoLast.list.length < blockMsgSize) {
+          else if (blockInfoLast.list.length < blockMsgSize) {
             blockInfoLast.list.push(infoNew);
 
             // 最后页面 消息总数+1
@@ -1372,6 +1385,94 @@ export default {
         }
       }
     },
+    // 拉取频道历史消息
+    async getChannelHistoryMsg(recentMsgs) {
+      const { channelId } = this.chatContent;
+      if(!channelId) return;
+      const loginId = eventCommon.fnCommonInfoRU({
+        getId: "loginId",
+      });
+
+      // api获取最后一条的数据信息
+        console.log('getChannelLastMsgInfo--')
+      const { data: lastMsgs} = await getChannelLastMsgInfo({
+        bizType: 2,
+         bizId: Number(channelId),
+      });
+      if(!lastMsgs?.length) return;
+      console.log('getChannelLastMsgInfo-1-', JSON.stringify(lastMsgs))
+      const lastMsgInfo = lastMsgs.find(item => item.msgType === 0);
+      console.log('getChannelLastMsgInfo-2-', lastMsgInfo)
+
+      // 没有消息执行清空
+      if(!lastMsgInfo) {
+        eventMsg.fnMsgDelete({
+            info: {
+                id: Number(channelId),
+                type: "channel",
+                msgId: 0,
+                idsDelete: [],
+                isOtherPlatformOperate: true, 
+            },
+        });
+        return;
+      };
+
+      const latestMsgId = Number(lastMsgInfo.latestMsgId);
+      const deleteHistoryS = await Cache(`${loginId}-channel-msg-delete-history`) || {}; //本地删除/清空的消息
+
+      // 判断如果本地是最新的则不拉取，由于离线会推最后一条消息，这里根据最后两条进行判断
+      console.log('recentMsgs--', recentMsgs, latestMsgId)
+      const lastOneMsgIsExist = recentMsgs.some(item => Number(item.MsgID) === latestMsgId); // 最后一条消息是否存在
+      const lastTwoMsgIsExist = recentMsgs.some(item => Number(item.MsgID) === (latestMsgId -1)); // 最后第二条消息是否存在
+      if(lastOneMsgIsExist && (latestMsgId <= 1 || lastTwoMsgIsExist)) {
+        return
+      }
+      
+      // api获取历史消息
+      const latestSize = 30
+      const params = {
+        bizType: 2,
+        bizId: Number(channelId),
+        msgType: 0,
+        latestSize: latestMsgId > latestSize ? latestSize : latestMsgId,
+        latestMsgId: Number(lastMsgInfo.latestMsgId) + 1,
+        eventType: 2,
+      }
+      console.log('getChannelHistoryMsg--', params)
+      let msgs = await eventChannel.fnGetHistoryMsgs(params)
+      console.log('getChannelHistoryMsg-2-', msgs)
+      if(!msgs.length) return;
+
+      // 过滤历史本地删除/清空的消息
+      console.log('deleteHistoryS--', deleteHistoryS)
+      const { clearTime, idsDelete } = deleteHistoryS[Number(channelId)] || {};
+            console.log('deleteHistoryS-2-', clearTime, idsDelete)
+      if(clearTime) {
+       msgs = msgs.filter(item => Number(item.latestChannelMessage.msgTime) > clearTime)
+          console.log('deleteHistoryS-3-', msgs)
+      }
+      if(idsDelete?.length) {
+        msgs = msgs.filter(item => {
+          console.log('idsDelete--', idsDelete)
+          const deleteItem = idsDelete.find(i => Number(i.msgId) === Number(item.latestChannelMessage.msgId))
+          return !deleteItem || Number(item.latestChannelMessage.msgTime) > deleteItem.clearTime
+        })
+         console.log('deleteHistoryS-4-', msgs)
+      }
+
+      // 排序
+      msgs.sort((a, b) => {
+        return Number(a.latestChannelMessage.msgTime) - Number(b.latestChannelMessage.msgTime);
+      });
+      console.log('getChannelHistoryMsg-3-', msgs)
+
+      // 消息展示
+      for(let i = 0; i < msgs.length; i++) {
+        const item = msgs[i]
+        await eventMsg.fnChannelMsgAdd(item.latestChannelMessage, true);
+      }
+    },
     /**
      * 消息列表初始化
      */
@@ -1402,8 +1503,9 @@ export default {
           msgBlockList: this.blockList,
         })
         .then((res) => {
+          console.log('blockList--', res)
           if (res) {
-            this.blockList = res.msgBlockList;
+            this.blockList = res?.msgBlockList || [];
             this.blockListShowPageNum = res.pageNumCurrent;
             this.pageCount = res.pageCount;
             this.pageLastMsgCount = res.pageLastMsgCount;
@@ -1436,6 +1538,14 @@ export default {
               // 显示置低按钮
               this.handleToBottomBtnVisibleSet();
             }, 100);
+          }
+          
+          if(this.chatContent.type === 'channel') {
+            const msgList = this.blockList || [];
+            console.log('recentMsgList-1-', msgList)
+            const recentMsgList = msgList.at(-1)?.list || [];
+               console.log('recentMsgList-2-', recentMsgList)
+            this.getChannelHistoryMsg(recentMsgList.slice(-10));
           }
         });
 
@@ -1579,6 +1689,8 @@ export default {
                 },
               },
             });
+            // 更新最后消息事件
+            msgReadByMeTime = msgLastEnterVisual.sendTime + 1;
           }
         }
       }
