@@ -178,6 +178,18 @@ const fnMsgAdd = async ({ msg, contentStr, fileKey, type }) => {
         msgNew.content = '[暂不支持该消息类型]'
     }
     console.log(`fnMsgAdd-3-msgId:${msgId}`)
+
+    // 判断是否为隐藏消息（isHide: true && sendUid !== loginUid）
+    // 如果是隐藏消息，只存库，跳过所有UI更新
+    const isHideMessage = msgNew.isHide === true && msgNew.sendUid !== loginId;
+    // const isHideMessage = typeof msgNew.content === 'string' && msgNew.content.includes('xxx');
+
+    if (isHideMessage) {
+        // 只存储到indexdb，不进行任何UI更新
+        eventBase.fnMsgAddToDB(msgNew, msgNew.friendId);
+        return;
+    }
+
     // 收到的新消息，进行传递
     eventBase.fnCommunicationSendMsg({
         operator: "msgNew",
