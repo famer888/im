@@ -393,7 +393,7 @@ export const OneToOneMessage = $root.OneToOneMessage = (() => {
      * @property {Array.<ILinkObj>|null} [links] OneToOneMessage links
      * @property {number|Long|null} [sentOverTime] OneToOneMessage sentOverTime
      * @property {number|null} [channel] OneToOneMessage channel
-     * @property {boolean|null} [fakeSend] OneToOneMessage fakeSend
+     * @property {boolean|null} [isHide] OneToOneMessage isHide
      */
 
     /**
@@ -597,12 +597,12 @@ export const OneToOneMessage = $root.OneToOneMessage = (() => {
     OneToOneMessage.prototype.channel = 0;
 
     /**
-     * OneToOneMessage fakeSend.
-     * @member {boolean} fakeSend
+     * OneToOneMessage isHide.
+     * @member {boolean} isHide
      * @memberof OneToOneMessage
      * @instance
      */
-    OneToOneMessage.prototype.fakeSend = false;
+    OneToOneMessage.prototype.isHide = false;
 
     /**
      * Creates a new OneToOneMessage instance using the specified properties.
@@ -675,8 +675,8 @@ export const OneToOneMessage = $root.OneToOneMessage = (() => {
             writer.uint32(/* id 22, wireType 0 =*/176).int64(message.sentOverTime);
         if (message.channel != null && Object.hasOwnProperty.call(message, "channel"))
             writer.uint32(/* id 23, wireType 0 =*/184).int32(message.channel);
-        if (message.fakeSend != null && Object.hasOwnProperty.call(message, "fakeSend"))
-            writer.uint32(/* id 24, wireType 0 =*/192).bool(message.fakeSend);
+        if (message.isHide != null && Object.hasOwnProperty.call(message, "isHide"))
+            writer.uint32(/* id 24, wireType 0 =*/192).bool(message.isHide);
         return writer;
     };
 
@@ -808,7 +808,7 @@ export const OneToOneMessage = $root.OneToOneMessage = (() => {
                     break;
                 }
             case 24: {
-                    message.fakeSend = reader.bool();
+                    message.isHide = reader.bool();
                     break;
                 }
             default:
@@ -964,9 +964,9 @@ export const OneToOneMessage = $root.OneToOneMessage = (() => {
         if (message.channel != null && message.hasOwnProperty("channel"))
             if (!$util.isInteger(message.channel))
                 return "channel: integer expected";
-        if (message.fakeSend != null && message.hasOwnProperty("fakeSend"))
-            if (typeof message.fakeSend !== "boolean")
-                return "fakeSend: boolean expected";
+        if (message.isHide != null && message.hasOwnProperty("isHide"))
+            if (typeof message.isHide !== "boolean")
+                return "isHide: boolean expected";
         return null;
     };
 
@@ -1203,8 +1203,8 @@ export const OneToOneMessage = $root.OneToOneMessage = (() => {
                 message.sentOverTime = new $util.LongBits(object.sentOverTime.low >>> 0, object.sentOverTime.high >>> 0).toNumber();
         if (object.channel != null)
             message.channel = object.channel | 0;
-        if (object.fakeSend != null)
-            message.fakeSend = Boolean(object.fakeSend);
+        if (object.isHide != null)
+            message.isHide = Boolean(object.isHide);
         return message;
     };
 
@@ -1272,7 +1272,7 @@ export const OneToOneMessage = $root.OneToOneMessage = (() => {
             } else
                 object.sentOverTime = options.longs === String ? "0" : 0;
             object.channel = 0;
-            object.fakeSend = false;
+            object.isHide = false;
         }
         if (message.msgId != null && message.hasOwnProperty("msgId"))
             if (typeof message.msgId === "number")
@@ -1338,8 +1338,8 @@ export const OneToOneMessage = $root.OneToOneMessage = (() => {
                 object.sentOverTime = options.longs === String ? $util.Long.prototype.toString.call(message.sentOverTime) : options.longs === Number ? new $util.LongBits(message.sentOverTime.low >>> 0, message.sentOverTime.high >>> 0).toNumber() : message.sentOverTime;
         if (message.channel != null && message.hasOwnProperty("channel"))
             object.channel = message.channel;
-        if (message.fakeSend != null && message.hasOwnProperty("fakeSend"))
-            object.fakeSend = message.fakeSend;
+        if (message.isHide != null && message.hasOwnProperty("isHide"))
+            object.isHide = message.isHide;
         return object;
     };
 
@@ -1397,7 +1397,7 @@ export const GroupMessage = $root.GroupMessage = (() => {
      * @property {number|null} [edit] GroupMessage edit
      * @property {Array.<ILinkObj>|null} [links] GroupMessage links
      * @property {number|Long|null} [sentOverTime] GroupMessage sentOverTime
-     * @property {boolean|null} [fakeSend] GroupMessage fakeSend
+     * @property {boolean|null} [isHide] GroupMessage isHide
      */
 
     /**
@@ -1571,12 +1571,12 @@ export const GroupMessage = $root.GroupMessage = (() => {
     GroupMessage.prototype.sentOverTime = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
 
     /**
-     * GroupMessage fakeSend.
-     * @member {boolean} fakeSend
+     * GroupMessage isHide.
+     * @member {boolean} isHide
      * @memberof GroupMessage
      * @instance
      */
-    GroupMessage.prototype.fakeSend = false;
+    GroupMessage.prototype.isHide = false;
 
     /**
      * Creates a new GroupMessage instance using the specified properties.
@@ -1646,8 +1646,8 @@ export const GroupMessage = $root.GroupMessage = (() => {
                 $root.LinkObj.encode(message.links[i], writer.uint32(/* id 19, wireType 2 =*/154).fork()).ldelim();
         if (message.sentOverTime != null && Object.hasOwnProperty.call(message, "sentOverTime"))
             writer.uint32(/* id 20, wireType 0 =*/160).int64(message.sentOverTime);
-        if (message.fakeSend != null && Object.hasOwnProperty.call(message, "fakeSend"))
-            writer.uint32(/* id 21, wireType 0 =*/168).bool(message.fakeSend);
+        if (message.isHide != null && Object.hasOwnProperty.call(message, "isHide"))
+            writer.uint32(/* id 21, wireType 0 =*/168).bool(message.isHide);
         return writer;
     };
 
@@ -1772,7 +1772,7 @@ export const GroupMessage = $root.GroupMessage = (() => {
                     break;
                 }
             case 21: {
-                    message.fakeSend = reader.bool();
+                    message.isHide = reader.bool();
                     break;
                 }
             default:
@@ -1913,9 +1913,9 @@ export const GroupMessage = $root.GroupMessage = (() => {
         if (message.sentOverTime != null && message.hasOwnProperty("sentOverTime"))
             if (!$util.isInteger(message.sentOverTime) && !(message.sentOverTime && $util.isInteger(message.sentOverTime.low) && $util.isInteger(message.sentOverTime.high)))
                 return "sentOverTime: integer|Long expected";
-        if (message.fakeSend != null && message.hasOwnProperty("fakeSend"))
-            if (typeof message.fakeSend !== "boolean")
-                return "fakeSend: boolean expected";
+        if (message.isHide != null && message.hasOwnProperty("isHide"))
+            if (typeof message.isHide !== "boolean")
+                return "isHide: boolean expected";
         return null;
     };
 
@@ -2138,8 +2138,8 @@ export const GroupMessage = $root.GroupMessage = (() => {
                 message.sentOverTime = object.sentOverTime;
             else if (typeof object.sentOverTime === "object")
                 message.sentOverTime = new $util.LongBits(object.sentOverTime.low >>> 0, object.sentOverTime.high >>> 0).toNumber();
-        if (object.fakeSend != null)
-            message.fakeSend = Boolean(object.fakeSend);
+        if (object.isHide != null)
+            message.isHide = Boolean(object.isHide);
         return message;
     };
 
@@ -2204,7 +2204,7 @@ export const GroupMessage = $root.GroupMessage = (() => {
                 object.sentOverTime = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
             } else
                 object.sentOverTime = options.longs === String ? "0" : 0;
-            object.fakeSend = false;
+            object.isHide = false;
         }
         if (message.sendUid != null && message.hasOwnProperty("sendUid"))
             if (typeof message.sendUid === "number")
@@ -2271,8 +2271,8 @@ export const GroupMessage = $root.GroupMessage = (() => {
                 object.sentOverTime = options.longs === String ? String(message.sentOverTime) : message.sentOverTime;
             else
                 object.sentOverTime = options.longs === String ? $util.Long.prototype.toString.call(message.sentOverTime) : options.longs === Number ? new $util.LongBits(message.sentOverTime.low >>> 0, message.sentOverTime.high >>> 0).toNumber() : message.sentOverTime;
-        if (message.fakeSend != null && message.hasOwnProperty("fakeSend"))
-            object.fakeSend = message.fakeSend;
+        if (message.isHide != null && message.hasOwnProperty("isHide"))
+            object.isHide = message.isHide;
         return object;
     };
 

@@ -156,6 +156,9 @@ message GroupSendReqInfo {
     GroupAssistantMessageContent webContent = 14; // web端消息体 add v1.2.0
     GroupAssistantMessageContent myselfAppContent = 15; // 己方app端消息体 add v1.2.0
     GroupAssistantMessageContent myselfWebContent = 16; // 己方web端消息体 add v1.2.0
+    UploadChannelType channelType = 17; // OSS上传通道类型
+    repeated    LinkObj links = 18; // links 文本消息中带的链接数组
+    bool             isHide   = 19; // 是否是 隐藏消息
 }
 
 
