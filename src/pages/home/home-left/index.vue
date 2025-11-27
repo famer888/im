@@ -821,6 +821,12 @@ export default {
       if (info.messageProtocolId) {
         return;
       }
+
+      // 如果是隐藏消息且在当前会话窗口，跳过会话列表更新
+      if (info.skipChatListUpdate) {
+        return;
+      }
+
       if (operatorType == "groupShutupAll") {
         await this.eventHandgroupShutupAll(info);
       }

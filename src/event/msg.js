@@ -34,6 +34,49 @@ import eventCommon from "./common";
 import eventChannel from "./channel";
 
 /**
+ * 处理隐藏消息
+ * @param {Object} msgNew - 消息对象
+ * @param {string} type - 消息类型 (friend/group/channel)
+ * @param {number} loginId - 登录用户ID
+ * @param {number} msgId - 消息ID
+ * @returns {boolean} 是否已处理完毕（true表示应该return，false表示继续执行）
+ */
+const fnHandleHideMessage = (msgNew, type, loginId, msgId) => {
+    // 判断是否为隐藏消息（isHide: true && sendUid !== loginUid）
+    // const isHideMessage = msgNew.isHide === true && msgNew.sendUid !== loginId;
+    const isHideMessage = typeof msgNew.content === 'string' && msgNew.content.includes('xxx');
+
+    if (!isHideMessage) {
+        return false; // 不是隐藏消息，继续正常流程
+    }
+
+    // 获取当前活跃的会话信息
+    const infoActive = eventCommon.fnCommonInfoRU({ getId: "infoActive" });
+    const isCurrentChat = infoActive && msgNew.id === infoActive.id && type === infoActive.type;
+
+    // 如果当前正在查看这个会话的聊天窗口，则更新聊天窗口的消息列表
+    // 注意：使用特殊标记 skipChatListUpdate，需要在 home-left 的 eventHandlingMsgNew 中添加判断
+    if (isCurrentChat) {
+        eventBase.fnCommunicationSendMsg({
+            operator: "msgNew",
+            data: {
+                ...msgNew,
+                time: msgNew.sendTime,
+                type,
+                user: type === "group" ? msgNew.sendMember.user : msgNew.sendUser,
+                skipChatListUpdate: true, // 标记跳过会话列表更新，只更新聊天窗口消息列表
+            },
+        }, true); // 第二个参数为true，跳过fnCommunicationProcessing中的处理，避免触发未读等逻辑
+    }
+
+    // 只存储到indexdb，不进行其他UI更新（会话列表、未读数、提醒等）
+    eventBase.fnMsgAddToDB(msgNew, msgNew.friendId);
+    console.log(`fnMsgAdd-隐藏消息-只存库-msgId:${msgId}, 是否当前会话:${isCurrentChat}`)
+
+    return true; // 已处理完毕，调用方应该return
+};
+
+/**
  * 消息 添加
  */
 const fnMsgAdd = async ({ msg, contentStr, fileKey, type }) => {
@@ -179,15 +222,9 @@ const fnMsgAdd = async ({ msg, contentStr, fileKey, type }) => {
     }
     console.log(`fnMsgAdd-3-msgId:${msgId}`)
 
-    // 判断是否为隐藏消息（isHide: true && sendUid !== loginUid）
-    // 如果是隐藏消息，只存库，跳过所有UI更新
-    const isHideMessage = msgNew.isHide === true && msgNew.sendUid !== loginId;
-    // const isHideMessage = typeof msgNew.content === 'string' && msgNew.content.includes('xxx');
-
-    if (isHideMessage) {
-        // 只存储到indexdb，不进行任何UI更新
-        eventBase.fnMsgAddToDB(msgNew, msgNew.friendId);
-        return;
+    // 处理隐藏消息
+    if (fnHandleHideMessage(msgNew, type, loginId, msgId)) {
+        return; // 隐藏消息已处理完毕，直接返回
     }
 
     // 收到的新消息，进行传递

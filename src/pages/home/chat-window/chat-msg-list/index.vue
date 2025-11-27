@@ -615,8 +615,8 @@ export default {
       let unreadSeparation = this.unreadSeparationId === message.customMsgId;
       const selected = this.selectedIdList.some((cur) => cur.id == message.id);
       // 如果是假消息，非我发送，隐藏自己
-      const hidden = message.isHide && !message.sendUid === this.loginId;
-      // const hidden = typeof message.content === 'string' && message.content.includes('xxx');
+      // const hidden = message.isHide && !message.sendUid === this.loginId;
+      const hidden = typeof message.content === 'string' && message.content.includes('xxx');
       // 并且是最后一条，隐藏所有挂件
       if (hidden && index === this.maxIndex - 1) {
         active = showTime = unreadSeparation = false;
