@@ -41,15 +41,10 @@
             "
           >
             <div
-              v-for="n in item.list"
+              v-for="(n, i) in item.list"
               :id="n.customMsgId"
               :key="n.customMsgId"
-              :class="{
-                active: String(n.customMsgId) === String(idHighlighted),
-                showTime: Boolean(n.showTime),
-                unreadSeparation: unreadSeparationId === n.customMsgId,
-                selected: selectedIdList.some((cur) => cur.id == n.id),
-              }"
+              :class="getCurrentMsgClass(n, index * 80 + i, blockList)"
               :data-show-time-day="n.showTimeDay"
             >
               <h3 v-if="unreadSeparationId == n.customMsgId">
@@ -554,6 +549,12 @@ export default {
         (item) => item.name || item.nickName
       );
     },
+    loginId() {
+      return eventCommon.fnCommonInfoRU({ getId: "loginId" });
+    },
+    maxIndex() {
+      return this.blockList.reduce((acc, item) => acc + item.list.length, 0);
+    }
   },
   inject: ["handleFriendList"],
   mounted() {
@@ -608,6 +609,20 @@ export default {
     }
   },
   methods: {
+    getCurrentMsgClass(message, index) {
+      let active = String(message.customMsgId) === String(this.idHighlighted);
+      let showTime = Boolean(message.showTime);
+      let unreadSeparation = this.unreadSeparationId === message.customMsgId;
+      const selected = this.selectedIdList.some((cur) => cur.id == message.id);
+      // 如果是假消息，非我发送，隐藏自己
+      // const hidden = message.isHide && !message.sendUid === this.loginId;
+      const hidden = typeof message.content === 'string' && message.content.includes('xxx');
+      // 并且是最后一条，隐藏所有挂件
+      if (hidden && index === this.maxIndex - 1) {
+        active = showTime = unreadSeparation = false;
+      }
+      return { active, showTime, unreadSeparation, selected, hidden }
+    },
     isChannelSystemMsg(msgInfo) {
         return this.chatContent?.type === "channel" && msgInfo?.chatType === 6;
     },
@@ -1412,7 +1427,7 @@ export default {
                 type: "channel",
                 msgId: 0,
                 idsDelete: [],
-                isOtherPlatformOperate: true, 
+                isOtherPlatformOperate: true,
             },
         });
         return;
@@ -1428,7 +1443,7 @@ export default {
       if(lastOneMsgIsExist && (latestMsgId <= 1 || lastTwoMsgIsExist)) {
         return
       }
-      
+
       // api获取历史消息
       const latestSize = 30
       const params = {
@@ -1539,7 +1554,7 @@ export default {
               this.handleToBottomBtnVisibleSet();
             }, 100);
           }
-          
+
           if(this.chatContent.type === 'channel') {
             const msgList = this.blockList || [];
             console.log('recentMsgList-1-', msgList)
@@ -1798,6 +1813,11 @@ export default {
               font-weight: bold;
               font-size: 14px;
             }
+          }
+          &.hidden {
+            padding: 0;
+            height: 0;
+            overflow: hidden;
           }
 
           &.unreadSeparation {

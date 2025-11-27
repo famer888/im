@@ -323,8 +323,8 @@ export default {
         } else if (info) {
           const curGroup = this.groupList.find((item) => item.id == info.id);
           groupInfo = {
-            memberCount: curGroup.memberCount
-          } 
+            memberCount: curGroup?.memberCount || 0
+          }
         }
         this.infoActive = {
           ...info,

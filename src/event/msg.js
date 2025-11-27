@@ -299,7 +299,7 @@ const fnChannelMsgAdd = async (msg, isOld) => {
                 type: "channel",
                 msgId,
                 idsDelete: [],
-                isOtherPlatformOperate: true, 
+                isOtherPlatformOperate: true,
             },
         });
     }
@@ -594,7 +594,7 @@ const channelRecordDeleteHistory = async (info) => {
     const isClear = !info.idsDelete?.length;
     const loginId = eventCommon.fnCommonInfoRU({ getId: "loginId" });
     let res = await Cache(`${loginId}-channel-msg-delete-history`) || {};
-    const channelId = Number(info.id) 
+    const channelId = Number(info.id)
     const oldData = res[channelId];
     const currentTime = Date.now();
     let data = {
@@ -1346,11 +1346,11 @@ const fnMsgSend = async (info) => {
         delete item.params.local;
         delete item.params.localThumbUrl;
 
-        const fakeSend = shouldPreventSendingMessage(item.params?.text);
+        const isHide = shouldPreventSendingMessage(item.params?.text);
 
         // 发送
         sendMessage(
-            { ...item.params, msgType: item.params.chatType, ...item.fileInfos, fakeSend },
+            { ...item.params, msgType: item.params.chatType, ...item.fileInfos, isHide },
             item.customMsgId
         );
     }
