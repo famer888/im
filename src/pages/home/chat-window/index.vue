@@ -1286,6 +1286,9 @@ export default {
   position: relative;
   display: flex;
   flex-direction: column;
+  padding-right: 0;
+  transition: padding-right 0.3s ease;
+  will-change: padding-right;
   &.sidebar-outer {
     padding-right: 256px;
   }
