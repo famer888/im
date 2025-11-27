@@ -471,7 +471,7 @@ export default class dbBase {
     /**
      * 指定时间之后
      */
-    async getMsgUnreadForTimeAfter({ id, type, values }) {
+    async getMsgUnreadForTimeAfter({ id, type, values, lastMessage }) {
         let unreadInfo = null;
 
         try {
@@ -523,11 +523,12 @@ export default class dbBase {
                     }
                 }
             } else {
+                // 取在存之前，永远取不到
                 // 获取最后一个等于的信息
-                const infoLast = await this.db[tableName]
+                const infoLast = (await this.db[tableName]
                     .where("sendTime")
                     .equals(sendTime)
-                    .first();
+                    .first()) || lastMessage;
 
                 if (infoLast && !infoLast.isSelf) {
                     msgReadList.push(infoLast);
@@ -783,7 +784,7 @@ export default class dbBase {
             console.error('查询失败：', error);
             return false;
         }
-        
+
     }
 
     // 消息列表排序

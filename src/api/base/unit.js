@@ -5,6 +5,7 @@ import * as $root_sys from "./sys.js";
 import * as $root_group from "./group.js";
 import * as $root_group_message from "./group_message.js";
 import * as $root_channel_api from "./channel_api.js";
+import * as $root_imweb_web from "./imweb-web.js";
 import { _decrypt, _encrypt, encrypt } from "./index";
 import { getUint32Bytes, stringToAscii } from "../../socket/unit";
 require("./protobuf");
@@ -76,6 +77,8 @@ const getRoot = (protoType) => {
         root = $root_group_message;
     } else if (protoType === "channel_api") {
         root = $root_channel_api;
+    } else if (protoType === "imweb-web") {
+        root = $root_imweb_web;
     }
     return root;
 };
@@ -166,11 +169,13 @@ const requestApi = async (opt) => {
         data = {},
         headers = {},
         noEncrypt = false,
+        customAesKey = "",
     } = opt;
 
     return new Promise(async (resolve, reject) => {
         let header = new Headers();
         let { aesKey } = noEncrypt ? {} : await handleTrendsAesKeyPrams(header);
+        if( customAesKey ) aesKey = customAesKey;
 
         let params = {
             clientInfo: eventCommon.fnClientInfoGet(),
@@ -238,7 +243,7 @@ const requestApi = async (opt) => {
     });
 };
 
-const handleEncode = ({ protoType, type, params, aesKey }) => {
+export const handleEncode = ({ protoType, type, params, aesKey }) => {
     let root = getRoot(protoType);
     let reqMethod = root[`${type}Req`];
     let param = reqMethod.create(params);
@@ -255,10 +260,10 @@ const handleEncode = ({ protoType, type, params, aesKey }) => {
     return array;
 };
 
-const handleDecode = ({ data, protoType, type, aesKey }) => {
+export const handleDecode = ({ data, protoType, type, aesKey, noResp }) => {
     let root = getRoot(protoType);
     let data2 = _decrypt(new Int8Array(data.slice(6)), aesKey);
-    let respMethod = root[`${type}Resp`];
+    let respMethod = noResp ? root[type] : root[`${type}Resp`];
     let message = respMethod.decode(new Uint8Array(data2));
     return message;
 };

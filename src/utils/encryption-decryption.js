@@ -212,6 +212,15 @@ export const fnGroupRelKeyGet = async (id) => {
       msgkey = _decrypt(msgKeyBuffer, key);
     } catch (error) {
         console.error('解密异常-msgkey-', privateKey, keyInfos)
+        // 同步下自己和服务器的密钥
+        const beforeTime = window.beforeUploadOwnKeyTime || 0;
+        const currentTime = new Date().getTime(); 
+        const limitTime = beforeTime + 1000 * 60 * 10;
+         // 限制10分钟内只能更新1次
+        if(currentTime > limitTime) {
+          window.beforeUploadOwnKeyTime = currentTime;
+          fnUpdateOwnKey();
+        }
     }
     const buffer = ConcatInt8([
         Uint8Array.from([10]),

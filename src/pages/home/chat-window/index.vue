@@ -683,6 +683,9 @@ export default {
             this.memberDialogInfo = memberInfoList.find(
               (item) => item.nickName === info.atName || item.name === info.atName
             );
+            if(!this.memberDialogInfo) {
+               window.$toast("抱歉，该用户/群/频道不存在");
+            }
           }
           break;
         }

@@ -557,7 +557,7 @@ const downloadHandler = (event, item, webContents) => {
         item.setSavePath(data.fileLocalPath);
         item.once("done", (event, state) => {
            clearDownTimer(timerName)
-            mainWindow.send(
+            sendMain(
                 state === "completed"
                     ? "downloadFileDone"
                     : "downloadFileFailed",
@@ -568,8 +568,48 @@ const downloadHandler = (event, item, webContents) => {
     } catch (error) {
         console.log("downloadHandler-error-", error);
         clearDownTimer(timerName)
-        mainWindow.send( "downloadFileFailed", data);
+        sendMain( "downloadFileFailed", data);
     }
+};
+
+
+/**
+ * 安全地从主进程向渲染进程发送 IPC 消息
+ * @param {string} channel - 消息通道名称
+ * @param {any} data - 要发送的数据（可选）
+ * @param {BrowserWindow|null} targetWindow - 目标窗口实例。如果为 null，则尝试发送给 mainWindow 或第一个可用窗口。
+ */
+const sendMain = (channel, data, targetWindow = null) => {
+  let win;
+
+  // 优先使用传入的目标窗口
+  if (targetWindow && targetWindow instanceof BrowserWindow && !targetWindow.isDestroyed()) {
+    win = targetWindow;
+  } 
+  // 否则，尝试使用 mainWindow
+  else if (mainWindow && !mainWindow.isDestroyed()) {
+    win = mainWindow;
+  }
+  // 最后，尝试获取第一个可用的窗口
+  else {
+    const allWindows = BrowserWindow.getAllWindows();
+    win = allWindows.find(w => !w.isDestroyed());
+  }
+
+  // 检查窗口是否有效
+  if (win && win.webContents && !win.webContents.isDestroyed()) {
+    try {
+      win.webContents.send(channel, data);
+      console.log(`[sendMain] 成功向窗口发送消息: ${channel}`);
+      return true;
+    } catch (error) {
+      console.error(`[sendMain] 发送消息 ${channel} 时发生错误:`, error);
+      return false;
+    }
+  } else {
+    console.warn(`[sendMain] 无法发送消息 ${channel}: 没有找到有效的窗口或 webContents。`);
+    return false;
+  }
 };
 
 // {query, userId}
@@ -760,12 +800,13 @@ const handleFileDownload = (args) => {
         timeout, // 超时时长毫秒
     } = args;
     const url = trendsFileUrl || fileUrl;
-
+    
+    
     // 处理下载超时
     if(timeout) {
         const timerName = `${groupId || channelId || userId }_${msgId}`
         downTimers[timerName] = setTimeout(() => {
-            mainWindow.send(
+            sendMain(
                 "downloadFileFailed",
                 args,
             );
