@@ -97,15 +97,16 @@ const handleDownloadFileFailed = (_$, data) => {
         let { channelType = 0 } = data || {};
         let moduleCode = {0: "ossDefaultUrl", 1: "ossChatUrl", 2: "ossLowRateUrl"}[channelType] || "ossDefaultUrl"
         let url = data.trendsFileUrl || data.fileUrl;
-        console.log('handleDownloadFileFailed--', url)
+        console.error('下载文件失败--', url)
         reportErrorDomain(url, {errorDesc: "下载失败", moduleCode})  
         let downFailNum = data.downFailNum || 0
         if(downFailNum <=3 ) {
             data.downFailNum = downFailNum + 1
             data.trendsFileUrl = await getNewFileDownUrl(url, channelType, data.downFailNum-1) || "";
-            console.log('handleDownloadFileFailed-new-', data.trendsFileUrl)
+            console.error('下载文件失败-替换新域名进行下载-', data.trendsFileUrl)
             ipcRenderer.send("fileDownload", data)
         }else {
+            console.error('下载文件失败-结束-', url)
             fnDownloadFileInfoUpdate(data, "downloadError");
         }
     }, 100);
