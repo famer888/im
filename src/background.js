@@ -26,6 +26,8 @@ import { createProtocol } from "vue-cli-plugin-electron-builder/lib";
 import nodePath from "path";
 import { openFile } from "@/utils/server";
 import { showNotification, closeNotification } from  "@/notification";
+const log = require('electron-log');
+initElectronLog();
 
 app.on("gpu-process-crashed", (event, kill) => {
     // console.warn("app:gpu-process-crashed", event, kill);
@@ -55,6 +57,26 @@ protocol.registerSchemesAsPrivileged([
         privileges: { secure: true, standard: true, bypassCSP: true },
     },
 ]);
+
+// 监听主进程未捕获的同步异常
+process.on('uncaughtException', (error) => {
+  log.error('主进程未捕获异常：', error);
+});
+
+// 监听主进程未处理的 Promise 拒绝
+process.on('unhandledRejection', (reason, promise) => {
+  log.error('主进程未处理 Promise 拒绝：', { reason, promise });
+});
+
+// 主进程即将退出时触发（包括正常退出和崩溃退出）
+app.on('will-quit', (event) => {
+  // 可通过自定义标志区分是否为崩溃退出
+  if (global.isCrashed) {
+    log.error('主进程崩溃导致退出');
+  } else {
+    log.info('主进程正常退出');
+  }
+});
 
 const isDevelopment = process.env.NODE_ENV !== "production";
 const workingDir = isDevelopment ? `${__dirname}/public` : `${__dirname}`;
@@ -1141,9 +1163,27 @@ app.on("open-url", (event, url) => {
 app.setName(pkg.name);
 app.dock && app.dock.setIcon(icon);
 
-setTimeout(() => {
-    console.log(BrowserWindow.getAllWindows().length);
-}, 2000);
+
+// 监听来自渲染进程的日志事件
+function watchRenderLog() {
+    if(!isDevelopment) {
+        ipcMain.on("renderer-log", (event, level, message, meta) => {
+            // 在主进程中记录日志
+            if (meta) {
+                log[level](message, meta);
+            } else {
+                log[level](message);
+            }
+        });
+    }
+}
+
+function initElectronLog() {
+    log.transports.console.level = false;
+    log.transports.file.sync = false; //启用异步写入
+    log.transports.file.maxSize = 10 * 1024 * 1024; // 10MB
+    log.transports.file.maxFiles = 5;
+}
 
 if (!app.requestSingleInstanceLock()) {
     console.log("获取到没有呢", baseIndex);
@@ -1195,6 +1235,8 @@ function registerLocalResourceProtocol(ses) {
 }
 app.on("ready", () => {
     createMainWindow();
+    watchRenderLog();
+    log.info('应用启动');
 
     screenshots = new Screenshots();
     globalShortcut.register("ctrl+shift+a", () => {

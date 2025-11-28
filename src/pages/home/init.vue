@@ -98,6 +98,7 @@ export default {
   },
   props: ["hide"],
   async mounted() {
+    console.$collect('初始化开始')
     // 登录id
     loginId = Number(location.href.slice(location.href.lastIndexOf("=") + 1));
 
@@ -117,31 +118,39 @@ export default {
 
     if (loginInfo) {
       // 如果存在则同步sessionId
+       console.$collect('初始化-同步sessionId')
       eventCommon.fnLoginSessionIdRU(loginInfo.sessionId);
     } else {
       // 登出
       eventCommon.fnLoginout();
+      console.$collect('初始化-未查询到登录信息，执行退出')
       return;
     }
 
     // 通过主进程获取用户的文件存储地址
+    console.$collect('初始化-文件存储地址')
     await initUserCachePath(loginId);
 
     // 初始化 账户配置
+    console.$collect('初始化-账户配置')
     await eventCommon.fnConfigInit(true);
 
     // 初始化群事件
+    console.$collect('初始化-群事件')
     eventGroup.fnGroupEventExecIdObjGet();
 
     // 初始化定时删除的信息记录
+    console.$collect('初始化-定时删除消息')
     eventCheduledCeletion.fnMsgListGet();
 
     // 全部密钥的对象初始化
+    console.$collect('初始化-密钥')
     fnKeyObjsInit();
 
     if (navigator.onLine) {
       this.text = this.$t("加密检测");
 
+      console.$collect('初始化-加密检测')
       const resLogin = await getUserInfo();
       if (resLogin && resLogin.userInfo) {
         const { nickName, icon } = resLogin.userInfo;
@@ -190,8 +199,10 @@ export default {
       }
 
       // 敏感词初始化
+      console.$collect('初始化-敏感词初始化')
       eventCommon.fnSensitiveWordsInit();
 
+      console.$collect('初始化-获取密钥')
       this.handleKeyPair();
 
       // 15秒后加密还没有更新好，显示重置按钮
@@ -202,6 +213,7 @@ export default {
       this.text = "";
 
       // 没有网络则不断检测网络，有网后重置
+      console.$collect('初始化-无网络')
       this.handleNetwork();
     }
   },
