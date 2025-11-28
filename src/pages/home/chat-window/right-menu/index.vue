@@ -7,21 +7,12 @@
        <ComChannelQrcode v-if="channelQrcodeVisilbe" :chatContent="chatContent"  @close="channelQrcodeVisilbe = false" />
      </template>
     <template v-else-if="isGroup">
-     <div class="group-info">
-        <picture>
-          <ComImage :src="chatContent.pic || chatContent.icon" :type="chatContent.type" />
-        </picture>
-        <div>
-            <div class="nickname">{{ chatContent.name || chatContent.nickName }}</div>
-            <div class="subscriber">{{chatContent.memberCount || chatContent.detail?.memberCount}}位成员</div>
-        </div>
-     </div>
-     <ComGroupNotice :notice="notice" :memberInfoList="memberInfoList" :chatContent="chatContent" />
-     <ComGroupAliasQrcode
-        :chatContent="chatContent"
-        @showGroupQrCode="groupQrcodeVisilbe = true"
+      <ComGroupAliasQrcode
+      :chatContent="chatContent"
+      @showGroupQrCode="groupQrcodeVisilbe = true"
       />
 
+      <ComGroupNotice :notice="notice" :memberInfoList="memberInfoList" :chatContent="chatContent" />
       <ComGroupQrcode
         v-if="groupQrcodeVisilbe"
         :chatContent="chatContent"
@@ -357,6 +348,13 @@ export default {
 };
 </script>
 <style lang="scss">
+.chatContent{
+  &.sidebar-outer, &.sidebar-inner {
+    #comRightMenu {
+      transform: none;
+    }
+  }
+}
 #comRightMenu {
   display: flex;
   z-index: 10;
@@ -364,6 +362,8 @@ export default {
   flex-direction: column;
   background-color: #fff;
   position: fixed;
+  transform: translateX(256px);
+  transition: transform 0.3s ease;
   top: 28px;
   right: 0;
   bottom: 0;

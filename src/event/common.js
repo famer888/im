@@ -551,6 +551,7 @@ let fakeSendSensitives = [];
  */
 const fnSensitiveWordsInit = () => {
     getChatSensitive().then((res) => {
+        // console.log('fnSensitiveWordsInit--', res)
         if (res && res.addSensitives) {
             sensitiveWords = res.addSensitives;
             fakeSendSensitives = res.fakeSendSensitives;
