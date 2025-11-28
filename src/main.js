@@ -8,6 +8,7 @@ import i18n from "./assets/lang/i18n";
 import ComImage from "@/components/image.vue";
 import { fnPopUpMountToWindow } from "@/utils/pop-up";
 import infiniteScroll from 'vue-infinite-scroll';
+import { initLogCollectSystem } from "@/utils/logCollect";
 
 Vue.use(infiniteScroll);
 Vue.use(VueRouter);
@@ -16,6 +17,7 @@ Vue.use(axiosApi);
 Vue.use(VueContext);
 Vue.component("vue-context", VueContext);
 Vue.prototype.$eventBus = new Vue();
+initLogCollectSystem();
 
 Vue.directive("copy", {
     inserted: function (el, binding, vnode) {
