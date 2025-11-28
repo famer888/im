@@ -1650,7 +1650,7 @@ export default {
           scrollTop: dom.scrollTop,
           clientHeight: dom.clientHeight,
         });
-        console.log('[debug] msgListEnterVisual', msgListEnterVisual);
+        // console.log('[debug] msgListEnterVisual', msgListEnterVisual);
         // 可视区没有内容直接结束
         if (msgListEnterVisual.length === 0) {
           return;
@@ -1682,16 +1682,16 @@ export default {
 
         // 进入可视区域的最后一条信息
         const msgLastEnterVisual = msgListEnterVisual[msgListEnterVisual.length - 1];
-        console.log('[debug] msgLastEnterVisual--', msgLastEnterVisual);
+        // console.log('[debug] msgLastEnterVisual--', msgLastEnterVisual);
 
         // 如果有未读，并有未读消息在可视区域内，则设置已读
         let timeUnread = _.get(this.chatContent.unreadObj, "time");
-        console.log('[debug] timeUnread1', timeUnread);
+        // console.log('[debug] timeUnread1', timeUnread);
 
         if (msgReadByMeTime !== 0) {
           timeUnread = msgReadByMeTime;
         }
-        console.log('[debug] timeUnread2', msgLastEnterVisual.readStatus, msgLastEnterVisual.sendTime, timeUnread);
+        // console.log('[debug] timeUnread2', msgLastEnterVisual.readStatus, msgLastEnterVisual.sendTime, timeUnread);
 
         if (timeUnread) {
           timeUnread = Number(timeUnread);
