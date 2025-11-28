@@ -585,7 +585,7 @@ const sendMain = (channel, data, targetWindow = null) => {
   // 优先使用传入的目标窗口
   if (targetWindow && targetWindow instanceof BrowserWindow && !targetWindow.isDestroyed()) {
     win = targetWindow;
-  } 
+  }
   // 否则，尝试使用 mainWindow
   else if (mainWindow && !mainWindow.isDestroyed()) {
     win = mainWindow;
@@ -729,6 +729,14 @@ const setMainWin = async () => {
         mainWindowIsFocused = false;
         mainWindow && mainWindow.send("visibilitychange", false);
     });
+    mainWindow.on('will-resize', (event, bounds) => {
+      if (Math.abs(lastWidth - bounds.width) < 250) {
+        lastWidth = bounds.width;
+      } else {
+        event.preventDefault();
+        mainWindow.setSize(lastWidth, bounds.height);
+      }
+    })
 
     // 下载完成处理
     mainWindow.webContents.session.on("will-download", downloadHandler);
@@ -751,6 +759,44 @@ const setMainWin = async () => {
                     createTime: new Date().getTime(),
                 });
         }
+    });
+    ipcMain.handle("toggleSideBar", async (event, visible) => {
+      let type = 'none';
+
+      try {
+          if (!mainWindow) {
+              return type;
+          }
+
+          isTogglingSidebar = true; // 设置标志，表示正在执行 toggle 操作
+
+          if (visible) {
+              // 显示侧边栏：存储当前宽度，判断是否最大化
+              const bounds = mainWindow.getBounds();
+
+              if (!mainWindow.isMaximized()) {
+                  lastWidth = bounds.width; // 存储当前宽度
+                  // 如果没有最大化，增加256px
+                  const newWidth = bounds.width + 256;
+                  mainWindow.setSize(newWidth, bounds.height);
+
+                  type = 'outer';
+              } else {
+                  type = 'inner';
+              }
+          } else {
+              // 隐藏侧边栏：恢复到lastWidth
+              const bounds = mainWindow.getBounds();
+              mainWindow.setSize(lastWidth, bounds.height);
+              type = 'none';
+          }
+      } catch (error) {
+          type = 'none';
+      }
+
+      // 统一在函数尾部重置标志
+      isTogglingSidebar = false;
+      return type;
     });
 
     powerMonitor.on("resume", () => {
@@ -800,8 +846,8 @@ const handleFileDownload = (args) => {
         timeout, // 超时时长毫秒
     } = args;
     const url = trendsFileUrl || fileUrl;
-    
-    
+
+
     // 处理下载超时
     if(timeout) {
         const timerName = `${groupId || channelId || userId }_${msgId}`
@@ -1060,53 +1106,6 @@ const createMainWindow = async () => {
     // 监听 通知显示
     ipcMain.on("notificationClose", (event, args) => {
         closeNotification(args)
-    });
-    // 监听宽度变化
-    mainWindow.on('resize', () => {
-      // 排除 toggleSideBar 进行的宽度设置造成的回调
-      if (!isTogglingSidebar && mainWindow && !mainWindow.isMaximized()) {
-          const bounds = mainWindow.getBounds();
-          lastWidth = bounds.width;
-      }
-    });
-
-    // 侧边栏显示隐藏
-    ipcMain.handle("toggleSideBar", async (event, visible) => {
-        let type = 'none';
-
-        try {
-            if (!mainWindow) {
-                return type;
-            }
-
-            isTogglingSidebar = true; // 设置标志，表示正在执行 toggle 操作
-
-            if (visible) {
-                // 显示侧边栏：存储当前宽度，判断是否最大化
-                const bounds = mainWindow.getBounds();
-                lastWidth = bounds.width; // 存储当前宽度
-
-                if (!mainWindow.isMaximized()) {
-                    // 如果没有最大化，增加256px
-                    const newWidth = bounds.width + 256;
-                    mainWindow.setSize(newWidth, bounds.height);
-                    type = 'outer';
-                } else {
-                    type = 'inner';
-                }
-            } else {
-                // 隐藏侧边栏：恢复到lastWidth
-                const bounds = mainWindow.getBounds();
-                mainWindow.setSize(lastWidth, bounds.height);
-                type = 'none';
-            }
-        } catch (error) {
-            type = 'none';
-        }
-
-        // 统一在函数尾部重置标志
-        isTogglingSidebar = false;
-        return type;
     });
 
     powerMonitor.on("suspend", () => {
