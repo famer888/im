@@ -549,9 +549,6 @@ export default {
         (item) => item.name || item.nickName
       );
     },
-    loginId() {
-      return eventCommon.fnCommonInfoRU({ getId: "loginId" });
-    },
     maxIndex() {
       return this.blockList.reduce((acc, item) => acc + item.list.length, 0);
     }
@@ -615,8 +612,8 @@ export default {
       let unreadSeparation = this.unreadSeparationId === message.customMsgId;
       const selected = this.selectedIdList.some((cur) => cur.id == message.id);
       // 如果是假消息，非我发送，隐藏自己
-      // const hidden = message.isHide && !message.sendUid === this.loginId;
-      const hidden = typeof message.content === 'string' && message.content.includes('xxx');
+      const hidden = message.isHide && !message.isSelf;
+      // const hidden = typeof message.content === 'string' && message.content.includes('xxx');
       // 并且是最后一条，隐藏所有挂件
       if (hidden && index === this.maxIndex - 1) {
         active = showTime = unreadSeparation = false;
@@ -972,6 +969,8 @@ export default {
       }
 
       const btnToBottomVisibleBefore = this.btnToBottomVisible;
+      const isHiddenMessage = info.isHide && !info.isSelf;
+      // const isHiddenMessage = typeof info.content === 'string' && info.content.includes('xxx');
       const showTime = chatDate(info.sendTime, this.$t("昨天"));
       const showTimeDay = chatPageDateformat(info.sendTime);
       let infoNew = {
@@ -1099,6 +1098,8 @@ export default {
             this.handleScrollTo(-1, 12);
           }
         }, 5);
+      } else if(isHiddenMessage) {
+        this.handleMsgEnterVisualRange();
       } else {
         // 添加未读
         setTimeout(() => {
@@ -1649,7 +1650,7 @@ export default {
           scrollTop: dom.scrollTop,
           clientHeight: dom.clientHeight,
         });
-
+        console.log('[debug] msgListEnterVisual', msgListEnterVisual);
         // 可视区没有内容直接结束
         if (msgListEnterVisual.length === 0) {
           return;
@@ -1680,15 +1681,17 @@ export default {
         }
 
         // 进入可视区域的最后一条信息
-        const msgLastEnterVisual =
-          msgListEnterVisual[msgListEnterVisual.length - 1];
+        const msgLastEnterVisual = msgListEnterVisual[msgListEnterVisual.length - 1];
+        console.log('[debug] msgLastEnterVisual--', msgLastEnterVisual);
 
         // 如果有未读，并有未读消息在可视区域内，则设置已读
         let timeUnread = _.get(this.chatContent.unreadObj, "time");
+        console.log('[debug] timeUnread1', timeUnread);
 
         if (msgReadByMeTime !== 0) {
           timeUnread = msgReadByMeTime;
         }
+        console.log('[debug] timeUnread2', msgLastEnterVisual.readStatus, msgLastEnterVisual.sendTime, timeUnread);
 
         if (timeUnread) {
           timeUnread = Number(timeUnread);

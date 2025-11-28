@@ -75,7 +75,7 @@ export function ReceiveKeyPairMessage(data) {
  * MessageSource   source   = 10; //消息来源 v1.6.2
  */
 export function CReqMessageReceipt(receipts) {
-    console.log('CReqMessageReceipt--', receipts);
+    // console.log('[debug] CReqMessageReceipt--', receipts);
     const message = SendReceiptMessageReq.create({ receipts });
     const buffer = SendReceiptMessageReq.encode(message).finish();
     const rb = initHeader(buffer, 10106);
