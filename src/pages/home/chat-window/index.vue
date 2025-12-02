@@ -341,6 +341,7 @@ import eventGroup from "@/event/group";
 import eventFriend from "@/event/friend";
 import eventCommon from "@/event/common";
 import eventFile from "@/event/file";
+import { lockDomBeforeResize } from "@/utils/widget/lockDomBeforeResize";
 
 // 群成员列表
 let memberInfoList = [];
@@ -963,7 +964,7 @@ export default {
       // 选中信息
       this.rightClickSelectedInfo = data;
       this.getMsgReadUsersInfo(data?.readUsers, info)
-      await ipcRenderer.invoke('toggleSideBar', false);
+      await lockDomBeforeResize(false);
       // 打开右键菜单
       this.$refs.rightClickMenu && this.$refs.rightClickMenu.open(e);
     },
@@ -1273,10 +1274,10 @@ export default {
     },
     'rightMenuVisible': {
       async handler(visible) {
-        const type = await ipcRenderer.invoke('toggleSideBar', visible);
+        const type = await lockDomBeforeResize(visible, true);
         this.sidebarType = type;
       },
-      immediate: true,
+      immediate: false,
     }
   }
 };
@@ -1289,9 +1290,8 @@ export default {
   position: relative;
   display: flex;
   flex-direction: column;
+  width: 100%;
   padding-right: 0;
-  transition: padding-right 0.3s ease;
-  will-change: padding-right;
   &.sidebar-outer {
     padding-right: 256px;
   }

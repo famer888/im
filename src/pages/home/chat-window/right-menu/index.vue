@@ -363,7 +363,6 @@ export default {
   background-color: #fff;
   position: fixed;
   transform: translateX(256px);
-  transition: transform 0.3s ease;
   top: 28px;
   right: 0;
   bottom: 0;

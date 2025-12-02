@@ -93,6 +93,7 @@ import eventBase from "@/event/base";
 import eventFile from "@/event/file";
 import eventCommon from "@/event/common";
 import { notificationReply } from "@/event/msg";
+import { lockDomBeforeResize } from "@/utils/widget/lockDomBeforeResize";
 
 export default {
   components: {
@@ -309,7 +310,7 @@ export default {
         ].includes(operator)
       ) {
         let groupInfo = {};
-        ipcRenderer.invoke('toggleSideBar', false);
+        lockDomBeforeResize(false);
         if (info?.type === "channel" || info?.comType === "detailsChannel") {
           if(info.showTip && this.infoActive.channelId === info.channelId ) {
             window.$toast("您已在频道");
@@ -702,6 +703,7 @@ export default {
   align-items: stretch;
   flex: auto;
   position: relative;
+  overflow-x: hidden;
 
   > div {
     position: absolute;
