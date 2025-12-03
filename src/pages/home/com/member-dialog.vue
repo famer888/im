@@ -93,7 +93,12 @@ import { contactsRelation } from "@/api/imContacation.js";
 
 export default {
   props: ["memberInfo", "channelId"],
-  inject: ["provideUpdateGroupMember"],
+  inject: {
+    provideUpdateGroupMember: {
+      from: "provideUpdateGroupMember",
+      default: () => () => {}
+    }
+  },
   components: {
       ComAddVerifyDialog
   },
@@ -226,17 +231,21 @@ export default {
       Cache(`${loginId}-ContactList`).then((res) => {
         if (res) {
           const info = res.find((item) => item.id === id);
-          if (info) {
-            this.name = info.name || info.nickName;
-            this.bfFriend = true;
-            if (!this.memberInfo.bfFriend) {
-              // 好友列表找到了该成员信息，但是传进来的群成员和自己的关系显示不明确，更新和群成员的关系
+        if (info) {
+          this.name = info.name || info.nickName;
+          this.bfFriend = true;
+          if (!this.memberInfo.bfFriend) {
+            // 好友列表找到了该成员信息，但是传进来的群成员和自己的关系显示不明确，更新和群成员的关系
+            if (typeof this.provideUpdateGroupMember === 'function') {
               this.provideUpdateGroupMember({...this.memberInfo, bfFriend: true})
             }
-          } else {
-            this.bfFriend = false;
+          }
+        } else {
+          this.bfFriend = false;
+          if (typeof this.provideUpdateGroupMember === 'function') {
             this.provideUpdateGroupMember({...this.memberInfo, bfFriend: false})
           }
+        }
         }
       });
     },
