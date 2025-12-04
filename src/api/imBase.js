@@ -102,6 +102,7 @@ export const RemoveArchiveReq = (data) =>
         data,
     });
 
+
 export const getGameGlobalConfig = (data) =>
     requestAxios(`https://test-gateway.68chat.co/channel/getChannelById`,{
     // requestAxios(`http://test-gateway.68chat.co/global-config/globalConfig/getGameGlobalConfig`,{
@@ -163,9 +164,9 @@ function postEncrypted(key, data) {
     return concatBuffers([header, length, signed]);
 }
 
-    
+
 function requestAxios(url, params, opts) {
-    const { 
+    const {
         method = "POST",
         headers ={}
     } = opts || {}
@@ -177,16 +178,16 @@ function requestAxios(url, params, opts) {
      const encryptedBody = postEncrypted(bodyAesKey, reqBody);
 
     return new Promise( async (resolve, reject) => {
-        
+
         const finalHeaders = {
             'Content-Type': 'application/octet-stream',
-             ...headers };  
+             ...headers };
         const httpDefault = {
             method,
             url: url,
             data:  encryptedBody,
             timeout: 5000,
-            headers: finalHeaders, // 设置请求头 
+            headers: finalHeaders, // 设置请求头
         };
         axios(httpDefault)
         .then((res) => {
