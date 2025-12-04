@@ -6,7 +6,7 @@ import { Local, getEnvType } from "@/utils";
 // api
 import { UpdateContacts, getChatSensitive } from "@/api/imBase";
 import { GroupUpdate, groupOrUserDetail } from "@/api/imGroup";
-import { updateMember } from "@/api/imChannel";
+import { updateMember, searchAliasContent } from "@/api/imChannel";
 
 // 事件
 import eventBase from "./base";
@@ -339,61 +339,59 @@ const fnCloseListRU = ({ addId, removeIds, isCloseLast, isCloseAll }) => {
  * 新的好友或群
  */
 const fnNewFriendOrGroup = (text) => {
-    groupOrUserDetail({
+    searchAliasContent({
         fromUid: commonInfo.loginId,
-        context: text,
+        content: text,
     }).then(async (res) => {
-        if (res) {
-            const { errCode, errMsg, errorCode, errorDesc } = res.commonResult || {};
-            const code = errCode || errorCode || 0;
-            if (code == 200) {
-                // 好友
-                if (res.groupOrUserType == 1) {
-                    const { userInfo } = res?.targetUser || {};
-
-                    if (userInfo) {
-                        eventBase.fnCommunicationSendMsg({
-                            operator: "memberDialogShow",
-                            data: {
-                                values: {
-                                    id: Number(userInfo.uid),
-                                    icon: userInfo.icon,
-                                    nickName: userInfo.nickName,
-                                },
-                            },
-                        });
-                    }
-                } else {
-                    // 群
-                    const { groupBase, addToken } = res.groupDetail || {};
-
-                    if (groupBase) {
-                        eventBase.fnCommunicationSendMsg({
-                            operator: "openGroupDialog",
-                            data: {
-                                values: {
-                                    id: Number(groupBase.groupId),
-                                    pic: groupBase.pic,
-                                    name: groupBase.name,
-                                    memberCount: Number(groupBase.memberCount),
-                                    addToken,
-                                    groupAliasName: groupBase.groupAliasName,
-                                    hostId: Number(groupBase.hostId),
-                                    bfJoinFriend: groupBase.bfJoinFriend,
-                                    bfJoinCheck: groupBase.bfJoinCheck,
-                                },
-                            },
-                        });
-                    }
-                }
-
-                return;
-            } else {
-                const msg = errMsg || errorDesc || "";
-                window.$toast( msg || i18n.t("抱歉，该用户/群似乎不存在"));
-            }
+        if (res?.code === 200) {
+          const { groupAlias, userDetail, channelInfo, searchType } = res.data;
+          // 好友
+          if (searchType == 0) {
+            eventBase.fnCommunicationSendMsg({
+              operator: "memberDialogShow",
+              data: {
+                values: {
+                  id: Number(userDetail.uid),
+                  icon: userDetail.icon,
+                  nickName: userDetail.nickName,
+                },
+              },
+            });
+          } else if (searchType == 1) {
+            // 群
+            eventBase.fnCommunicationSendMsg({
+              operator: "openGroupDialog",
+              data: {
+                  values: {
+                  id: Number(groupAlias.groupId),
+                  pic: groupAlias.pic,
+                  name: groupAlias.name,
+                  memberCount: Number(groupAlias.memberCount),
+                  addToken: groupAlias.addToken,
+                  groupAliasName: groupAlias.groupAliasName,
+                  hostId: Number(groupAlias.hostId),
+                  bfJoinFriend: groupAlias.bfJoinFriend,
+                  bfJoinCheck: groupAlias.bfJoinCheck,
+                  },
+              },
+            });
+          } else if (searchType == 2) {
+            // 频道
+            eventBase.fnCommunicationSendMsg({
+            operator: 'activeChange',
+            data: {
+                ...channelInfo,
+                id: channelInfo.channelId,
+                name: channelInfo.channelName,
+                pic: channelInfo.icon,
+                type: 'channel',
+                comType: 'chat',
+            },
+            });
+          }
+        } else {
+          window.$toast(res?.msg || i18n.t("抱歉，该用户/群似乎不存在"));
         }
-
     });
 };
 

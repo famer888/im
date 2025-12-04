@@ -104,6 +104,7 @@ export const RemoveArchiveReq = (data) =>
         data,
     });
 
+
 export const getGameGlobalConfig = (data) =>
     requestAxios(`https://test-gateway.68chat.co/channel/getChannelById`,{
     // requestAxios(`http://test-gateway.68chat.co/global-config/globalConfig/getGameGlobalConfig`,{
