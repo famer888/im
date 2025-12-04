@@ -141,9 +141,9 @@ export const fnChannelRelKeyGet = async (id) => {
     } catch (error) {
         console.error('解密-生成秘钥异常-2-',privateKey, keyInfos)
     }
-   
+
     const msgKeyBuffer = Uint8Array.from(Buffer.from(keyInfos.msgKey, "hex"));
-    let msgkey = null; 
+    let msgkey = null;
     try {
       msgkey = _decrypt(msgKeyBuffer, key);
     } catch (error) {
@@ -205,16 +205,16 @@ export const fnGroupRelKeyGet = async (id) => {
     } catch (error) {
         console.error('解密-生成秘钥异常-2-',privateKey, keyInfos)
     }
-   
+
     const msgKeyBuffer = Uint8Array.from(Buffer.from(keyInfos.msgKey, "hex"));
-    let msgkey = null; 
+    let msgkey = null;
     try {
       msgkey = _decrypt(msgKeyBuffer, key);
     } catch (error) {
         console.error('解密异常-msgkey-', privateKey, keyInfos)
         // 同步下自己和服务器的密钥
         const beforeTime = window.beforeUploadOwnKeyTime || 0;
-        const currentTime = new Date().getTime(); 
+        const currentTime = new Date().getTime();
         const limitTime = beforeTime + 1000 * 60 * 10;
          // 限制10分钟内只能更新1次
         if(currentTime > limitTime) {
@@ -273,7 +273,7 @@ export const fnFriendRelKeyGet = async ({
         } catch (error) {
             console.error("解密-生成秘钥异常-1-", optsStr, accountConfig)
         }
-       
+
     }
 
     // 旧的密钥信息
@@ -451,7 +451,7 @@ export const fnFriendRelKeyGet = async ({
         } catch (error) {
             console.error('解密-生成秘钥异常-4-',optsStr, privateKey, appKeyPairOwn, webKeyPair, appKeyPair)
         }
-       
+
     }
 };
 
@@ -589,7 +589,7 @@ const fnUtf8ArrayToStr = (buffer, type) => {
         case enumMsgType.image: {
             // 图片
             const imgObj = ImageObj.decode(UnitBuffer);
-            const txt = `${imgObj.url}||${imgObj.thumbUrl}||${Number(
+            let txt = `${imgObj.url}||${imgObj.thumbUrl}||${Number(
                 imgObj.fileSize
             )}||${imgObj.sizeType}`;
 
@@ -1034,7 +1034,7 @@ export const fnFormartMsgParams = async ({ data, customMsgId, id, type }) => {
     if (type === "group") {
         params.groupId = groupId;
     } else if(type === "channel") {
-        params.channelId = channelId; 
+        params.channelId = channelId;
     } else {
         params.receiveUid = receiveUid;
     }
@@ -1079,7 +1079,7 @@ export const fnUpdateOwnKey = () => {
         if(!appKeyPair || !webKeyPair) return { code: 500 };
         const { accountConfig } = eventCommon.fnConfigRU();
         let { publicKey, privateKey, keyVersion } = accountConfig;
-        
+
         // 本地无秘钥则重新生成
         if( publicKey !== webKeyPair.publicKey || keyVersion !== webKeyPair.keyVersion || !privateKey ) {
             const newKey =  await getNewKey()
