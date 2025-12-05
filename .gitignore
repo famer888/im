@@ -28,3 +28,4 @@ pnpm-debug.log*
 release
 /src/wfc/av/internal/soundMeter.js
 .npmrc
+output/*
