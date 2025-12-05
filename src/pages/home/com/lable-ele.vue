@@ -71,7 +71,7 @@ export default {
                 values: channelInfo,
               },
             });
-        } 
+        }
     },
     handleAtClick(e) {
       e.stopPropagation();
@@ -121,7 +121,7 @@ export default {
         }
         let linkRes = await this.validChannelLink(linkUrl);
         console.log('validChannelLink--',linkRes )
-        if (linkRes) {
+        if (linkRes?.code === 200) {
           this.goChannelLink(linkRes)
         } else {
           // 其它链接直接打开

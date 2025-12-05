@@ -17,6 +17,7 @@ const domainUrl =  process.env.VUE_APP_OPEN_CHAT_DOMAIN;
 export const getChannelLastMsgInfo = (data) => {
     return requestAxios(`/message/channelMessage/latestId`, data, {
         headers: {
+           "Content-Type": "application/json",
             ...getSignHeader(),
         },
     });
@@ -93,6 +94,13 @@ export const subscribeChannel = (data) => {
     });
 };
 
+export const searchAliasContent = (data) => requestAxios('/user/search/content', data, {
+  headers: {
+    ...getSignHeader(),
+  },
+})
+
+
 // 更新成员信息
 export const updateMember = (data) => {
     return requestAxios(`/channel/channelMember/updateMember`, data, {
@@ -121,8 +129,8 @@ export const getHistoryMsgs = (data) =>
         data,
          headers: {
             ...getSignHeader(),
-            'Accept': 'application/x-protobuf', 
-            'content-type': 'application/x-protobuf', 
+            'Accept': 'application/x-protobuf',
+            'content-type': 'application/x-protobuf',
         },
     });
 

@@ -12,11 +12,13 @@ import eventCommon from "@/event/common.js";
 // 获取token
 export const getQrCodeUrl = (errCallback) =>
     getUrl(
-        { type: "QrCodeUrl", url: `${baseBuildUrl}/login/qrCodeUrl` },
+        // { type: "QrCodeUrl", url: `${baseBuildUrl}/login/qrCodeUrl` },
+        { type: "QrCodeUrl", url: `${baseUrl()}/login/qrCodeUrl` },
         errCallback
     );
 export const getIsLogin = (data) =>
-    getUrl({ type: "IsLogin", url: `${baseBuildUrl}/login/isLogin`, data });
+    // getUrl({ type: "IsLogin", url: `${baseBuildUrl}/login/isLogin`, data });
+    getUrl({ type: "IsLogin", url: `${baseUrl()}/login/isLogin`, data });
 export const getUserInfo = (data) =>
     getUrl({ type: "UserInfo", url: `${baseUrl()}/user/userInfo`, data });
 export const GetKeyPairList = (data) =>
@@ -101,6 +103,7 @@ export const RemoveArchiveReq = (data) =>
         url: `${baseUrl()}/user/removeArchive`,
         data,
     });
+
 
 export const getGameGlobalConfig = (data) =>
     requestAxios(`https://test-gateway.68chat.co/channel/getChannelById`,{

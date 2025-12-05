@@ -321,7 +321,7 @@ export default {
           if(beforeTime < Date.now()) {
             this.handleGetChannelDetail(info, channelId);
           }
-        } else if (info) {
+        } else if (info?.type === 'group') {
           const curGroup = this.groupList.find((item) => item.id == info.id);
           groupInfo = {
             memberCount: curGroup?.memberCount || 0
