@@ -17,6 +17,7 @@ const domainUrl =  process.env.VUE_APP_OPEN_CHAT_DOMAIN;
 export const getChannelLastMsgInfo = (data) => {
     return requestAxios(`/message/channelMessage/latestId`, data, {
         headers: {
+           "Content-Type": "application/json",
             ...getSignHeader(),
         },
     });
