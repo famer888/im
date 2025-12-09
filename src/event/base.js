@@ -255,6 +255,13 @@ const fnCommunicationProcessing = (values) => {
             });
             break;
         }
+        case "openChannelNoticeDialog": {
+            // 添加 频道简介对话框
+            eventCommon.fnCloseListRU({
+                addId: "channelNoticeDialog",
+            });
+            break;
+        }
         case "memberDialogShow": {
             // 添加 好友对话框
             eventCommon.fnCloseListRU({

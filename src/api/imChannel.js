@@ -76,6 +76,15 @@ export const getChannelDetail = (data) => {
     });
 };
 
+// 修改频道信息
+export const updateChannel = (data) => {
+    return requestAxios(`/channel/updateChannel`, data, {
+        headers: {
+            ...getSignHeader(),
+        },
+    });
+};
+
 // 查询是否是频道链接
 export const isChannelLink = (data) => {
     return requestAxios(`/channel/getChannelByLink`, data, {

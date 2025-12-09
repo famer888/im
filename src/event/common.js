@@ -534,7 +534,8 @@ const fnClientInfoGet = () => {
         version: appVer,
         packageCode: 1000,
         language: languageIndex + 1, // 默认简体中文
-        plat: process.platform === "darwin" ? 3 : 4,
+        // plat: process.platform === "darwin" ? 3 : 4,
+        plat: 4,
         sysModel: process.platform === "darwin" ? "MAC" : "WINDOWS",
     };
 };
