@@ -5,7 +5,10 @@
      <template v-if="chatContent.type === 'channel'">
        <ChannelLink v-if="chatContent.linkType !== 1 || [1, 2].includes(chatContent.memberType)"  :chatContent="chatContent"  @showQrCode="channelQrcodeVisilbe = true" />
        <ComChannelQrcode v-if="channelQrcodeVisilbe" :chatContent="chatContent"  @close="channelQrcodeVisilbe = false" />
-     </template> 
+      <div class="channel-notice">
+         <ChannelNotice :remark="remark" :memberInfoList="channelUserList" :chatContent="chatContent" />
+      </div>
+     </template>
     <template v-else-if="isGroup">
      <ComGroupAliasQrcode
         :chatContent="chatContent"
@@ -87,6 +90,7 @@ import ComGroupAliasQrcode from "./group-alias-qrcode.vue";
 import ComGroupNotice from "./group-notice/index.vue";
 import ChannelLink from "./channel-link.vue";
 import ComInviteFriendJoinGroup  from "./invite-friend-join-group";
+import ChannelNotice from './channel-notice/index.vue'
 
 // 工具
 import { rcheduleDeletionTimeList } from "@/utils/widget";
@@ -101,6 +105,7 @@ export default {
     ComGroupAliasQrcode,
     ComGroupNotice,
     ChannelLink,
+    ChannelNotice,
     ComInviteFriendJoinGroup,
     ComGroupQrcode: () => import("./group-qrcode.vue"),
     ComChannelQrcode: () => import("./channel-qrcode.vue"),
@@ -156,7 +161,7 @@ export default {
     if(this.isGroupUpdate && this.memberInfoList.length) {
       this.getGroupMemberOnLineStatus(0)
     }
-    
+
     // 虚拟滚动监听
     this.$refs["rightMenu"].addEventListener(
       "scroll",
@@ -173,6 +178,9 @@ export default {
   computed: {
     isChannel() {
       return this.chatContent.type === 'channel'
+    },
+    remark() {
+      return _.get(this.chatContent, "remark") || "";
     }
   },
   methods: {
@@ -440,6 +448,9 @@ export default {
     z-index: 9;
     background: #fff;
     cursor: pointer;
+  }
+  .channel-notice{
+    border-top: 10px solid #f5f5f5;
   }
 }
 </style>

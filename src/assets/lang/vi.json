@@ -228,5 +228,7 @@
   "请输入链接地址": "Vui lòng nhập địa chỉ liên kết",
   "链接地址需http/https开头": "Địa chỉ liên kết bắt đầu bằng http/https",
   "数据已载入": "Dữ liệu đã được tải",
-  "打开": "Mở"
+  "打开": "Mở",
+  "频道简介": "Giới thiệu kênh",
+  "无简介":"Không có giới thiệu"
 }

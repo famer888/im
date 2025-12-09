@@ -74,6 +74,11 @@
         :chatContent="chatContent"
         :historyNotice="historyNotice"
       />
+      <ComChannelNoticeDialog
+        v-if="channelNoticeDialogVisible"
+        :chatContent="chatContent"
+      />
+      <!--    :historyNotice="historyNotice" -->
     </template>
     <vue-context class="contact-menu-box" ref="rightClickMenu" :lazy="true">
       <div class="menu-content" v-if="rightClickSelectedInfo">
@@ -356,6 +361,7 @@ export default {
     ComChatMsgList,
     ComNetworkTips,
     ComGroupNoticeDialog: () => import("./right-menu/group-notice/dialog.vue"),
+    ComChannelNoticeDialog: () => import("./right-menu/channel-notice/dialog.vue"),
     ComDropArea: () => import("./drop-area.vue"),
     ComMemberDialog: () => import("@/pages/home/com/member-dialog.vue"),
     ComGroupDialog: () => import("@/pages/home/com/group-dialog.vue"),
@@ -404,6 +410,7 @@ export default {
       groupDialogInfo: null, // 群会话框的信息
       channelDialogInfo: null, // 频道会话框的信息
       groupNoticeDialogVisible: false, // 群公告会话框是否显示
+      channelNoticeDialogVisible: false, // 频道简介会话框是否显示
       groupTopNoticeContent: "", // 群顶部公告内容
       memberCount: 0, // 成员总数
       historyNotice: {
@@ -502,6 +509,7 @@ export default {
         "closeOperator", // 关闭操作
         "uploadFilesSet", // 上传文件设置
         "openGroupNoticeDialog", // 打开 群公告对话框
+        "openChannelNoticeDialog", // 打开 频道简介对话框
         "openGroupDialog", // 打开 群会话框
         "friendRemarkUpdate", // 更新好友备注名
         "openChannelDialog", // 打开 频道对话框
@@ -622,6 +630,15 @@ export default {
                 };
                 break;
               }
+              case "channelNoticeDialog": {
+                // 关闭 频道简介会话框
+                this.channelNoticeDialogVisible = false;
+                // this.historyNotice = {
+                //   notice: "",
+                //   showHistoryNotice: false,
+                // };
+                break;
+              }
               case "memberDialog": {
                 // 关闭 好友对话框
                 this.memberDialogInfo = null;
@@ -662,6 +679,11 @@ export default {
           this.groupNoticeDialogVisible = true;
           return;
         }
+        case "openChannelNoticeDialog": {
+          // 打开 频道简介对话框
+          this.channelNoticeDialogVisible = true;
+          return;
+        }
         case "memberDialogShow": {
           // 显示成员会话框
           if (info.values) {
@@ -674,6 +696,44 @@ export default {
             if(!this.memberDialogInfo) {
                window.$toast("抱歉，该用户/群/频道不存在");
             }
+          } else if (info.atName && this.chatContent.type === 'channel') {
+             // 频道成员查找
+             const user = channelUserList.find(
+                 (item) => item.userInfoDTO.nickName === info.atName || item.userInfoDTO.name === info.atName
+             );
+             
+             let friend = null;
+             if (user) {
+                 friend = friendList.find(f => f.id === user.userInfoDTO.uid);
+             } else {
+                 // 如果频道成员列表中没找到，尝试在好友列表中查找
+                 friend = friendList.find(f => f.nickName === info.atName || f.name === info.atName);
+             }
+
+             if (user || friend) {
+                 const uid = user ? user.userInfoDTO.uid : friend.id;
+                 const icon = user ? user.userInfoDTO.icon : friend.pic;
+                 const name = user ? user.userInfoDTO.name : friend.name;
+                 const nickName = user ? user.userInfoDTO.nickName : friend.nickName;
+                 const targetMemberType = user ? user.memberType : 0;
+
+                 // 计算是否不显示添加按钮
+                 const currentMemberType = this.chatContent.memberType;
+                 const notShowAddButton = (currentMemberType === 2 && (targetMemberType === 1 || targetMemberType === 2)) ||
+                    (currentMemberType === 1 && targetMemberType === 2);
+
+                 this.memberDialogInfo = {
+                     id: uid,
+                     icon: icon,
+                     name: name,
+                     nickName: nickName,
+                     bfFriend: !!friend,
+                     channelId: this.chatContent.id,
+                     notShowAddButton,
+                 };
+             } else {
+                 window.$toast("抱歉，该用户/群/频道不存在");
+             }
           } else {
              // 如果是at名，则找到该成员
             this.memberDialogInfo = memberInfoList.find(

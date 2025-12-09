@@ -228,5 +228,7 @@
   "请输入链接地址": "Please enter the link address",
   "链接地址需http/https开头": "The link address needs to start with http/https",
   "数据已载入": "Data loaded",
-  "打开": "open"
+  "打开": "open",
+  "频道简介": "Channel introduction",
+  "无简介":"No introduction"
 }
