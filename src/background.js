@@ -26,6 +26,7 @@ import { createProtocol } from "vue-cli-plugin-electron-builder/lib";
 import nodePath from "path";
 import { openFile } from "@/utils/server";
 import { showNotification, closeNotification } from  "@/notification";
+import { initToggleSideBar } from "@/utils/toggleSideBar";
 const log = require('electron-log');
 initElectronLog();
 
@@ -109,8 +110,6 @@ let imagesCacheDir = `${userData}/images`;
 let voicesCacheDir = `${userData}/voices`;
 let mainWindowIsFocused = true;
 let downTimers = {};
-let lastWidth = 600;
-let isTogglingSidebar = false;
 
 ipcMain.handle("get-user-data-path", () => {
     return userData;
@@ -751,14 +750,9 @@ const setMainWin = async () => {
         mainWindowIsFocused = false;
         mainWindow && mainWindow.send("visibilitychange", false);
     });
-    mainWindow.on('will-resize', (event, bounds) => {
-      if (Math.abs(lastWidth - bounds.width) < 250) {
-        lastWidth = bounds.width;
-      } else {
-        event.preventDefault();
-        mainWindow.setSize(lastWidth, bounds.height);
-      }
-    })
+
+    // 初始化 toggleSideBar 相关功能
+    initToggleSideBar(mainWindow);
 
     // 下载完成处理
     mainWindow.webContents.session.on("will-download", downloadHandler);
@@ -781,44 +775,6 @@ const setMainWin = async () => {
                     createTime: new Date().getTime(),
                 });
         }
-    });
-    ipcMain.handle("toggleSideBar", async (event, visible) => {
-      let type = 'none';
-
-      try {
-          if (!mainWindow) {
-              return type;
-          }
-
-          isTogglingSidebar = true; // 设置标志，表示正在执行 toggle 操作
-
-          if (visible) {
-              // 显示侧边栏：存储当前宽度，判断是否最大化
-              const bounds = mainWindow.getBounds();
-
-              if (!mainWindow.isMaximized()) {
-                  lastWidth = bounds.width; // 存储当前宽度
-                  // 如果没有最大化，增加256px
-                  const newWidth = bounds.width + 256;
-                  mainWindow.setSize(newWidth, bounds.height);
-
-                  type = 'outer';
-              } else {
-                  type = 'inner';
-              }
-          } else {
-              // 隐藏侧边栏：恢复到lastWidth
-              const bounds = mainWindow.getBounds();
-              mainWindow.setSize(lastWidth, bounds.height);
-              type = 'none';
-          }
-      } catch (error) {
-          type = 'none';
-      }
-
-      // 统一在函数尾部重置标志
-      isTogglingSidebar = false;
-      return type;
     });
 
     powerMonitor.on("resume", () => {
