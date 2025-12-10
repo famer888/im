@@ -6,16 +6,19 @@
       </picture>
       <section>
         <!-- maxlength="500" -->
-        <textarea v-if="loginIsHost" type="text" v-model="noticeText" :placeholder="$t('请输入内容')"
+        <textarea v-if="loginIsHost && isEdit" type="text" v-model="noticeText" :placeholder="$t('请输入内容')"
           :disabled="!loginIsHost" />
         <ComGroupNoticeView v-else :content="noticeText" :atNameList="atNameList" :noClick="false"
           :styleInfo="{ height: '203px' }" :key="noticeText" :chatContent="chatContent" />
         <!-- <span v-if="loginIsHost">{{ 500 - noticeText.length }}</span> -->
       </section>
       <template v-if="loginIsHost">
-        <div class="bottom">
+        <div class="bottom" v-if="!isEdit">
+          <span @click.stop="isEdit = true">{{ $t('修改') }}</span>
+        </div>
+        <div class="bottom" v-else>
           <span @click.stop="handleOk">{{ $t("确定") }}</span>
-          <span @click.stop="handleClose">{{ $t("取消") }}</span>
+          <span @click.stop="handleCancel">{{ $t("取消") }}</span>
         </div>
       </template>
     </div>
@@ -40,11 +43,15 @@ export default {
     return {
       loginIsHost: false, // 是否是群主
       noticeText: "", // 公告字符串
+      noticeTextCopy: "", // 公告字符串备份
+      isEdit: false, // 是否是编辑状态
     };
   },
   inject: ['provideChannelUserList'],
   mounted() {
+    this.isEdit = false
     this.noticeText = _.get(this.chatContent, "remark") || "";
+    this.noticeTextCopy = _.get(this.chatContent, "remark") || "";
     // 是否是拥有着和管理
     this.loginIsHost = (this.chatContent.memberType === 1 || this.chatContent.memberType === 2);
   },
@@ -66,9 +73,17 @@ export default {
   },
   methods: {
     /**
+     * 取消
+     */
+    handleCancel() {
+      this.isEdit = false;
+      this.noticeText = this.noticeTextCopy;
+    },
+    /**
      * 关闭 群公告会话框
      */
     handleClose() {
+      this.isEdit = false;
       // 移除 群公告会话框
       eventCommon.fnCloseListRU({
         removeIds: ["channelNoticeDialog"],
@@ -95,10 +110,10 @@ export default {
           eventBase.fnCommunicationSendMsg({
             operator: "channelUpdate",
             data: {
-                channelId: id,
-                values: {
-                    remark: this.noticeText
-                }
+              channelId: id,
+              values: {
+                remark: this.noticeText
+              }
             },
           });
           // 关闭
