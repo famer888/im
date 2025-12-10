@@ -507,7 +507,8 @@ export default {
             // 保存到通讯录，更新当前chatContent
             this.infoActive = {
               ...this.infoActive,
-              bfAddress: info.bfAddress,
+              // bfAddress: info.bfAddress,
+              bfAddress: true,
             };
             break;
           }
