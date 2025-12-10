@@ -18,7 +18,7 @@
             />
             <DetailsFriend
               v-else-if="infoActive.comType === 'detailsFriend'"
-              :key="infoActive.id"
+              :key="`${infoActive.id}-Friend`"
               :info="infoActive"
             />
             <AddContactsDetail
