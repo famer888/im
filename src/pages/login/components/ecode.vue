@@ -34,7 +34,7 @@
 import { remote } from "@/platform";
 import { Cache } from "@/cache";
 import { getMacAddress } from "@/utils/trendsAesKey";
-import { fnInitAllGroupKey } from "@/utils/encryption-decryption";
+import { fnInitAllGroupKey ,fnInitAllChannelKey,fnInitAllFriendKey} from "@/utils/encryption-decryption";
 
 // 控件
 import QrcodeVue from "qrcode.vue";
@@ -180,6 +180,11 @@ export default {
           // console.log("登录成功", res);
           // 初始化所有群的key
           fnInitAllGroupKey(loginId);
+          // 初始化所有频道的key
+          fnInitAllChannelKey(loginId);
+          // 初始化所有私聊key
+          // fnInitAllFriendKey(loginId)
+
           // 同步
           eventCommon.fnConfigRU({
             infoMerge: {
