@@ -406,6 +406,7 @@ const fnNewFriendOrGroup = (text) => {
                 values: {
                   id: Number(userDetail.userInfoBaseResp.uid),
                   icon: userDetail.userInfoBaseResp.icon,
+                  addToken: userDetail.addToken,
                   nickName: userDetail.userInfoBaseResp.nickName,
                 },
               },
