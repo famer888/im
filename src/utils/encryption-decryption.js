@@ -80,7 +80,7 @@ export const fnInitAllGroupKey = (loginId) => {
 };
 
 export const fnInitAllChannelKey = (loginId) => {
-    groupKeyObjs = {};
+    channelKeyObjs = {};
     Cache(`${loginId}-channel-key-objs`, null);
 };
 

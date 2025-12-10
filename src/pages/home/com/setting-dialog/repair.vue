@@ -30,6 +30,7 @@ import { copyText } from "@/utils/clipboard";
 import {
   fnInitAllGroupKey,
   fnInitAllFriendKey,
+  fnInitAllChannelKey
 } from "@/utils/encryption-decryption";
 import { Cache } from "@/cache";
 
@@ -93,9 +94,13 @@ export default {
       }
     },
     async handleRepair(type) {
+       const loginId = eventCommon.fnCommonInfoRU({
+        getId: "loginId",
+      });
       if (type === "decryption") {
-        fnInitAllGroupKey();
-        fnInitAllFriendKey();
+        fnInitAllGroupKey(loginId);
+        fnInitAllChannelKey(loginId);
+        fnInitAllFriendKey(loginId);
         window.$toast(this.$t("秘钥重置成功"));
       } else {
         // window
