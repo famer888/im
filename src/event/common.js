@@ -328,6 +328,65 @@ const fnCloseListRU = ({ addId, removeIds, isCloseLast, isCloseAll }) => {
 };
 
 /**
+ * 新的好友或群 存档（数据接口改变了）
+ */
+// const fnNewFriendOrGroup = (text) => {
+//     searchAliasContent({
+//         fromUid: commonInfo.loginId,
+//         content: text,
+//     }).then(async (res) => {
+//         if (res?.code === 200) {
+//           const { groupAlias, userDetail, channelInfo, searchType } = res.data;
+//           // 好友
+//           if (searchType == 0) {
+//             eventBase.fnCommunicationSendMsg({
+//               operator: "memberDialogShow",
+//               data: {
+//                 values: {
+//                   id: Number(userDetail.uid),
+//                   icon: userDetail.icon,
+//                   nickName: userDetail.nickName,
+//                 },
+//               },
+//             });
+//           } else if (searchType == 1) {
+//             // 群
+//             eventBase.fnCommunicationSendMsg({
+//               operator: "openGroupDialog",
+//               data: {
+//                   values: {
+//                   id: Number(groupAlias.groupId),
+//                   pic: groupAlias.pic,
+//                   name: groupAlias.name,
+//                   memberCount: Number(groupAlias.memberCount),
+//                   addToken: groupAlias.addToken,
+//                   groupAliasName: groupAlias.groupAliasName,
+//                   hostId: Number(groupAlias.hostId),
+//                   bfJoinFriend: groupAlias.bfJoinFriend,
+//                   bfJoinCheck: groupAlias.bfJoinCheck,
+//                   },
+//               },
+//             });
+//           } else if (searchType == 2) {
+//             // 频道
+//             eventBase.fnCommunicationSendMsg({
+//             operator: 'activeChange',
+//             data: {
+//                 ...channelInfo,
+//                 id: channelInfo.channelId,
+//                 name: channelInfo.channelName,
+//                 pic: channelInfo.icon,
+//                 type: 'channel',
+//                 comType: 'chat',
+//             },
+//             });
+//           }
+//         } else {
+//           window.$toast(res?.msg || i18n.t("抱歉，该用户/群似乎不存在"));
+//         }
+//     });
+// };
+/**
  * 新的好友或群
  */
 const fnNewFriendOrGroup = (text) => {
@@ -337,33 +396,35 @@ const fnNewFriendOrGroup = (text) => {
     }).then(async (res) => {
         if (res?.code === 200) {
           const { groupAlias, userDetail, channelInfo, searchType } = res.data;
+           console.log('别名--',res.data)
+           // searchType1 好友 0 群 2频道
           // 好友
-          if (searchType == 0) {
+          if (searchType == 1) {
             eventBase.fnCommunicationSendMsg({
               operator: "memberDialogShow",
               data: {
                 values: {
-                  id: Number(userDetail.uid),
-                  icon: userDetail.icon,
-                  nickName: userDetail.nickName,
+                  id: Number(userDetail.userInfoBaseResp.uid),
+                  icon: userDetail.userInfoBaseResp.icon,
+                  nickName: userDetail.userInfoBaseResp.nickName,
                 },
               },
             });
-          } else if (searchType == 1) {
+          } else if (searchType == 0) {
             // 群
             eventBase.fnCommunicationSendMsg({
               operator: "openGroupDialog",
               data: {
                   values: {
-                  id: Number(groupAlias.groupId),
-                  pic: groupAlias.pic,
-                  name: groupAlias.name,
-                  memberCount: Number(groupAlias.memberCount),
+                  id: Number(groupAlias.groupBaseResp.groupId),
+                  pic: groupAlias.groupBaseResp.pic,
+                  name: groupAlias.groupBaseResp.name,
+                  memberCount: Number(groupAlias.groupBaseResp.memberCount),
                   addToken: groupAlias.addToken,
-                  groupAliasName: groupAlias.groupAliasName,
-                  hostId: Number(groupAlias.hostId),
-                  bfJoinFriend: groupAlias.bfJoinFriend,
-                  bfJoinCheck: groupAlias.bfJoinCheck,
+                  groupAliasName: groupAlias.groupBaseResp.groupAliasName,
+                  hostId: Number(groupAlias.groupBaseResp.hostId),
+                  bfJoinFriend: groupAlias.groupBaseResp.bfJoinFriend,
+                  bfJoinCheck: groupAlias.groupBaseResp.bfJoinCheck,
                   },
               },
             });
