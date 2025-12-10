@@ -15,18 +15,9 @@
       <dl v-if="!isSelf">
         <dt>{{ $t("备注名") }}：</dt>
         <dd>
-          <input
-            class="edit-name"
-            :style="{'width': maxWidth + 'px'}"
-            v-model="name"
-            autofocus
-            maxlength="32"
-            ref="refName"
-            :disabled="!nameEdit"
-            @blur="handleRemarkUpdate('name')"
-            @keyup.enter="handleEnter"
-            :placeholder="name || nickName"
-          />
+          <input class="edit-name" :style="{ 'width': maxWidth + 'px' }" v-model="name" autofocus maxlength="32"
+            ref="refName" :disabled="!nameEdit" @blur="handleRemarkUpdate('name')" @keyup.enter="handleEnter"
+            :placeholder="name || nickName" />
           <!-- <span v-else class="info-text">{{ name }}</span> -->
           <picture v-if="!nameEdit && bfFriend" @click="handleNameEdit">
             <img src="@/assets/images/message/edit-icon.png" />
@@ -36,14 +27,8 @@
       <dl>
         <dt>{{ $t("描述") }}：</dt>
         <dd>
-          <input
-            v-if="depictEdit"
-            v-model="depict"
-            maxlength="32"
-            ref="refDepict"
-            @blur="handleRemarkUpdate('depict')"
-            @keyup.enter="handleEnter"
-          />
+          <input v-if="depictEdit" v-model="depict" maxlength="32" ref="refDepict" @blur="handleRemarkUpdate('depict')"
+            @keyup.enter="handleEnter" />
           <span v-else class="info-text">{{
             depict === "" ? $t("什么都没写") : depict
           }}</span>
@@ -55,13 +40,7 @@
       <div v-if="stepNum === 2" class="inputContent">
         <h3>{{ $t("添加验证") }}：</h3>
         <div>
-          <textarea
-            v-model="text"
-            :placeholder="$t('请输入内容')"
-            type="text"
-            maxlength="20"
-            ref="refText"
-          ></textarea>
+          <textarea v-model="text" :placeholder="$t('请输入内容')" type="text" maxlength="20" ref="refText"></textarea>
           <span>{{ 20 - text.length }}</span>
         </div>
       </div>
@@ -75,7 +54,7 @@
       </div>
     </div>
     <ComAddVerifyDialog v-if="verifierVisble" :defalutValue="verifyValue" @close="verifierVisble = false"
-          @confirm="verifyConfirm" />
+      @confirm="verifyConfirm" />
   </div>
 </template>
 <script>
@@ -95,7 +74,7 @@ export default {
   props: ["memberInfo", "channelId"],
   inject: ["provideUpdateGroupMember"],
   components: {
-      ComAddVerifyDialog
+    ComAddVerifyDialog
   },
   data() {
     return {
@@ -121,7 +100,7 @@ export default {
     };
   },
   created() {
-      // 添加监听 设置通信事件的监听机制
+    // 添加监听 设置通信事件的监听机制
     eventBase.fnCommunicationMonitoring(
       "memberDialog",
       [
@@ -135,7 +114,7 @@ export default {
       getId: "loginId",
     });
     this.loginInfo = eventCommon.fnCommonInfoRU({
-        getId: "loginInfo",
+      getId: "loginInfo",
     });
 
     const { id, name, nickName, depict, bfFriend, channelId, notShowAddButton } = this.memberInfo;
@@ -162,7 +141,7 @@ export default {
     }
 
     // 如果是好友，好友信息 API 更新
-    eventFriend.fnFriendDetailsGet(id, {channelId});
+    eventFriend.fnFriendDetailsGet(id, { channelId });
 
     // 如果bfFriend是undefined,则检查是否为好友
     if (bfFriend === undefined) {
@@ -171,54 +150,54 @@ export default {
 
   },
   beforeDestroy() {
-     eventBase.fnCommunicationMonitoring("memberDialog", null);
+    eventBase.fnCommunicationMonitoring("memberDialog", null);
   },
   methods: {
     eventHandling(info, operator, operatorType) {
       switch (operator) {
         case "friendUpdate": {
-          if(info.id === this.memberInfo.id) {
-             this.memberDetail = info;
+          if (info.id === this.memberInfo.id) {
+            this.memberDetail = { ...info, addToken: this.memberInfo.addToken || '' };
           }
           console.log("friendUpdate--", info, this.memberDetail)
         }
       }
     },
     showAddVerifyDialog() {
-          const msg = '我是' + this.loginInfo?.name || ''
-          this.verifyValue = msg.length > 20 ? msg.slice(0, 20) + '...' : msg;
-          this.verifierVisble = true;
+      const msg = '我是' + this.loginInfo?.name || ''
+      this.verifyValue = msg.length > 20 ? msg.slice(0, 20) + '...' : msg;
+      this.verifierVisble = true;
     },
     // 好友验证消息输入框确认回调
     verifyConfirm(msg) {
-          console.log('verifyConfirm--', msg, this.memberInfo)
-          if(!msg) {
-            window.$toast('请输入验证消息');
-            return;
-          }
-          this.verifyValue = msg;
-          this.addFriend();
-      },
+      console.log('verifyConfirm--', msg, this.memberInfo)
+      if (!msg) {
+        window.$toast('请输入验证消息');
+        return;
+      }
+      this.verifyValue = msg;
+      this.addFriend();
+    },
     // 添加好友
     addFriend() {
-          const pra = {
-              targetUid: Number(this.memberInfo.id),
-              msg: this.verifyValue,
-              type: 0,
-              op: 0,
-              addToken: this.memberDetail.addToken
-          }
-          console.log("contactsRelation--", pra)
-          contactsRelation(pra).then(res => {
-              const { errCode } = res?.commonResult || {}
-              if (errCode == 200) {
-                  window.$toast('已向对方发送添加申请')
-                  this.verifierVisble = false;
-              } else {
-                  window.$toast(res?.errorDesc || '发送失败，请稍后尝试')
-              }
-              console.log('contactsRelation--', res, errCode)
-          })
+      const pra = {
+        targetUid: Number(this.memberInfo.id),
+        msg: this.verifyValue,
+        type: 0,
+        op: 0,
+        addToken: this.memberDetail.addToken
+      }
+      console.log("contactsRelation--", pra)
+      contactsRelation(pra).then(res => {
+        const { errCode } = res?.commonResult || {}
+        if (errCode == 200) {
+          window.$toast('已向对方发送添加申请')
+          this.verifierVisble = false;
+        } else {
+          window.$toast(res?.errorDesc || '发送失败，请稍后尝试')
+        }
+        console.log('contactsRelation--', res, errCode)
+      })
     },
     // 检查传进来群成员信息和自己是否为好友
     handCheckisFriend(loginId, id) {
@@ -231,11 +210,11 @@ export default {
             this.bfFriend = true;
             if (!this.memberInfo.bfFriend) {
               // 好友列表找到了该成员信息，但是传进来的群成员和自己的关系显示不明确，更新和群成员的关系
-              this.provideUpdateGroupMember({...this.memberInfo, bfFriend: true})
+              this.provideUpdateGroupMember({ ...this.memberInfo, bfFriend: true })
             }
           } else {
             this.bfFriend = false;
-            this.provideUpdateGroupMember({...this.memberInfo, bfFriend: false})
+            this.provideUpdateGroupMember({ ...this.memberInfo, bfFriend: false })
           }
         }
       });
@@ -297,11 +276,11 @@ export default {
           values:
             type === "name"
               ? {
-                  name: this.name,
-                }
+                name: this.name,
+              }
               : {
-                  depict: this.depict,
-                },
+                depict: this.depict,
+              },
         },
       });
     },
@@ -347,7 +326,7 @@ export default {
     width: 400px;
     box-sizing: border-box;
 
-    > picture {
+    >picture {
       position: absolute;
       top: 0;
       right: 0;
@@ -363,14 +342,14 @@ export default {
       }
     }
 
-    > .top {
+    >.top {
       height: 100px;
       display: flex;
       align-items: center;
       border-bottom: 1px solid #eee;
       margin-bottom: 15px;
 
-      > img {
+      >img {
         display: block;
         height: 60px;
         width: 60px;
@@ -378,7 +357,7 @@ export default {
         margin-right: 20px;
       }
 
-      > h2 {
+      >h2 {
         display: block;
         margin: 0;
         padding: 0 1em 0 0;
@@ -391,19 +370,19 @@ export default {
       }
     }
 
-    > dl {
+    >dl {
       display: flex;
       line-height: 30px;
       font-size: 14px;
       margin: 0;
 
-      > dt {
+      >dt {
         padding: 0 10px 0 0;
         color: #999;
         white-space: nowrap;
       }
 
-      > dd {
+      >dd {
         display: flex;
         flex: auto;
 
@@ -413,7 +392,7 @@ export default {
           word-break: break-word;
         }
 
-        > picture {
+        >picture {
           width: 30px;
           cursor: pointer;
           display: flex;
@@ -424,37 +403,38 @@ export default {
             opacity: 0.8;
           }
 
-          > img {
+          >img {
             height: 15px;
           }
         }
 
-        > input {
+        >input {
           display: block;
           width: 100%;
           height: 100%;
           font-size: 14px;
           font-family: PingFangSC-Regular;
-          &:disabled{
+
+          &:disabled {
             background-color: white;
           }
         }
       }
     }
 
-    > .inputContent {
-      > h3 {
+    >.inputContent {
+      >h3 {
         font-size: 14px;
         margin: 0;
         padding: 0;
         line-height: 30px;
       }
 
-      > div {
+      >div {
         height: 80px;
         position: relative;
 
-        > textarea {
+        >textarea {
           padding: 10px;
           box-sizing: border-box;
           width: 100%;
@@ -464,7 +444,7 @@ export default {
           line-height: 20px;
         }
 
-        > span {
+        >span {
           font-size: 12px;
           position: absolute;
           right: 5px;
@@ -474,12 +454,12 @@ export default {
       }
     }
 
-    > .bottom {
+    >.bottom {
       margin-top: 15px;
       padding-bottom: 10px;
       display: flex;
 
-      > span {
+      >span {
         display: block;
         color: #fff;
         background-color: #3369fe;

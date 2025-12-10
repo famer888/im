@@ -14,13 +14,13 @@
   <a
     v-else-if="info.type === 'link'"
     href="javascript:void(0)"
-    @click="handleGoLink(info)"
+    @click.stop="handleGoLink(info)"
     >{{ info.content }}</a
   >
   <a
     v-else-if="info.type === 'customLink'"
     href="javascript:void(0)"
-    @click="handleGoLink(info, true)"
+    @click.stop="handleGoLink(info, true)"
     v-html="info.content"
     ></a>
   <br v-else />
