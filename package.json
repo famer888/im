@@ -66,6 +66,7 @@
     "js-base64": "^3.4.5",
     "js-md5": "^0.7.3",
     "jsencrypt": "^3.3.2",
+    "json-bigint": "^1.0.0",
     "mime-types": "^2.1.35",
     "node-int64": "^0.4.0",
     "ntp-client": "^0.5.3",

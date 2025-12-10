@@ -232,6 +232,11 @@
   "频道简介": "Giới thiệu kênh",
   "群简介": "Giới thiệu nhóm",
   "频道别名": "Biệt danh kênh",
-  "无简介":"Không có giới thiệu",
-  "修改":"Sửa"
+  "无简介": "Không có giới thiệu",
+  "修改": "Sửa",
+  "此频道已失效或过期": "Kênh này đã hết hạn hoặc không hợp lệ",
+  "频道通知": "Thông báo kênh",
+  "暂无通知": "Không có thông báo",
+  "加载中...": "Đang tải...",
+  "没有更多了": "Không còn nữa"
 }

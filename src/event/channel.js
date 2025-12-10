@@ -465,7 +465,7 @@ const fnHandleChannelSubscriberJoinInternal = async (latestChannelEventMessage) 
             channelDetail = res?.data;
 
             if (!channelDetail) {
-                console.error("获取频道详情失败");
+                console.error(`获取频道详情失败: ${channelId}`);
                 return;
             }
         }
@@ -589,7 +589,7 @@ const isValidSocketMsg = (msgTime) => {
 // const isRepetitiveSocketMsg = async (channelId, msgId) => {
 //     console.log('isRepetitiveSocketMsg-1-',channelId, msgId)
 //     if(!channelId || !msgId) return false;
-//   const id = Number(channelId);  
+//   const id = Number(channelId);
 //   const type = "channel";
 //   const limit = 100;
 //   let lastMsg = lastChannelMsgs[id]

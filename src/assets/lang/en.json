@@ -233,5 +233,10 @@
   "群简介": "Group introduction",
   "频道别名": "Channel Alias",
   "无简介": "No introduction",
-  "修改":"Edit"
+  "修改": "Edit",
+  "此频道已失效或过期": "This channel has expired or is invalid",
+  "频道通知": "Channel Notification",
+  "暂无通知": "No notifications",
+  "加载中...": "Loading...",
+  "没有更多了": "No more"
 }

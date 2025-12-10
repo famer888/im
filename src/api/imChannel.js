@@ -9,10 +9,20 @@ import { decrypt } from "./base/index";
 import axios from "axios";
 const crypto = require("crypto");
 import eventCommon from "@/event/common.js";
+const JSONBig = require("json-bigint")({ storeAsString: true });
 
 const bodyAesKey = process.env.VUE_APP_SECRET_KEY;
 const domainUrl =  process.env.VUE_APP_OPEN_CHAT_DOMAIN;
 
+export const channelCheckJoin = (data) => {
+  return requestAxios(`/channel/channelEventReq/userCheckJoin`, data, {
+    bigIntRequestKeys: ['id'],
+    headers: {
+      ...getSignHeader(),
+    },
+    useBigIntResponseBody: true,
+  });
+}
 // 获取频道最后的一条消息信息
 export const getChannelLastMsgInfo = (data) => {
     return requestAxios(`/message/channelMessage/latestId`, data, {
@@ -64,6 +74,7 @@ export const getChannelEventList = (data) => {
         headers: {
             ...getSignHeader(),
         },
+        useBigIntResponseBody: true,
     });
 };
 
@@ -208,14 +219,26 @@ function postEncrypted(key, data) {
 }
 
 function requestAxios(url, params, opts) {
-    const { method = "POST", headers = {} } = opts || {};
+    const { method = "POST", headers = {}, bigIntRequestKeys = [], useBigIntResponseBody = false } = opts || {};
     const reqBody = params || {
         // "channelId": 100095,
         pageNum: 1,
         pageSize: 10,
     };
     // console.log('bodyAesKey', bodyAesKey)
-    const encryptedBody = postEncrypted(bodyAesKey, reqBody);
+    let reqBodyStr;
+    if (bigIntRequestKeys && bigIntRequestKeys.length > 0) {
+        // 先用普通 JSON.stringify 序列化
+        reqBodyStr = JSON.stringify(reqBody);
+        // 只对指定的 key 把字符串值转成数字（去掉引号），如 "id":"123" -> "id":123
+        bigIntRequestKeys.forEach(key => {
+            const regex = new RegExp(`"${key}":"(\\d+)"`, 'g');
+            reqBodyStr = reqBodyStr.replace(regex, `"${key}":$1`);
+        });
+    } else {
+        reqBodyStr = reqBody;
+    }
+    const encryptedBody = postEncrypted(bodyAesKey, reqBodyStr);
 
     return new Promise(async (resolve, reject) => {
         const finalHeaders = {
@@ -242,7 +265,7 @@ function requestAxios(url, params, opts) {
                     // console.log('requestAxios--', body)
                     const result = aesDecode(body, bodyAesKey);
                         //    console.log('requestAxios-2-', result)
-                    resolve(JSON.parse(result));
+                    resolve(useBigIntResponseBody ? JSONBig.parse(result) : JSON.parse(result));
                 } else {
                     reject(res);
                 }
