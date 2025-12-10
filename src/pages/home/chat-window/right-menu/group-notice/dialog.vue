@@ -5,22 +5,16 @@
         <img src="@/assets/images/common/close-icon.png" />
       </picture>
       <div class="top">
-        <ComImage
-          :src="(editUser && editUser.icon) || (hostInfo && hostInfo.icon)"
-          type="friend"
-        />
+        <ComImage :src="(editUser && editUser.icon) || (hostInfo && hostInfo.icon)" type="friend" />
         <h2>
           {{
             (editUser && editUser.nickName) || (hostInfo && hostInfo.nickName)
           }}
         </h2>
-        <span
-          v-if="loginIsHost"
-          :class="{
-            groupOwner: chatContent.groupNotice.editUser && chatContent.groupNotice.editUser.type == 0,
-            isAdmin: chatContent.groupNotice.editUser && chatContent.groupNotice.editUser.type == 1,
-          }"
-        >
+        <span v-if="loginIsHost" :class="{
+          groupOwner: chatContent.groupNotice.editUser && chatContent.groupNotice.editUser.type == 0,
+          isAdmin: chatContent.groupNotice.editUser && chatContent.groupNotice.editUser.type == 1,
+        }">
           {{
             $t(
               handleEditUserType(
@@ -31,36 +25,26 @@
         </span>
       </div>
       <section>
-        <textarea
-          v-if="loginIsHost"
-          maxlength="500"
-          type="text"
-          v-model="noticeText"
-          :placeholder="$t('请输入内容')"
-          :disabled="!loginIsHost"
-        />
-        <ComGroupNoticeView
-          v-else
-          :content="noticeText"
-          :atNameList="atNameList"
-          :noClick="false"
-          :styleInfo="{ height: '203px' }"
-          :key="noticeText"
-          :chatContent="chatContent"
-        />
-        <span v-if="loginIsHost">{{ 500 - noticeText.length }}</span>
+        <textarea v-if="loginIsHost && isEdit" maxlength="500" type="text" v-model="noticeText"
+          :placeholder="$t('请输入内容')" :disabled="!loginIsHost" />
+        <ComGroupNoticeView v-else :content="noticeText" :atNameList="atNameList" :noClick="false"
+          :styleInfo="{ height: '203px' }" :key="noticeText" :chatContent="chatContent" />
+        <span v-if="loginIsHost && isEdit">{{ 500 - noticeText.length }}</span>
       </section>
       <template v-if="loginIsHost">
-        <div class="bfAll">
+        <div class="bottom" v-if="!isEdit">
+          <span @click.stop="isEdit = true">{{ $t('修改') }}</span>
+        </div>
+        <div class="bfAll" v-if="isEdit">
           {{ $t("通知所有成员") }}
           <span>
             {{ $t("推送告知所有的群成员，即使对方开启消息免打扰") }}
           </span>
           <ComSwitch :value="bfAll" @input="bfAll = !bfAll" />
         </div>
-        <div class="bottom">
+        <div class="bottom" v-if="isEdit">
           <span @click.stop="handleOk">{{ $t("确定") }}</span>
-          <span @click.stop="handleClose">{{ $t("取消") }}</span>
+          <span @click.stop="handleCancel">{{ $t("取消") }}</span>
         </div>
       </template>
     </div>
@@ -86,11 +70,14 @@ export default {
       editUser: null, // 公告编辑者信息
       loginIsHost: false, // 是否是群主
       noticeText: "", // 公告字符串
+      noticeTextCopy: "", // 公告字符串副本
       bfAll: false, // 群公告是否通知所有人
+      isEdit: false, // 是否是编辑状态
     };
   },
   inject: ["provideMemberList", "provideSetTopNotice"],
   mounted() {
+    this.isEdit = false
     // 获取成员信息列表
     const memberInfoList = this.provideMemberList();
 
@@ -100,6 +87,7 @@ export default {
     } else {
       // 公告文本
       this.noticeText = _.get(this.chatContent, "groupNotice.notice") || "";
+      this.noticeTextCopy = _.get(this.chatContent, "groupNotice.notice") || "";
       this.handleSetNoticeBaseInfo(memberInfoList);
     }
 
@@ -112,6 +100,13 @@ export default {
     this.hostInfo = memberInfoList.find((item) => item.type == 0);
   },
   methods: {
+    /**
+    * 取消
+    */
+    handleCancel() {
+      this.isEdit = false;
+      this.noticeText = this.noticeTextCopy;
+    },
     handleSetNoticeBaseInfo(memberInfoList) {
       // 登录id
       const loginId = eventCommon.fnCommonInfoRU({
@@ -127,7 +122,7 @@ export default {
             (item) => item.id == loginId && item.type < 2
           );
         }
-         
+
         // 设置公告编辑者信息
         this.editUser = editUser;
 
@@ -160,6 +155,7 @@ export default {
      * 关闭 群公告会话框
      */
     handleClose() {
+      this.isEdit = false
       // 移除 群公告会话框
       eventCommon.fnCloseListRU({
         removeIds: ["groupNoticeDialog"],
@@ -225,7 +221,7 @@ export default {
   },
 };
 </script>
-<style lang="scss" >
+<style lang="scss">
 .comGroupNoticeDialog {
   position: fixed;
   left: 0;
@@ -235,7 +231,7 @@ export default {
   z-index: 10;
   background: rgba($color: #000000, $alpha: 0.2);
 
-  > div {
+  >div {
     background: #fff;
     position: absolute;
     left: 50%;
@@ -246,7 +242,7 @@ export default {
     width: 438px;
     box-sizing: border-box;
 
-    > picture {
+    >picture {
       position: absolute;
       top: 0;
       right: 0;
@@ -262,12 +258,12 @@ export default {
       }
     }
 
-    > .top {
+    >.top {
       height: 70px;
       display: flex;
       align-items: center;
 
-      > img {
+      >img {
         display: block;
         height: 35px;
         width: 35px;
@@ -275,7 +271,7 @@ export default {
         margin-right: 10px;
       }
 
-      > h2 {
+      >h2 {
         display: block;
         margin: 0;
         padding: 0;
@@ -284,7 +280,7 @@ export default {
         font-weight: 600;
       }
 
-      > span {
+      >span {
         display: block;
         padding: 1px 10px;
         margin-left: 5px;
@@ -293,19 +289,21 @@ export default {
         font-size: 12px;
         color: #fff;
         transform: scale(0.9);
+
         &.groupOwner {
           background-color: #3369fe;
         }
+
         &.isAdmin {
           background-color: #fb9203;
         }
       }
     }
 
-    > section {
+    >section {
       position: relative;
 
-      > textarea {
+      >textarea {
         padding: 15px 10px;
         box-sizing: border-box;
         width: 100%;
@@ -317,7 +315,7 @@ export default {
         display: block;
       }
 
-      > span {
+      >span {
         position: absolute;
         right: 10px;
         bottom: -18px;
@@ -325,12 +323,12 @@ export default {
         color: #666;
       }
 
-      > div {
+      >div {
         padding: 15px 0;
         background-color: rgb(245, 245, 245);
         border-radius: 8px;
 
-        > div {
+        >div {
           padding: 0 10px;
 
           span {
@@ -341,13 +339,13 @@ export default {
       }
     }
 
-    > .bottom {
+    >.bottom {
       margin-top: 5px;
       padding-bottom: 10px;
       display: flex;
       justify-content: flex-end;
 
-      > span {
+      >span {
         display: block;
         color: #fff;
         background-color: #3369fe;
@@ -373,14 +371,14 @@ export default {
       }
     }
 
-    > .bfAll {
+    >.bfAll {
       padding: 10px 0;
       font-size: 13px;
       line-height: 25px;
       color: #333;
       position: relative;
 
-      > span {
+      >span {
         display: block;
         font-size: 12px;
         color: #999;
@@ -388,7 +386,7 @@ export default {
         max-width: 370px;
       }
 
-      > div {
+      >div {
         position: absolute;
         right: 0;
         top: 27px;
@@ -407,7 +405,7 @@ export default {
   line-height: 20px;
   user-select: text;
 
-  > h4 {
+  >h4 {
     margin: 0;
     font-size: 14px;
     color: #3369fe;
