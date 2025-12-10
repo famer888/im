@@ -1,8 +1,8 @@
 <template>
   <div class="channel-link">
-    <h4 class="title">频道链接</h4>
+    <h4 class="title">{{ $t("频道别名") }}</h4>
     <div class="info">
-      <a class="link" @click="copyTest(chatContent?.link)">{{chatContent?.link || ""}}</a>
+      <a class="link" @click="copyTest(chatContent?.alias)">{{chatContent?.alias ? `@${chatContent?.alias}` : ""}}</a>
       <div class="code-entrance" @click="$emit('showQrCode')">
         <img class="code-icon" src="@/assets/images/chat/code.png" />
         <img class="more-icon" src="@/assets/images/channel/more.png" />
@@ -19,8 +19,10 @@ export default {
   props: ["chatContent"],
   methods: {
     copyTest(text) {
-      copyToClipboard(" " + text + " ");
-      window.$toast(this.$t("复制成功"));
+      if (text) {
+        copyToClipboard(" @" + text + " ");
+        window.$toast(this.$t("复制成功"));
+      }
     },
   }
 }
@@ -47,7 +49,7 @@ export default {
     cursor: pointer;
     word-wrap: break-word;
     width: 200px;
-    white-space: nowrap;  
+    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }

@@ -1,7 +1,7 @@
 <template>
   <div class="groupNotice" @click.stop="handleOpenGroupNoticeDialog">
     <div class="head">
-       <h3>{{ $t("群公告") }}</h3>
+       <h3>{{ $t("群简介") }}</h3>
        <img class="arrow" src="@/assets/images/common/right-arrow-a.png"/>
     </div>
     <ComGroupNoticeView
@@ -70,7 +70,7 @@ export default {
     }
   }
 
-  
+
 
   .groupNoticeView {
     overflow: hidden;
