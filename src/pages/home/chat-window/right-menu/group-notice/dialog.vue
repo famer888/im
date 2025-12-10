@@ -189,7 +189,6 @@ export default {
                 },
               ],
             });
-            this.provideSetTopNotice({ notice: this.noticeText });
           });
       } else {
         this.handleSendNotice(false);
@@ -207,6 +206,28 @@ export default {
           bfAll,
         },
       });
+      this.provideSetTopNotice({ notice: this.noticeText });
+      // 更新本地 chatContent 数据
+      if (this.chatContent) {
+        if (!this.chatContent.groupNotice) {
+          this.$set(this.chatContent, "groupNotice", {});
+        }
+        this.$set(this.chatContent.groupNotice, "notice", this.noticeText);
+        // 更新编辑者信息
+        const loginId = eventCommon.fnCommonInfoRU({
+          getId: "loginId",
+        });
+        const memberInfoList = this.provideMemberList();
+        const currentUser = memberInfoList.find((item) => item.id == loginId);
+
+        if (currentUser) {
+          const editUserInfo = {
+            user: currentUser,
+            type: currentUser.type,
+          };
+          this.$set(this.chatContent.groupNotice, "editUser", editUserInfo);
+        }
+      }
       // 关闭
       this.handleClose();
     },
