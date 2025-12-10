@@ -134,13 +134,18 @@ export const strSplitAt = (htmlStr, splitList) => {
                         const strBefore = resultNew[resultNew.length - 1];
 
                         // 如果@前面为非空格字符，向前合并
+                        // 判断是否可能是邮箱（包含.且不在末尾），如果是邮箱则保持合并
+                        const isEmailDomain =
+                            result[i].indexOf(".") !== -1 &&
+                            result[i].indexOf(".") < result[i].length - 1;
+
                         if (
                             i > 0 &&
                             result[i][0] === "@" &&
                             ![" ", "@"].includes(
                                 strBefore[strBefore.length - 1]
                             ) &&
-                            strBefore[0] !== "@"
+                            strBefore[0] !== "@" && isEmailDomain
                         ) {
                             resultNew[resultNew.length - 1] += result[i];
                         } else {
@@ -179,18 +184,20 @@ const splitStringByAtList = (inputString, splitList) => {
             const indexEnd = indexStart + strAt.length;
 
             if (indexStart !== -1) {
-                // at在最前面或前面有空格
-                const charBefore = inputStringEnd.slice(
-                    indexStart - 1,
-                    indexStart
-                );
+                // // at在最前面或前面有空格
+                // const charBefore = inputStringEnd.slice(
+                //     indexStart - 1,
+                //     indexStart
+                // );
 
-                if (
-                    indexStart === 0 ||
-                    (charBefore.length === 1 &&
-                        charBefore.trim().length === 0) ||
-                    charBefore[0] === "@"
-                ) {
+                // if (
+                //     indexStart === 0 ||
+                //     (charBefore.length === 1 &&
+                //         charBefore.trim().length === 0) ||
+                //     charBefore[0] === "@"
+                // ) {
+              // 移除@前必须有空格的限制
+                if (true) {
                     const charAfter = inputStringEnd.slice(
                         indexEnd,
                         indexEnd + 1
