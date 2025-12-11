@@ -559,9 +559,9 @@ const fnHandleChannelSubscriberJoinInternal = async (latestChannelEventMessage) 
 };
 
 const fnGetHistoryMsgs = (params) => {
-    console.log('getHistoryMsgs--', params)
+    // console.log('getHistoryMsgs--', params)
    return getHistoryMsgs(params).then(res => {
-        console.log('getHistoryMsgs-2-', res)
+        // console.log('getHistoryMsgs-2-', res)
         const msgTotal = res.messageBytes?.length || 0;
         let msgs = [];
         if(msgTotal) {
