@@ -308,29 +308,34 @@ export default {
           "chatMsgListSearchScrollTo",
         ].includes(operator)
       ) {
-        let groupInfo = {};
+        let current = {};
         if (info?.type === "channel" || info?.comType === "detailsChannel") {
           if(info.showTip && this.infoActive.channelId === info.channelId ) {
             window.$toast("您已在频道");
             return;
           }
+          // 这是在干嘛？不知道为什么又加了个取消详情获取
+          // 影响到切换频道了bro
           const channelId = operator === 'chatMsgListSearchScrollTo' ? info?.id : info?.channelId;
-          const beforeTime = (this.getChannelDetailTimes[channelId] || 0) + 30000
+          const beforeTime = (this.getChannelDetailTimes[channelId] || 0) + 30000;
+
           if(beforeTime < Date.now()) {
             this.handleGetChannelDetail(info, channelId);
+          } else {
+            current = { channelDetailDone: +new Date() }
           }
         } else if (info?.type === 'group') {
           const curGroup = this.groupList.find((item) => item.id == info.id);
-          groupInfo = {
+          current = {
             memberCount: curGroup?.memberCount || 0
           }
         }
         this.infoActive = {
           ...info,
-          ...groupInfo,
+          ...current,
         };
       } else if (operator === "updateChannelIdentity") {
-        console.log('updateChannelIdentity--', this.infoActive, info )
+        // console.log('updateChannelIdentity--', this.infoActive, info )
         // 如果不是当前窗口，直接结束
         if (this.infoActive?.id !== Number(info.channelId)) {
           // 至少更新MessageChannelList中的adminPrivacy
