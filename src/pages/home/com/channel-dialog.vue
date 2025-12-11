@@ -506,6 +506,7 @@ export default {
 
       // 内部链接（频道、群聊）样式
       :deep(a) {
+        font-size: 14px;
         color: #3369fe;
         text-decoration: none;
         cursor: pointer;

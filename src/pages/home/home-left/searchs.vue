@@ -18,7 +18,7 @@
       >
         <li
           v-for="(item, index) in listNew"
-          :key="item.customMsgId ? item.customMsgId : item.id + item.type"
+          :key="item.customMsgId ? item.customMsgId + index : item.id + item.type + index"
           :style="
             topIndexs.includes(index + searchScrollShowIndex) && index !== 0
               ? { marginTop: '27px' }
