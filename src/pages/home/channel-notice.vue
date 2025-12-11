@@ -23,6 +23,20 @@
           <span class="time"> · {{ chatTime(item.sendTime) }}</span>
         </div>
         <p class="line-notify">{{ item.content }}</p>
+        <div v-if="item.id && item.reqStatus >= 0" class="right-info">
+          <template v-if="item.reqStatus === 0">
+            <button @click.stop="check(item.id, item, false, index)">
+              {{ $t("拒绝") }}
+            </button>
+            <button
+              class="active"
+              @click.stop="check(item.id, item, true, index)"
+            >
+              {{ $t("通过") }}
+            </button>
+          </template>
+          <span v-else>{{ reqStatusMap[item.reqStatus] }}</span>
+        </div>
       </li>
       <li v-if="loading" class="loading-tip">{{ $t("加载中...") }}</li>
       <li v-if="!hasMore && list.length > 0" class="no-more-tip">{{ $t("没有更多了") }}</li>
@@ -34,7 +48,7 @@
 </template>
 <script>
 import { chatTime, generateUniqueId } from "@/utils/base";
-import { getChannelEventList, getChannelDetail } from "@/api/imChannel";
+import { getChannelEventList, getChannelDetail, channelCheckJoin } from "@/api/imChannel";
 import { Cache } from "@/cache";
 
 // 事件
@@ -57,6 +71,11 @@ export default {
       pageSize: 10,
       loading: false,
       hasMore: true,
+      reqStatusMap: {
+        1: "已同意",
+        2: "已拒绝",
+        3: "已失效",
+      },
     };
   },
   async mounted() {
@@ -76,26 +95,23 @@ export default {
     // 点击频道通知，跳转到频道
     async handleChannelClick(item) {
       // 如果 jumpPage 不为真或者不等于频道ID，则不跳转
-      if (!item.jumpPage || !item.id) {
+      if (!item.jumpPage || !item.channelId) {
         return;
       }
 
       try {
-        // 获取频道信息，优先从本地列表查找，再从缓存查找
-        let channelInfo = await this.findChannelInfo(item.id);
-
-        if (!channelInfo) {
-          // 如果本地和缓存都没有，从服务器获取
-          const res = await getChannelDetail({ channelId: item.id });
-          if (res && res.data) {
-            channelInfo = {
-              channelId: res.data.channelId,
-              channelName: res.data.channelName,
-              icon: res.data.icon,
-              logoColor: res.data.logoColor,
-              adminPrivacy: res.data.adminPrivacy,
-            };
-          }
+        let channelInfo = null;
+        const res = await getChannelDetail({ channelId: item.channelId });
+        if (!res?.data?.memberType || res?.data?.memberType < 0) {
+          return window.$toast(this.$t("此频道已失效或过期"));
+        } else if (res?.data) {
+          channelInfo = {
+            channelId: res.data.channelId,
+            channelName: res.data.channelName,
+            icon: res.data.icon,
+            logoColor: res.data.logoColor,
+            adminPrivacy: res.data.adminPrivacy,
+          };
         }
 
         if (channelInfo) {
@@ -112,11 +128,11 @@ export default {
             },
           });
         } else {
-          window.$toast(this.$t("频道信息获取失败"));
+          window.$toast(this.$t("此频道已失效或过期"));
         }
       } catch (error) {
         console.error("跳转频道失败:", error);
-        window.$toast(this.$t("频道跳转失败"));
+        window.$toast(this.$t("此频道已失效或过期"));
       }
     },
 
@@ -180,6 +196,23 @@ export default {
       await this.getChannelNoticeList(false);
     },
 
+    // 审核频道申请
+    check(id, item, flag, index) {
+      channelCheckJoin({
+        id,
+        flag,
+      }).then((res) => {
+        if (res.code === 200 || res.errCode === 200) {
+          window.$toast(this.$t("操作成功"));
+          const listNew = _.cloneDeep(this.list);
+          listNew[index].reqStatus = flag ? 1 : 2;
+          this.list = listNew;
+        } else {
+          window.$toast(res.msg || res.errMsg || "操作失败");
+        }
+      });
+    },
+
     async getChannelNoticeList(isLoadMore = false) {
       if (this.loading) return;
 
@@ -189,18 +222,20 @@ export default {
           pageNum: this.pageNum,
           pageSize: this.pageSize,
         });
-
         if (res && res.data && res.data.rowList) {
           // 格式化数据
           const newList = res.data.rowList.map(item => ({
-            id: item.channelId,
+            id: String(item.id),
             jumpPage: item.jumpPage,
-            eventReqId: item.eventReqId || item.channelEventReqId,
             channelName: item.channelName,
+            channelId: item.channelId,
+            uid: item.uid,
             icon: item.icon,
             logoColor: item.logoColor || "#FF6B35",
             content: item.noticeMsg,
             sendTime: Number(item.createTime || item.updateTime || Date.now()),
+            reqStatus: item.reqStatus || 0,
+            reqType: item.reqType,
           }));
 
           if (isLoadMore) {
@@ -272,7 +307,7 @@ export default {
       height: 72px;
       position: relative;
       padding-left: 65px;
-      padding-right: 15px;
+      padding-right: 150px;
       display: flex;
       justify-content: center;
       flex-direction: column;
@@ -342,6 +377,43 @@ export default {
         text-overflow: ellipsis;
         overflow: hidden;
         white-space: nowrap;
+      }
+
+      .right-info {
+        position: absolute;
+        right: 15px;
+
+        > span {
+          display: block;
+          line-height: 30px;
+          height: 30px;
+          background: #eeeff3;
+          color: #999b9e;
+          width: 60px;
+          text-align: center;
+          border-radius: 5px;
+        }
+
+        > button {
+          margin-left: 5px;
+          border: 0;
+          color: #fff;
+          background: #666;
+          line-height: 30px;
+          padding: 0 10px;
+          border-radius: 5px;
+          width: 60px;
+          text-align: center;
+          cursor: pointer;
+
+          &:hover {
+            opacity: 0.8;
+          }
+
+          &.active {
+            background: #3369fe;
+          }
+        }
       }
     }
 

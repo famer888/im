@@ -1699,7 +1699,8 @@ const fnGroupDetailGet = (groupId) => {
             const info = fnGroupDataFormat([
                 {
                     ...res.group,
-                    bfAddress: res.bfAddress,
+                    // bfAddress: res.bfAddress,
+                    bfAddress: true,
                     qrExpire: res.qrExpire,
                     qrUrl: res.qrUrl,
                     memberType: res.memberType,
@@ -1905,7 +1906,8 @@ const fnGroupDetailInit = (groupId) => {
                     const info = fnGroupDataFormat([
                         {
                             ...res.group,
-                            bfAddress: res.bfAddress,
+                            // bfAddress: res.bfAddress,
+                            bfAddress: true,
                             qrExpire: res.qrExpire,
                             qrUrl: res.qrUrl,
                             memberType: res.memberType,
@@ -2526,7 +2528,8 @@ const fnGroupDataFormat = (arr) => {
             bfGroupReadCancel: Boolean(item.bfGroupReadCancel),
             bfJoinCheck: Boolean(item.bfJoinCheck),
             bfJoinFriend: Boolean(item.bfJoinFriend),
-            bfAddress: Boolean(item.bfAddress),
+            // bfAddress: Boolean(item.bfAddress),
+            bfAddress: true,
             groupNotice: item.groupNotice || "",
             bfPushNotice: item.bfPushNotice,
             bfSetAdmin: item.bfSetAdmin,

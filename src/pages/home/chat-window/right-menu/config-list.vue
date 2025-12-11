@@ -15,10 +15,10 @@
         <span> {{ $t("消息免打扰") }}</span>
         <ComSwitch :value="bfDisturb" @input="handelBfDisturbChange" />
       </li>
-      <li v-if="isGroup">
+      <!-- <li v-if="isGroup">
         <span> {{ $t("保存到通讯录") }}</span>
         <ComSwitch :value="bfAddress" @input="handelBfAddressChange" />
-      </li>
+      </li> -->
     </template>
     <template v-if="!isChannel && !isGroup && chatContent.memberType !== 2 && chatContent.id !== 10002">
       <li>
@@ -335,7 +335,8 @@ export default {
         data: {
           id,
           type,
-          bfAddress: this.bfAddress,
+          // bfAddress: this.bfAddress,
+          bfAddress: true,
         },
       });
     },

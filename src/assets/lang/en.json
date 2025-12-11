@@ -232,7 +232,17 @@
   "数据已载入": "Data loaded",
   "打开": "open",
   "频道简介": "Channel introduction",
-  "无简介":"No introduction",
+  "群简介": "Group introduction",
+  "频道别名": "Channel Alias",
+  "无简介": "No introduction",
+  "修改": "Edit",
+  "此频道已失效或过期": "This channel has expired or is invalid",
+  "频道通知": "Channel Notification",
+  "暂无通知": "No notifications",
+  "加载中...": "Loading...",
+  "没有更多了": "No more",
+  "所有者": "Owner",
   "邀请成功": "Invitation successful",
   "用户昵称开启了入群需审核，对方同意后才会进入群聊": "has enabled group join approval. They will enter the group chat after approval"
 }
+  

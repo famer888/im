@@ -21,7 +21,7 @@
                 {{ getItemName(hostInfo) }}
 
               </div>
-              <div class="badge">所有者</div>
+              <div class="badge">{{$t('所有者')}}</div>
             </div>
             <div class="member-online-state">
               {{ getOnlineState(hostInfo) }}

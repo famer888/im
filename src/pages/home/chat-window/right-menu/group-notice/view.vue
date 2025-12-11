@@ -12,7 +12,7 @@
     </template>
     <template v-else>
       <div :style="styleInfo">
-        {{ $t("无公告") }}
+        {{ $t("无简介") }}
       </div>
     </template>
   </div>
@@ -42,7 +42,7 @@ export default {
     handleContent() {
       let htmlString = repalceLink(this.content);
       htmlString = htmlString.replace(/\n/g, '<br/>')
-      
+
       // 字符串替换为表情图片标签
       htmlString = strReplaceEmojiImgLabel(htmlString);
 

@@ -183,7 +183,7 @@ export default {
           // 初始化所有频道的key
           fnInitAllChannelKey(loginId);
           // 初始化所有私聊key
-          // fnInitAllFriendKey(loginId)
+          fnInitAllFriendKey(loginId)
 
           // 同步
           eventCommon.fnConfigRU({

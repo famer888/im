@@ -232,7 +232,17 @@
   "数据已载入": "Dados carregados",
   "打开": "aberto",
   "频道简介": "Descrição do canal",
-  "无简介":"Sem descrição",
+  "群简介": "Descrição do grupo",
+  "频道别名": "Apelido do Canal",
+  "无简介": "Sem descrição",
+  "修改": "Editar",
+  "此频道已失效或过期": "Este canal expirou ou é inválido",
+  "频道通知": "Notificação do Canal",
+  "暂无通知": "Sem notificações",
+  "加载中...": "Carregando...",
+  "没有更多了": "Não há mais",
+  "所有者": "Proprietário",
   "邀请成功": "Convite bem-sucedido",
   "用户昵称开启了入群需审核，对方同意后才会进入群聊": "ativou a aprovação de entrada no grupo. Eles entrarão no grupo após a aprovação"
 }
+  
