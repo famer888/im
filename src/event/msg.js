@@ -1652,7 +1652,7 @@ const fnAlertNotification = async (data, chatList) => {
                 type,
                 msgType,
                 showReplyIcon,
-                icon: type === "group" ? info.avatar : avatar,
+                icon: type === "group" ? info.avatar : (avatar || info.avatar || info.pic),
                 content: msgType === 8 ? `[${i18n.t("群公告")}]${content}` : content,
                 userName: remarkName || nickName || "",
                 name: info.name || info.nickName,
