@@ -415,6 +415,7 @@ const fnFriendDetailsGet = (id, { channelId, groupId } = {}) => {
 
     // 获取联系人详情
     getContactsDetail(params).then((res) => {
+      console.log('获取联系人详情',res)
         // 阅后即焚 是否开启
         const bfReadCancel =
             _.get(res, "contactsDetailBase.bfReadCancel") || false;
