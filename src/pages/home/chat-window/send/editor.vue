@@ -297,7 +297,7 @@ export default {
 
       const selection = window.getSelection();
       selection.removeAllRanges(); // 清除当前的选中范围
-      selection.addRange(savedSelection); // 还原选中的文本范围
+      savedSelection instanceof Range && selection.addRange(savedSelection); // 还原选中的文本范围
     },
     /**
      * 复制 点击
@@ -315,7 +315,7 @@ export default {
       if (savedSelection) {
         const selection = window.getSelection();
         selection.removeAllRanges(); // 清除当前的选中范围
-        selection.addRange(savedSelection); // 还原选中的文本范围
+        savedSelection instanceof Range && selection.addRange(savedSelection); // 还原选中的文本范围
       }
 
       this.handlePaste(e);

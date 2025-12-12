@@ -73,6 +73,10 @@ const handleChannelEvents = async (data) => {
                     isDisable: true,
                 });
                 break;
+            // 注销频道
+            case 7:
+                eventRemoveLocalChannel(Number(channelId));
+                break;
             default:
                 break;
         }
