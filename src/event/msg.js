@@ -80,7 +80,7 @@ const fnHandleHideMessage = (msgNew, type, loginId) => {
  */
 const fnMsgAdd = async ({ msg, contentStr, fileKey, type }) => {
     const msgId = Number(msg.msgId)
-    console.log(`fnMsgAdd-1-msgId:${msgId}`)
+    // console.log(`fnMsgAdd-1-msgId:${msgId}`)
     // console.log("fnMsgAdd--", { msg, contentStr, fileKey, type })
     let msgNew = { msgType: 0, ...msg, content: contentStr };
     delete msgNew.attachmentKey;
@@ -93,7 +93,7 @@ const fnMsgAdd = async ({ msg, contentStr, fileKey, type }) => {
     if ( String(msgNew.content).includes("-||-msgId:")) {
         msgNew = await fnMsgContentAddQuote(msgNew);
     }
-    console.log(`fnMsgAdd-2-msgId:${msgId}`)
+    // console.log(`fnMsgAdd-2-msgId:${msgId}`)
     // 登录id
     const loginId = eventCommon.fnCommonInfoRU({
         getId: "loginId",
@@ -219,7 +219,7 @@ const fnMsgAdd = async ({ msg, contentStr, fileKey, type }) => {
         // 收款消息提示不支持
         msgNew.content = '[暂不支持该消息类型]'
     }
-    console.log(`fnMsgAdd-3-msgId:${msgId}`)
+    // console.log(`fnMsgAdd-3-msgId:${msgId}`)
 
     // 处理隐藏消息
     if (fnHandleHideMessage(msgNew, type, loginId)) {
@@ -339,7 +339,7 @@ const fnChannelMsgAdd = async (msg, isOld) => {
     const type = "channel"
     const msgId = Number(msg.msgId)
      if(msgId === 1) {
-         console.log('fnChannelMsgAdd-c-', msg)
+        //  console.log('fnChannelMsgAdd-c-', msg)
          // 频道消息删除
        await fnMsgDelete({
             info: {
@@ -1701,12 +1701,13 @@ const fnAlertNotification = async (data, chatList) => {
                 type,
                 msgType,
                 showReplyIcon,
-                icon: type === "group" ? info.avatar : avatar,
+                icon: type === "group" ? info.avatar : (avatar || info.avatar || info.pic),
                 content: msgType === 8 ? `[${i18n.t("群公告")}]${content}` : content,
                 userName: remarkName || nickName || "",
-                name: info.name || info.nickName,
+                name: info.name || info.nickName || info.channelName,
                 loginId,
             };
+            console.log('小窗口',params,'----',info)
             // console.log("alertNotification--", params)
             ipcRenderer.send("alertNotification", {
                 // windowId: remote.getCurrentWindow().getMediaSourceId(),

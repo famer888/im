@@ -141,7 +141,7 @@ const fnSocketMessage = (arrayBuffer) => {
         case 4205: {
             // 远程其它端操作清除全部，clear为1，表示全部清除
             const { msgId, msgTargetId, clear, clearTime } = data?.latestRecallChannelMessage || {};
-             console.log('4205-2-', JSON.stringify(data))
+            //  console.log('4205-2-', JSON.stringify(data))
             const state =  eventChannel.isValidSocketMsg(Number(clearTime))
             if(!state) {
                 console.log('阻止了条重复推送[4205]', JSON.stringify(data))
