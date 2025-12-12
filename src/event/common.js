@@ -438,6 +438,10 @@ const fnNewFriendOrGroup = (text) => {
           },
         });
       } else if (searchType == 2) {
+        if (channelInfo && commonInfo.infoActive && commonInfo.infoActive.channelId === channelInfo.channelId) {
+          window.$toast("您已在频道");
+          return;
+        }
         if (!channelInfo) {
           window.$toast("此频道已失效或过期");
         } else if (!channelInfo.linkType || channelInfo.memberType) {
