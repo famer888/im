@@ -333,6 +333,8 @@ const fnApiDataFormat = (friendList) => {
             identify: item.userInfo.identify,
             nickName: item.userInfo.nickName,
             msgCancelTime: item.msgCancelTime,
+            ...item.userInfo.bfCancel ? { bfCancel: item.userInfo?.bfCancel } : {},
+            ...item.userInfo.bfBanned ? { bfBanned: item.userInfo?.bfBanned } : {},
         };
 
         const name = _.get(item.userInfo, "friendRelation.remarkName");
@@ -581,7 +583,7 @@ const fnRemarkUpdate = (info, operatorType) => {
             const index = list.findIndex((item) => item.id === info.id);
             if (index !== -1) {
                 list[index].name = name;
-             
+
             } else {
                 list.push({
                     id: info.id,

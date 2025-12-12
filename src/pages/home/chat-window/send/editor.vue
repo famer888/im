@@ -7,6 +7,7 @@
           v-if="emojiVisible"
           :definedHidden="isDialog"
           @choice="handleSendEmoji"
+          :chatType="chatContent.type"
         />
       </div>
       <div v-if="!isDialog">
