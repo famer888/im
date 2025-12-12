@@ -1655,7 +1655,7 @@ const fnAlertNotification = async (data, chatList) => {
                 icon: type === "group" ? info.avatar : (avatar || info.avatar || info.pic),
                 content: msgType === 8 ? `[${i18n.t("群公告")}]${content}` : content,
                 userName: remarkName || nickName || "",
-                name: info.name || info.nickName,
+                name: info.name || info.nickName || info.channelName,
                 loginId,
             };
             console.log('小窗口',params,'----',info)
