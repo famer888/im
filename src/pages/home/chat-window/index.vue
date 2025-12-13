@@ -45,6 +45,8 @@
       <ComMemberDialog
         v-if="memberDialogInfo"
         :memberInfo="memberDialogInfo"
+        :channelId="chatContent.type === 'channel' ? chatContent.id : ''"
+        :groupId="chatContent.type === 'group' ? chatContent.id : ''"
         @close="memberDialogInfo = null"
       />
       <ComGroupDialog

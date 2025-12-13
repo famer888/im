@@ -71,7 +71,7 @@ import { Cache } from "@/cache";
 import { contactsRelation } from "@/api/imContacation.js";
 
 export default {
-  props: ["memberInfo", "channelId"],
+  props: ["memberInfo", "channelId", "groupId"],
   inject: ["provideUpdateGroupMember"],
   components: {
     ComAddVerifyDialog
@@ -136,17 +136,17 @@ export default {
       }
     })
     // 如果明确不是好友则，不用拉取好友列表判断
-    if (bfFriend === false) {
-      return;
-    }
+    // if (bfFriend === false) {
+    //   return;
+    // }
 
     // 如果是好友，好友信息 API 更新
-    eventFriend.fnFriendDetailsGet(id, { channelId });
+    eventFriend.fnFriendDetailsGet(id, { channelId: this.channelId, groupId: this.groupId });
 
     // 如果bfFriend是undefined,则检查是否为好友
-    if (bfFriend === undefined) {
+    // if (bfFriend === undefined) {
       this.handCheckisFriend(loginId, id)
-    }
+    // }
 
   },
   beforeDestroy() {
@@ -159,7 +159,7 @@ export default {
           if (info.id === this.memberInfo.id) {
             this.memberDetail = { ...info, addToken: info.addToken || this.memberInfo.addToken || '' };
           }
-          console.log("friendUpdate--", info, this.memberDetail)
+          console.log("friendUpdate--", info, this.memberDetail,'this.memberInfo',this.memberInfo)
         }
       }
     },
