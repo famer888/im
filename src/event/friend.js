@@ -405,18 +405,18 @@ const fnFriendListFormat = (list) => {
  */
 const fnFriendDetailsGet = (id, { channelId, groupId } = {}) => {
     // 如果是系统账户，则不需要拉详情
-    if (["10002"].includes(id)) {
+    if (["10002"].includes(String(id))) {
         return;
     }
     let params = {
-        targetUid: id
+        targetUid: Number(id)
     };
     if (groupId) params.groupId = groupId;
     if (channelId) params.channelId = channelId;
 
     // 获取联系人详情
     getContactsDetail(params).then((res) => {
-      console.log('获取联系人详情',res)
+      console.log('获取联系人详情',res,'params',params)
         // 阅后即焚 是否开启
         const bfReadCancel =
             _.get(res, "contactsDetailBase.bfReadCancel") || false;

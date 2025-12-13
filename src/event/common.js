@@ -426,6 +426,7 @@ const fnNewFriendOrGroup = (text) => {
               hostId: Number(groupAlias.groupBaseResp.hostId),
               bfJoinFriend: groupAlias.groupBaseResp.bfJoinFriend,
               bfJoinCheck: groupAlias.groupBaseResp.bfJoinCheck,
+              remark: groupAlias.groupBaseResp.remark,
             },
           },
         });

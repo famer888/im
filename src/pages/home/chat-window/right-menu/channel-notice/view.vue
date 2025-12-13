@@ -6,7 +6,7 @@
       </div>
     </template>
     <template v-else>
-      <div :style="styleInfo">
+      <div :style="styleInfo" class="nullClass">
         {{ $t("无简介") }}
       </div>
     </template>
@@ -48,11 +48,11 @@ export default {
       for (const item of tagList) {
         if (item.type === "text") {
           const arr = strSplitAt(item.content, this.atNameList).map((content) => {
-              return {
-                type: "text",
-                content,
-              };
-            });
+            return {
+              type: "text",
+              content,
+            };
+          });
 
           // 对文本判断是否存在没有 https的链接
           for (const n of arr) {
@@ -139,5 +139,9 @@ export default {
       height: 18px;
     }
   }
+}
+
+.nullClass {
+  color: #d3d1d1;
 }
 </style>

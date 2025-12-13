@@ -11,7 +11,7 @@
       </div>
     </template>
     <template v-else>
-      <div :style="styleInfo">
+      <div :style="styleInfo" class="nullClass">
         {{ $t("无简介") }}
       </div>
     </template>
@@ -144,6 +144,9 @@ export default {
     > img {
       height: 18px;
     }
+  }
+  .nullClass{
+    color: #d3d1d1;
   }
 }
 </style>

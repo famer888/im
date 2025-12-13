@@ -33,7 +33,10 @@
       </section>
       <template v-if="loginIsHost">
         <div class="bottom" v-if="!isEdit">
-          <span @click.stop="isEdit = true">{{ $t('修改') }}</span>
+          <span @click.stop="() => {
+            isEdit = true
+            noticeText = ''
+          }">{{ $t('发布新简介') }}</span>
         </div>
         <div class="bfAll" v-if="isEdit">
           {{ $t("通知所有成员") }}
@@ -43,7 +46,7 @@
           <ComSwitch :value="bfAll" @input="bfAll = !bfAll" />
         </div>
         <div class="bottom" v-if="isEdit">
-          <span @click.stop="handleOk">{{ $t("确定") }}</span>
+          <span @click.stop="handleOk">{{ $t("确认发布") }}</span>
           <span @click.stop="handleCancel">{{ $t("取消") }}</span>
         </div>
       </template>
