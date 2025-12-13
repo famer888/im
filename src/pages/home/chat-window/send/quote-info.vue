@@ -92,8 +92,8 @@ export default {
         break;
       }
       case 8: {
-        // 引用群公告
-        this.content = '[群公告]'
+        // 引用群简介
+        this.content = '[群简介]'
         break;
       }
       default: {

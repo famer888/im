@@ -190,7 +190,7 @@ export const fnMsgListToBlockInfos = (pageNumList, list, msgBlockList) => {
                     "[名片]": 5,
                     "[系统]": 6,
                     "[文件]": 7,
-                    "[群公告]": 8,
+                    "[群简介]": 8,
                     "[动图]": 9,
                     "[骰子]": 12,
                     "[扑克牌]": 18,

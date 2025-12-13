@@ -25,11 +25,11 @@
         </span>
       </div>
       <section>
-        <textarea v-if="loginIsHost && isEdit" maxlength="500" type="text" v-model="noticeText"
+        <textarea v-if="loginIsHost && isEdit" maxlength="800" type="text" v-model="noticeText"
           :placeholder="$t('请输入内容')" :disabled="!loginIsHost" />
         <ComGroupNoticeView v-else :content="noticeText" :atNameList="atNameList" :noClick="false"
           :styleInfo="{ height: '203px' }" :key="noticeText" :chatContent="chatContent" />
-        <span v-if="loginIsHost && isEdit">{{ 500 - noticeText.length }}</span>
+        <span v-if="loginIsHost && isEdit">{{ 800 - noticeText.length }}</span>
       </section>
       <template v-if="loginIsHost">
         <div class="bottom" v-if="!isEdit">
@@ -71,7 +71,7 @@ export default {
       loginIsHost: false, // 是否是群主
       noticeText: "", // 公告字符串
       noticeTextCopy: "", // 公告字符串副本
-      bfAll: false, // 群公告是否通知所有人
+      bfAll: false, // 群简介是否通知所有人
       isEdit: false, // 是否是编辑状态
     };
   },
@@ -126,7 +126,7 @@ export default {
         // 设置公告编辑者信息
         this.editUser = editUser;
 
-        // 登录信息是否为群主,或者是否为管理员，并且具有发布群公告的权限
+        // 登录信息是否为群主,或者是否为管理员，并且具有发布群简介的权限
         this.loginIsHost = this.chatContent.hostId === loginId || (this.chatContent.memberType < 2 && this.chatContent.bfPushNotice);
 
       } else {
@@ -135,7 +135,7 @@ export default {
           (item) => item.id == loginId && item.type < 2
         );
 
-        // 登录信息是否为群主,或者是否为管理员，并且具有发布群公告的权限
+        // 登录信息是否为群主,或者是否为管理员，并且具有发布群简介的权限
         this.loginIsHost =
           (this.chatContent.hostId === loginId) ||
           (this.chatContent.memberType == 1 && this.chatContent.bfPushNotice);
@@ -152,11 +152,11 @@ export default {
       }
     },
     /**
-     * 关闭 群公告会话框
+     * 关闭 群简介会话框
      */
     handleClose() {
       this.isEdit = false
-      // 移除 群公告会话框
+      // 移除 群简介会话框
       eventCommon.fnCloseListRU({
         removeIds: ["groupNoticeDialog"],
       });
@@ -281,6 +281,7 @@ export default {
 
     >.top {
       height: 70px;
+      min-height: 70px;
       display: flex;
       align-items: center;
 
@@ -288,6 +289,8 @@ export default {
         display: block;
         height: 35px;
         width: 35px;
+        min-width: 35px;
+        min-height: 35px;
         border-radius: 50%;
         margin-right: 10px;
       }

@@ -249,7 +249,7 @@ const fnCommunicationProcessing = (values) => {
             break;
         }
         case "openGroupNoticeDialog": {
-            // 打开 群公告对话框
+            // 打开 群简介对话框
             eventCommon.fnCloseListRU({
                 addId: "groupNoticeDialog",
             });

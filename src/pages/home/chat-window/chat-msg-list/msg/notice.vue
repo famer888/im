@@ -6,7 +6,7 @@
     @click.stop="handleOpenGroupNoticeDialog"
   >
     <slot></slot>
-    <h3><img src="@/assets/images/notice.svg" /> {{ $t("群公告") }}</h3>
+    <h3><img src="@/assets/images/notice.svg" /> {{ $t("群简介") }}</h3>
     <picture>
       <img src="@/assets/images/arrow.svg" />
     </picture>

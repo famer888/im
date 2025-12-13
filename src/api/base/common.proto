@@ -202,7 +202,7 @@ enum GroupHandleType {
     GROUP_NAME      = 1; // 群名称
     GROUP_PIC       = 2; // 群图标
     GROUP_MEMBER_NICKNAME = 3; // 群成员名称
-    GROUP_NOTICE    = 4; // 群公告
+    GROUP_NOTICE    = 4; // 群简介
     GROUP_SHUTUP    = 5; // 群禁言
     GROUP_READ_CANCEL    = 6; // 群阅后即焚 v1.3.0
 }
@@ -235,7 +235,7 @@ enum AdminRightType {
     ALL_RIGHT   = 0; // 所有
     UPDATE_DATA = 1; // 修改群资料
     CHECK_APPLY = 2; // 审核入群申请
-    PUSH_NOTICE = 3; // 发布群公告
+    PUSH_NOTICE = 3; // 发布群简介
     SET_ADMIN   = 4; // 设置管理员
 }
 
@@ -396,17 +396,17 @@ message KeyPairBase {
 message AdminRightBase {
     bool bfUpdateData = 1; // 修改群资料
     bool bfJoinCheck  = 2; // 审核入群申请
-    bool bfPushNotice = 3; // 发布群公告
+    bool bfPushNotice = 3; // 发布群简介
     bool bfSetAdmin   = 4; // 设置其他管理员
     bool bfResetQrcode   = 5; // 设置其他管理员
 }
 
-//群公告base
+//群简介base
 message GroupNoticeBase {
     GroupMemberBase  editUser  = 1; //编辑用户
-    string notice  = 2 ; // 群公告内容
+    string notice  = 2 ; // 群简介内容
     int64  releaseTime = 3; //发布时间
-    int64  noticeId = 4;//群公告id
+    int64  noticeId = 4;//群简介id
     bool   bfRemind = 5;//是否通知所有人
 }
 

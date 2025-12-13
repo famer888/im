@@ -31,7 +31,7 @@
             @keyup.enter="handleEnter" />
           <span v-else class="info-text">{{
             depict === "" ? $t("什么都没写") : depict
-          }}</span>
+            }}</span>
           <picture v-if="!depictEdit && bfFriend" @click="handleDepictEdit">
             <img src="@/assets/images/message/edit-icon.png" />
           </picture>
@@ -71,7 +71,7 @@ import { Cache } from "@/cache";
 import { contactsRelation } from "@/api/imContacation.js";
 
 export default {
-  props: ["memberInfo", "channelId"],
+  props: ["memberInfo", "channelId", "groupId"],
   inject: {
     provideUpdateGroupMember: {
       from: "provideUpdateGroupMember",
@@ -141,17 +141,17 @@ export default {
       }
     })
     // 如果明确不是好友则，不用拉取好友列表判断
-    if (bfFriend === false) {
-      return;
-    }
+    // if (bfFriend === false) {
+    //   return;
+    // }
 
     // 如果是好友，好友信息 API 更新
-    eventFriend.fnFriendDetailsGet(id, { channelId });
+    eventFriend.fnFriendDetailsGet(id, { channelId: this.channelId, groupId: this.groupId });
 
     // 如果bfFriend是undefined,则检查是否为好友
-    if (bfFriend === undefined) {
+    // if (bfFriend === undefined) {
       this.handCheckisFriend(loginId, id)
-    }
+    // }
 
   },
   beforeDestroy() {
@@ -162,9 +162,9 @@ export default {
       switch (operator) {
         case "friendUpdate": {
           if (info.id === this.memberInfo.id) {
-            this.memberDetail = { ...info, addToken: this.memberInfo.addToken || '' };
+            this.memberDetail = { ...info, addToken: info.addToken || this.memberInfo.addToken || '' };
           }
-          console.log("friendUpdate--", info, this.memberDetail)
+          console.log("friendUpdate--", info, this.memberDetail,'this.memberInfo',this.memberInfo)
         }
       }
     },

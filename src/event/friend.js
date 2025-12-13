@@ -408,12 +408,11 @@ const fnFriendDetailsGet = (id, { channelId, groupId } = {}) => {
     if (["10002"].includes(id)) {
         return;
     }
-
     let params = {
         targetUid: id
-    }
-    if(groupId) params.groupId = groupId;
-    if(channelId) params.channelId = channelId;
+    };
+    if (groupId) params.groupId = groupId;
+    if (channelId) params.channelId = channelId;
 
     // 获取联系人详情
     getContactsDetail(params).then((res) => {

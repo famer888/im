@@ -25,7 +25,7 @@ enum MessageType {
     nameCard = 5; //名片
     system = 6;//系统
     file    = 7; // 文件
-    notice  = 8; // 群公告
+    notice  = 8; // 群简介
     dynamicImage = 9; // 动图
     redPacket = 10; // 红包
     html      = 11; // 机器人消息占用
@@ -792,7 +792,7 @@ message SystemObj {
     string 		content  		= 1; //系统消息文本内容
 }
 
-//群公告消息
+//群简介消息
 message GroupNoticeObj {
     string       content     = 1; // 公告内容
     int64        noticeId    = 2; //公告ID

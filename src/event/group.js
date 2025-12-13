@@ -2775,7 +2775,7 @@ const bfJoinFriendSet = (info) => {
 };
 
 /**
- * 群公告设置
+ *群简介设置
  */
 const fnNoticeSet = (info) => {
     const { id, notice, bfAll } = info;

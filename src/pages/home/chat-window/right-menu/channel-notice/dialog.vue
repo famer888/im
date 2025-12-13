@@ -5,12 +5,11 @@
         <img src="@/assets/images/common/close-icon.png" />
       </picture>
       <section>
-        <!-- maxlength="500" -->
-        <textarea v-if="loginIsHost && isEdit" type="text" v-model="noticeText" :placeholder="$t('请输入内容')"
-          :disabled="!loginIsHost" />
+        <textarea v-if="loginIsHost && isEdit" maxlength="255" type="text" v-model="noticeText"
+          :placeholder="$t('请输入内容')" :disabled="!loginIsHost" />
         <ComGroupNoticeView v-else :content="noticeText" :atNameList="atNameList" :noClick="false"
           :styleInfo="{ height: '203px' }" :key="noticeText" :chatContent="chatContent" />
-        <!-- <span v-if="loginIsHost">{{ 500 - noticeText.length }}</span> -->
+        <span v-if="loginIsHost && isEdit">{{ 255 - noticeText.length }}</span>
       </section>
       <template v-if="loginIsHost">
         <div class="bottom" v-if="!isEdit">
@@ -80,11 +79,11 @@ export default {
       this.noticeText = this.noticeTextCopy;
     },
     /**
-     * 关闭 群公告会话框
+     * 关闭 群简介会话框
      */
     handleClose() {
       this.isEdit = false;
-      // 移除 群公告会话框
+      // 移除 群简介会话框
       eventCommon.fnCloseListRU({
         removeIds: ["channelNoticeDialog"],
       });
