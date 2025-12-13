@@ -71,7 +71,7 @@ export default {
       loginIsHost: false, // 是否是群主
       noticeText: "", // 公告字符串
       noticeTextCopy: "", // 公告字符串副本
-      bfAll: false, // 群公告是否通知所有人
+      bfAll: false, // 群简介是否通知所有人
       isEdit: false, // 是否是编辑状态
     };
   },
@@ -126,7 +126,7 @@ export default {
         // 设置公告编辑者信息
         this.editUser = editUser;
 
-        // 登录信息是否为群主,或者是否为管理员，并且具有发布群公告的权限
+        // 登录信息是否为群主,或者是否为管理员，并且具有发布群简介的权限
         this.loginIsHost = this.chatContent.hostId === loginId || (this.chatContent.memberType < 2 && this.chatContent.bfPushNotice);
 
       } else {
@@ -135,7 +135,7 @@ export default {
           (item) => item.id == loginId && item.type < 2
         );
 
-        // 登录信息是否为群主,或者是否为管理员，并且具有发布群公告的权限
+        // 登录信息是否为群主,或者是否为管理员，并且具有发布群简介的权限
         this.loginIsHost =
           (this.chatContent.hostId === loginId) ||
           (this.chatContent.memberType == 1 && this.chatContent.bfPushNotice);
@@ -152,11 +152,11 @@ export default {
       }
     },
     /**
-     * 关闭 群公告会话框
+     * 关闭 群简介会话框
      */
     handleClose() {
       this.isEdit = false
-      // 移除 群公告会话框
+      // 移除 群简介会话框
       eventCommon.fnCloseListRU({
         removeIds: ["groupNoticeDialog"],
       });

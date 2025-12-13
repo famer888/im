@@ -111,7 +111,7 @@ export default {
         }
         case 8: {
           // 引用的是公告，直接显示群公告
-          this.content = "[群公告]";
+          this.content = "[群简介]";
           break;
         }
 

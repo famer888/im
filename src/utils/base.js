@@ -508,7 +508,7 @@ export const enumMsgType = {
     shareCard: 5, //分享
     system: 6, //系统消息
     file: 7, //文件消息
-    groupNotice: 8, //群公告
+    groupNotice: 8, //群简介
     gif: 9, //GIF消息
     redEnvelope: 10, //红包
     robot: 11, //机器人

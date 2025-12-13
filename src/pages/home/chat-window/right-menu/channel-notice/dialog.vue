@@ -79,11 +79,11 @@ export default {
       this.noticeText = this.noticeTextCopy;
     },
     /**
-     * 关闭 群公告会话框
+     * 关闭 群简介会话框
      */
     handleClose() {
       this.isEdit = false;
-      // 移除 群公告会话框
+      // 移除 群简介会话框
       eventCommon.fnCloseListRU({
         removeIds: ["channelNoticeDialog"],
       });

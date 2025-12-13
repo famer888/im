@@ -83,7 +83,7 @@
                 [{{ $t("有新公告") }}]
               </span>
               <span style="color: #999999; font-size: 12px">
-                {{ item.sendUserName }}[{{ $t("群公告") }}]
+                {{ item.sendUserName }}[{{ $t("群简介") }}]
               </span>
               {{ item.content }}
             </div>

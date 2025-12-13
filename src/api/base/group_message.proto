@@ -29,7 +29,7 @@ message GroupReqMsgDto {
     GroupHandleType handleType  = 17; // 群处理消息类型
     string      rId     = 18; // 记录ID，用于已接收响应
     bool        groupShutup    = 19; // 群禁言 add v1.1.0
-    GroupNoticeBase    groupNotice  = 20; // 群公告 add v1.1.0
+    GroupNoticeBase    groupNotice  = 20; // 群简介 add v1.1.0
     GroupMemberType checkUserType   = 21; // 审核人群身份类型 add V1.1.0
     bool        bfGroupReadCancel    = 22; // 群阅后即焚设置值 add v1.3.0
     int32       groupMsgCancelTime   = 23;  //群消息销毁时间[秒] add v1.3.0

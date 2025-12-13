@@ -1,7 +1,7 @@
 <template>
   <div class="groupTopNoticeDialog">
     <h2 @click="handleOpenGroupNoticeDialog">
-      {{ $t("群公告") }}
+      {{ $t("群简介") }}
       <img src="@/assets/images/headNav/jt-icon.png" />
     </h2>
     <div>

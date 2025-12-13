@@ -35,7 +35,7 @@ export default {
   },
   methods: {
     /**
-     * 打开群公告对话框
+     * 打开群简介对话框
      */
     handleOpenGroupNoticeDialog() {
       eventBase.fnCommunicationSendMsg({

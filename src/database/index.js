@@ -96,7 +96,7 @@ export default class dbBase {
                 .filter((item) => {
                     if (typeof item.content === "string") {
                         return (
-                            // 放开群公告的搜索
+                            // 放开群简介的搜索
                             [0, 8].includes(item.msgType || item.chatType) &&
                             item.content &&
                             item.content

@@ -150,7 +150,7 @@ export default {
       "rightMenu",
       [
         "closeOperator", // 关闭操作
-        "groupNoticeSet", // 群公告设置
+        "groupNoticeSet", // 群简介设置
       ],
       this.eventHandling
     );

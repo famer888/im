@@ -648,7 +648,7 @@ const fnUtf8ArrayToStr = (buffer, type) => {
             return txt;
         }
         case enumMsgType.groupNotice: {
-            // 群公告
+            // 群简介
             return GroupNoticeObj.decode(UnitBuffer).content;
         }
         case enumMsgType.dice: {
@@ -722,7 +722,7 @@ const fnFormartMsgToStr = (ref, str) => {
         5: "[名片]",
         6: "[系统]",
         7: "[文件]",
-        8: "[群公告]",
+        8: "[群简介]",
         9: "[动图]",
         12: "[骰子]",
         18: "[扑克牌]",
