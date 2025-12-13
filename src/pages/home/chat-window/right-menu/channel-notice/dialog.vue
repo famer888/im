@@ -5,11 +5,12 @@
         <img src="@/assets/images/common/close-icon.png" />
       </picture>
       <section>
-        <textarea v-if="loginIsHost && isEdit" maxlength="255" type="text" v-model="noticeText"
+        <!--  maxlength="255" -->
+        <textarea v-if="loginIsHost && isEdit" type="text" v-model="noticeText"
           :placeholder="$t('请输入内容')" :disabled="!loginIsHost" />
         <ComGroupNoticeView v-else :content="noticeText" :atNameList="atNameList" :noClick="false"
           :styleInfo="{ height: '203px' }" :key="noticeText" :chatContent="chatContent" />
-        <span v-if="loginIsHost && isEdit">{{ 255 - noticeText.length }}</span>
+        <!-- <span v-if="loginIsHost && isEdit">{{ 255 - noticeText.length }}</span> -->
       </section>
       <template v-if="loginIsHost">
         <div class="bottom" v-if="!isEdit">
