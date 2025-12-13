@@ -39,12 +39,12 @@ import touzi from "@/assets/images/message/touz_6.jpg";
 import poker from "@/assets/images/message/poker.png";
 
 export default {
-  props: ["definedHidden"],
+  props: ["definedHidden", "chatType"],
   data() {
     return {
       type: 0,
-      imgs: [
-      { expressionIcon: touzi, type: 2 }, 
+      imgs: this.chatType === 'channel' ? []: [
+      { expressionIcon: touzi, type: 2 },
       { expressionIcon: poker, type: 3 },
     ],
       emojis: [],

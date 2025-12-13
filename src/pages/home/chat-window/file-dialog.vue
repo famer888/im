@@ -95,7 +95,8 @@ export default {
      * 消息发送
      */
     handleSendMessage(list) {
-      const { id, type } = this.chatContent;
+      let { id, channelId, type } = this.chatContent;
+      id = type === 'channel' ? (channelId || id) : id;
 
       if (this.list.some((item) => item.isError)) {
         window.$toast(this.$t("上传/文件视频大小超过50M!"));

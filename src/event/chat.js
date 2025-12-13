@@ -124,7 +124,7 @@ const fnChatWindowUpdate = async (info) => {
             chatInfo = channels.find((item) => item.channelId === updateInfo.id);
             if (!chatInfo?.channelId || !chatInfo?.channelName) {
                 const res = await getChannelDetail({ channelId: updateInfo.id });
-                console.log("chatInfo-2-", res)
+                // console.log("chatInfo-2-", res)
                 chatInfo = res?.data || {};
             }
         }

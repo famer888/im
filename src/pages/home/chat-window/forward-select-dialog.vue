@@ -118,8 +118,6 @@ export default {
 
       // 使用 Map 进行高效去重，key 为唯一标识
       const uniqueMap = new Map();
-      // 存储没有发布权限的频道 ID
-      const excludedChannelIds = new Set();
 
       // 辅助函数：检查是否匹配搜索条件
       const matchSearch = (item) => {
@@ -142,29 +140,33 @@ export default {
         }
       };
 
-      // 按优先级顺序处理：chats 优先（最近聊天）
-      this.chats.forEach(item => {
-        // 如果是频道类型且没有发布权限，记录 ID 并跳过
-        // if (item.type === 'channel' && !(item.adminPrivacy & 2)) {
-        //   excludedChannelIds.add(item.channelId);
-        //   return;
-        // }
-        if (item.type === 'channel') return;
-        addItem(item, item.type);
-      });
-
-      // 处理好友列表
-      this.friendList.forEach(item => addItem(item, "friend"));
-
-      // 处理群组列表
-      this.groups.forEach(item => addItem(item, "group"));
-
-      // 处理频道列表，不存在被排除列表，并且有权限的
+      // 处理频道列表（接口数据优先级最高）
       this.channels.forEach(item => {
-        if (!excludedChannelIds.has(item.channelId) && (item.adminPrivacy & 2)) {
+        if (item.adminPrivacy & 2) {
           addItem(item, "channel");
         }
       });
+      // 按优先级顺序处理：chats（最近聊天）
+      this.chats.forEach(item => {
+        // 频道类型：缓存数据优先级低于接口，只添加不存在的
+        if (item.type === 'channel') {
+          if (item.adminPrivacy & 2) {
+            addItem(item, "channel");
+          }
+          return;
+        } else if (item.bfCancel || item.bfBanned) {
+          return;
+        }
+        addItem(item, item.type);
+      });
+      // 处理好友列表
+      this.friendList.forEach(item => {
+        if (item.bfCancel || item.bfBanned) return;
+        addItem(item, "friend");
+      });
+
+      // 处理群组列表
+      this.groups.forEach(item => addItem(item, "group"));
       uniqueMap.delete("friend_channelNotice");
       uniqueMap.delete("group_invitation");
       return Array.from(uniqueMap.values());
