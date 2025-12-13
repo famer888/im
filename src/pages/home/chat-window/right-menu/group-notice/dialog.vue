@@ -25,11 +25,11 @@
         </span>
       </div>
       <section>
-        <textarea v-if="loginIsHost && isEdit" maxlength="500" type="text" v-model="noticeText"
+        <textarea v-if="loginIsHost && isEdit" maxlength="800" type="text" v-model="noticeText"
           :placeholder="$t('请输入内容')" :disabled="!loginIsHost" />
         <ComGroupNoticeView v-else :content="noticeText" :atNameList="atNameList" :noClick="false"
           :styleInfo="{ height: '203px' }" :key="noticeText" :chatContent="chatContent" />
-        <span v-if="loginIsHost && isEdit">{{ 500 - noticeText.length }}</span>
+        <span v-if="loginIsHost && isEdit">{{ 800 - noticeText.length }}</span>
       </section>
       <template v-if="loginIsHost">
         <div class="bottom" v-if="!isEdit">
@@ -281,6 +281,7 @@ export default {
 
     >.top {
       height: 70px;
+      min-height: 70px;
       display: flex;
       align-items: center;
 
@@ -288,6 +289,8 @@ export default {
         display: block;
         height: 35px;
         width: 35px;
+        min-width: 35px;
+        min-height: 35px;
         border-radius: 50%;
         margin-right: 10px;
       }
