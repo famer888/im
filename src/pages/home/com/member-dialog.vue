@@ -31,7 +31,7 @@
             @keyup.enter="handleEnter" />
           <span v-else class="info-text">{{
             depict === "" ? $t("什么都没写") : depict
-          }}</span>
+            }}</span>
           <picture v-if="!depictEdit && bfFriend" @click="handleDepictEdit">
             <img src="@/assets/images/message/edit-icon.png" />
           </picture>
@@ -157,7 +157,7 @@ export default {
       switch (operator) {
         case "friendUpdate": {
           if (info.id === this.memberInfo.id) {
-            this.memberDetail = { ...info, addToken: this.memberInfo.addToken || '' };
+            this.memberDetail = { ...info, addToken: info.addToken || this.memberInfo.addToken || '' };
           }
           console.log("friendUpdate--", info, this.memberDetail)
         }
