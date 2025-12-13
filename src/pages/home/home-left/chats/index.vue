@@ -80,7 +80,7 @@
                 "
                 style="color: #ff0000; font-size: 12px"
               >
-                [{{ $t("有新公告") }}]
+                [{{ $t("有新群简介") }}]
               </span>
               <span style="color: #999999; font-size: 12px">
                 {{ item.sendUserName }}[{{ $t("群简介") }}]
