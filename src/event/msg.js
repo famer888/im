@@ -1658,7 +1658,6 @@ const fnAlertNotification = async (data, chatList) => {
                 name: info.name || info.nickName || info.channelName,
                 loginId,
             };
-            console.log('小窗口',params,'----',info)
             // console.log("alertNotification--", params)
             ipcRenderer.send("alertNotification", {
                 // windowId: remote.getCurrentWindow().getMediaSourceId(),
