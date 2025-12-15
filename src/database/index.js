@@ -859,7 +859,7 @@ export default class dbBase {
         let addData = await this.setDataList(data, type, tableName);
         if (!this.db || !this.db[tableName]) {
             this.addVision(tableName, async () => {
-                await this.db[tableName].bulkPut(addData);
+                await this.db[tableName].bulkPut(addData)
             });
         } else {
             this.db[tableName]
@@ -1051,7 +1051,8 @@ export default class dbBase {
             ) {
                 return [];
             }
-            let customMsgId = data.customMsgId || Content.customMsgId;
+            const sendTime = Content?.sendTime || data?.sendTime;
+            let customMsgId = data.customMsgId || Content.customMsgId || String(data.groupId || data.UserID) +String(sendTime).substring(sendTime.length - 5, sendTime.length);
             return [
                 {
                     ...data,
