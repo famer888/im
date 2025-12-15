@@ -102,6 +102,18 @@ export default {
     // 普通群成员默认群主信息
     this.hostInfo = memberInfoList.find((item) => item.type == 0);
   },
+  watch: {
+    // 防止超出限制
+    noticeText(val) {
+      if (val && val.length > 800) {
+        let limit = 800;
+        if (val.charCodeAt(limit - 1) >= 0xD800 && val.charCodeAt(limit - 1) <= 0xDBFF) {
+          limit = 799;
+        }
+        this.noticeText = val.slice(0, limit);
+      }
+    },
+  },
   methods: {
     /**
     * 取消
