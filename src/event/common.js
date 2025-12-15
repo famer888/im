@@ -603,7 +603,7 @@ const fnClientInfoGet = () => {
     sessionId,
     appVer,
     version: appVer,
-    packageCode: 1000,
+    packageCode: 6000,
     language: languageIndex + 1, // 默认简体中文
     // plat: process.platform === "darwin" ? 3 : 4,
     plat: 4,

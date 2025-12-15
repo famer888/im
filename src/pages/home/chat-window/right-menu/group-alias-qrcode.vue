@@ -1,16 +1,14 @@
 <template>
-  <div class="comGroupAliasQrcode" @click="$emit('showGroupQrCode')">
-    <h3>{{ $t("群别名") }}</h3>
-    <div>
-      <span @click.stop="copyTest('@' + chatContent.groupAliasName)">
+  <div class="comGroupAliasQrcode">
+    <h3 class="title">{{ $t("群别名") }}</h3>
+    <div class="info">
+      <span class="link" @click.stop="copyTest('@' + chatContent.groupAliasName)">
         @{{ chatContent.groupAliasName }}
       </span>
-      <img
-        class="code"
-        src="@/assets/images/chat/code.png"
-        @click="$emit('showGroupQrCode')"
-      />
-      <img class="arrow" src="@/assets/images/chat/arrow-rgiht.png" />
+      <div class="code-entrance" @click="$emit('showGroupQrCode')">
+        <img class="code-icon" src="@/assets/images/chat/code.png" />
+        <img class="more-icon" src="@/assets/images/channel/more.png" />
+      </div>
     </div>
   </div>
 </template>
@@ -28,46 +26,49 @@ export default {
   },
 };
 </script>
-<style scoped  lang="scss">
+<style scoped lang="scss">
 .comGroupAliasQrcode {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   width: 100%;
-  padding: 12px 10px;
+  padding: 8px 10px;
   box-sizing: border-box;
   border-bottom: 10px solid #f5f5f5;
-  cursor: pointer;
-  height: 65px;
 
-  > h3 {
+  .title {
     font-size: 14px;
     color: #000;
     margin: 0;
-    flex-shrink: 0;
   }
 
-  > div {
+  .info {
     display: flex;
     align-items: center;
+    justify-content: space-between;
+  }
 
-    > span {
-      font-size: 14px;
-      color: #178aff;
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-      width: 100%;
+  .link {
+    color: #178aff;
+    cursor: pointer;
+    word-wrap: break-word;
+    width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 
-      &:hover {
-        opacity: 0.8;
-      }
+    &:hover {
+      opacity: 0.8;
     }
+  }
 
-    .code {
-      width: 22px;
-      height: 22px;
-      margin-left: 8px;
+  .code-entrance {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+
+    .code-icon {
+      height: 18px;
+    }
+    .more-icon {
+      height: 20px;
     }
   }
 }
