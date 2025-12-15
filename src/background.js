@@ -1219,8 +1219,8 @@ app.on("before-quit", async (event) => {
     tray = null;
     // }
 });
-app.on("activate", (e) => {
-    if (!mainWindow.isVisible()) {
+app.on("activate", () => {
+    if (mainWindow && !mainWindow.isVisible()) {
         mainWindow.show();
     }
 });
