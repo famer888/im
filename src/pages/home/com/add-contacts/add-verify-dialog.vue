@@ -23,7 +23,12 @@ export default {
     watch: {
         verifyValue(v) {
             if(v.length > 20) {
-                this.verifyValue = v.slice(0, 20);
+                let val = v.slice(0, 20);
+                const lastCode = val.charCodeAt(val.length - 1);
+                if (lastCode >= 0xD800 && lastCode <= 0xDBFF) {
+                    val = val.slice(0, -1);
+                }
+                this.verifyValue = val;
             }
         }
     },

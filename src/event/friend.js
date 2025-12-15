@@ -228,22 +228,55 @@ async function fnUpdateFriend(friendData, loginId) {
   const data = {
     bfReadReceipt: friendInfo.bfReadReceipt,
     msgCancelTime: friendInfo.msgCancelTime,
-    lettet: friendInfo.letter,
+    letter: friendInfo.letter,
     identify: friendInfo.userInfo.identify,
     nickName: friendInfo.userInfo.nickName,
     id: friendId,
   };
+
+  // 尝试从 friendInfo 中获取 bfFriend
+  let bfFriend = undefined;
+
+  // 优先处理解除好友关系的操作，确保不被 friendRelation 中的旧数据覆盖
+  if (friendData.doType === 5) {
+    // 5: 解除好友关系 -> 明确非好友
+    bfFriend = false;
+  } else {
+    const friendRelation = _.get(friendInfo, "userInfo.friendRelation");
+    if (friendRelation && friendRelation.bfFriend !== undefined) {
+      bfFriend = friendRelation.bfFriend;
+    } else if ([0, 2, 4].includes(friendData.doType)) {
+      // 0: 同意加好友, 2: 阅后即焚, 4: 已读回执
+      // 这些操作隐含好友关系，如果没有字段，默认补全为 true
+      bfFriend = true;
+    }
+  }
+
+  if (bfFriend !== undefined) {
+    data.bfFriend = bfFriend;
+  }
+
   if (friendInfo.userInfo.icon) {
     data.pic = friendInfo.userInfo.icon;
   }
-  if (index !== -1) {
-    contactList[index] = {
-      ...contactList[index],
-      ...data,
-    };
+
+  if (bfFriend === false) {
+    // 如果明确不是好友，从列表中移除
+    if (index !== -1) {
+      contactList.splice(index, 1);
+    }
   } else {
-    contactList.push(data);
+    if (index !== -1) {
+      contactList[index] = {
+        ...contactList[index],
+        ...data,
+      };
+    } else if (bfFriend === true) {
+      // 只有明确是好友时才添加到列表
+      contactList.push(data);
+    }
   }
+
   // console.log(contactList, '----------->248')
   Cache(`${loginId}-ContactList`, contactList);
 }
@@ -368,6 +401,18 @@ const fnApiDataFormat = (friendList) => {
     }
     if (item.signature) {
       info.signature = item.signature;
+    }
+    // 增加非空判断，防止接口字段缺失导致误删好友
+    const friendRelation = _.get(item.userInfo, "friendRelation");
+    if (friendRelation) {
+      const bfFriend = _.get(friendRelation, "bfFriend");
+      if (bfFriend !== undefined) {
+        info.bfFriend = bfFriend;
+      }
+    } else {
+      if (item.userInfo) {
+        info.bfFriend = false;
+      }
     }
     return info;
   });
@@ -501,11 +546,9 @@ const fnFriendUpdate = ({ info, friends, chats }) => {
   const friendIndex = friends.findIndex((item) => item.id === info.id);
 
   if (friendIndex !== -1) {
-    const updateInfo = objectComparisonUpdate(friends[friendIndex], info);
-
-    if (updateInfo) {
-      // 信息被更新，则同步好友列表
-      friends[friendIndex] = updateInfo;
+    // 如果 bfFriend 为 false，则从好友列表中移除
+    if (info.bfFriend === false) {
+      friends.splice(friendIndex, 1);
       const { letters, letterIndexs, friendList } =
         fnFriendListFormat(friends);
 
@@ -515,13 +558,29 @@ const fnFriendUpdate = ({ info, friends, chats }) => {
         friendList,
       };
       Cache(`${loginId}-ContactList`, friendList);
+    } else {
+      const updateInfo = objectComparisonUpdate(friends[friendIndex], info);
 
-      // 判断免打扰是否有更新，更新免打扰id列表
-      eventCommon.fnDisturbInfoSync({
-        id: updateInfo.id,
-        type: "friend",
-        bfDisturb: Boolean(updateInfo.bfDisturb),
-      });
+      if (updateInfo) {
+        // 信息被更新，则同步好友列表
+        friends[friendIndex] = updateInfo;
+        const { letters, letterIndexs, friendList } =
+          fnFriendListFormat(friends);
+
+        dataNew.friendData = {
+          letters,
+          letterIndexs,
+          friendList,
+        };
+        Cache(`${loginId}-ContactList`, friendList);
+
+        // 判断免打扰是否有更新，更新免打扰id列表
+        eventCommon.fnDisturbInfoSync({
+          id: updateInfo.id,
+          type: "friend",
+          bfDisturb: Boolean(updateInfo.bfDisturb),
+        });
+      }
     }
   }
 
