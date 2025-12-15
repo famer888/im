@@ -109,7 +109,7 @@
   "群成员共{value}人": "Tổng số thành viên trong nhóm là {value} người",
   "知道了": "Tôi đã biết",
   "拖入您要发送的文件": "Kéo và thả tệp tin bạn muốn gửi",
-  "有新公告": "Có thông báo mới",
+  "有新群简介": "Giới thiệu nhóm mới",
   "清除成功": "Xóa thành công",
   "人": "Người",
   "当前网络异常，请检查网络设置": "Lỗi mạng, vui lòng kiểm tra cài đặt mạng",
@@ -204,7 +204,7 @@
   "完成": "Hoàn thành",
   "名称": "tên",
   "登录二维码获取失败!": "Không lấy được mã QR đăng nhập!",
-  "发布该公告会通知全部群成员，可能会对群成员造成打扰，确定发布？": "Nhập nội dung cần chuyển đổi vào đây Đăng thông báo này sẽ thông báo cho tất cả thành viên trong nhóm và có thể gây xáo trộn cho các thành viên trong nhóm?",
+  "发布该群简介会通知全部群成员，可能会对群成员造成打扰，确定发布？": "Phát hành giới thiệu nhóm này sẽ thông báo cho toàn bộ thành viên nhóm, có thể gây phiền phức cho thành viên nhóm, xác định phát hành?",
   "密钥异常，重新登录": "Key bị lỗi, đăng nhập lại",
   "加载中": "đang tải",
   "密钥异常，发送消息失败": "Chìa khóa không bình thường và tin nhắn không gửi được.",
@@ -242,6 +242,8 @@
   "加载中...": "Đang tải...",
   "没有更多了": "Không còn nữa",
   "所有者": "Trang chủ",
+  "发布新简介": "phát hành bản giới thiệu mới",
+  "确认发布": "xác nhận phát hành",
   "邀请成功": "Mời thành công",
   "用户昵称开启了入群需审核，对方同意后才会进入群聊": "đã bật phê duyệt tham gia nhóm. Họ sẽ vào nhóm sau khi được phê duyệt"
 }

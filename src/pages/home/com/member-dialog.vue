@@ -31,7 +31,7 @@
             @keyup.enter="handleEnter" />
           <span v-else class="info-text">{{
             depict === "" ? $t("什么都没写") : depict
-            }}</span>
+          }}</span>
           <picture v-if="!depictEdit && bfFriend" @click="handleDepictEdit">
             <img src="@/assets/images/message/edit-icon.png" />
           </picture>
@@ -75,7 +75,7 @@ export default {
   inject: {
     provideUpdateGroupMember: {
       from: "provideUpdateGroupMember",
-      default: () => () => {}
+      default: () => () => { }
     }
   },
   components: {
@@ -131,8 +131,9 @@ export default {
     this.depict = depict || "";
     this.oldName = this.name;
     this.oldDepict = this.depict;
-    this.bfFriend = bfFriend;
+    this.bfFriend = !!bfFriend;
     this.notShowAddButton = notShowAddButton || false;
+    this.memberDetail = { ...this.memberInfo };
 
     this.$nextTick(() => {
       let h2 = document.querySelector('.name-h2')
@@ -140,18 +141,23 @@ export default {
         this.maxWidth = h2.offsetWidth - 14
       }
     })
+
     // 如果明确不是好友则，不用拉取好友列表判断
     // if (bfFriend === false) {
     //   return;
     // }
+    // 如果bfFriend是undefined,则检查是否为好友
+    // if (bfFriend === undefined) {
+    // this.handCheckisFriend(loginId, id)
+    // }
+
+    // 始终检查缓存以纠正可能的错误状态
+    this.handCheckisFriend(loginId, id)
 
     // 如果是好友，好友信息 API 更新
     eventFriend.fnFriendDetailsGet(id, { channelId: this.channelId, groupId: this.groupId });
 
-    // 如果bfFriend是undefined,则检查是否为好友
-    // if (bfFriend === undefined) {
-      this.handCheckisFriend(loginId, id)
-    // }
+
 
   },
   beforeDestroy() {
@@ -162,15 +168,31 @@ export default {
       switch (operator) {
         case "friendUpdate": {
           if (info.id === this.memberInfo.id) {
+            if (info.bfFriend !== undefined) {
+              this.bfFriend = info.bfFriend;
+              // 状态不一致，更新
+              if (this.memberInfo.bfFriend !== this.bfFriend) {
+                this.provideUpdateGroupMember({ ...this.memberInfo, bfFriend: this.bfFriend })
+              }
+            }
             this.memberDetail = { ...info, addToken: info.addToken || this.memberInfo.addToken || '' };
           }
-          console.log("friendUpdate--", info, this.memberDetail,'this.memberInfo',this.memberInfo)
+          console.log("friendUpdate--", info, this.memberDetail, 'this.memberInfo', this.memberInfo)
         }
       }
     },
     showAddVerifyDialog() {
-      const msg = '我是' + this.loginInfo?.name || ''
-      this.verifyValue = msg.length > 20 ? msg.slice(0, 20) + '...' : msg;
+      const msg = '我是' + (this.loginInfo?.name || '')
+      if (msg.length > 20) {
+        let val = msg.slice(0, 20);
+        const lastCode = val.charCodeAt(val.length - 1);
+        if (lastCode >= 0xD800 && lastCode <= 0xDBFF) {
+          val = val.slice(0, -1);
+        }
+        this.verifyValue = val + '...';
+      } else {
+        this.verifyValue = msg;
+      }
       this.verifierVisble = true;
     },
     // 好友验证消息输入框确认回调
@@ -192,7 +214,7 @@ export default {
         op: 0,
         addToken: this.memberDetail.addToken
       }
-      console.log("contactsRelation--", pra)
+      console.log("contactsRelation", pra)
       contactsRelation(pra).then(res => {
         const { errCode } = res?.commonResult || {}
         if (errCode == 200) {
@@ -206,27 +228,37 @@ export default {
     },
     // 检查传进来群成员信息和自己是否为好友
     handCheckisFriend(loginId, id) {
+      if (!id) return;
       // 如果传进来的群成员和自己不是好友关系，获取好友列表再次确认
       Cache(`${loginId}-ContactList`).then((res) => {
         if (res) {
-          const info = res.find((item) => item.id === id);
-        if (info) {
-          this.name = info.name || info.nickName;
-          this.bfFriend = true;
-          if (!this.memberInfo.bfFriend) {
-            // 好友列表找到了该成员信息，但是传进来的群成员和自己的关系显示不明确，更新和群成员的关系
+          const info = res.find((item) => String(item.id) === String(id));
+          if (info) {
+            this.name = info.name || info.nickName;
+
+            // 缓存中存在该用户
+            if (info.bfFriend === false) {
+              // 明确标记为非好友
+              this.bfFriend = false;
+            } else {
+              // 存在于缓存中且未标记为false，默认为好友
+              // (兼容旧数据或无 bfFriend 字段但存在于联系人列表的情况)
+              this.bfFriend = true;
+            }
+
+            if (this.bfFriend !== !!this.memberInfo.bfFriend) {
+              if (typeof this.provideUpdateGroupMember === 'function') {
+                this.provideUpdateGroupMember({ ...this.memberInfo, bfFriend: this.bfFriend })
+              }
+            }
+          } else {
+            this.bfFriend = false;
             if (typeof this.provideUpdateGroupMember === 'function') {
-              this.provideUpdateGroupMember({ ...this.memberInfo, bfFriend: true })
+              this.provideUpdateGroupMember({ ...this.memberInfo, bfFriend: false })
             }
           }
-        } else {
-          this.bfFriend = false;
-          if (typeof this.provideUpdateGroupMember === 'function') {
-            this.provideUpdateGroupMember({ ...this.memberInfo, bfFriend: false })
-          }
         }
-        }
-      });
+      })
     },
     /**
      * 到好友聊天窗
