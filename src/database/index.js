@@ -638,7 +638,7 @@ export default class dbBase {
     /**
      * 获取消息列表
      */
-    async getMsgList({ id, type, sendTime, msgBlockList }) {
+    async getMsgList({ id, type, sendTime, msgBlockList }, retryCount = 0) {
         const tableName = handleTableNameGet(id, type);
 
         try {
@@ -710,7 +710,46 @@ export default class dbBase {
                 }
             }
         } catch (e) {
-            // console.error(e);
+            // 1. 优先检查版本号错误，需要升级数据库
+            if (
+                (e.name == "VersionError" || e.name == "DatabaseClosedError") &&
+                e.message && 
+                e.message.indexOf("is less than the existing version") !== -1
+            ) {
+                let visision = parseInt(
+                    e.message
+                        .split(
+                            "is less than the existing version ("
+                        )[1]
+                        .split(")")[0]
+                );
+                if (isNaN(visision)) {
+                    console.error("解析数据库版本失败", e.message);
+                    return null;
+                }
+                if (visision % 10 == 0) {
+                    visision = Math.floor(visision / 10);
+                }
+                Cache(
+                    `${this.userId}storageVersion`,
+                    visision + 1
+                );
+                await this.setTableVision();
+                if (retryCount < 5) {
+                    return await this.getMsgList({ id, type, sendTime, msgBlockList }, retryCount + 1);
+                }
+                return null;
+            } 
+            // 2. 如果不是版本错误，而是锁死或未知错误，则尝试重试
+            else if (retryCount < 3 && (e.name === 'DatabaseClosedError' || e.name === 'UnknownError')) {
+                console.log(`获取消息列表失败，尝试重试 (${retryCount + 1}/3)...`, e);
+                return new Promise((resolve) => {
+                    setTimeout(async () => {
+                        const res = await this.getMsgList({ id, type, sendTime, msgBlockList }, retryCount + 1);
+                        resolve(res);
+                    }, 300);
+                });
+            }
         }
 
         return null;
@@ -736,7 +775,7 @@ export default class dbBase {
     /**
      * 分页查询函数
      */
-    async getPaginatedEvents(tableName, pageNum, multiple) {
+    async getPaginatedEvents(tableName, pageNum, multiple, retryCount = 0) {
         try {
             // 计算偏移量
             const offset = (pageNum - 1) * pageSize;
@@ -750,7 +789,46 @@ export default class dbBase {
             events = this.msgListSort(events);
             return fnDbMsgListFormat(events, tableName.includes("group"));
         } catch (e) {
-            // console.log(e);
+            // 1. 优先检查版本号错误，需要升级数据库
+            if (
+                (e.name == "VersionError" || e.name == "DatabaseClosedError") &&
+                e.message && 
+                e.message.indexOf("is less than the existing version") !== -1
+            ) {
+                let visision = parseInt(
+                    e.message
+                        .split(
+                            "is less than the existing version ("
+                        )[1]
+                        .split(")")[0]
+                );
+                if (isNaN(visision)) {
+                    console.error("解析数据库版本失败", e.message);
+                    return [];
+                }
+                if (visision % 10 == 0) {
+                    visision = Math.floor(visision / 10);
+                }
+                Cache(
+                    `${this.userId}storageVersion`,
+                    visision + 1
+                );
+                await this.setTableVision();
+                if (retryCount < 5) {
+                    return await this.getPaginatedEvents(tableName, pageNum, multiple, retryCount + 1);
+                }
+                return [];
+            } 
+            // 2. 如果不是版本错误，而是锁死或未知错误，则尝试重试
+            else if (retryCount < 3 && (e.name === 'DatabaseClosedError' || e.name === 'UnknownError')) {
+                console.log(`分页查询失败，尝试重试 (${retryCount + 1}/3)...`, e);
+                return new Promise((resolve) => {
+                    setTimeout(async () => {
+                        const res = await this.getPaginatedEvents(tableName, pageNum, multiple, retryCount + 1);
+                        resolve(res);
+                    }, 300);
+                });
+            }
         }
 
         return [];
@@ -877,7 +955,7 @@ export default class dbBase {
     /**
      * 获取列表
      */
-    getTableList(tableName, pageNum = 1, pageSize = 20, msgId, isRead) {
+    getTableList(tableName, pageNum = 1, pageSize = 20, msgId, isRead, retryCount = 0) {
         return new Promise(async (reject) => {
             try {
                 if (!this.db[tableName]) return reject([]);
@@ -897,26 +975,13 @@ export default class dbBase {
                     return reject(list);
                 }
                 let nums = this.getLimit(pageSize, pageNum);
-                // let startTime = Date.now()
                 let methods = this.db[tableName]
-                    .orderBy("sendTime")
+                    .where("sendTime")
+                    .between(nums[0], nums[1], true, true)
                     .reverse()
                     .filter((item) => {
-                        let bol =
-                            item.Status != 2 &&
-                            item.sendTime &&
-                            (item.content ||
-                                item.text ||
-                                item.Content ||
-                                item.local);
+                        let bol = true;
                         if (msgId) {
-                            bol =
-                                item.MsgID * 1 >= msgId * 1 &&
-                                item.ChatType != 50 &&
-                                item.chatType != 50 &&
-                                item.msgType != 50;
-                        }
-                        if (nums[2]) {
                             bol = bol && item.sendTime * 1 < nums[2] * 1;
                         }
                         return bol;
@@ -933,11 +998,11 @@ export default class dbBase {
                     })
                     .catch(async (err) => {
                         try {
+                            // 1. 优先检查版本号错误，需要升级数据库
                             if (
-                                err.name == "DatabaseClosedError" &&
-                                err.message.split(
-                                    "is less than the existing version ("
-                                ).length
+                                (err.name == "VersionError" || err.name == "DatabaseClosedError") &&
+                                err.message && 
+                                err.message.indexOf("is less than the existing version") !== -1
                             ) {
                                 let visision = parseInt(
                                     err.message
@@ -946,6 +1011,11 @@ export default class dbBase {
                                         )[1]
                                         .split(")")[0]
                                 );
+                                if (isNaN(visision)) {
+                                    console.error("解析数据库版本失败", err.message);
+                                    reject([]);
+                                    return;
+                                }
                                 if (visision % 10 == 0) {
                                     visision = Math.floor(visision / 10);
                                 }
@@ -954,15 +1024,41 @@ export default class dbBase {
                                     visision + 1
                                 );
                                 await this.setTableVision();
-                                let list = await this.getTableList(
-                                    tableName,
-                                    pageNum,
-                                    pageSize,
-                                    msgId,
-                                    isRead
-                                );
-                                reject(list);
-                            } else {
+                                if (retryCount < 5) {
+                                    let list = await this.getTableList(
+                                        tableName,
+                                        pageNum,
+                                        pageSize,
+                                        msgId,
+                                        isRead,
+                                        retryCount + 1
+                                    );
+                                    reject(list);
+                                } else {
+                                    reject([]);
+                                }
+                            } 
+                            // 2. 如果不是版本错误，而是锁死或未知错误，则尝试重试
+                            else if (retryCount < 3 && (err.name === 'DatabaseClosedError' || err.name === 'UnknownError')) {
+                                console.log(`读取消息失败，尝试重试 (${retryCount + 1}/3)...`, err);
+                                setTimeout(async () => {
+                                    try {
+                                        const list = await this.getTableList(
+                                            tableName,
+                                            pageNum,
+                                            pageSize,
+                                            msgId,
+                                            isRead,
+                                            retryCount + 1
+                                        );
+                                        reject(list);
+                                    } catch (e) {
+                                        reject([]);
+                                    }
+                                }, 300);
+                            } 
+                            // 3. 其他错误，返回空
+                            else {
                                 reject([]);
                             }
                         } catch (error) {
@@ -1063,7 +1159,7 @@ export default class dbBase {
             ];
         }
     }
-    async setTableVision(cb, type) {
+    async setTableVision(cb, type, retryCount = 0) {
         let tables = this.localStorageName;
         this.version = (await this.getVersion()) || 1;
         if (this.version % 10 == 0) {
@@ -1081,42 +1177,49 @@ export default class dbBase {
         this.db.version(this.version).stores(tables);
 
         try {
-            this.db
-                .open()
-                .then((rt) => {
-                    cb && cb();
-                })
-                .catch(async (err) => {
-                    console.log("----数据库版本---报错", err);
-                    try {
-                        if (
-                            err.name == "VersionError" &&
-                            err.message.split(
-                                "is less than the existing version ("
-                            ).length
-                        ) {
-                            let visision = parseInt(
-                                err.message
-                                    .split(
-                                        "is less than the existing version ("
-                                    )[1]
-                                    .split(")")[0]
-                            );
-                            if (visision % 10 == 0) {
-                                visision = Math.floor(visision / 10);
-                            }
-                            await Cache(
-                                `${this.userId}storageVersion`,
-                                visision + 1
-                            );
-                            this.setTableVision();
-                        }
-                    } catch (error) {
-                        console.log(err);
-                    }
-                });
-        } catch (error) {
+            await this.db.open();
             cb && cb();
+        } catch (err) {
+            console.log("----数据库版本---报错", err);
+            try {
+                if (
+                    err.name == "VersionError" &&
+                    err.message && 
+                    err.message.indexOf("is less than the existing version") !== -1
+                ) {
+                    let visision = parseInt(
+                        err.message
+                            .split(
+                                "is less than the existing version ("
+                            )[1]
+                            .split(")")[0]
+                    );
+                    if (isNaN(visision)) {
+                        console.error("解析数据库版本失败", err.message);
+                        return;
+                    }
+                    if (visision % 10 == 0) {
+                        visision = Math.floor(visision / 10);
+                    }
+                    await Cache(
+                        `${this.userId}storageVersion`,
+                        visision + 1
+                    );
+                    if (retryCount < 5) {
+                        await this.setTableVision(cb, type, retryCount + 1);
+                    } else {
+                        console.error("数据库版本升级重试次数过多，停止重试");
+                    }
+                } else {
+                    if (retryCount < 3) {
+                        console.log(`数据库打开失败，尝试重试 (${retryCount + 1}/3)...`, err);
+                        await new Promise((resolve) => setTimeout(resolve, 300));
+                        await this.setTableVision(cb, type, retryCount + 1);
+                    }
+                }
+            } catch (error) {
+                console.log(error);
+            }
         }
         Cache(`${this.userId}` + "localStorageName", tables);
     }
