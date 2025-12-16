@@ -58,6 +58,7 @@ import { initUserCachePath, Cache } from "@/cache";
 import { QueryArchiveReq } from "@/api/imBase";
 import { importDB } from "@/utils/cacheDB.js";
 import { getContactsList } from "@/api/imContacation";
+import { getGroupContactList } from "@/api/imGroup";
 import { chatGroupDataFormat, chatFriendDataFormat } from "@/utils/base";
 import { fnKeyObjsInit, fnUpdateOwnKey } from "@/utils/encryption-decryption";
 
@@ -91,6 +92,11 @@ export default {
       letters: [],
       letterIndexs: [],
       friendList: [],
+      groupList: [],
+      groupListPageCount: 0,
+      groupListPageReqList: [],
+      groupListPageReqCompleteList: [],
+      groupFetchId: 0,
       unreadObj: {},
       left: 0,
       tipsVisibleImport: false,
@@ -348,6 +354,101 @@ export default {
       });
     },
     /**
+     * 同步群列表
+     */
+    handleGroups(pageNum = 1, fetchId = 0) {
+      const pageSize = 200;
+
+      if (pageNum === 1) {
+        this.groupList = [];
+        this.groupListPageReqCompleteList = [];
+        this.groupListPageReqList = [];
+        this.groupListPageCount = 0;
+        
+        // 生成新的请求ID，用于防止并发请求冲突
+        const newFetchId = Date.now();
+        this.groupFetchId = newFetchId;
+        fetchId = newFetchId;
+      } else {
+        // 非第一页时，必须匹配当前的fetchId，否则视为过期请求
+        if (fetchId !== this.groupFetchId) {
+          return;
+        }
+      }
+
+      getGroupContactList(
+        {
+          pageNum,
+          pageSize,
+        },
+        () => {
+          setTimeout(() => {
+            // 重试前检查ID是否有效
+            if (fetchId === this.groupFetchId) {
+              this.handleGroups(pageNum, fetchId);
+            }
+          }, 2000);
+        }
+      ).then((res) => {
+        // 响应回来后检查ID是否有效
+        if (fetchId !== this.groupFetchId) {
+          return;
+        }
+        let groups = [];
+        if (res && res.groups) {
+          groups = eventGroup.fnGroupDataFormat(res.groups);
+        }
+
+        if (groups.length > 0) {
+          // 数据去重
+          const existingIds = new Set(this.groupList.map((item) => item.id));
+          const newGroups = groups.filter((item) => !existingIds.has(item.id));
+          if (newGroups.length > 0) {
+            this.groupList.push(...newGroups);
+          }
+        }
+
+        const processNext = () => {
+          if (
+            this.groupListPageReqCompleteList.length >= this.groupListPageCount
+          ) {
+            Cache(`${loginId}-GroupList`, this.groupList);
+          } else if (this.groupListPageReqList.length > 0) {
+            const pageNumNew = this.groupListPageReqList[0];
+            this.groupListPageReqList = this.groupListPageReqList.slice(1);
+            this.handleGroups(pageNumNew, fetchId);
+          }
+        };
+
+        if (pageNum === 1) {
+          // 记录总数
+          const count = res && res.groupCount ? res.groupCount : 0;
+          this.groupListPageCount = Math.ceil(count / pageSize);
+
+          if (groups.length >= count && count > 0) {
+            this.groupListPageCount = 1;
+          }
+
+          if (this.groupListPageCount <= 1) {
+            Cache(`${loginId}-GroupList`, this.groupList);
+            return;
+          } else {
+            this.groupListPageReqList = Array.from(
+              { length: this.groupListPageCount - 1 },
+              (_$, index) => index + 2
+            );
+            this.groupListPageReqCompleteList.push(1);
+
+            // 并发控制：每次取1个
+            processNext();
+          }
+        } else {
+          this.groupListPageReqCompleteList.push(pageNum);
+          processNext();
+        }
+      });
+    },
+    /**
      * 初始化好友备注数据
      */
     async handleFriendRemarks() {
@@ -403,6 +504,7 @@ export default {
           // 清空旧的群列表
           Cache(`${loginId}-GroupList`, []);
           this.handleFriends();
+          this.handleGroups();
           this.handleChatsGet();
         }, 10);
       }
