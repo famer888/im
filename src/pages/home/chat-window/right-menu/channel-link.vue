@@ -5,7 +5,7 @@
       <a class="link" @click="copyTest(chatContent?.alias)">{{chatContent?.alias ? `@${chatContent?.alias}` : ""}}</a>
       <div class="code-entrance" @click="$emit('showQrCode')">
         <img class="code-icon" src="@/assets/images/chat/code.png" />
-        <img class="more-icon" src="@/assets/images/channel/more.png" />
+        <img class="more-icon" src="@/assets/images/chat/arrow-rgiht.png" />
       </div>
     </div>
   </div>
@@ -33,23 +33,26 @@ export default {
   width: 100%;
   padding: 8px 10px;
   box-sizing: border-box;
-
+  display: flex;
+  align-items: center;
+  height: 55px;
   .title {
     font-size: 14px;
     color: #000;
+    flex: 1;
   }
   .info {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    flex-shrink: 0;
   }
 
   .link {
     color: #178aff;
     cursor: pointer;
     word-wrap: break-word;
-    width: 200px;
     white-space: nowrap;
+    max-width: 200px;
     overflow: hidden;
     text-overflow: ellipsis;
   }
@@ -60,10 +63,12 @@ export default {
     cursor: pointer;
 
     .code-icon {
-      height: 18px;
+      width: 22px;
+      height: 22px;
+      margin-left: 8px;
     }
     .more-icon {
-      height: 20px;
+      height: 22px;
     }
   }
 }
