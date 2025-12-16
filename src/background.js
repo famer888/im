@@ -1220,7 +1220,7 @@ app.on("before-quit", async (event) => {
     // }
 });
 app.on("activate", () => {
-    if (mainWindow && !mainWindow.isVisible()) {
+    if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.isVisible()) {
         mainWindow.show();
     }
 });
