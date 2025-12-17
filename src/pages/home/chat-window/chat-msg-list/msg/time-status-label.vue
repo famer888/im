@@ -34,11 +34,15 @@ import { formatTimeStamp } from "@/utils/base";
 // 事件
 import eventBase from "@/event/base";
 import eventMsg from "@/event/msg";
+import benchmark from "@/debuggers/benchmark";
 
 export default {
   components: { ComLoading },
   props: ["msgInfo", "chatContent"],
   mounted() {
+    // benchmark: 记录消息渲染
+    benchmark.onMsgRender(this.msgInfo);
+
     // 如果信息发送中，添加对应处理超时的列表
     if (this.msgInfo.readStatus === -1) {
       eventMsg.fnSendingInfoListAdd({
@@ -109,6 +113,20 @@ export default {
       }, 100);
     },
   },
+  watch: {
+    'msgInfo.readStatus': {
+      handler(newVal) {
+        if (!this.msgInfo.isSelf || !this.msgInfo.customMsgId) return
+        // benchmark: 根据 readStatus 标记渲染状态
+        if (newVal === 0) {
+          benchmark.markRenderFailed(this.msgInfo.customMsgId, this.msgInfo.MsgID)
+        } else if (newVal === 1 || newVal === 2) {
+          benchmark.markRenderSuccess(this.msgInfo.customMsgId, this.msgInfo.MsgID)
+        }
+      },
+      immediate: true,
+    },
+  }
 };
 </script>
 <style scoped lang="scss">

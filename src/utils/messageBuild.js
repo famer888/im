@@ -6,6 +6,7 @@ import { strIsSafe } from "@/utils/base";
 
 // 事件
 import eventCommon from "@/event/common";
+import benchmark from "@/debuggers/benchmark";
 
 export const sendMessage = async (params, flag) => {
     const loginInfo = eventCommon.fnCommonInfoRU({
@@ -56,6 +57,8 @@ setInterval(() => {
         sendMessageList = sendMessageList.filter((_, index) => index !== 0);
         if (info && info.text) {
             if (!strIsSafe(info.text)) {
+                // benchmark: 安全检查失败
+                benchmark.markFailed(flag, 'strIsSafe');
                 return;
             }
         }
@@ -70,6 +73,9 @@ setInterval(() => {
                 if (res) {
                     // console.log("CReqSendChatGroup--", res)
                     CReqSendChatGroup(res, flag);
+                } else {
+                    // benchmark: 消息参数格式化失败（群）
+                    benchmark.markFailed(flag, 'fnFormartMsgParams_group');
                 }
             });
         } else if(info.channelId) {
@@ -82,6 +88,9 @@ setInterval(() => {
                 if (res) {
                     console.log("CReqSendChatChannel--", res, flag)
                     CReqSendChatChannel(res, Number(flag));
+                } else {
+                    // benchmark: 消息参数格式化失败（频道）
+                    benchmark.markFailed(flag, 'fnFormartMsgParams_channel');
                 }
             });
         } else {
@@ -94,6 +103,9 @@ setInterval(() => {
                 if (res) {
                     // console.log("CReqChatSendPrivate--", res)
                     CReqChatSendPrivate(res, flag);
+                } else {
+                    // benchmark: 消息参数格式化失败（私聊）
+                    benchmark.markFailed(flag, 'fnFormartMsgParams_friend');
                 }
             });
         }

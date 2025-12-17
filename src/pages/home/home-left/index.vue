@@ -127,6 +127,7 @@ import eventChannel from "@/event/channel";
 import eventChat from "@/event/chat";
 import eventMsg from "@/event/msg";
 import { _ } from "core-js";
+import { isBatchMode } from "@/utils/batchRenderer";
 
 // 聊天窗口置顶数量
 let chatTopSize = 0;
@@ -300,9 +301,19 @@ export default {
     },
     /**
      * 处理事件
+     * @param {Object|Array} info - 消息数据，批量模式下为数组
+     * @param {string} operator - 事件类型
+     * @param {string} operatorType - 操作子类型，批量模式下为 BATCH_MODE
      */
     eventHandling(info, operator, operatorType) {
     //   console.log({ info, operator, operatorType }, "homeLeft --------> 220");
+
+      // 批量模式处理
+      if (isBatchMode(operatorType, info)) {
+        this.handleBatchEvent(info, operator);
+        return;
+      }
+
       if (!info) {
         return;
       }
@@ -462,6 +473,144 @@ export default {
           }
           break;
         default:
+      }
+    },
+    /**
+     * 批量事件处理
+     * @param {Array} messages - 消息数组 [{ data, operatorType, timestamp }]
+     * @param {string} operator - 事件类型
+     */
+    handleBatchEvent(messages, operator) {
+      if (messages.length === 0) return;
+
+      switch (operator) {
+        case "msgNew":
+          this.handleBatchMsgNew(messages);
+          break;
+        case "msgListPropertyUpdate":
+          this.handleBatchMsgPropertyUpdate(messages);
+          break;
+        default:
+          // 未知的批量事件，逐条处理
+          messages.forEach((msg) => {
+            this.eventHandling(msg.data, operator, msg.operatorType);
+          });
+      }
+    },
+    /**
+     * 批量处理新消息 - 更新会话列表
+     * @param {Array} messages - 消息数组
+     */
+    async handleBatchMsgNew(messages) {
+      if (messages.length === 0) return;
+
+      // 过滤掉需要跳过的消息
+      const validMessages = messages.filter((msg) => {
+        const info = msg.data;
+        // 跳过禁言状态的通知消息
+        if (info.messageProtocolId) return false;
+        return true;
+      });
+
+      if (validMessages.length === 0) return;
+
+      // 处理全员禁言消息
+      for (const msg of validMessages) {
+        if (msg.operatorType === "groupShutupAll") {
+          await this.eventHandgroupShutupAll(msg.data);
+        }
+      }
+
+      // 收集所有需要更新的信息，然后批量更新
+      let chats = this.chats;
+      let channels = this.channels;
+      let groups = this.groups;
+      let unreadObj = this.unreadObj;
+      let needNotify = null; // 最后一条需要通知的消息
+
+      for (const msg of validMessages) {
+        const info = msg.data;
+        const updateInfos = await eventChat.fnChatWindowUpdate(
+          {
+            updateInfo: info,
+            chats,
+            channels,
+            groups,
+            friendList: this.friendList,
+            unreadObj,
+          },
+          msg.operatorType
+        );
+
+        if (updateInfos.chatList) {
+          chats = updateInfos.chatList;
+          chatTopSize = updateInfos.chatTopSize;
+          needNotify = info;
+        }
+
+        if (updateInfos.unreadObj) {
+          unreadObj = updateInfos.unreadObj;
+        }
+      }
+
+      // 一次性更新状态
+      if (chats !== this.chats) {
+        this.chats = _.cloneDeep(chats);
+      }
+
+      if (unreadObj !== this.unreadObj) {
+        this.unreadObj = unreadObj;
+      }
+
+      // 只对最后一条消息发通知
+      if (needNotify) {
+        eventMsg.fnAlertNotification(needNotify, this.chats);
+      }
+
+      // 如果当前会话在批量消息中，更新当前会话的未读
+      if (this.infoActive) {
+        const activeKey = this.infoActive.id + this.infoActive.type;
+        const hasActiveUpdate = validMessages.some(
+          (msg) => msg.data.id + msg.data.type === activeKey
+        );
+        if (hasActiveUpdate && this.unreadObj[activeKey]) {
+          eventBase.fnCommunicationSendMsg({
+            operator: "activeChange",
+            data: {
+              ...this.infoActive,
+              unreadObj: this.unreadObj[activeKey],
+            },
+          });
+        }
+      }
+    },
+    /**
+     * 批量处理消息状态更新
+     * @param {Array} messages - 消息数组
+     */
+    handleBatchMsgPropertyUpdate(messages) {
+      if (messages.length === 0) return;
+
+      const chats = _.cloneDeep(this.chats);
+      let hasUpdate = false;
+
+      for (const msg of messages) {
+        const info = msg.data;
+        for (let i = 0; i < chats.length; i++) {
+          if (chats[i].id == info.id) {
+            chats[i].readStatus = info.readStatus;
+            hasUpdate = true;
+            break;
+          }
+        }
+      }
+
+      if (hasUpdate) {
+        this.chats = chats;
+        Cache(
+          `${loginId}MessageGroupList`,
+          chats.filter((item) => item.type === "group")
+        );
       }
     },
     // 设置消息列表的频道静音状态

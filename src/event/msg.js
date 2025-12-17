@@ -35,7 +35,7 @@ import eventChannel from "./channel";
 /**
  * 消息 添加
  */
-const fnMsgAdd = async ({ msg, contentStr, fileKey, type }) => {
+export const fnMsgAdd = async ({ msg, contentStr, fileKey, type }) => {
     const msgId = Number(msg.msgId)
     // console.log(`fnMsgAdd-1-msgId:${msgId}`)
     // console.log("fnMsgAdd--", { msg, contentStr, fileKey, type })

@@ -51,7 +51,7 @@
   </div>
 </template>
 <script>
-import BDBase from "@/database";
+import BDBase from "@/database/queue";
 import { initUserCachePath, Cache } from "@/cache";
 
 // 工具
@@ -364,7 +364,7 @@ export default {
         this.groupListPageReqCompleteList = [];
         this.groupListPageReqList = [];
         this.groupListPageCount = 0;
-        
+
         // 生成新的请求ID，用于防止并发请求冲突
         const newFetchId = Date.now();
         this.groupFetchId = newFetchId;

@@ -5,6 +5,7 @@ import md5 from "js-md5";
 
 // 事件
 import eventCommon from "@/event/common";
+import benchmark from "@/debuggers/benchmark";
 
 // api
 import { GetKeyPair, UpdateKeyPair } from "@/api/imBase";
@@ -970,6 +971,8 @@ export const fnFormartMsgParams = async ({ data, customMsgId, id, type }) => {
             // 如果群密钥没获取到，则直接结束
             if (!relKey) {
                 window.$toast(i18n.t("密钥异常，发送消息失败"));
+                // benchmark: 群密钥获取失败
+                benchmark.markFailed(customMsgId, 'fnGroupRelKeyGet');
                 return;
             }
 
@@ -1009,6 +1012,8 @@ export const fnFormartMsgParams = async ({ data, customMsgId, id, type }) => {
             if (!data) {
                 console.log(2);
                 window.$toast(i18n.t("密钥异常，发送消息失败"));
+                // benchmark: 私聊密钥获取失败
+                benchmark.markFailed(customMsgId, 'fnFriendRelKeyGet');
                 return;
             }
 
@@ -1017,6 +1022,8 @@ export const fnFormartMsgParams = async ({ data, customMsgId, id, type }) => {
             // 如果群密钥没获取到，则直接结束
             if (!app && !pc && id !== 10002) {
                 window.$toast(i18n.t("密钥异常，发送消息失败"));
+                // benchmark: app和pc密钥都为空
+                benchmark.markFailed(customMsgId, 'noAppAndPcKey');
                 return;
             }
 

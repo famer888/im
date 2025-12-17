@@ -9,6 +9,7 @@ import {
     Menu,
     nativeImage as NativeImage,
     powerMonitor,
+    powerSaveBlocker,
     protocol,
     session,
     shell,
@@ -86,6 +87,7 @@ let imagesCacheDir = `${userData}/images`;
 let voicesCacheDir = `${userData}/voices`;
 let mainWindowIsFocused = true;
 let downTimers = {};
+let powerBlockerId = null; // 电源阻止器ID
 
 ipcMain.handle("get-user-data-path", () => {
     return userData;
@@ -582,7 +584,7 @@ const sendMain = (channel, data, targetWindow = null) => {
   // 优先使用传入的目标窗口
   if (targetWindow && targetWindow instanceof BrowserWindow && !targetWindow.isDestroyed()) {
     win = targetWindow;
-  } 
+  }
   // 否则，尝试使用 mainWindow
   else if (mainWindow && !mainWindow.isDestroyed()) {
     win = mainWindow;
@@ -625,6 +627,7 @@ const setMainWin = async () => {
         nodeIntegrationInWorker: true,
         webviewTag: true,
         allowRunningInsecureContent: true,
+        backgroundThrottling: false, // 禁用渲染器节流，即使窗口在后台也保持正常运行
         // session: ses,
         // partition,
         // 如果想打包之后的版本，不能打开调试控制台，请取消下面的注释
@@ -797,8 +800,8 @@ const handleFileDownload = (args) => {
         timeout, // 超时时长毫秒
     } = args;
     const url = trendsFileUrl || fileUrl;
-    
-    
+
+
     // 处理下载超时
     if(timeout) {
         const timerName = `${groupId || channelId || userId }_${msgId}`
@@ -935,7 +938,7 @@ const createMainWindow = async () => {
             event.returnValue = args;
             return;
         }
-        
+
         try {
             const clipboardEx = require("electron-clipboard-ex");
             // only support windows and mac
@@ -960,7 +963,7 @@ const createMainWindow = async () => {
         } catch (error) {
             console.log(error)
         }
-        
+
 
         args.hasFile = args.files && args.files.length > 0;
 
@@ -1046,7 +1049,7 @@ const createMainWindow = async () => {
     ipcMain.on("alertNotification", (event, args) => {
         // console.log('alertNotification-1-', mainWindow.isMinimized(), !mainWindowIsFocused)
         if (
-            mainWindow.isMinimized() 
+            mainWindow.isMinimized()
             // || !mainWindowIsFocused
         ) {
                   console.log('alertNotification-2-')
@@ -1147,6 +1150,11 @@ function registerLocalResourceProtocol(ses) {
 app.on("ready", () => {
     createMainWindow();
 
+    // 启用电源阻止器，防止系统进入睡眠状态
+    // 'prevent-app-suspension' - 阻止应用挂起，保持CPU运行
+    // 'prevent-display-sleep' - 阻止显示器睡眠
+    powerBlockerId = powerSaveBlocker.start('prevent-app-suspension');
+
     screenshots = new Screenshots();
     globalShortcut.register("ctrl+shift+a", () => {
         isMainWindowFocusedWhenStartScreenshot = mainWindow.isFocused();
@@ -1207,6 +1215,11 @@ app.on("before-quit", async (event) => {
                 (id) => id !== windows[0].getMediaSourceId()
             ),
         });
+    }
+
+    // 停止电源阻止器
+    if (powerBlockerId !== null && powerSaveBlocker.isStarted(powerBlockerId)) {
+        powerSaveBlocker.stop(powerBlockerId);
     }
 
     // Fix issues #14

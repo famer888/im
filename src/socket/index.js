@@ -6,6 +6,7 @@ import { CReqChatLogin, SYS_HEARTBEAT } from "./api/login";
 // 工具
 import { sendErrToSentry } from "@/utils/sentry";
 import { getNewNormalDomain } from "@/utils/trendsDomain";
+import { benchmark } from "@/debuggers";
 
 // 事件
 import { eventWsReceivedMsg } from "@/event";
@@ -147,6 +148,9 @@ export const webSocketSend = (value) => {
 
  const reconnect = () => {
     if (isContact) {
+        // benchmark: 记录重连次数
+        benchmark.recordReconnect();
+
         const networkStatusType = eventCommon.fnNetworkStatusTypeRU();
         if (networkStatusType !== "networkAnomaly" && !timerLoginoutTip) {
             timerLoginoutTip = setTimeout(() => {
