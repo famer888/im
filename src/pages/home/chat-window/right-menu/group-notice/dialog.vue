@@ -11,7 +11,7 @@
             (editUser && editUser.nickName) || (hostInfo && hostInfo.nickName)
           }}
         </h2>
-        <span v-if="loginIsHost" :class="{
+        <span v-if="loginIsHost || showBadge" :class="{
           groupOwner: chatContent.groupNotice.editUser && chatContent.groupNotice.editUser.type == 0,
           isAdmin: chatContent.groupNotice.editUser && chatContent.groupNotice.editUser.type == 1,
         }">
@@ -76,6 +76,7 @@ export default {
       noticeTextCopy: "", // 公告字符串副本
       bfAll: false, // 群简介是否通知所有人
       isEdit: false, // 是否是编辑状态
+      showBadge: false,
     };
   },
   inject: ["provideMemberList", "provideSetTopNotice"],
@@ -93,7 +94,6 @@ export default {
       this.noticeTextCopy = _.get(this.chatContent, "groupNotice.notice") || "";
       this.handleSetNoticeBaseInfo(memberInfoList);
     }
-
     // at名称列表
     this.atNameList = memberInfoList
       .filter((item) => item.name || item.nickName)
@@ -101,6 +101,7 @@ export default {
 
     // 普通群成员默认群主信息
     this.hostInfo = memberInfoList.find((item) => item.type == 0);
+    this.getShowBadge(memberInfoList);
   },
   watch: {
     // 防止超出限制
@@ -115,6 +116,11 @@ export default {
     },
   },
   methods: {
+    getShowBadge(memberInfoList) {
+      const uid = this.editUser?.uid || _.get(this.chatContent, "groupNotice.editUser.user.uid");
+      const userType = memberInfoList.find(x => x.id === Number(uid))?.type;
+      this.showBadge = userType === 0 || userType === 1;
+    },
     /**
     * 取消
     */
@@ -137,13 +143,11 @@ export default {
             (item) => item.id == loginId && item.type < 2
           );
         }
-
         // 设置公告编辑者信息
         this.editUser = editUser;
 
         // 登录信息是否为群主,或者是否为管理员，并且具有发布群简介的权限
         this.loginIsHost = this.chatContent.hostId === loginId || (this.chatContent.memberType < 2 && this.chatContent.bfPushNotice);
-
       } else {
         // 没有公告信息，则获取当前登入者信息，并判断他是群主还是管理员，只有这两个身份才可以设置b编辑者信息
         this.editUser = memberInfoList.find(

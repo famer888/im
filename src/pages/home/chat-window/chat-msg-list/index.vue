@@ -1004,9 +1004,9 @@ export default {
               showTime,
             };
           }
-
           // 如果存在则替换
-          const existingIndex = blockInfoLast.list.findIndex(item => item.MsgID == infoNew.MsgID);
+          const existingIndex = blockInfoLast.list.findIndex(item => `${item.customMsgId}-${item.MsgID}` == `${infoNew.customMsgId}-${infoNew.MsgID}`);
+          // const existingIndex = blockInfoLast.list.findIndex(item => item.MsgID == infoNew.MsgID);
           if (existingIndex > -1) {
             blockInfoLast.list[existingIndex] = infoNew;
           }
