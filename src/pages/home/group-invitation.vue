@@ -113,6 +113,7 @@ export default {
 
     handleUpdateList() {
       getGroupReqList({ pageNum: this.pageNum, pageSize: 100 }).then((res) => {
+        console.log('getGroupReqList--',res)
         if (res && res.groupReqs) {
           let groupInfoList = [];
           res.groupReqs.forEach((item) => {
