@@ -13,11 +13,11 @@
           class="textAvatar"
           :color="item.logoColor"
           :value="item.channelName"
-          :id="item.id"
+          :id="item.channelId"
           width="40px"
           height="40px"
         />
-        <ComImage v-else :src="item.icon" type="icon" />
+        <ComImage v-else :src="item.icon" type="channel" />
         <div class="top-info">
           <h2>{{ item.channelName }}</h2>
           <span class="time"> · {{ chatTime(item.sendTime) }}</span>
@@ -222,6 +222,7 @@ export default {
           pageNum: this.pageNum,
           pageSize: this.pageSize,
         });
+        console.log('getChannelEventList--',res)
         if (res && res.data && res.data.rowList) {
           // 格式化数据
           const newList = res.data.rowList.map(item => ({
