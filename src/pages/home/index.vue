@@ -353,7 +353,7 @@ export default {
           const loginId = eventCommon.fnCommonInfoRU({
             getId: "loginId",
           });
-          const channel = (await Cache(`${loginId}MessageChannelList`)).find((item) => item.id === Number(info.channelId));
+          const channel = (await Cache(`${loginId}MessageChannelList`))?.find((item) => item.id === Number(info.channelId));
           if (channel) {
             eventBase.fnCommunicationSendMsg({
               operator: "channelDetailCache",

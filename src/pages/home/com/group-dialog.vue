@@ -514,7 +514,7 @@ export default {
       font-size: 12px;
       color: #999;
       line-height: 18px;
-      max-height: 90px;
+      max-height: 100px;
       overflow: hidden;
       text-overflow: ellipsis;
       display: -webkit-box;
@@ -524,8 +524,8 @@ export default {
       word-break: break-all;
 
       &.expanded {
-        height: 144px;
-        max-height: 144px;
+        height: 155px;
+        max-height: 155px;
         overflow-y: auto;
         display: block;
         -webkit-line-clamp: unset;
