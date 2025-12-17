@@ -666,7 +666,7 @@ export default {
     async handleMemberDialogShow(info) {
       let friendList = await this.handleFriendList();
 
-      let friend = friendList.find((item) => item.id == info.id);
+      let friend = Array.isArray(friendList) ? friendList.find((item) => item.id == info.id) : null;
       let values = {
         ...info,
         bfFriend: !!friend,
