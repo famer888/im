@@ -11,6 +11,7 @@ import { getChannelDetail } from "@/api/imChannel";
 // 事件
 import eventCommon from "./common";
 import eventBase from "./base";
+import sharePromise from "@/utils/sharePromise";
 
 /**
  * 聊天列表排序
@@ -123,8 +124,7 @@ const fnChatWindowUpdate = async (info) => {
         if (updateInfo.type === "channel") {
             chatInfo = channels.find((item) => item.channelId === updateInfo.id);
             if (!chatInfo?.channelId || !chatInfo?.channelName) {
-                const res = await getChannelDetail({ channelId: updateInfo.id });
-                // console.log("chatInfo-2-", res)
+                const res = await sharePromise({ tag: `channel-update-${updateInfo.id}`, method: getChannelDetail }, { channelId: updateInfo.id })
                 chatInfo = res?.data || {};
             }
         }
