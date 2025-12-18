@@ -311,10 +311,12 @@ const fnSocketMessage = (arrayBuffer) => {
             // 群消息已读用户
             const { receiptMessage = [] } = data || {};
             eventMsg.fnGroupMsgReadRecord(receiptMessage)
+            break;
         }
         case 4204: {
             const { latestChannelEventMessage = {} } = data || {};
             eventChannel.handleChannelEvents(latestChannelEventMessage);
+            break;
         }
         case 4206: {
             const { msgTime } = data.latestChannelEventMessage|| {};
@@ -324,6 +326,7 @@ const fnSocketMessage = (arrayBuffer) => {
                 return;
             };
             eventMsg.fnChannelMsgReadUpdate(data.channelId, data.readChannelMessages)
+            break;
         }
 
         default:

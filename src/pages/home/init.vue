@@ -495,6 +495,12 @@ export default {
         // 已经初始化过，直接完成初始化
         this.text = this.$t("完成");
         this.$emit("loaded");
+        // 后台更新数据
+        setTimeout(() => {
+          this.handleFriends();
+          this.handleGroups();
+          this.handleChatsGet();
+        }, 1000);
       } else {
         // 更新数据
         this.isLoad = true;

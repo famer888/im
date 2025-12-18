@@ -944,10 +944,38 @@ export default {
           chats.filter((item) => item.type === "friend")
         );
 
-         Cache(
+        Cache(
           `${loginId}MessageChannelList`,
           chats.filter((item) => item.type === "channel")
         );
+
+        // 清除通讯录列表
+        if (type === "group") {
+          this.groups = this.groups.filter((item) => item.id != id);
+          Cache(`${loginId}-GroupList`, this.groups);
+        } else if (type === "friend") {
+          const friendList = this.friendList.filter((item) => item.id != id);
+          if (friendList.length !== this.friendList.length) {
+            const { letters, letterIndexs, friendList: newFriendList } =
+              eventFriend.fnFriendListFormat(friendList);
+            this.letters = letters;
+            this.letterIndexs = letterIndexs;
+            this.friendList = newFriendList;
+            Cache(`${loginId}-ContactList`, this.friendList);
+          }
+        } else if (type === "channel") {
+          this.channels = this.channels.filter(
+            (item) => (item.channelId || item.id) != id
+          );
+          Cache(`${loginId}-ChannelList`).then((list) => {
+            if (list && list.length) {
+              const newList = list.filter(
+                (item) => (item.channelId || item.id) != id
+              );
+              Cache(`${loginId}-ChannelList`, newList);
+            }
+          });
+        }
 
         // 清除当前聊天框消息列表的数据
         eventMsg.fnMsgDelete({ info: { id, type, idsDelete: [] } });

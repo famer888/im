@@ -209,6 +209,8 @@ const fnRnGroupEvent = async (data, isGroupInitEvent) => {
                         msgId: [Number(item.commonMsgDto.msgId)],
                     });
                 });
+                // 立即执行初始化
+                fnRunInit();
                 return;
             }
         }
@@ -242,9 +244,7 @@ const fnRnGroupEvent = async (data, isGroupInitEvent) => {
                 }
                 if (
                     !groupEventExecIdObj[groupId + "broadcast"] &&
-                    !groupEventExecIdObj[groupId + "unicast"] &&
-                    msgId > 1 &&
-                    !isHas
+                    !groupEventExecIdObj[groupId + "unicast"]
                 ) {
                     // 收到群事件，但是发现丢失创群事件，则把当前所有群事件都丢弃，直接进入初始化流程
                     const isInit = await fnCheckGroupMemberList(groupId);
@@ -252,6 +252,18 @@ const fnRnGroupEvent = async (data, isGroupInitEvent) => {
                     if (!isInit) {
                         // 如果群成员列表不存在，则把当前所有群事件都丢弃，直接进入初始化流程
                         if (!groupInitDetailsGetList.includes(groupId)) {
+                            // 将当前触发初始化的消息保存到事件队列中，以便初始化完成后重放（避免消息丢失）
+                            // 构造符合格式的消息对象
+                            const pendingEvents = data.groupReqEventMsgDto.map(item => ({
+                                ...item,
+                                commonMsgDto: {
+                                    ...item.commonMsgDto,
+                                    msgId: Number(item.commonMsgDto.msgId)
+                                }
+                            }));
+                            // 存入阻塞队列
+                            groupInitEvents[groupId + "broadcast"] = pendingEvents;
+
                             // 如果当前群存在初始化等待队列中，就不在push进去了
                             groupInitInfoList.push({
                                 id: groupId,
@@ -271,6 +283,8 @@ const fnRnGroupEvent = async (data, isGroupInitEvent) => {
                                 msgId: [Number(item.commonMsgDto.msgId)],
                             });
                         });
+                        // 立即执行初始化
+                        fnRunInit();
                         return;
                     }
                 }
@@ -540,12 +554,19 @@ const fnGroupUpdataEvent = async (data, loginId) => {
         // 群信息变更
         if ([1, 2].includes(handleType)) {
             // 更新
+            let updateValues = {};
+            if (handleType === 1) {
+                updateValues = { name: groupName };
+            } else if (handleType === 2) {
+                updateValues = { pic };
+            }
+
             eventBase.fnCommunicationSendMsg({
                 operator: "groupUpdate",
                 data: {
                     type: "group",
                     id: groupId,
-                    values: groupName ? { name: groupName } : { pic },
+                    values: updateValues,
                 },
             });
         } else if (handleType === 5) {
@@ -1458,6 +1479,24 @@ const fnGroupMsgEvent = async (data, loginId) => {
         }
     }
 
+    // 更新本地缓存 GroupList (例如成员数量变更)
+    // 通过发送 groupUpdate 事件通知 home-left 更新
+    const updateValues = {};
+    if (info.memberCount !== undefined) updateValues.memberCount = info.memberCount;
+    if (info.isDisable !== undefined) updateValues.isDisable = info.isDisable;
+    if (info.memberType !== undefined) updateValues.memberType = info.memberType;
+
+    if (Object.keys(updateValues).length > 0) {
+        eventBase.fnCommunicationSendMsg({
+            operator: "groupUpdate",
+            data: {
+                type: "group",
+                id: info.groupId,
+                values: updateValues,
+            },
+        });
+    }
+
     // 确认完成
     receiveGroupEvent({
         groupId: info.groupId,
@@ -1925,6 +1964,37 @@ const fnGroupDetailInit = (groupId) => {
                             value: info.groupMsgCancelTime,
                         });
                     }
+
+                    const loginId = eventCommon.fnCommonInfoRU({ getId: "loginId" });
+
+                    // 更新 MessageGroupList 缓存 (确保会话列表也存在)
+                    Cache(`${loginId}MessageGroupList`).then((list) => {
+                        list = list || [];
+                        const index = list.findIndex((item) => item.id === groupId && item.type === "group");
+                        if (index === -1) {
+                            // 如果会话列表不存在，构建一个新的会话项
+                            const chatItem = {
+                                id: groupId,
+                                type: "group",
+                                name: info.name,
+                                pic: info.pic,
+                                memberCount: info.memberCount,
+                                time: Date.now(),
+                                sendTime: Date.now(),
+                                content: "加入群聊",
+                                unreadCount: 0,
+                                isTop: false,
+                                isDisturb: false,
+                            };
+
+                            // 通知界面添加新会话
+                            eventBase.fnCommunicationSendMsg({
+                                operator: "msgNew",
+                                operatorType: "groupJoin",
+                                data: chatItem,
+                            });
+                        }
+                    });
 
                     setTimeout(() => {
                         // 通讯
@@ -2691,7 +2761,12 @@ async function fnCheckGroupMemberList(groupId) {
     const groupMemberList = await Cache(
         `${loginId}_${groupId}_groupMemberList`
     );
-    if (groupMemberList && groupMemberList.length > 0) {
+
+    // 同时也检查GroupList是否存在该群，如果不存在也需要初始化
+    const groupList = await Cache(`${loginId}-GroupList`) || [];
+    const inGroupList = groupList.some(item => item.id === groupId);
+
+    if (groupMemberList && groupMemberList.length > 0 && inGroupList) {
         return true;
     }
     return false;

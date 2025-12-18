@@ -279,21 +279,35 @@ const fnGetChannelInfo = async (channelId) => {
  * 添加成员
  */
 const fnChannelAdd = async (info) => {
-    if(!info?.channelId) return
+    if (info?.channelId === undefined || info?.channelId === null) return;
+
     const loginId = eventCommon.fnCommonInfoRU({
         getId: "loginId",
     });
-    const ChannelLists = await Cache(`${loginId}-ChannelList`);
-    let list = ChannelLists.filter(item => item.channelId !== info.channelId)
-    const channelInfo = fnChannelFormat(info)
-    list.unshift(channelInfo)
-    Cache(`${loginId}-ChannelList`, list);
+
+    const id = Number(info.channelId);
+    if (isNaN(id)) return;
+
+    try {
+        const ChannelLists = (await Cache(`${loginId}-ChannelList`)) || [];
+        // 过滤掉已存在的相同ID频道（兼容数字和字符串比较）
+        let list = ChannelLists.filter(item => Number(item.channelId) !== id);
+
+        const channelInfo = fnChannelFormat(info);
+        // 确保 channelId 是数字
+        channelInfo.channelId = id;
+
+        list.unshift(channelInfo);
+        await Cache(`${loginId}-ChannelList`, list);
+    } catch (error) {
+        console.error("fnChannelAdd 缓存写入失败:", error);
+    }
 }
 
 const fnChannelFormat = (info) => {
     return {
         adminPrivacy: info.adminPrivacy || 0,
-        channelId: info.channelId,
+        channelId: Number(info.channelId),
         channelName: info.channelName || "",
         createTime: info.createTime,
         icon: info.icon || "",
@@ -337,15 +351,21 @@ const fnChannelUpdate = ({ info, channels, chats }) => {
         channels,
     };
 
-    const index = channels.findIndex((item) => item.channelId === info.channelId);
+    const id = Number(info.channelId);
+    // 确保 info.channelId 是数字，方便后续处理
+    if (!isNaN(id)) {
+        info.channelId = id;
+    }
+
+    const index = channels.findIndex((item) => Number(item.channelId) === id);
 
     if (index === -1) {
-        dataNew.channels.push(info);
+        dataNew.channels.unshift(info);
     } else {
         dataNew.channels[index] = { ...dataNew.channels[index], ...info };
     }
 
-    Cache(`${loginId}-ChannelList`, channels);
+    Cache(`${loginId}-ChannelList`, dataNew.channels);
 
     // 如果聊天信息不一致则更新聊天信息
     const chatIndex = chats.findIndex(
@@ -450,7 +470,7 @@ const fnHandleChannelSubscriberJoinInternal = async (latestChannelEventMessage) 
 
         // 查找缓存中的频道信息
         const cachedChannel = cachedMessageChannelList.find(
-            item => item.id === Number(channelId) && item.type === "channel"
+            item => Number(item.id) === Number(channelId) && item.type === "channel"
         );
 
         if (cachedChannel) {
@@ -487,18 +507,29 @@ const fnHandleChannelSubscriberJoinInternal = async (latestChannelEventMessage) 
 
         // 1. 更新频道列表缓存
         const ChannelLists = (await Cache(`${loginId}-ChannelList`)) || [];
-        const existIndex = ChannelLists.findIndex(item => item.channelId === Number(channelId));
+        const existIndex = ChannelLists.findIndex(item => Number(item.channelId) === Number(channelId));
 
         // 如果频道列表中已存在，则忽略
         if (existIndex === -1) {
-            ChannelLists.unshift(channelInfo);
-            await Cache(`${loginId}-ChannelList`, ChannelLists);
+            // 调用 fnChannelAdd 统一处理缓存更新（包含 unshift 逻辑）
+            await fnChannelAdd(channelInfo);
+
+            // 通知界面更新频道列表（用于通讯录和搜索）
+            eventBase.fnCommunicationSendMsg({
+                operator: "channelUpdate",
+                data: {
+                    type: "channel",
+                    channelId: Number(channelId),
+                    id: Number(channelId),
+                    values: channelInfo,
+                },
+            });
         }
 
         // 2. 更新聊天列表缓存
         const MessageChannelList = (await Cache(`${loginId}MessageChannelList`)) || [];
         const chatExistIndex = MessageChannelList.findIndex(
-            item => item.id === Number(channelId) && item.type === "channel"
+            item => Number(item.id) === Number(channelId) && item.type === "channel"
         );
 
         const timestamp = Number(latestChannelEventMessage?.msgTime) || Date.now();
