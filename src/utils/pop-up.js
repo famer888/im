@@ -43,13 +43,22 @@ const fnLoadingDialog = (visible) => {
 let elConfirm = null;
 
 /**
+ * 关闭确认弹窗
+ */
+const fnCloseConfirm = () => {
+    if (elConfirm) {
+        if (document.body.contains(elConfirm)) {
+            document.body.removeChild(elConfirm);
+        }
+        elConfirm = null;
+    }
+};
+
+/**
  * 确认弹窗
  */
 const fnConfirm = async (params) => {
-    if (elConfirm) {
-        document.body.removeChild(elConfirm);
-        elConfirm = null;
-    }
+    fnCloseConfirm();
 
     return await new Promise((resolve) => {
         const comp = Vue.extend(Confirm);
@@ -57,10 +66,7 @@ const fnConfirm = async (params) => {
             propsData: {
                 ...params,
                 callback: (value) => {
-                    if (elConfirm) {
-                        document.body.removeChild(elConfirm);
-                        elConfirm = null;
-                    }
+                    fnCloseConfirm();
                     resolve(value);
                 },
             },
@@ -78,6 +84,7 @@ const fnConfirm = async (params) => {
 export const fnPopUpMountToWindow = () => {
     // 挂载 确认弹窗
     window.$confirm = fnConfirm;
+    window.$closeConfirm = fnCloseConfirm;
 
     // 挂载 loading
     window.$loading = fnLoadingDialog;

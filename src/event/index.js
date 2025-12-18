@@ -289,6 +289,8 @@ const fnSocketMessage = (arrayBuffer) => {
 
   // 退出登录
   if (code === 20002) {
+    console.log("退出登录");
+    window.$closeConfirm && window.$closeConfirm();
     ipcRenderer.send("auto-export-db", {});
   }
 
