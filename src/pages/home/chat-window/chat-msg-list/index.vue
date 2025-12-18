@@ -501,6 +501,7 @@ import eventMsg from "@/event/msg";
 
 // api
 import { getChannelLastMsgInfo } from "@/api/imChannel";
+import { isBatchMode } from "@/utils/batchRenderer";
 
 // 模块消息数量
 const blockMsgSize = 80;
@@ -710,8 +711,17 @@ export default {
     },
     /**
      * 处理事件
+     * @param {Object|Array} info - 消息数据，批量模式下为数组
+     * @param {string} operator - 事件类型
+     * @param {string} operatorType - 操作子类型，批量模式下为 BATCH_MODE
      */
-    eventHandling(info, operator) {
+    eventHandling(info, operator, operatorType) {
+      // 批量模式处理
+      if (isBatchMode(operatorType, info)) {
+        this.handleBatchEvent(info, operator);
+        return;
+      }
+
       // 如果不是当前窗口则不处理
       if (info.id + info.type !== this.chatContent.id + this.chatContent.type) {
         return;
@@ -760,6 +770,209 @@ export default {
 
         default:
       }
+    },
+    /**
+     * 批量事件处理
+     * @param {Array} messages - 消息数组 [{ data, operatorType, timestamp }]
+     * @param {string} operator - 事件类型
+     */
+    handleBatchEvent(messages, operator) {
+      // 过滤出属于当前聊天窗口的消息
+      const currentChatKey = this.chatContent.id + this.chatContent.type;
+      const relevantMessages = messages.filter(
+        (msg) => msg.data.id + msg.data.type === currentChatKey
+      );
+
+      if (relevantMessages.length === 0) {
+        return;
+      }
+
+      switch (operator) {
+        case "msgNew":
+          this.handleBatchMsgNew(relevantMessages);
+          break;
+        case "msgListPropertyUpdate":
+          this.handleBatchMsgPropertyUpdate(relevantMessages);
+          break;
+        default:
+          // 未知的批量事件，逐条处理
+          relevantMessages.forEach((msg) => {
+            this.eventHandling(msg.data, operator, msg.operatorType);
+          });
+      }
+    },
+    /**
+     * 批量处理新消息
+     * @param {Array} messages - 消息数组
+     */
+    handleBatchMsgNew(messages) {
+      if (messages.length === 0) return;
+
+      const btnToBottomVisibleBefore = this.btnToBottomVisible;
+      let hasNotice = false;
+      let noticeContent = "";
+
+      // 批量格式化消息
+      const newItems = messages.map((msg) => {
+        const info = msg.data;
+
+        // 检查公告
+        if (info.msgType === 8) {
+          hasNotice = true;
+          noticeContent = info.content;
+        }
+
+        // 更新已读时间
+        if (!info.isSelf && msgReadByMeTime === 0) {
+          msgReadByMeTime = info.sendTime;
+        }
+
+        const showTime = chatDate(info.sendTime, this.$t("昨天"));
+        const showTimeDay = chatPageDateformat(info.sendTime);
+        let infoNew = { ...info, showTimeDay };
+
+        // 名片消息处理
+        if (info.msgType == 5 && info.content && info.content.includes("*|*|*")) {
+          let cardContent = info.content.split("*|*|*");
+          infoNew.content = {
+            name: cardContent[0],
+            pic: cardContent[1],
+            id: cardContent[2],
+          };
+        }
+
+        return { info: infoNew, showTime };
+      });
+
+      // 公告弹窗
+      if (hasNotice) {
+        this.$emit("openGroupTopNoticeDialog", noticeContent);
+      }
+
+      // 批量添加到 blockList
+      if (this.blockList.length > 0) {
+        const blockInfoLast = this.blockList[this.blockList.length - 1];
+
+        if (blockInfoLast.pageNum === this.pageCount) {
+          let lastMsgTime = blockInfoLast.list.length > 0
+            ? blockInfoLast.list[blockInfoLast.list.length - 1].sendTime
+            : null;
+
+          for (const { info: infoNew, showTime } of newItems) {
+            // 判断是否需要显示日期
+            let itemToAdd = infoNew;
+            if (lastMsgTime) {
+              const lastDay = dayjs(Number(lastMsgTime)).format("YYYY-MM-DD");
+              const curDay = dayjs(Number(infoNew.sendTime)).format("YYYY-MM-DD");
+              if (lastDay !== curDay) {
+                itemToAdd = { ...infoNew, showTime };
+              }
+            } else {
+              itemToAdd = { ...infoNew, showTime };
+            }
+
+            // 添加到合适的 block
+            if (blockInfoLast.list.length < blockMsgSize) {
+              blockInfoLast.list.push(itemToAdd);
+              this.pageLastMsgCount += 1;
+            } else {
+              // 需要新建 block
+              this.pageCount += 1;
+              this.pageLastMsgCount = 1;
+              this.blockList.push({
+                pageNum: this.pageCount,
+                list: [itemToAdd],
+              });
+            }
+
+            lastMsgTime = infoNew.sendTime;
+          }
+
+          // 一次性触发响应式更新
+          this.blockList = [...this.blockList];
+        } else {
+          // 最后一页不在视图中，只更新计数
+          for (let i = 0; i < newItems.length; i++) {
+            if (this.pageLastMsgCount < blockMsgSize) {
+              this.pageLastMsgCount += 1;
+            } else {
+              this.pageCount += 1;
+              this.pageLastMsgCount = 1;
+            }
+          }
+        }
+      } else {
+        // 之前没有消息，初始化
+        const firstItem = newItems[0];
+        this.pageCount = 1;
+        this.pageLastMsgCount = 1;
+        this.blockList = [{
+          pageNum: 1,
+          list: [{ ...firstItem.info, showTime: firstItem.showTime }],
+        }];
+
+        // 添加剩余消息
+        if (newItems.length > 1) {
+          let lastMsgTime = firstItem.info.sendTime;
+          for (let i = 1; i < newItems.length; i++) {
+            const { info: infoNew, showTime } = newItems[i];
+            const lastDay = dayjs(Number(lastMsgTime)).format("YYYY-MM-DD");
+            const curDay = dayjs(Number(infoNew.sendTime)).format("YYYY-MM-DD");
+            const itemToAdd = lastDay !== curDay ? { ...infoNew, showTime } : infoNew;
+
+            if (this.blockList[0].list.length < blockMsgSize) {
+              this.blockList[0].list.push(itemToAdd);
+              this.pageLastMsgCount += 1;
+            } else {
+              this.pageCount += 1;
+              this.pageLastMsgCount = 1;
+              this.blockList.push({
+                pageNum: this.pageCount,
+                list: [itemToAdd],
+              });
+            }
+            lastMsgTime = infoNew.sendTime;
+          }
+        }
+
+        this.blockListShowPageNum = 1;
+        this.containerOpacity = 1;
+      }
+
+      // 滚动处理（只执行一次）
+      if (!btnToBottomVisibleBefore || isToBottom) {
+        // 使用 setTimeout 确保 DOM 已更新
+        setTimeout(() => {
+          const dom = this.$refs["container"];
+          if (dom && dom.clientHeight === dom.scrollHeight) {
+            this.handleMsgEnterVisualRange();
+          } else {
+            this.handleScrollTo(-1, 12);
+          }
+        }, 5);
+      } else {
+        setTimeout(() => {
+          this.unreadCount = this.chatContent.unreadObj
+            ? this.chatContent.unreadObj.count
+            : 0;
+        }, 200);
+      }
+    },
+    /**
+     * 批量处理消息属性更新
+     * @param {Array} messages - 消息数组
+     */
+    handleBatchMsgPropertyUpdate(messages) {
+      if (messages.length === 0) return;
+
+      // 批量更新属性
+      let blockList = this.blockList;
+      for (const msg of messages) {
+        blockList = fnMsgPropertyUpdate(msg.data, blockList, this.pageCount);
+      }
+
+      this.blockList = blockList;
+      this.handleMsgEnterVisualRange();
     },
     /**
      * 处理事件 删除消息
@@ -968,7 +1181,7 @@ export default {
       if (!info.isSelf) {
         // 这里不知道因为什么要这么判断，只生效一次，导致未读消息数量积压，实际上已经上报已读
         // if (msgReadByMeTime === 0) {
-        if (msgReadByMeTime < info.sendTime) {
+          if (msgReadByMeTime < info.sendTime) {
           msgReadByMeTime = info.sendTime + 1;
         }
       }
@@ -1378,8 +1591,6 @@ export default {
       if (res) {
         // 赋值列表
         this.blockList = res;
-        console.log('>>>>', this.blockList);
-
         if (pages.length > 1) {
           await this.handleMsgListForPageGet(pages.slice(1));
         }
@@ -1503,7 +1714,6 @@ export default {
           msgBlockList: this.blockList,
         })
         .then((res) => {
-          // console.log('blockList--', res)
           if (res) {
             this.blockList = res?.msgBlockList || [];
             this.blockListShowPageNum = res.pageNumCurrent;
