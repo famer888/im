@@ -45,7 +45,7 @@ export default {
       type: 0,
       imgs: this.chatType === 'channel' ? []: [
       { expressionIcon: touzi, type: 2 },
-      { expressionIcon: poker, type: 3 },
+      // { expressionIcon: poker, type: 3 },
     ],
       emojis: [],
     };
