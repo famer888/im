@@ -2,7 +2,7 @@
   <div class="comTimeStatusLabel">
     <div class="read" v-if="chatContent.type === 'channel'">
       <img  class="read-icon" src="@/assets/images/channel/read1.png" />
-      <span class="read-num">{{ msgInfo.readTotal || 0 }}</span>
+      <span class="read-num">{{ msgInfo.readTotal || 1 }}</span>
     </div>
     <span>
       {{ formatTimeStamp(msgInfo.sendTime) }}
