@@ -558,6 +558,7 @@ export default class dbBase {
 
         if (type === "group") {
           info.groupId = id;
+          info.sendUid = item.sendUid || item.sendMember?.user?.uid;
           info.type = 1;
         }
 

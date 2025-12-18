@@ -143,22 +143,23 @@ export default {
 
             // 如果是不需要解密的图片，直接用网图
             if (!fileKey && chatType !== 3) {
-                const params = {
-                    customMsgId,
-                    fileLocalPath: fileUrl,
-                    chatType,
-                };
+                // console.log('>>> fileUrl', customMsgId, document.getElementById(`${customMsgId}`), fileUrl);
+                // const params = {
+                //     customMsgId,
+                //     fileLocalPath: fileUrl,
+                //     chatType,
+                // };
 
-                if ( this.chatContent.type === "group") {
-                    params.groupId = this.chatContent.id;
-                } else if (this.chatContent.type === "channel") {
-                     params.channelId = this.chatContent.id;
-                } else {
-                    params.userId = this.chatContent.id;
-                }
+                // if ( this.chatContent.type === "group") {
+                //     params.groupId = this.chatContent.id;
+                // } else if (this.chatContent.type === "channel") {
+                //      params.channelId = this.chatContent.id;
+                // } else {
+                //     params.userId = this.chatContent.id;
+                // }
 
-                eventFile.fnDownloadFileInfoUpdate(params);
-                return;
+                // eventFile.fnDownloadFileInfoUpdate(params);
+                // return;
             }
 
             // 后缀名
