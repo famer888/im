@@ -31,6 +31,7 @@ import eventFriend from "./friend";
 import eventFile from "./file";
 import eventCommon from "./common";
 import eventChannel from "./channel";
+import { benchmark } from "@/debuggers";
 
 /**
  * 消息 添加
@@ -1345,6 +1346,9 @@ const fnMsgSend = async (info) => {
         delete item.params.local;
         delete item.params.localThumbUrl;
 
+        // benchmark: 初始化消息发送日志
+        benchmark.initSendLog(item.customMsgId);
+
         // 发送
         sendMessage(
             { ...item.params, msgType: item.params.chatType, ...item.fileInfos },
@@ -1373,6 +1377,8 @@ const fnMsgSendSuccess = (msg, type) => {
         updated.time = String(sentOverTime);
         updated.sendTime = String(sentOverTime);
     }
+    // benchmark: 标记收到服务器确认
+    benchmark.markRecieved(customMsgId);
 
     // 数据库内查找该消息，并修改状态 及 msgId
     window.$db
@@ -1443,6 +1449,8 @@ const fnMsgSendTimeout = () => {
  * 消息发送失败
  */
 const fnMsgSendFail = async ({ id, type, customMsgId }) => {
+    // benchmark: 标记发送失败
+    benchmark.markFailed(customMsgId, 'fnMsgSendFail');
     // 数据库内查找该消息，并修改状态 及 msgId
     window.$db
         .updateMsgProperty({
