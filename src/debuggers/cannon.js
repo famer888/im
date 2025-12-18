@@ -1,7 +1,12 @@
 import { IDS, messagesSchema } from "./schema";
 import { fnMsgAdd } from "@/event/msg";
+import eventCommon from "@/event/common";
 
-// 当前登录id为572083
+// 动态获取当前登录id
+const getLoginId = () => {
+  return eventCommon.fnCommonInfoRU({ getId: "loginId" });
+};
+
 let currentIndex = 0;
 let sentCount = 0;
 let maxCount = 0;
@@ -38,6 +43,9 @@ const generateMessage = () => {
   ];
   const contentText = randomStrings[Math.floor(Math.random() * randomStrings.length)];
 
+  // 动态获取当前登录id
+  const loginId = getLoginId();
+
   // 直接返回解密后的格式，跳过所有解密流程
   const message = {
     msg: {
@@ -48,7 +56,7 @@ const generateMessage = () => {
       msgId: msgId,
       UserID: userId,
       sendUid: userId,
-      receiveUid: 572083,
+      receiveUid: loginId,
       friendId: userId,
       id: userId,
       contentMd5: Math.random().toString(36).substring(2, 34),
@@ -57,6 +65,7 @@ const generateMessage = () => {
       sentOverTime: sendTime,
       isSelf: false,
       links: [],
+      name: 'User' + userId,
       sendUser: {
         uid: userId,
         nickName: `User${userId}`,
@@ -64,7 +73,7 @@ const generateMessage = () => {
         createTime: sendTime - (Math.floor(Math.random() * 365) * 24 * 60 * 60 * 1000),
         userType: 1
       },
-      tableName: `572083-message.man${userId}`
+      tableName: `${loginId}-message.man${userId}`
     },
     contentStr: contentText, // 直接传递解密后的文本
     fileKey: null,
