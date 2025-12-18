@@ -35,9 +35,9 @@ class Benchmark {
   marks = {
     // 保留注释
     // 前两个为drain massassLog的位置，保存耗时的文本即可
-    getMsgList: new Marks(10),
-    addDB: new Marks(5),
-    reconnect: new Marks(5),
+    getMsgList: new Marks(3),
+    addDB: new Marks(3),
+    reconnect: new Marks(3),
 
     // map key为MsgId, value的key值为所有能导致发送消息失败的函数，值为执行次数
     // 是否发送(无需排除网络问题)，是否收到服务器的确认，是否有渲染(成功或失败），所有导致发送消息失败的函数执行次数，渲染挂载次数，导致重渲染的函数: []
@@ -121,6 +121,21 @@ class Benchmark {
       rerenderFns: [],      // 导致重渲染的函数
       sendTime: Date.now()
     })
+  }
+
+  getSendLogForRightMenu(msgId, customMsgId) {
+    const log = this.marks.sendLog.get(customMsgId)
+    if (!log) {
+      return `${customMsgId}: ${msgId || '-'} | 无记录`
+    }
+
+    const sent = log.sended ? '√' : 'X'
+    const recieved = log.recieved ? '√' : 'X'
+    const Rsent = (log.status & STATUS.RENDER_SUCCESS) ? '√' : 'X'
+    const Rfailed = (log.status & STATUS.RENDER_FAILED) ? '√' : 'X'
+    const failNames = Object.keys(log.fnMsgSendFail).join('-') || 'none'
+
+    return `${customMsgId}: ${log.MsgId || msgId || '-'} | sent${sent} | recieved${recieved} | Rsent${Rsent} | Rfailed${Rfailed} | mount:${log.mounted} | references:${failNames}`
   }
 
   /**

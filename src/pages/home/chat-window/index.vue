@@ -346,6 +346,7 @@ import eventGroup from "@/event/group";
 import eventFriend from "@/event/friend";
 import eventCommon from "@/event/common";
 import eventFile from "@/event/file";
+import { benchmark } from "@/debuggers";
 
 // 群成员列表
 let memberInfoList = [];
@@ -539,7 +540,7 @@ export default {
       const env = getEnvType();
       if(env !== 'test' && env !== 'uat') return;
       msgInfo.sendTimeStr = freeTime(msgInfo.sendTime, 'y-m-d h:i:s');
-      const msgInfoStr = JSON.stringify(msgInfo);
+      const msgInfoStr = JSON.stringify({ ...msgInfo, sendLog: benchmark.getSendLogForRightMenu(msgInfo.MsgID, msgInfo.customMsgId) });
       copyToClipboard(msgInfoStr);
       window.$toast(this.$t("复制成功"));
     },
@@ -703,7 +704,7 @@ export default {
              const user = channelUserList.find(
                  (item) => item.userInfoDTO.nickName === info.atName || item.userInfoDTO.name === info.atName
              );
-             
+
              let friend = null;
              if (user) {
                  friend = friendList.find(f => f.id === user.userInfoDTO.uid);
