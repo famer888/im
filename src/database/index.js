@@ -542,10 +542,10 @@ export default class dbBase {
       // 确认消息收到
       const arr = msgReadList.map((item) => {
         const info = {
-          ChatMessageType: 0,
           type: 0,
           targetId: id,
           msgId: Number(item.MsgID),
+          messageType: item.msgType,
           duration: 0,
           snapchatTime: 0,
           source: 1,
@@ -558,7 +558,6 @@ export default class dbBase {
 
         if (type === "group") {
           info.groupId = id;
-          info.ChatMessageType = 1;
           info.type = 1;
         }
 
