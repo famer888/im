@@ -543,6 +543,7 @@ export default class dbBase {
       const arr = msgReadList.map((item) => {
         const info = {
           ChatMessageType: 0,
+          type: 0,
           targetId: id,
           msgId: Number(item.MsgID),
           duration: 0,
@@ -558,6 +559,7 @@ export default class dbBase {
         if (type === "group") {
           info.groupId = id;
           info.ChatMessageType = 1;
+          info.type = 1;
         }
 
         return info;
