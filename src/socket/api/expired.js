@@ -50,7 +50,7 @@ export default class Expired {
     // 判断lastMessage是否是退出或离开事件
     const lastEventType = lastMessage.data?.latestChannelEventMessage?.eventType;
     if (this.channelExitEventTypes.includes(lastEventType)) {
-      console.log('[Expired]频道已解散，所有事件删除', Number(channelId));
+      console.log('[Expired]频道已解散，所有事件删除', item.messages.length, Number(channelId));
       this.stack.delete(channelId);
       return;
     }

@@ -991,11 +991,11 @@ export default {
         if (blockInfoLast.pageNum === this.pageCount) {
 
           // 之前的最后一条信息
-          const msgInfoLastBefore =
-            blockInfoLast.list[blockInfoLast.list.length - 1];
+          const msgInfoLastBefore = blockInfoLast.list[blockInfoLast.list.length - 1];
           // 上一条跟当前数据不是同一天，则需要显示日期
           // console.log({blockInfoLast, msgInfoLastBefore}, '958 -------------->')
           if (
+            msgInfoLastBefore &&
             dayjs(Number(msgInfoLastBefore.sendTime)).format("YYYY-MM-DD") !==
             dayjs(Number(info.sendTime)).format("YYYY-MM-DD")
           ) {
