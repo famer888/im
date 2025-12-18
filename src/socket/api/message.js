@@ -75,11 +75,16 @@ export function ReceiveKeyPairMessage(data) {
  * MessageSource   source   = 10; //消息来源 v1.6.2
  */
 export function CReqMessageReceipt(receipts) {
+    console.log('[回执]开始', receipts);
     const message = SendReceiptMessageReq.create({ receipts });
+    console.log('[回执]消息体构建SendReceiptMessageReq.create({ receipts })', message);
     const buffer = SendReceiptMessageReq.encode(message).finish();
+    console.log('[回执]消息content编码SendReceiptMessageReq.encode(message).finish()', buffer);
     const rb = initHeader(buffer, 10106);
+    console.log('[回执]添加头部后', rb);
     console.log("发出推送-10106-")
     webSocketSend(rb);
+    console.log('[回执]发送完成');
 }
 
 // 频道消息已读
