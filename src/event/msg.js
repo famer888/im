@@ -41,6 +41,7 @@ import { benchmark } from "@/debuggers";
  * @returns {Promise<boolean>} - true: 重复消息，应跳过; false: 非重复，继续处理
  */
 const fnCheckMsgRepeat = async (id, type, msgId) => {
+    if (!msgId) return false;
     const isRepeat = await window.$db.checkRepeat({ id, type, msgId });
     if (isRepeat) {
         console.log(`[repeat]${type}MsgAdd blocked`, id, msgId);
