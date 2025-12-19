@@ -341,17 +341,20 @@ export default {
      * 同步好友列表
      */
     handleFriends() {
-      Cache(`${loginId}-ContactList`).then((res) => {
-        if (res && res.length > 0) {
-          if (res[0].userInfo) {
-            this.handleUpdateFirendsForApi(1);
-          } else {
-            this.handleDataFinish("friend");
-          }
-        } else {
-          this.handleUpdateFirendsForApi(1);
-        }
-      });
+      // Cache(`${loginId}-ContactList`).then((res) => {
+      //   if (res && res.length > 0) {
+      //     if (res[0].userInfo) {
+      //       this.handleUpdateFirendsForApi(1);
+      //     } else {
+      //       this.handleDataFinish("friend");
+      //     }
+      //   } else {
+      //     this.handleUpdateFirendsForApi(1);
+      //   }
+      // });
+
+      // 强制更新好友列表
+      this.handleUpdateFirendsForApi(1);
     },
     /**
      * 同步群列表
@@ -546,6 +549,14 @@ export default {
      */
     handleUpdateFirendsForApi(pageNum) {
       const pageSize = 200;
+
+      if (pageNum === 1) {
+        this.friendList = [];
+        // 重置变量，防止状态污染
+        friendListPageReqList = [];
+        friendListPageReqCompleteList.length = 0;
+        friendListPageCount = 0;
+      }
 
       getContactsList(
         {
