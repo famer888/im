@@ -307,9 +307,9 @@ export default {
           if (percentage) {
             this.friendNum += percentage;
           } else {
-            Cache(`${loginId}-ContactList`, this.friendList);
+            await Cache(`${loginId}-ContactList`, this.friendList);
             this.friendNum = 100;
-            this.handleFriendRemarks()
+            await this.handleFriendRemarks()
           }
           break;
         }
@@ -461,7 +461,7 @@ export default {
           remarks.push({id, name})
         }
       });
-      Cache(`${loginId}-FriendRemarks`, remarks);
+      await Cache(`${loginId}-FriendRemarks`, remarks);
     },
     /**
      * 获取所有频道列表
@@ -558,6 +558,7 @@ export default {
           }, 2000)
         }
       ).then(async (res) => {
+        console.log('/contacts/contactsList---',res)
         if (res) {
           // 列表格式化
           const list = eventFriend.fnApiDataFormat(res.contactsList);
