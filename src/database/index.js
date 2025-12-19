@@ -49,6 +49,11 @@ export default class dbBase {
     // sendTime - 用于时间排序和范围查询
     this.tableString = "&customMsgId, &MsgID, readStatus, sendTime";
     this.version = 1;
+    // 初始化完成的 Promise 锁
+    this._dbReadyResolve = null;
+    this._dbReady = new Promise((resolve) => {
+      this._dbReadyResolve = resolve;
+    });
     this.initDB(userId);
     this.timer;
     this.addList = [];
@@ -57,7 +62,64 @@ export default class dbBase {
   async initDB(userId) {
     this.userId = userId;
     this.localStorageName = (await this.getLocalStorageName(userId)) || {};
-    this.setTableVision();
+    await this.updateVersionFromPreviousDatabase();
+    await this.setTableVision();
+    // 初始化完成，释放锁
+    this._dbReadyResolve && this._dbReadyResolve();
+  }
+
+  async updateVersionFromPreviousDatabase() {
+    try {
+      // 创建临时数据库实例来检查现有schema
+      const tempDb = new Dexie(this.userId + "-68-2.0.3");
+      await tempDb.open();
+
+      // 获取当前数据库中的表
+      const existingTables = tempDb.tables;
+
+      if (existingTables.length === 0) {
+        tempDb.close();
+        return;
+      }
+
+      // 检查是否有schema不同的表
+      let needUpdate = false;
+      const tablesToUpdate = [];
+
+      for (const table of existingTables) {
+        // 获取表的当前schema：主键 + 索引
+        const primKey = table.schema.primKey ? table.schema.primKey.src : '';
+        const indexes = table.schema.indexes.map(idx => idx.src).join(', ');
+        const existingSchema = primKey + (indexes ? ', ' + indexes : '');
+
+        // 如果schema与当前定义的tableString不同
+        if (existingSchema !== this.tableString) {
+          needUpdate = true;
+          tablesToUpdate.push(table.name);
+        }
+      }
+
+      tempDb.close();
+
+      if (needUpdate) {
+        // schema有变化，更新localStorageName中对应表的schema
+        for (const tableName of tablesToUpdate) {
+          if (this.localStorageName[tableName]) {
+            this.localStorageName[tableName] = this.tableString;
+          }
+        }
+        // 同步更新本地缓存
+        await Cache(`${this.userId}` + "localStorageName", this.localStorageName);
+
+        // 增加版本号并写入本地
+        this.version = (await this.getVersion()) || 1;
+        this.version += 1;
+        await Cache(`${this.userId}storageVersion`, this.version);
+      }
+    } catch (e) {
+      // 数据库可能不存在或其他错误，忽略
+      console.log('[db]更新数据库版本号失败', e.message || e);
+    }
   }
 
   getListSearch(searchText) {
@@ -865,6 +927,8 @@ export default class dbBase {
    * 新增替换
    */
   async addDB(tableName, data, type) {
+    // 等待数据库初始化完成
+    await this._dbReady;
     let addData = this.setDataList(data, type, tableName);
     this.db[tableName]
       .bulkPut(addData)
