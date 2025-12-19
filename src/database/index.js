@@ -44,11 +44,10 @@ export default class dbBase {
     this.localStorageName = {};
     // 索引说明：
     // &customMsgId - 主键，用于 get/update/bulkGet/bulkDelete
-    // MsgID - 用于通过消息ID查询
+    // &MsgID - 唯一键，用于通过消息ID查询
     // readStatus - 用于查询已读状态
     // sendTime - 用于时间排序和范围查询
-    // &[customMsgId+MsgID] - 复合唯一键，确保customMsgId和MsgID组合唯一
-    this.tableString = "&customMsgId, MsgID, readStatus, sendTime, &[customMsgId+MsgID]";
+    this.tableString = "&customMsgId, &MsgID, readStatus, sendTime";
     this.version = 1;
     this.initDB(userId);
     this.timer;
@@ -788,6 +787,29 @@ export default class dbBase {
       return 0; // 如果 sendTime 和 MsgID 都相同，则保持原顺序
     });
   }
+  /**
+   * 检查消息ID是否重复
+   * @param {Object} params - { id, type, msgId }
+   * @returns {Promise<boolean>} true: 重复; false: 不重复
+   */
+  async checkRepeat({ id, type, msgId }) {
+    const tableName = handleTableNameGet(id, type);
+    if (!this.db[tableName] || !msgId) {
+      return false;
+    }
+
+    try {
+      const count = await this.db[tableName]
+        .where("MsgID")
+        .equals(String(msgId))
+        .count();
+
+      return count > 0;
+    } catch (e) {
+      return false;
+    }
+  }
+
   /**
    * 获取消息信息 通过msgId
    */

@@ -34,6 +34,21 @@ import eventChannel from "./channel";
 import { benchmark } from "@/debuggers";
 
 /**
+ * 消息去重检查
+ * @param {number} id - 会话ID (friendId/groupId/channelId)
+ * @param {string} type - 消息类型 (friend/group/channel)
+ * @param {number} msgId - 消息ID
+ * @returns {Promise<boolean>} - true: 重复消息，应跳过; false: 非重复，继续处理
+ */
+const fnCheckMsgRepeat = async (id, type, msgId) => {
+    const isRepeat = await window.$db.checkRepeat({ id, type, msgId });
+    if (isRepeat) {
+        console.log(`[repeat]${type}MsgAdd blocked`, id, msgId);
+    }
+    return isRepeat;
+};
+
+/**
  * 消息 添加
  */
 export const fnMsgAdd = async ({ msg, contentStr, fileKey, type }) => {
@@ -200,8 +215,12 @@ export const fnMsgAdd = async ({ msg, contentStr, fileKey, type }) => {
 const fnGroupMsgAdd = async (msg) => {
     // console.log(msg, 'fnGroupMsgAdd --------> 185')
     const type = "group";
+    const groupId = Number(msg.groupId);
+    const msgId = Number(msg.msgId);
+
+    if (await fnCheckMsgRepeat(groupId, type, msgId)) return;
     const { contentStr, fileKey } = await fnMsgDecryption({
-        id: Number(msg.groupId),
+        id: groupId,
         type,
         msgType: msg.msgType || 0,
         msgEncryptionVersion: msg.version ,
@@ -237,6 +256,8 @@ const fnFriendMsgAdd = async (msg) => {
         loginId == Number(msg.sendUid) ? msg.receiveUid : msg.sendUid
     );
 
+    const msgId = Number(msg.msgId);
+    if (await fnCheckMsgRepeat(friendId, type, msgId)) return;
     // 是否是自己发送的
     const isSelf = Number(msg.sendUid) === loginId;
 
@@ -312,6 +333,7 @@ const fnChannelMsgAdd = async (msg, isOld) => {
         };
     }
 
+    if (await fnCheckMsgRepeat(channelId, type, msgId)) return;
     const { contentStr, fileKey } = await fnMsgDecryption({
         id: channelId,
         type,

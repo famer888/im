@@ -101,7 +101,6 @@ const fnChatWindowUpdate = async (info) => {
             } else {
                 // 如果是好友， 在好友中查找
                 chatInfo = friendList.find((item) => item.id === updateInfo.id);
-
                 // 如果好友信息没找到
                 if (!chatInfo) {
                     //
