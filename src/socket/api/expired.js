@@ -109,32 +109,33 @@ export default class Expired {
 
   // 频道消息ticker处理
   channelTicker(channelId, item) {
-    const lastMessage = item.messages[item.messages.length - 1];
-
-    // 【排查】打印最后一条消息的完整数据
+    // 【排查】打印消息的完整数据
     // console.log('[Expired][排查] channelTicker处理, channelId=', Number(channelId), '消息数量=', item.messages.length);
-    // console.log('[Expired][排查] 最后一条消息:', lastMessage.code, lastMessage.data?.latestChannelEventMessage);
 
-    // 判断lastMessage是否是退出/解散事件
-    if (this.isChannelExitEvent(lastMessage)) {
-      // console.log('[Expired] 频道已退出/解散/注销，所有事件删除', item.messages.length, Number(channelId));
-      this.stack.delete(channelId);
-      return;
-    }
-
-    // 找到最后一个离开事件的位置
-    let sliceIndex = 0;
+    // 找到最后一个退出/解散/被踢事件的位置
+    let exitEventIndex = -1;
     for (let i = item.messages.length - 1; i >= 0; i--) {
       if (this.isChannelExitEvent(item.messages[i])) {
-        // console.log('[Expired][排查] 找到离开事件位置: index=', i, item.messages[i].data?.latestChannelEventMessage);
-        sliceIndex = i + 1;
+        exitEventIndex = i;
         break;
       }
     }
 
-    // slice(离开，最新)，遍历dispatch
-    const messagesToDispatch = item.messages.slice(sliceIndex);
-    // console.log('[Expired][排查] 准备dispatch消息数量:', messagesToDispatch.length, '从index', sliceIndex, '开始');
+    let messagesToDispatch;
+    if (exitEventIndex === item.messages.length - 1) {
+      // 退出事件是最后一条，仅dispatch最后一条
+      // console.log('[Expired] 退出事件是最后一条，仅dispatch最后一条', Number(channelId));
+      messagesToDispatch = [item.messages[exitEventIndex]];
+    } else if (exitEventIndex >= 0) {
+      // 退出事件不是最后一条，slice退出事件到最新的一条，不包含退出事件
+      // console.log('[Expired][排查] 找到离开事件位置: index=', exitEventIndex, '从', exitEventIndex + 1, '开始dispatch');
+      messagesToDispatch = item.messages.slice(exitEventIndex + 1);
+    } else {
+      // 没有退出事件，全部dispatch
+      messagesToDispatch = item.messages;
+    }
+
+    // console.log('[Expired][排查] 准备dispatch消息数量:', messagesToDispatch.length);
     for (const msg of messagesToDispatch) {
       this.dispatch(msg.code, msg.data);
     }
@@ -196,9 +197,9 @@ export default class Expired {
                     data?.latestChannelEventMessage?.msgTime ||
                     data?.latestRecallChannelMessage?.sendTime ||
                     data?.clearTime;
-    console.log('[expired time check]msgTime', msgTime, this.inititalTime, data);
+    // console.log('[expired time check]msgTime', msgTime, this.inititalTime, data);
 
-    if (msgTime && msgTime > this.inititalTime) {
+    if (msgTime && Number(msgTime) > this.inititalTime) {
       return true;
     }
     if (!this.channelCodes.includes(code)) {
@@ -218,7 +219,7 @@ export default class Expired {
   // groupCheck(code, data) {}
 
   check(code, data) {
-    console.log('[expired]check', code, data);
+    // console.log('[expired]check', code, data);
     // 频道消息处理
     if (this.channelCodes.includes(code)) {
       return this.channelCheck(code, data);
