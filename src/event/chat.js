@@ -117,7 +117,7 @@ const fnChatWindowUpdate = async (info) => {
                         };
                     } catch (e) {
                         console.error("fnChatWindowUpdate friend error", e);
-                        chatInfo = null;
+                        chatInfo = {};
                     }
                 }
             }
@@ -139,7 +139,7 @@ const fnChatWindowUpdate = async (info) => {
                     };
                 } catch (e) {
                     console.error("fnChatWindowUpdate group error", e);
-                    chatInfo = null;
+                    chatInfo = {};
                 }
             }
         }
