@@ -12,8 +12,8 @@
           }}
         </h2>
         <span v-if="loginIsHost || showBadge" :class="{
-          groupOwner: chatContent.groupNotice.editUser && chatContent.groupNotice.editUser.type == 0,
-          isAdmin: chatContent.groupNotice.editUser && chatContent.groupNotice.editUser.type == 1,
+          groupOwner: editUser?.type === 0 || chatContent.groupNotice.editUser && chatContent.groupNotice.editUser.type == 0,
+          isAdmin: editUser?.type === 1 || !editUser && chatContent.groupNotice.editUser && chatContent.groupNotice.editUser.type == 1,
         }">
           {{
             $t(
@@ -33,10 +33,7 @@
       </section>
       <template v-if="loginIsHost">
         <div class="bottom" v-if="!isEdit">
-          <span @click.stop="() => {
-            isEdit = true
-            noticeText = ''
-          }">{{ $t('发布新简介') }}</span>
+          <span @click.stop="handleActivateEdit">{{ $t('发布新简介') }}</span>
         </div>
         <div class="bfAll" v-if="isEdit">
           {{ $t("通知所有成员") }}
@@ -81,27 +78,7 @@ export default {
   },
   inject: ["provideMemberList", "provideSetTopNotice"],
   mounted() {
-    this.isEdit = false
-    // 获取成员信息列表
-    const memberInfoList = this.provideMemberList();
-
-    // 历史公告，直接赋值historyNotice
-    if (this.historyNotice.showHistoryNotice) {
-      this.noticeText = this.historyNotice.notice;
-    } else {
-      // 公告文本
-      this.noticeText = _.get(this.chatContent, "groupNotice.notice") || "";
-      this.noticeTextCopy = _.get(this.chatContent, "groupNotice.notice") || "";
-      this.handleSetNoticeBaseInfo(memberInfoList);
-    }
-    // at名称列表
-    this.atNameList = memberInfoList
-      .filter((item) => item.name || item.nickName)
-      .map((item) => "@" + (item.name || item.nickName));
-
-    // 普通群成员默认群主信息
-    this.hostInfo = memberInfoList.find((item) => item.type == 0);
-    this.getShowBadge(memberInfoList);
+    this.init();
   },
   watch: {
     // 防止超出限制
@@ -116,8 +93,32 @@ export default {
     },
   },
   methods: {
+    init() {
+      // 这判断怎么写的那么乱啊卧槽
+      this.isEdit = false
+      // 获取成员信息列表
+      const memberInfoList = this.provideMemberList();
+
+      // 历史公告，直接赋值historyNotice
+      if (this.historyNotice.showHistoryNotice) {
+        this.noticeText = this.historyNotice.notice;
+      } else {
+        // 公告文本
+        this.noticeText = _.get(this.chatContent, "groupNotice.notice") || "";
+        this.noticeTextCopy = _.get(this.chatContent, "groupNotice.notice") || "";
+      }
+      this.handleSetNoticeBaseInfo(memberInfoList);
+      // at名称列表
+      this.atNameList = memberInfoList
+        .filter((item) => item.name || item.nickName)
+        .map((item) => "@" + (item.name || item.nickName));
+
+      // 普通群成员默认群主信息
+      this.hostInfo = memberInfoList.find((item) => item.type == 0);
+      this.getShowBadge(memberInfoList);
+    },
     getShowBadge(memberInfoList) {
-      const uid = this.editUser?.uid || _.get(this.chatContent, "groupNotice.editUser.user.uid");
+      const uid = this.editUser?.uid || this.editUser?.id || _.get(this.chatContent, "groupNotice.editUser.user.uid");
       const userType = memberInfoList.find(x => x.id === Number(uid))?.type;
       this.showBadge = userType === 0 || userType === 1;
     },
@@ -125,15 +126,30 @@ export default {
     * 取消
     */
     handleCancel() {
-      this.isEdit = false;
-      this.noticeText = this.noticeTextCopy;
+      this.init();
+    },
+    handleActivateEdit() {
+      this.isEdit = true;
+      this.noticeText = '';
+      const memberInfoList = this.provideMemberList();
+      const loginId = eventCommon.fnCommonInfoRU({
+        getId: "loginId",
+      });
+      this.editUser = memberInfoList.find(
+        (item) => item.id == loginId && item.type < 2
+      ) || {};
     },
     handleSetNoticeBaseInfo(memberInfoList) {
       // 登录id
       const loginId = eventCommon.fnCommonInfoRU({
         getId: "loginId",
       });
-      if (this.chatContent.groupNotice.notice) {
+      if (this.historyNotice.showHistoryNotice) {
+        const uid = this.historyNotice?.editorId;
+        this.editUser = memberInfoList.find(
+          (item) => item.id == uid
+        ) || {};
+      } else if (this.chatContent.groupNotice.notice) {
         // 如果有公告信息
         let editUser = {}
         if (this.chatContent.groupNotice.editUser) { // 如果没有返回编辑者
@@ -141,7 +157,7 @@ export default {
         } else {
           editUser = memberInfoList.find(
             (item) => item.id == loginId && item.type < 2
-          );
+          ) || {};
         }
         // 设置公告编辑者信息
         this.editUser = editUser;
@@ -151,8 +167,8 @@ export default {
       } else {
         // 没有公告信息，则获取当前登入者信息，并判断他是群主还是管理员，只有这两个身份才可以设置b编辑者信息
         this.editUser = memberInfoList.find(
-          (item) => item.id == loginId && item.type < 2
-        );
+          (item) => item.id == loginId
+        ) || {};
 
         // 登录信息是否为群主,或者是否为管理员，并且具有发布群简介的权限
         this.loginIsHost =
@@ -225,7 +241,7 @@ export default {
           bfAll,
         },
       });
-      this.provideSetTopNotice({ notice: this.noticeText });
+      this.provideSetTopNotice({ notice: this.noticeText, editorId: id });
       // 更新本地 chatContent 数据
       if (this.chatContent) {
         if (!this.chatContent.groupNotice) {
@@ -250,13 +266,14 @@ export default {
       // 关闭
       this.handleClose();
     },
-    handleEditUserType(type) {
+    handleEditUserType(origin) {
       let typeStr = {
         0: "群主",
         1: "管理员",
         2: "",
       };
-      return typeStr[type];
+      const forceType = this.editUser?.type;
+      return typeStr[forceType] || typeStr[origin];
     },
   },
 };

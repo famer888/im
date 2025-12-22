@@ -524,7 +524,9 @@ export const fnMsgPropertyUpdate = (info, blockList, pageCount) => {
             }
         } else if (pageNumList.includes(pageCount - 1)) {
             // 如果最后一页不存在，但倒数第二页存在，则清掉倒数第二页
-            blockListNew = blockListNew.pop();
+            // ? 这里会把整个页面清空哦，因为代码把blockListNew改成了Object
+            // blockListNew = blockListNew.pop();
+            blockListNew.pop();
         }
 
         return blockListNew;
