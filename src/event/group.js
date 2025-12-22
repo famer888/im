@@ -1965,36 +1965,35 @@ const fnGroupDetailInit = (groupId) => {
                         });
                     }
 
-                    const loginId = eventCommon.fnCommonInfoRU({ getId: "loginId" });
+                    // const loginId = eventCommon.fnCommonInfoRU({ getId: "loginId" });
+                    // // 更新 MessageGroupList 缓存 (确保会话列表也存在)
+                    // Cache(`${loginId}MessageGroupList`).then((list) => {
+                    //     list = list || [];
+                    //     const index = list.findIndex((item) => item.id === groupId && item.type === "group");
+                    //     if (index === -1) {
+                    //         // 如果会话列表不存在，构建一个新的会话项
+                    //         const chatItem = {
+                    //             id: groupId,
+                    //             type: "group",
+                    //             name: info.name,
+                    //             pic: info.pic,
+                    //             memberCount: info.memberCount,
+                    //             time: Date.now(),
+                    //             sendTime: Date.now(),
+                    //             content: "加入群聊",
+                    //             unreadCount: 0,
+                    //             isTop: false,
+                    //             isDisturb: false,
+                    //         };
 
-                    // 更新 MessageGroupList 缓存 (确保会话列表也存在)
-                    Cache(`${loginId}MessageGroupList`).then((list) => {
-                        list = list || [];
-                        const index = list.findIndex((item) => item.id === groupId && item.type === "group");
-                        if (index === -1) {
-                            // 如果会话列表不存在，构建一个新的会话项
-                            const chatItem = {
-                                id: groupId,
-                                type: "group",
-                                name: info.name,
-                                pic: info.pic,
-                                memberCount: info.memberCount,
-                                time: Date.now(),
-                                sendTime: Date.now(),
-                                content: "加入群聊",
-                                unreadCount: 0,
-                                isTop: false,
-                                isDisturb: false,
-                            };
-
-                            // 通知界面添加新会话
-                            eventBase.fnCommunicationSendMsg({
-                                operator: "msgNew",
-                                operatorType: "groupJoin",
-                                data: chatItem,
-                            });
-                        }
-                    });
+                    //         // 通知界面添加新会话
+                    //         eventBase.fnCommunicationSendMsg({
+                    //             operator: "msgNew",
+                    //             operatorType: "groupJoin",
+                    //             data: chatItem,
+                    //         });
+                    //     }
+                    // });
 
                     setTimeout(() => {
                         // 通讯
