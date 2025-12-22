@@ -200,6 +200,10 @@ export default {
      * 提交
      */
     handleOk() {
+      if(!this.noticeText || !this.noticeText.trim()){
+        window.$toast(this.$t("请输入内容"));
+        return;
+      }
       if (this.bfAll) {
         window
           .$confirm({
