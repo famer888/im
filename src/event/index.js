@@ -191,9 +191,7 @@ const dispatch = (code, data) => {
       const errCode = commonResult.errCode;
       if (errCode == 100) {
         // 登出前要先导出
-        ipcRenderer.invoke("auto-export-db", {}).then((res) => {
-          eventCommon.fnLoginout();
-        });
+        ipcRenderer.send("auto-export-db", {});
       } else if ([1022, 1021].includes(errCode)) {
         // 群被禁用，被禁言 信息发送失败,更新信息状态和添加提示
         eventMsg.fnMsgSendFail({
