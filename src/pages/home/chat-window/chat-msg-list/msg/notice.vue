@@ -123,7 +123,7 @@ export default {
           notice: this.content,
         },
       });
-      this.provideGroupNotice({ notice: this.content });
+      this.provideGroupNotice({ notice: this.content, editorId: Number(this.msgInfo?.sendUid) });
     },
   },
 };

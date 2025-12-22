@@ -811,6 +811,7 @@ export default {
       const btnToBottomVisibleBefore = this.btnToBottomVisible;
       let hasNotice = false;
       let noticeContent = "";
+      let noticeUid = '';
 
       // 批量格式化消息
       const newItems = messages.map((msg) => {
@@ -820,6 +821,7 @@ export default {
         if (info.msgType === 8) {
           hasNotice = true;
           noticeContent = info.content;
+          noticeUid = info.sendUid;
         }
 
         // 更新已读时间
@@ -846,7 +848,7 @@ export default {
 
       // 公告弹窗
       if (hasNotice) {
-        this.$emit("openGroupTopNoticeDialog", noticeContent);
+        this.$emit("openGroupTopNoticeDialog", noticeContent, noticeUid);
       }
 
       // 批量添加到 blockList
@@ -1166,7 +1168,7 @@ export default {
     eventHandlingMsgNew(info) {
       // 如果是公告，则显示公告顶部弹窗
       if (info.msgType === 8) {
-        this.$emit("openGroupTopNoticeDialog", info.content);
+        this.$emit("openGroupTopNoticeDialog", info.content, info.sendUid);
       }
 
       const btnToBottomVisibleBefore = this.btnToBottomVisible;

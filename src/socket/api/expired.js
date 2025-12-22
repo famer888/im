@@ -1,4 +1,3 @@
-
 // 所有解密后数据流经这里
 // 目前只拦截所有频道消息，判断是否过期，如果过期则累积消息，
 // stack: Map<id | groupId | channelId, message[]>
@@ -157,7 +156,7 @@ export default class Expired {
                      Date.now();
     item.messages.push({ code, data, sendTime });
     // 根据sendTime排序
-    item.messages.sort((a, b) => a.sendTime - b.sendTime);
+    item.messages.sort((a, b) => Number(a.sendTime) - Number(b.sendTime));
     // 更新expiredTime
     item.expiredTime = Date.now() + this.expiredDelay;
   }

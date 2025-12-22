@@ -52,7 +52,8 @@ export default {
       eventBase.fnCommunicationSendMsg({
         operator: "openGroupNoticeDialog",
       });
-      this.provideGroupNotice({notice: this.content})
+      const uid = this.chatContent?.groupNotice?.user?.uid || this.chatContent?.groupNotice?.user?.id;
+      this.provideGroupNotice({ notice: this.content, editorId: Number(uid) })
       this.handleClose();
     },
     /**
