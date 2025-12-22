@@ -5,6 +5,7 @@ import VueContext from "vue-context";
 import "./common.scss";
 import axiosApi from "./api/base/axios";
 import i18n from "./assets/lang/i18n";
+import ImeFixPlugin from "@/utils/ime-fix";
 import ComImage from "@/components/image.vue";
 import { fnPopUpMountToWindow } from "@/utils/pop-up";
 import infiniteScroll from 'vue-infinite-scroll';
@@ -14,6 +15,7 @@ Vue.use(VueRouter);
 Vue.component("ComImage", ComImage);
 Vue.use(axiosApi);
 Vue.use(VueContext);
+Vue.use(ImeFixPlugin);
 Vue.component("vue-context", VueContext);
 Vue.prototype.$eventBus = new Vue();
 

@@ -12,16 +12,10 @@
           }}
         </h2>
         <span v-if="loginIsHost || showBadge" :class="{
-          groupOwner: editUser?.type === 0 || chatContent.groupNotice.editUser && chatContent.groupNotice.editUser.type == 0,
-          isAdmin: editUser?.type === 1 || !editUser && chatContent.groupNotice.editUser && chatContent.groupNotice.editUser.type == 1,
+          groupOwner: displayUserType == 0,
+          isAdmin: displayUserType == 1,
         }">
-          {{
-            $t(
-              handleEditUserType(
-                (chatContent.groupNotice.editUser && chatContent.groupNotice.editUser.type) || (hostInfo && hostInfo.type)
-              )
-            )
-          }}
+          {{ $t(displayUserLabel) }}
         </span>
       </div>
       <section>
@@ -77,6 +71,27 @@ export default {
     };
   },
   inject: ["provideMemberList", "provideSetTopNotice"],
+  computed: {
+    displayUserType() {
+      if (this.editUser && this.editUser.type !== undefined) {
+        return this.editUser.type;
+      }
+      if (this.chatContent?.groupNotice?.editUser?.type !== undefined) {
+        return this.chatContent.groupNotice.editUser.type;
+      }
+      if (this.hostInfo && this.hostInfo.type !== undefined) {
+        return this.hostInfo.type;
+      }
+      return -1;
+    },
+    displayUserLabel() {
+      const typeMap = {
+        0: '群主',
+        1: '管理员'
+      };
+      return typeMap[this.displayUserType] || '';
+    }
+  },
   mounted() {
     this.init();
   },
@@ -269,15 +284,6 @@ export default {
       }
       // 关闭
       this.handleClose();
-    },
-    handleEditUserType(origin) {
-      let typeStr = {
-        0: "群主",
-        1: "管理员",
-        2: "",
-      };
-      const forceType = this.editUser?.type;
-      return typeStr[forceType] || typeStr[origin];
     },
   },
 };
