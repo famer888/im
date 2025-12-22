@@ -347,8 +347,10 @@ const fnChannelMsgAdd = async (msg, isOld) => {
     if (!contentStr) {
         return;
     }
+    // 确保channelId和msgId是数字类型，避免因类型不一致导致会话列表匹配失败
+    const msgNum= {...msg, channelId: Number(msg.channelId), msgId: Number(msg.msgId)}
      fnMsgAdd({
-        msg,
+        msg: msgNum,
         contentStr,
         fileKey,
         type,

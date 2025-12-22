@@ -232,8 +232,12 @@ export default {
     uniqueById(arr) {
         const map = new Map();
         arr.forEach(item => {
-            if (!map.has(item.id)) {
-                map.set(item.id, item);
+            // 使用 id + type 组合作为唯一键，并确保转为字符串处理，防止 123 和 "123" 被视为不同
+            // 添加分隔符确保 id="1",type="1" 和 id="11",type="" 不会冲突
+            const type = item.type || '';
+            const key = item.id + '_' + type;
+            if (!map.has(key)) {
+                map.set(key, item);
             }
         });
         return Array.from(map.values());
