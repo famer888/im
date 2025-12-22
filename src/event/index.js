@@ -191,7 +191,7 @@ const dispatch = (code, data) => {
       const errCode = commonResult.errCode;
       if (errCode == 100) {
         // 登出前要先导出
-        ipcRenderer.send("auto-export-db", {}).then((res) => {
+        ipcRenderer.invoke("auto-export-db", {}).then((res) => {
           eventCommon.fnLoginout();
         });
       } else if ([1022, 1021].includes(errCode)) {
