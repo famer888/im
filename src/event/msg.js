@@ -176,7 +176,7 @@ export const fnMsgAdd = async ({ msg, contentStr, fileKey, type }) => {
     if (msgNew.msgType === 8) {
         Cache(`${loginId}-groupNotice`).then((res) => {
             const obj = res || {};
-            obj[msgNew.groupId] = msgNew.content;
+            obj[msgNew.groupId] = `^#${msgNew.sendUid}#$-${msgNew.content}`;
 
             Cache(`${loginId}-groupNotice`, obj);
         });

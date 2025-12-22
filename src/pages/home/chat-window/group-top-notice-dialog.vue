@@ -6,7 +6,7 @@
     </h2>
     <div>
       <ComGroupNoticeView
-      :content="content"
+      :content="formatedNotice.notice"
       :atNameList="atNameList"
       :chatContent="chatContent"
     />
@@ -40,6 +40,18 @@ export default {
 
       return [];
     },
+    formatedNotice() {
+      // 历史逻辑，改起来很麻烦，用patter替换吧
+      // this.content patter为^#123#$-1234567890
+      // 中间为uid，后面为notice
+      const match = this.content.match(/^\^#(.+?)#\$-(.*)$/s);
+      const uid = match ? match[1] : '';
+      const notice = match ? match[2] : this.content;
+      return {
+        uid,
+        notice,
+      }
+    }
   },
   inject: ['provideGroupNotice'],
   mounted() {
@@ -52,8 +64,8 @@ export default {
       eventBase.fnCommunicationSendMsg({
         operator: "openGroupNoticeDialog",
       });
-      const uid = this.chatContent?.groupNotice?.user?.uid || this.chatContent?.groupNotice?.user?.id;
-      this.provideGroupNotice({ notice: this.content, editorId: Number(uid) })
+      const { uid, notice } = this.formatedNotice;
+      this.provideGroupNotice({ notice, editorId: Number(uid) })
       this.handleClose();
     },
     /**

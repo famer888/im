@@ -35,8 +35,8 @@
         @msgSelectedChange="handleMsgSelectedChange"
         @rightClickMenuDisplay="handleRightClickMenuDisplay"
         @openGroupTopNoticeDialog="
-          (value) => {
-            groupTopNoticeContent = value;
+          (content, uid) => {
+            groupTopNoticeContent = `^#${uid}#$-${content}`;
           }
         "
       />
@@ -1306,8 +1306,8 @@ export default {
         showHistoryNotice: true,
       };
     },
-    handleSetTopNotice({ notice }) {
-      this.groupTopNoticeContent = notice;
+    handleSetTopNotice({ notice, editorId }) {
+      this.groupTopNoticeContent = `^#${editorId}#$-${notice}`;
     },
     handleUpdateGroupMember(member) {
       for (let i = 0; i < memberInfoList.length; i++) {
