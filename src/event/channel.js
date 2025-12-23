@@ -141,7 +141,7 @@ const fnAddChannelNoticeToChat = async (data) => {
     // console.log(`[DEBUG] 创建频道:${channelInfo?.operateType === 0 && eventType === 1} 加入频道:${eventType === 2 && subscriberInfo?.operateType === 0}, 通知消息:${channelNoticeMsg?.isNotice}`);
     if (channelNoticeMsg?.isNotice) {
         const { noticeMsg, unReadNum } = channelNoticeMsg || {};
-        const timestamp = Date.now();
+        const timestamp = Number(data.msgTime) || Date.now();
         const loginId = eventCommon.fnCommonInfoRU({ getId: "loginId" });
         const customMsgId = generateUniqueId();
         const idStr = "channelNoticefriend"; // id + type
