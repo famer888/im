@@ -26,6 +26,7 @@ import { createProtocol } from "vue-cli-plugin-electron-builder/lib";
 import nodePath from "path";
 import { openFile } from "@/utils/server";
 import { showNotification, closeNotification } from  "@/notification";
+import { runMacStartupCleanup, watchUserDataRemoval, stopWatchUserData } from "@/utils/mac/uninstall-errors";
 
 app.on("gpu-process-crashed", (event, kill) => {
     // console.warn("app:gpu-process-crashed", event, kill);
@@ -1148,6 +1149,9 @@ function registerLocalResourceProtocol(ses) {
     });
 }
 app.on("ready", () => {
+    // [macOS] 启动前清理可能残留的 IndexedDB 锁文件
+    runMacStartupCleanup();
+
     createMainWindow();
 
     // 启用电源阻止器，防止系统进入睡眠状态
@@ -1222,6 +1226,9 @@ app.on("before-quit", async (event) => {
         powerSaveBlocker.stop(powerBlockerId);
     }
 
+    // [macOS] 停止 userData 目录监听
+    stopWatchUserData();
+
     // Fix issues #14
     baseIndexList[baseIndex] = 0;
 
@@ -1293,8 +1300,16 @@ function toggleTrayIcon(icon) {
 }
 
 // 监听软件卸载，关闭应用
-setInterval(() => {
-    if (!fs.existsSync(userData)) {
+if (isOsx) {
+    // macOS: 使用 fs.watch 避免文件锁定问题
+    watchUserDataRemoval(() => {
         app.quit();
-    }
-}, 5000);
+    });
+} else {
+    // Windows: 保持原有的 setInterval 轮询
+    setInterval(() => {
+        if (!fs.existsSync(userData)) {
+            app.quit();
+        }
+    }, 5000);
+}

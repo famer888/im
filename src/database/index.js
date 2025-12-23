@@ -69,16 +69,16 @@ export default class dbBase {
   }
 
   async updateVersionFromPreviousDatabase() {
+    let tempDb = null;
     try {
       // 创建临时数据库实例来检查现有schema
-      const tempDb = new Dexie(this.userId + "-68-2.0.3");
+      tempDb = new Dexie(this.userId + "-68-2.0.3");
       await tempDb.open();
 
       // 获取当前数据库中的表
       const existingTables = tempDb.tables;
 
       if (existingTables.length === 0) {
-        tempDb.close();
         return;
       }
 
@@ -99,8 +99,6 @@ export default class dbBase {
         }
       }
 
-      tempDb.close();
-
       if (needUpdate) {
         // schema有变化，更新localStorageName中对应表的schema
         for (const tableName of tablesToUpdate) {
@@ -119,6 +117,15 @@ export default class dbBase {
     } catch (e) {
       // 数据库可能不存在或其他错误，忽略
       console.log('[db]更新数据库版本号失败', e.message || e);
+    } finally {
+      // 确保临时数据库总是被关闭，避免文件句柄泄漏
+      if (tempDb) {
+        try {
+          tempDb.close();
+        } catch (closeError) {
+          // 忽略关闭错误
+        }
+      }
     }
   }
 
