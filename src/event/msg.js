@@ -1678,7 +1678,7 @@ const fnAlertNotification = async (data, chatList) => {
         !eventCommon.fnDisturbIdStrListRU({ idStrIsExist: id + type }) &&
         ![51, 6, 10, 13, 14, 99].includes(msgType)
     ) {
-        const info = chatList.find(item => item.id === id && item.type === type);
+        const info = (chatList || []).find(item => item.id === id && item.type === type);
         if (info) {
             const params = {
                 id,
