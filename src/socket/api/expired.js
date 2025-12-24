@@ -197,7 +197,9 @@ export default class Expired {
                     data?.latestRecallChannelMessage?.sendTime ||
                     data?.clearTime;
     // console.log('[expired time check]msgTime', msgTime, this.inititalTime, data);
-
+    if (!msgTime) {
+      return true;
+    }
     if (msgTime && Number(msgTime) > this.inititalTime) {
       return true;
     }
