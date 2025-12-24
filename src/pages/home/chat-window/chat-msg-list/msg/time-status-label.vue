@@ -19,7 +19,7 @@
         src="@/assets/images/message/has-read.png"
       />
       <img
-        v-else-if="msgInfo.readStatus === 1"
+        v-else-if="msgInfo.readStatus === 1 && chatContent.type !== 'channel'"
         src="@/assets/images/message/has-send.png"
       />
     </div>
