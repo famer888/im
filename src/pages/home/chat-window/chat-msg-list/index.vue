@@ -1710,6 +1710,68 @@ export default {
         await eventMsg.fnChannelMsgAdd(item.latestChannelMessage, true);
       }
     },
+    // 检查群最后一条消息更新
+    checkGroupLastMsgUpdate(recentMsgs) {
+      try {
+        const { id } = this.chatContent;
+        if (!id || !recentMsgs || recentMsgs.length === 0) return;
+
+        const loginId = eventCommon.fnCommonInfoRU({
+          getId: "loginId",
+        });
+
+        // 获取最后一条消息
+        const lastMsg = recentMsgs[recentMsgs.length - 1];
+        if (!lastMsg) return;
+
+        Cache(`${loginId}MessageGroupList`).then((groupList) => {
+          try {
+            if (groupList && groupList.length) {
+              const groupInfo = groupList.find((item) => String(item.id) === String(id));
+              if (groupInfo) {
+                 const cacheMsgId = Number(groupInfo.MsgID) || 0;
+                 const cacheTime = Number(groupInfo.time) || 0;
+                 const newMsgId = Number(lastMsg.MsgID) || 0;
+                 const newTime = Number(lastMsg.sendTime) || 0;
+
+                 let sendUserName = lastMsg.sendUserName || "";
+                 // 如果没有发送者名字且不是自己发送的，尝试从用户信息构建
+                 if (!sendUserName && !lastMsg.isSelf && lastMsg.user) {
+                    const name = lastMsg.user.name || lastMsg.user.nickName;
+                    if (name) {
+                       sendUserName = name + "：";
+                    }
+                 }
+                 const cacheSendUserName = groupInfo.sendUserName || "";
+                 // MsgID、时间、发送者名字 不一致，就更新
+                 if (cacheMsgId !== newMsgId || cacheTime !== newTime || cacheSendUserName !== sendUserName) {
+                   eventBase.fnCommunicationSendMsg({
+                    operator: "groupUpdate",
+                    data: {
+                      id: Number(id),
+                      type: 'group',
+                      values: {
+                        ...groupInfo,
+                        MsgID: Number(lastMsg.MsgID),
+                        content: lastMsg.content,
+                        time: lastMsg.sendTime,
+                        sendTime: lastMsg.sendTime,
+                        chatType: lastMsg.chatType,
+                        sendUserName: sendUserName
+                      },
+                    },
+                  });
+                 }
+              }
+            }
+          } catch (e) {
+            console.error("checkGroupLastMsgUpdate 缓存 error", e);
+          }
+        });
+      } catch (e) {
+        console.error("checkGroupLastMsgUpdate error", e);
+      }
+    },
     /**
      * 消息列表初始化
      */
@@ -1782,6 +1844,10 @@ export default {
             const recentMsgList = msgList.at(-1)?.list || [];
               //  console.log('recentMsgList-2-', recentMsgList)
             this.getChannelHistoryMsg(recentMsgList.slice(-10));
+          } else if(this.chatContent.type === 'group') {
+            const msgList = this.blockList || [];
+            const recentMsgList = msgList.at(-1)?.list || [];
+            this.checkGroupLastMsgUpdate(recentMsgList.slice(-10));
           }
         });
 

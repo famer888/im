@@ -105,7 +105,12 @@ export default {
   props: ["hide"],
   async mounted() {
     // 登录id
-    loginId = Number(location.href.slice(location.href.lastIndexOf("=") + 1));
+    const urlParams = new URLSearchParams(window.location.hash.split('?')[1]);
+    loginId = Number(urlParams.get('loginId'));
+    if (!loginId || isNaN(loginId)) {
+        // Fallback for older format if necessary, or just rely on URLSearchParams
+        loginId = Number(location.href.slice(location.href.lastIndexOf("=") + 1));
+    }
 
     // 登录id 设置到公共
     eventCommon.fnCommonInfoRU({
