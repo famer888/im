@@ -20,9 +20,6 @@ import eventCommon from "@/event/common";
 let timeBefore = new Date().getTime();
 
 const dispatch = (code, data) => {
-  if (![29901, 20001].includes(code)) {
-    console.log("收到推送", code);
-  }
   switch (code) {
     case 20001: {
       // 登录成功 接口已对应处理，所以这个推送不需要处理
@@ -332,6 +329,9 @@ const fnSocketMessage = (arrayBuffer) => {
   // 确认接收
   if (code !== 20701) {
     ReceiveServerToClient(data.id);
+  }
+  if (![29901, 20001].includes(code)) {
+    console.log("收到推送", code);
   }
   if (expired.check(code, data)) {
     dispatch(code, data);
