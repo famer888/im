@@ -323,12 +323,14 @@ export default {
       if (this.friendNum === 100 && this.chatNum === 100) {
         // 记录该账户更新完成
         Cache("login-account-list").then((res) => {
-          Cache(
-            "login-account-list",
-            res.map((item) =>
-              item.id === loginId ? { ...item, init: true } : item
-            )
-          );
+          if (res && Array.isArray(res)) {
+            Cache(
+              "login-account-list",
+              res.map((item) =>
+                item.id === loginId ? { ...item, init: true } : item
+              )
+            );
+          }
         });
 
         // 归档初始化
