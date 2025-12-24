@@ -551,7 +551,7 @@ const fnAtClick = async (text, currentGuoupId) => {
   const loginId = commonInfo.loginId;
 
   // 判断是不是好友
-  const friendList = await Cache(`${loginId}-ContactList`)
+  const friendList = (await Cache(`${loginId}-ContactList`)) || [];
   const memberValues = friendList.find(
     (item) => item.nickName === text || item.name === text
   );
@@ -568,7 +568,7 @@ const fnAtClick = async (text, currentGuoupId) => {
   // 判断是否是当前已有的群
   Cache(`${loginId}-GroupList`).then((res) => {
     if (res) {
-      const groupInfo = res.find((item) => item.groupAliasName === text);
+      const groupInfo = (res || []).find((item) => item.groupAliasName === text);
 
       if (groupInfo) {
         if (currentGuoupId == groupInfo.id) {
