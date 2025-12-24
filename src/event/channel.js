@@ -390,6 +390,28 @@ const fnChannelUpdate = ({ info, channels, chats }) => {
             isUpdated = true;
         }
 
+        // 更新频道id
+        if (info.MsgID && updateInfo.MsgID !== info.MsgID) {
+            updateInfo.MsgID = info.MsgID;
+            isUpdated = true;
+        }
+         // 更新频道最新消息内容
+        if (info.content && updateInfo.content !== info.content) {
+            updateInfo.content = info.content;
+            isUpdated = true;
+        }
+         // 更新频道消息时间
+        if (info.time && updateInfo.time !== info.time) {
+            updateInfo.time = info.time;
+            updateInfo.sendTime = info.time;
+            isUpdated = true;
+        }
+        // 更新聊天类型
+        if (info.chatType !== undefined && updateInfo.chatType !== info.chatType) {
+            updateInfo.chatType = info.chatType;
+            isUpdated = true;
+        }
+
         if (isUpdated) {
             chats[chatIndex] = updateInfo;
             dataNew.chats = chats;

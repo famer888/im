@@ -1639,6 +1639,30 @@ export default {
       const lastOneMsgIsExist = recentMsgs.some(item => Number(item.MsgID) === latestMsgId); // 最后一条消息是否存在
       const lastTwoMsgIsExist = recentMsgs.some(item => Number(item.MsgID) === (latestMsgId -1)); // 最后第二条消息是否存在
       if(lastOneMsgIsExist && (latestMsgId <= 1 || lastTwoMsgIsExist)) {
+        // 更新本地频道信息 （解决偶现切换频道不是最新消息的情况）
+        Cache(`${loginId}MessageChannelList`).then((channelList) => {
+          let channelInfo = null;
+          if (channelList && channelList.length) {
+            channelInfo = channelList.find((item) => Number(item.channelId) === Number(channelId));
+            const resItem = recentMsgs.find(item => Number(item.MsgID) === Number(latestMsgId));
+            if (channelInfo && resItem) {
+               // 通知左侧列表更新
+              eventBase.fnCommunicationSendMsg({
+                operator: "channelUpdate",
+                data: {
+                  channelId: Number(channelId),
+                  values: {
+                    ...channelInfo,
+                    MsgID: Number(resItem.MsgID),
+                    content: resItem.content,
+                    time: resItem.sendTime,
+                    chatType: resItem.chatType,
+                  },
+                },
+              });
+            }
+          }
+        });
         return
       }
 
