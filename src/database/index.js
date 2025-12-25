@@ -1146,7 +1146,7 @@ export default class dbBase {
       this.version += 1;
     }
     await Cache(`${this.userId}storageVersion`, this.version + 1);
-    this.db = new Dexie(this.userId + "-97-2.0.3");
+    this.db = new Dexie(this.userId + afterfix);
 
     if (!Object.keys(tables).length) {
       if (type == "init") cb && cb();
