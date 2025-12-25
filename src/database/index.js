@@ -25,6 +25,7 @@ import eventCheduledCeletion from "@/event/cheduled-deletion";
 // 完善  删除聊天记录   撤回、 删除等功能
 
 const pageSize = 80;
+export const afterfix = "-68-2.0.3";
 
 const handleTableNameGet = (id, type) => {
   let typeName = "message";
@@ -72,7 +73,7 @@ export default class dbBase {
     let tempDb = null;
     try {
       // 创建临时数据库实例来检查现有schema
-      tempDb = new Dexie(this.userId + "-68-2.0.3");
+      tempDb = new Dexie(this.userId + afterfix);
       await tempDb.open();
 
       // 获取当前数据库中的表
@@ -1145,7 +1146,7 @@ export default class dbBase {
       this.version += 1;
     }
     await Cache(`${this.userId}storageVersion`, this.version + 1);
-    this.db = new Dexie(this.userId + "-68-2.0.3");
+    this.db = new Dexie(this.userId + afterfix);
 
     if (!Object.keys(tables).length) {
       if (type == "init") cb && cb();

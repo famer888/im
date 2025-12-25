@@ -1,6 +1,6 @@
 import Dexie from "dexie";
 import { Cache } from "@/cache";
-import DbBase from "./index";
+import DbBase, { afterfix} from "./index";
 import { Massass } from "./logger";
 import benchmark from "@/debuggers/benchmark";
 // 这是一个DB操作队列，如你所见，dbBase extends Queue
@@ -142,7 +142,7 @@ export default class Queue extends DbBase {
     }
 
     // 创建新的数据库实例并配置表结构
-    this.db = new Dexie(this.userId + "-68-2.0.3");
+    this.db = new Dexie(this.userId + afterfix);
     this.db.version(this.version).stores(tables);
 
     try {

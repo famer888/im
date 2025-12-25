@@ -136,7 +136,10 @@ export default {
     }
 
     // 通过主进程获取用户的文件存储地址
-    await initUserCachePath(loginId);
+    // 先注释了：这个应用间数据共享的方案非常不安全，不但容易数据混乱，Cache函数自身没有抛错直接静默失败了
+    // 非常难以定位问题，多用户多app登录容易混淆数据和文件锁死
+    // 需要重新设计
+    // await initUserCachePath(loginId);
 
     // 初始化 账户配置
     await eventCommon.fnConfigInit(true);
