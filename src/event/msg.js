@@ -343,8 +343,9 @@ const fnChannelMsgAdd = async (msg, isOld) => {
         content:msg.content,
         attachmentKey: msg.attachmentKey,
     });
-    //  console.log(channelId+'收到一条频道消息-msg-',contentStr, msg)
+    //  console.log(channelId+'收到一条频道消息-msg-',contentStr,'msg', msg)
     if (!contentStr) {
+      console.log('contentStr null')
         return;
     }
     // 确保channelId和msgId是数字类型，避免因类型不一致导致会话列表匹配失败

@@ -1633,11 +1633,20 @@ export default {
 
       const latestMsgId = Number(lastMsgInfo.latestMsgId);
       const deleteHistoryS = await Cache(`${loginId}-channel-msg-delete-history`) || {}; //本地删除/清空的消息
+      const { clearTime, idsDelete } = deleteHistoryS[Number(channelId)] || {};
 
       // 判断如果本地是最新的则不拉取，由于离线会推最后一条消息，这里根据最后两条进行判断
       // console.log('recentMsgs--', recentMsgs, latestMsgId)
-      const lastOneMsgIsExist = recentMsgs.some(item => Number(item.MsgID) === latestMsgId); // 最后一条消息是否存在
-      const lastTwoMsgIsExist = recentMsgs.some(item => Number(item.MsgID) === (latestMsgId -1)); // 最后第二条消息是否存在
+
+      // 检查消息是否在本地删除列表中
+      const checkMsgIsDelete = (msgId) => {
+        return idsDelete && idsDelete.some(item => Number(item.msgId) === msgId);
+      }
+
+      const lastOneMsgIsExist = recentMsgs.some(item => Number(item.MsgID) === latestMsgId) || checkMsgIsDelete(latestMsgId); // 最后一条消息是否存在
+      const lastTwoMsgIsExist = recentMsgs.some(item => Number(item.MsgID) === (latestMsgId -1)) || checkMsgIsDelete(latestMsgId - 1); // 最后第二条消息是否存在
+      console.log('历史记录是否最新', lastOneMsgIsExist, lastTwoMsgIsExist,recentMsgs,latestMsgId)
+
       if(lastOneMsgIsExist && (latestMsgId <= 1 || lastTwoMsgIsExist)) {
         // 更新本地频道信息 （解决偶现切换频道不是最新消息的情况）
         Cache(`${loginId}MessageChannelList`).then((channelList) => {
@@ -1678,12 +1687,11 @@ export default {
       }
       // console.log('getChannelHistoryMsg--', params)
       let msgs = await eventChannel.fnGetHistoryMsgs(params)
-      // console.log('getChannelHistoryMsg-2-', msgs)
+      console.log('getChannelHistoryMsg-2-', msgs)
       if(!msgs.length) return;
-
       // 过滤历史本地删除/清空的消息
       // console.log('deleteHistoryS--', deleteHistoryS)
-      const { clearTime, idsDelete } = deleteHistoryS[Number(channelId)] || {};
+      // const { clearTime, idsDelete } = deleteHistoryS[Number(channelId)] || {};
             // console.log('deleteHistoryS-2-', clearTime, idsDelete)
       if(clearTime) {
        msgs = msgs.filter(item => Number(item.latestChannelMessage.msgTime) > clearTime)
@@ -1703,6 +1711,13 @@ export default {
         return Number(a.latestChannelMessage.msgTime) - Number(b.latestChannelMessage.msgTime);
       });
       // console.log('getChannelHistoryMsg-3-', msgs)
+
+      // 后续待判断  最后一条 content为空需要跳过 防止重复刷新
+      // const lastMsg = msgs[msgs.length - 1].latestChannelMessage;
+      // if (lastMsg && lastMsg.content && lastOneMsgIsExist) {
+
+      // }
+
 
       // 消息展示
       for(let i = 0; i < msgs.length; i++) {
@@ -1842,7 +1857,7 @@ export default {
             const msgList = this.blockList || [];
             // console.log('recentMsgList-1-', msgList)
             const recentMsgList = msgList.at(-1)?.list || [];
-              //  console.log('recentMsgList-2-', recentMsgList)
+               console.log('recentMsgList-2-', recentMsgList)
             this.getChannelHistoryMsg(recentMsgList.slice(-10));
           } else if(this.chatContent.type === 'group') {
             const msgList = this.blockList || [];
