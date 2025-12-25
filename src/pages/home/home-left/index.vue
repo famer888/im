@@ -1104,6 +1104,27 @@ export default {
           if (lastInfo) {
             item.chatType = lastInfo.chatType;
             item.content = this.fnFormatmsgLast(lastInfo);
+
+            // 解决删除消息后，会话框显示的发送名字、时间问题
+            // 更新时间和ID
+            if (lastInfo.sendTime) {
+              item.time = lastInfo.sendTime;
+              item.sendTime = lastInfo.sendTime;
+            }
+            if (lastInfo.MsgID) {
+              item.MsgID = Number(lastInfo.MsgID);
+            }
+            // 更新发送者名字
+            if (item.type === 'group') {
+                let sendUserName = lastInfo.sendUserName || "";
+                if (!sendUserName && !lastInfo.isSelf && lastInfo.user) {
+                   const name = lastInfo.user.name || lastInfo.user.nickName;
+                   if (name) {
+                      sendUserName = name + "：";
+                   }
+                }
+                item.sendUserName = sendUserName;
+            }
           } else {
             item.content = "";
             // 因为删除掉所有数据了，所以把chatType 设为null
