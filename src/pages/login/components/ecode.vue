@@ -225,13 +225,7 @@ export default {
             // 保存并跳转
             Cache("login-account-list", loginAccountList).then(() => {
               this.$router.push("/home?loginId=" + loginId);
-            }).catch((e) => {
-              console.error("[登录] 保存登录信息失败:", e);
-              this.$router.push("/home?loginId=" + loginId);
-            });
-          }).catch((e) => {
-            console.error("[登录] 获取登录列表失败:", e);
-            this.$router.push("/home?loginId=" + loginId);
+            })
           });
         } else {
           // 没有获取到成功信息，则1.5s后再进行获取
