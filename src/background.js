@@ -86,6 +86,7 @@ let baseIndexList = [];
 let userData = app.getPath("userData");
 let imagesCacheDir = `${userData}/images`;
 let voicesCacheDir = `${userData}/voices`;
+let codeCacheDir = `${userData}/Code Cache`;
 let mainWindowIsFocused = true;
 let downTimers = {};
 let powerBlockerId = null; // 电源阻止器ID
@@ -1067,7 +1068,7 @@ const createMainWindow = async () => {
         global.sharedObj.proto.onAppSuspend();
     });
 
-    [imagesCacheDir, voicesCacheDir].map((e) => {
+    [imagesCacheDir, voicesCacheDir, codeCacheDir].map((e) => {
         if (!fs.existsSync(e)) {
             fs.mkdirSync(e);
         }
