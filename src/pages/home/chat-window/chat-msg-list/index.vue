@@ -1712,62 +1712,27 @@ export default {
       });
       // console.log('getChannelHistoryMsg-3-', msgs)
 
-      // 最后一条 content为空需要跳过 防止重复刷新UI
-      if (!lastOneMsgIsExist) {
-        const deleteIds = []; // 需要本地删除的消息ID
-        // 从后往前遍历，直到找到有效消息或列表为空
-        while (msgs.length > 0) {
-          const lastMsg = msgs[msgs.length - 1].latestChannelMessage;
-          if (!lastMsg) {
-             msgs.pop();
-             continue;
-          }
-          // 尝试解密
-          const { contentStr } = await fnMsgDecryption({
-            id: Number(channelId),
-            type: "channel",
-            msgType: lastMsg.msgType || 0,
-            msgEncryptionVersion: lastMsg.version,
-            content: lastMsg.content,
-            attachmentKey: lastMsg.attachmentKey,
-          });
-          // 如果内容有效，则停止检查，保留该消息及前面的消息
-          if (contentStr) {
-             break;
-          }
-          // 如果内容无效，移除并添加到待删除列表
-            console.log('无效消息，加入删除列表:', lastMsg.msgId);
-            msgs.pop();
-            const deleteItem = {
-              msgId: Number(lastMsg.msgId),
-              customMsgId: lastMsg.customMsgId || null
-            };
-            if (lastMsg.id) {
-              deleteItem.id = lastMsg.id;
-            }
-            deleteIds.push(deleteItem);
-          }
-
-          // 批量执行本地删除空消息（空消息本身不进入缓存，这里进行直接本地删除，防止后面又刷新历史记录）
-          if (deleteIds.length > 0) {
-            eventBase.fnCommunicationSendMsg({
-              operator: "msgDelete",
-              data: {
-                id: Number(channelId),
-                type: "channel",
-                idsDelete: deleteIds,
-                isOtherPlatformOperate: false,
-                isRemoteDeletion: false,
-                isDeleteChatWindow: false
-              },
-            });
-          }
-      }
-
       // 消息展示
+      const deleteIds = [];
       for(let i = 0; i < msgs.length; i++) {
         const item = msgs[i]
-        await eventMsg.fnChannelMsgAdd(item.latestChannelMessage, true);
+        await eventMsg.fnChannelMsgAdd(item.latestChannelMessage, true, deleteIds);
+      }
+
+      // 批量执行本地删除空消息（空消息本身不进入缓存，这里进行直接本地删除，防止后面又刷新历史记录）
+      if (deleteIds.length > 0) {
+        console.log('执批量本地删除', deleteIds);
+        eventBase.fnCommunicationSendMsg({
+          operator: "msgDelete",
+          data: {
+            id: Number(channelId),
+            type: "channel",
+            idsDelete: deleteIds,
+            isOtherPlatformOperate: false,
+            isRemoteDeletion: false,
+            isDeleteChatWindow: false
+          },
+        });
       }
     },
     // 检查群最后一条消息更新
