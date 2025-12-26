@@ -1,57 +1,32 @@
 <template>
-  <div
-    id="chatMsgList"
-    :class="{ friend: chatContent.type === 'friend' }"
-    @click="handleInputEditorFoucs"
-  >
+  <div id="chatMsgList" :class="{ friend: chatContent.type === 'friend' }" @click="handleInputEditorFoucs">
     <section>
       <p class="showtimeDay" :class="{ 'day-show': floatDateVisible }">
         {{ floatDate }}
       </p>
-      <img
-        v-if="chatContent.bfReadCancel"
-        src="@/assets/images/chat/read-burn-back.png"
-      />
-      <div
-        id="allMsgContainer"
-        ref="container"
-        :style="{
-          opacity: containerOpacity,
-        }"
-      >
-        <div
-          v-for="(item, index) in blockList"
-          :key="'pageNum' + item.pageNum"
-          :id="'pageNum' + item.pageNum"
-          :style="
-            item.minHeight &&
+      <img v-if="chatContent.bfReadCancel" src="@/assets/images/chat/read-burn-back.png" />
+      <div id="allMsgContainer" ref="container" :style="{
+        opacity: containerOpacity,
+      }">
+        <div v-for="(item, index) in blockList" :key="'pageNum' + item.pageNum" :id="'pageNum' + item.pageNum" :style="item.minHeight &&
             blockListShowPageNum > item.pageNum + 1 &&
             blockListShowPageNum < item.pageNum - 1
-              ? {
-                  minHeight: item.minHeight + 'px',
-                }
-              : {}
-          "
-        >
-          <template
-            v-if="
-              (blockListShowPageNum <= item.pageNum + 1 &&
-                blockListShowPageNum >= item.pageNum - 1) ||
-              index === blockList.length - 1
-            "
-          >
-            <div
-              v-for="n in item.list"
-              :id="n.customMsgId"
-              :key="n.customMsgId"
-              :class="{
-                active: String(n.customMsgId) === String(idHighlighted),
-                showTime: Boolean(n.showTime),
-                unreadSeparation: unreadSeparationId === n.customMsgId,
-                selected: selectedIdList.some((cur) => cur.id == n.id),
-              }"
-              :data-show-time-day="n.showTimeDay"
-            >
+            ? {
+              minHeight: item.minHeight + 'px',
+            }
+            : {}
+          ">
+          <template v-if="
+            (blockListShowPageNum <= item.pageNum + 1 &&
+              blockListShowPageNum >= item.pageNum - 1) ||
+            index === blockList.length - 1
+          ">
+            <div v-for="n in item.list" :id="n.customMsgId" :key="n.customMsgId" :class="{
+              active: String(n.customMsgId) === String(idHighlighted),
+              showTime: Boolean(n.showTime),
+              unreadSeparation: unreadSeparationId === n.customMsgId,
+              selected: selectedIdList.some((cur) => cur.id == n.id),
+            }" :data-show-time-day="n.showTimeDay">
               <h3 v-if="unreadSeparationId == n.customMsgId">
                 <span @click="unreadSeparationId = -1">
                   {{ $t("未读消息") }}
@@ -60,63 +35,36 @@
               <span v-if="n.showTime" class="showtimeDay">
                 {{ n.showTimeDay }}
               </span>
-              <ComMsgSystemNotification
-                :groupOwner="groupOwner"
-                v-if="[50, 51, 52].includes(n.chatType) || isChannelSystemMsg(n)"
-                :msgInfo="n"
-                @rightClick="
+              <ComMsgSystemNotification :groupOwner="groupOwner"
+                v-if="[50, 51, 52].includes(n.chatType) || isChannelSystemMsg(n)" :msgInfo="n" @rightClick="
                   (e) => handleEmitInfo({ e, info: n }, 'rightClickMenuDisplay')
-                "
-              />
-              <section
-                v-else
-                :class="{
-                  self: n.isSelf && chatContent.type !== 'channel',
-                  showAvatar: !n.isSelf && chatContent.type === 'group',
-                }"
-              >
-                <ComAvatarName
-                  v-if="!n.isSelf && chatContent.type === 'group'"
-                  :msgInfo="n"
-                  :memberInfos="memberInfos"
+                " />
+              <section v-else :class="{
+                self: n.isSelf && chatContent.type !== 'channel',
+                showAvatar: !n.isSelf && chatContent.type === 'group',
+              }">
+                <ComAvatarName v-if="!n.isSelf && chatContent.type === 'group'" :msgInfo="n" :memberInfos="memberInfos"
                   @rightClick="
                     (e) =>
                       handleEmitInfo(
                         { e, info: n, isAvatar: true },
                         'rightClickMenuDisplay'
                       )
-                  "
-                  @openMemberDialog="
+                  " @openMemberDialog="
                     handleMemberDialogShow({
                       id: n.user.uid,
                       icon: n.user.icon,
                       name: n.user.name,
                       nickName: n.user.nickName,
                     })
-                  "
-                />
-                <ComMsgText
-                  v-if="n.chatType === 0"
-                  :isSelf="n.isSelf"
-                  :chatContent="chatContent"
-                  :content="n.content"
-                  :atUsers="n.atUsers"
-                  :currentGuoupId="chatContent.id"
-                  :links="n.links"
-                  @rightClick="
+                    " />
+                <ComMsgText v-if="n.chatType === 0" :isSelf="n.isSelf" :chatContent="chatContent" :content="n.content"
+                  :atUsers="n.atUsers" :currentGuoupId="chatContent.id" :links="n.links" @rightClick="
                     (e) =>
                       handleEmitInfo({ e, info: n }, 'rightClickMenuDisplay')
-                  "
-                >
-                  <img
-                    v-if="n.deleteSeconds"
-                    class="fire"
-                    src="@/assets/images/read-delete01.svg"
-                  />
-                  <ComSelectItem
-                    v-if="selectedIdList.length > 0"
-                    :selectedIdList="selectedIdList"
-                    :id="n.customMsgId"
+                  ">
+                  <img v-if="n.deleteSeconds" class="fire" src="@/assets/images/read-delete01.svg" />
+                  <ComSelectItem v-if="selectedIdList.length > 0" :selectedIdList="selectedIdList" :id="n.customMsgId"
                     @onClick="
                       handleEmitInfo(
                         {
@@ -126,40 +74,23 @@
                         },
                         'msgSelectedChange'
                       )
-                    "
-                  />
-                  <ComMsgQuote
-                    v-if="n.quoteMessage !== undefined"
-                    :msgInfo="n.quoteMessage"
-                    :memberInfos="memberInfos"
-                    :chatContent="chatContent"
-                    @onClick="
+                      " />
+                  <ComMsgQuote v-if="n.quoteMessage !== undefined" :msgInfo="n.quoteMessage" :memberInfos="memberInfos"
+                    :chatContent="chatContent" @onClick="
                       () =>
                         handleMoveToId({
                           customMsgId: n.quoteMessage.customMsgId,
                           isHighlighted: true,
                         })
-                    "
-                  />
+                    " />
                   <ComTimeStatusLabel :msgInfo="n" :chatContent="chatContent" />
                 </ComMsgText>
-                <ComMsgImage
-                  v-else-if="[1, 3, 9].includes(n.chatType)"
-                  :msgInfo="n"
-                  :chatContent="chatContent"
+                <ComMsgImage v-else-if="[1, 3, 9].includes(n.chatType)" :msgInfo="n" :chatContent="chatContent"
                   @rightClick="
                     (value) => handleEmitInfo(value, 'rightClickMenuDisplay')
-                  "
-                >
-                  <img
-                    v-if="n.deleteSeconds"
-                    class="fire"
-                    src="@/assets/images/read-delete01.svg"
-                  />
-                  <ComSelectItem
-                    v-if="selectedIdList.length > 0"
-                    :selectedIdList="selectedIdList"
-                    :id="n.customMsgId"
+                  ">
+                  <img v-if="n.deleteSeconds" class="fire" src="@/assets/images/read-delete01.svg" />
+                  <ComSelectItem v-if="selectedIdList.length > 0" :selectedIdList="selectedIdList" :id="n.customMsgId"
                     @onClick="
                       handleEmitInfo(
                         {
@@ -169,37 +100,21 @@
                         },
                         'msgSelectedChange'
                       )
-                    "
-                  />
-                  <ComMsgQuote
-                    v-if="n.quoteMessage !== undefined"
-                    :msgInfo="n.quoteMessage"
-                    :memberInfos="memberInfos"
-                    :chatContent="chatContent"
-                    @onClick="
+                      " />
+                  <ComMsgQuote v-if="n.quoteMessage !== undefined" :msgInfo="n.quoteMessage" :memberInfos="memberInfos"
+                    :chatContent="chatContent" @onClick="
                       () =>
                         handleMoveToId({
                           customMsgId: n.quoteMessage.customMsgId,
                           isHighlighted: true,
                         })
-                    "
-                  />
+                    " />
                   <ComTimeStatusLabel :msgInfo="n" :chatContent="chatContent" />
                 </ComMsgImage>
-                <ComMsgAudio
-                  v-else-if="n.chatType === 2"
-                  :msgInfo="n"
-                  :chatContent="chatContent"
+                <ComMsgAudio v-else-if="n.chatType === 2" :msgInfo="n" :chatContent="chatContent"
                   @rightClick="(e) => handleEmitInfo({ e, info: n }, 'rightClickMenuDisplay')">
-                  <img
-                    v-if="n.deleteSeconds"
-                    class="fire"
-                    src="@/assets/images/read-delete01.svg"
-                  />
-                  <ComSelectItem
-                    v-if="selectedIdList.length > 0"
-                    :selectedIdList="selectedIdList"
-                    :id="n.customMsgId"
+                  <img v-if="n.deleteSeconds" class="fire" src="@/assets/images/read-delete01.svg" />
+                  <ComSelectItem v-if="selectedIdList.length > 0" :selectedIdList="selectedIdList" :id="n.customMsgId"
                     @onClick="
                       handleEmitInfo(
                         {
@@ -209,40 +124,23 @@
                         },
                         'msgSelectedChange'
                       )
-                    "
-                  />
-                  <ComMsgQuote
-                    v-if="n.quoteMessage !== undefined"
-                    :msgInfo="n.quoteMessage"
-                    :memberInfos="memberInfos"
-                    :chatContent="chatContent"
-                    @onClick="
+                      " />
+                  <ComMsgQuote v-if="n.quoteMessage !== undefined" :msgInfo="n.quoteMessage" :memberInfos="memberInfos"
+                    :chatContent="chatContent" @onClick="
                       () =>
                         handleMoveToId({
                           customMsgId: n.quoteMessage.customMsgId,
                           isHighlighted: true,
                         })
-                    "
-                  />
+                    " />
                   <ComTimeStatusLabel :msgInfo="n" :chatContent="chatContent" />
                 </ComMsgAudio>
-                <ComMsgBusinessCard
-                  v-else-if="n.chatType === 5"
-                  :msgInfo="n"
-                  @rightClick="
-                    (e) =>
-                      handleEmitInfo({ e, info: n }, 'rightClickMenuDisplay')
-                  "
-                >
-                  <img
-                    v-if="n.deleteSeconds"
-                    class="fire"
-                    src="@/assets/images/read-delete01.svg"
-                  />
-                  <ComSelectItem
-                    v-if="selectedIdList.length > 0"
-                    :selectedIdList="selectedIdList"
-                    :id="n.customMsgId"
+                <ComMsgBusinessCard v-else-if="n.chatType === 5" :msgInfo="n" @rightClick="
+                  (e) =>
+                    handleEmitInfo({ e, info: n }, 'rightClickMenuDisplay')
+                ">
+                  <img v-if="n.deleteSeconds" class="fire" src="@/assets/images/read-delete01.svg" />
+                  <ComSelectItem v-if="selectedIdList.length > 0" :selectedIdList="selectedIdList" :id="n.customMsgId"
                     @onClick="
                       handleEmitInfo(
                         {
@@ -252,41 +150,23 @@
                         },
                         'msgSelectedChange'
                       )
-                    "
-                  />
-                  <ComMsgQuote
-                    v-if="n.quoteMessage !== undefined"
-                    :msgInfo="n.quoteMessage"
-                    :memberInfos="memberInfos"
-                    :chatContent="chatContent"
-                    @onClick="
+                      " />
+                  <ComMsgQuote v-if="n.quoteMessage !== undefined" :msgInfo="n.quoteMessage" :memberInfos="memberInfos"
+                    :chatContent="chatContent" @onClick="
                       () =>
                         handleMoveToId({
                           customMsgId: n.quoteMessage.customMsgId,
                           isHighlighted: true,
                         })
-                    "
-                  />
+                    " />
                   <ComTimeStatusLabel :msgInfo="n" :chatContent="chatContent" />
                 </ComMsgBusinessCard>
-                <ComMsgFile
-                  v-else-if="n.chatType === 7"
-                  :msgInfo="n"
-                  :chatContent="chatContent"
-                  @rightClick="
-                    (e) =>
-                      handleEmitInfo({ e, info: n }, 'rightClickMenuDisplay')
-                  "
-                >
-                  <img
-                    v-if="n.deleteSeconds"
-                    class="fire"
-                    src="@/assets/images/read-delete01.svg"
-                  />
-                  <ComSelectItem
-                    v-if="selectedIdList.length > 0"
-                    :selectedIdList="selectedIdList"
-                    :id="n.customMsgId"
+                <ComMsgFile v-else-if="n.chatType === 7" :msgInfo="n" :chatContent="chatContent" @rightClick="
+                  (e) =>
+                    handleEmitInfo({ e, info: n }, 'rightClickMenuDisplay')
+                ">
+                  <img v-if="n.deleteSeconds" class="fire" src="@/assets/images/read-delete01.svg" />
+                  <ComSelectItem v-if="selectedIdList.length > 0" :selectedIdList="selectedIdList" :id="n.customMsgId"
                     @onClick="
                       handleEmitInfo(
                         {
@@ -296,44 +176,24 @@
                         },
                         'msgSelectedChange'
                       )
-                    "
-                  />
-                  <ComMsgQuote
-                    v-if="n.quoteMessage !== undefined"
-                    :msgInfo="n.quoteMessage"
-                    :memberInfos="memberInfos"
-                    :chatContent="chatContent"
-                    @onClick="
+                      " />
+                  <ComMsgQuote v-if="n.quoteMessage !== undefined" :msgInfo="n.quoteMessage" :memberInfos="memberInfos"
+                    :chatContent="chatContent" @onClick="
                       () =>
                         handleMoveToId({
                           customMsgId: n.quoteMessage.customMsgId,
                           isHighlighted: true,
                         })
-                    "
-                  />
+                    " />
                   <ComTimeStatusLabel :msgInfo="n" :chatContent="chatContent" />
                 </ComMsgFile>
-                <ComMsgNotice
-                  v-else-if="n.chatType === 8"
-                  :isSelf="n.isSelf"
-                  :content="n.content"
-                  :atNameList="atNameList"
-                  :chatContent="chatContent"
-                  :msgInfo="n"
-                  @rightClick="
+                <ComMsgNotice v-else-if="n.chatType === 8" :isSelf="n.isSelf" :content="n.content"
+                  :atNameList="atNameList" :chatContent="chatContent" :msgInfo="n" @rightClick="
                     (e) =>
                       handleEmitInfo({ e, info: n }, 'rightClickMenuDisplay')
-                  "
-                >
-                  <img
-                    v-if="n.deleteSeconds"
-                    class="fire"
-                    src="@/assets/images/read-delete01.svg"
-                  />
-                  <ComSelectItem
-                    v-if="selectedIdList.length > 0"
-                    :selectedIdList="selectedIdList"
-                    :id="n.customMsgId"
+                  ">
+                  <img v-if="n.deleteSeconds" class="fire" src="@/assets/images/read-delete01.svg" />
+                  <ComSelectItem v-if="selectedIdList.length > 0" :selectedIdList="selectedIdList" :id="n.customMsgId"
                     @onClick="
                       handleEmitInfo(
                         {
@@ -343,27 +203,15 @@
                         },
                         'msgSelectedChange'
                       )
-                    "
-                  />
+                      " />
                   <ComTimeStatusLabel :msgInfo="n" :chatContent="chatContent" />
                 </ComMsgNotice>
-                <ComMsgDice
-                  v-else-if="n.chatType === 12"
-                  :msgInfo="n"
-                  @rightClick="
-                    (e) =>
-                      handleEmitInfo({ e, info: n }, 'rightClickMenuDisplay')
-                  "
-                >
-                  <img
-                    v-if="n.deleteSeconds"
-                    class="fire"
-                    src="@/assets/images/read-delete01.svg"
-                  />
-                  <ComSelectItem
-                    v-if="selectedIdList.length > 0"
-                    :selectedIdList="selectedIdList"
-                    :id="n.customMsgId"
+                <ComMsgDice v-else-if="n.chatType === 12" :msgInfo="n" @rightClick="
+                  (e) =>
+                    handleEmitInfo({ e, info: n }, 'rightClickMenuDisplay')
+                ">
+                  <img v-if="n.deleteSeconds" class="fire" src="@/assets/images/read-delete01.svg" />
+                  <ComSelectItem v-if="selectedIdList.length > 0" :selectedIdList="selectedIdList" :id="n.customMsgId"
                     @onClick="
                       handleEmitInfo(
                         {
@@ -373,41 +221,23 @@
                         },
                         'msgSelectedChange'
                       )
-                    "
-                  />
-                  <ComMsgQuote
-                    v-if="n.quoteMessage !== undefined"
-                    :msgInfo="n.quoteMessage"
-                    :memberInfos="memberInfos"
-                    :chatContent="chatContent"
-                    @onClick="
+                      " />
+                  <ComMsgQuote v-if="n.quoteMessage !== undefined" :msgInfo="n.quoteMessage" :memberInfos="memberInfos"
+                    :chatContent="chatContent" @onClick="
                       () =>
                         handleMoveToId({
                           customMsgId: n.quoteMessage.customMsgId,
                           isHighlighted: true,
                         })
-                    "
-                  />
+                    " />
                   <ComTimeStatusLabel :msgInfo="n" :chatContent="chatContent" />
                 </ComMsgDice>
-                <ComMsgPoker
-                  v-else-if="n.chatType === 18"
-                  :msgInfo="n"
-                  :chatContent="chatContent"
-                  @rightClick="
-                    (e) =>
-                      handleEmitInfo({ e, info: n }, 'rightClickMenuDisplay')
-                  "
-                >
-                  <img
-                    v-if="n.deleteSeconds"
-                    class="fire"
-                    src="@/assets/images/read-delete01.svg"
-                  />
-                  <ComSelectItem
-                    v-if="selectedIdList.length > 0"
-                    :selectedIdList="selectedIdList"
-                    :id="n.customMsgId"
+                <ComMsgPoker v-else-if="n.chatType === 18" :msgInfo="n" :chatContent="chatContent" @rightClick="
+                  (e) =>
+                    handleEmitInfo({ e, info: n }, 'rightClickMenuDisplay')
+                ">
+                  <img v-if="n.deleteSeconds" class="fire" src="@/assets/images/read-delete01.svg" />
+                  <ComSelectItem v-if="selectedIdList.length > 0" :selectedIdList="selectedIdList" :id="n.customMsgId"
                     @onClick="
                       handleEmitInfo(
                         {
@@ -417,36 +247,23 @@
                         },
                         'msgSelectedChange'
                       )
-                    "
-                  />
-                  <ComMsgQuote
-                    v-if="n.quoteMessage !== undefined"
-                    :msgInfo="n.quoteMessage"
-                    :memberInfos="memberInfos"
-                    :chatContent="chatContent"
-                    @onClick="
+                      " />
+                  <ComMsgQuote v-if="n.quoteMessage !== undefined" :msgInfo="n.quoteMessage" :memberInfos="memberInfos"
+                    :chatContent="chatContent" @onClick="
                       () =>
                         handleMoveToId({
                           customMsgId: n.quoteMessage.customMsgId,
                           isHighlighted: true,
                         })
-                    "
-                  />
+                    " />
                   <ComTimeStatusLabel :msgInfo="n" :chatContent="chatContent" />
                 </ComMsgPoker>
-                <ComMsgRichText
-                  v-else-if="n.msgType === 16"
-                  :content="n.content"
-                  @rightClick="
-                    (e) => handleEmitInfo({ e, info: n }, 'rightClickMenuDisplay')
-                  "
-                >
+                <ComMsgRichText v-else-if="n.msgType === 16" :content="n.content" @rightClick="
+                  (e) => handleEmitInfo({ e, info: n }, 'rightClickMenuDisplay')
+                ">
                 </ComMsgRichText>
                 <div v-else class="other">
-                  <ComSelectItem
-                    v-if="selectedIdList.length > 0"
-                    :selectedIdList="selectedIdList"
-                    :id="n.customMsgId"
+                  <ComSelectItem v-if="selectedIdList.length > 0" :selectedIdList="selectedIdList" :id="n.customMsgId"
                     @onClick="
                       handleEmitInfo(
                         {
@@ -456,8 +273,7 @@
                         },
                         'msgSelectedChange'
                       )
-                    "
-                  />
+                      " />
                   {{ $t("暂不支持该消息类型") }}
                 </div>
               </section>
@@ -466,13 +282,8 @@
         </div>
       </div>
     </section>
-    <ComFloatRightBtns
-      :atMeIds="atMeIds"
-      :btnToBottomVisible="btnToBottomVisible"
-      :unreadCount="unreadCount"
-      @clickToAt="handleToAt"
-      @clickToBottom="handleToBottom"
-    />
+    <ComFloatRightBtns :atMeIds="atMeIds" :btnToBottomVisible="btnToBottomVisible" :unreadCount="unreadCount"
+      @clickToAt="handleToAt" @clickToBottom="handleToBottom" />
   </div>
 </template>
 <script>
@@ -610,7 +421,7 @@ export default {
   },
   methods: {
     isChannelSystemMsg(msgInfo) {
-        return this.chatContent?.type === "channel" && msgInfo?.chatType === 6;
+      return this.chatContent?.type === "channel" && msgInfo?.chatType === 6;
     },
     updateKey() {
       // const { type, id } = this.chatContent || {};
@@ -1023,9 +834,9 @@ export default {
                   return idListClearReferenced.includes(item.customMsgId)
                     ? { ...item, quoteMessage: null }
                     : item;
-                  } else {
-                    return item
-                  }
+                } else {
+                  return item
+                }
               });
             }
           }
@@ -1037,13 +848,13 @@ export default {
 
           // 删除数据
           for (let i = 0; i < blockList.length; i++) {
-            if(customMsgIdList.length > 0){
+            if (customMsgIdList.length > 0) {
               blockList[i].list = blockList[i].list.filter((item) => {
                 return !customMsgIdList.includes(item.customMsgId);
               });
             }
 
-            if(msgIdList.length > 0){
+            if (msgIdList.length > 0) {
               blockList[i].list = blockList[i].list.filter((item) => {
                 return !msgIdList.includes(Number(item.MsgID));
               });
@@ -1183,7 +994,7 @@ export default {
       if (!info.isSelf) {
         // 这里不知道因为什么要这么判断，只生效一次，导致未读消息数量积压，实际上已经上报已读
         // if (msgReadByMeTime === 0) {
-          if (msgReadByMeTime < info.sendTime) {
+        if (msgReadByMeTime < info.sendTime) {
           msgReadByMeTime = info.sendTime + 1;
         }
       }
@@ -1601,32 +1412,32 @@ export default {
     // 拉取频道历史消息
     async getChannelHistoryMsg(recentMsgs) {
       const { channelId } = this.chatContent;
-      if(!channelId) return;
+      if (!channelId) return;
       const loginId = eventCommon.fnCommonInfoRU({
         getId: "loginId",
       });
 
       // api获取最后一条的数据信息
-        // console.log('getChannelLastMsgInfo--')
-      const { data: lastMsgs} = await getChannelLastMsgInfo({
+      // console.log('getChannelLastMsgInfo--')
+      const { data: lastMsgs } = await getChannelLastMsgInfo({
         bizType: 2,
-         bizId: Number(channelId),
+        bizId: Number(channelId),
       });
-      if(!lastMsgs?.length) return;
+      if (!lastMsgs?.length) return;
       // console.log('getChannelLastMsgInfo-1-', JSON.stringify(lastMsgs))
       const lastMsgInfo = lastMsgs.find(item => item.msgType === 0);
       // console.log('getChannelLastMsgInfo-2-', lastMsgInfo)
 
       // 没有消息执行清空
-      if(!lastMsgInfo) {
+      if (!lastMsgInfo) {
         eventMsg.fnMsgDelete({
-            info: {
-                id: Number(channelId),
-                type: "channel",
-                msgId: 0,
-                idsDelete: [],
-                isOtherPlatformOperate: true,
-            },
+          info: {
+            id: Number(channelId),
+            type: "channel",
+            msgId: 0,
+            idsDelete: [],
+            isOtherPlatformOperate: true,
+          },
         });
         return;
       };
@@ -1644,10 +1455,12 @@ export default {
       }
 
       const lastOneMsgIsExist = recentMsgs.some(item => Number(item.MsgID) === latestMsgId) || checkMsgIsDelete(latestMsgId); // 最后一条消息是否存在
-      const lastTwoMsgIsExist = recentMsgs.some(item => Number(item.MsgID) === (latestMsgId -1)) || checkMsgIsDelete(latestMsgId - 1); // 最后第二条消息是否存在
-      console.log('历史记录是否最新', lastOneMsgIsExist, lastTwoMsgIsExist,recentMsgs,latestMsgId)
+      const lastTwoMsgIsExist = recentMsgs.some(item => Number(item.MsgID) === (latestMsgId - 1)) || checkMsgIsDelete(latestMsgId - 1); // 最后第二条消息是否存在
+      // console.log('历史记录是否最新', lastOneMsgIsExist, lastTwoMsgIsExist)
+      // 发现 部分频道获取到最后一条消息lastMsgInfo.latestMsgId数据很长串,跟recentMsgs最后1、2条msgId匹配不上，导致每次切换都会刷新历史接口更新UI
+      // console.log('lastMsgInfo', lastMsgInfo, 'recentMsgs', recentMsgs)
 
-      if(lastOneMsgIsExist && (latestMsgId <= 1 || lastTwoMsgIsExist)) {
+      if (lastOneMsgIsExist && (latestMsgId <= 1 || lastTwoMsgIsExist)) {
         // 更新本地频道信息 （解决偶现切换频道不是最新消息的情况）
         Cache(`${loginId}MessageChannelList`).then((channelList) => {
           let channelInfo = null;
@@ -1655,7 +1468,7 @@ export default {
             channelInfo = channelList.find((item) => Number(item.channelId) === Number(channelId));
             const resItem = recentMsgs.find(item => Number(item.MsgID) === Number(latestMsgId));
             if (channelInfo && resItem) {
-               // 通知左侧列表更新
+              // 通知左侧列表更新
               eventBase.fnCommunicationSendMsg({
                 operator: "channelUpdate",
                 data: {
@@ -1688,22 +1501,22 @@ export default {
       // console.log('getChannelHistoryMsg--', params)
       let msgs = await eventChannel.fnGetHistoryMsgs(params)
       console.log('getChannelHistoryMsg-2-', msgs)
-      if(!msgs.length) return;
+      if (!msgs.length) return;
       // 过滤历史本地删除/清空的消息
       // console.log('deleteHistoryS--', deleteHistoryS)
       // const { clearTime, idsDelete } = deleteHistoryS[Number(channelId)] || {};
-            // console.log('deleteHistoryS-2-', clearTime, idsDelete)
-      if(clearTime) {
-       msgs = msgs.filter(item => Number(item.latestChannelMessage.msgTime) > clearTime)
-          console.log('deleteHistoryS-3-', msgs)
+      // console.log('deleteHistoryS-2-', clearTime, idsDelete)
+      if (clearTime) {
+        msgs = msgs.filter(item => Number(item.latestChannelMessage.msgTime) > clearTime)
+        console.log('deleteHistoryS-3-', msgs)
       }
-      if(idsDelete?.length) {
+      if (idsDelete?.length) {
         msgs = msgs.filter(item => {
           console.log('idsDelete--', idsDelete)
           const deleteItem = idsDelete.find(i => Number(i.msgId) === Number(item.latestChannelMessage.msgId))
           return !deleteItem || Number(item.latestChannelMessage.msgTime) > deleteItem.clearTime
         })
-         console.log('deleteHistoryS-4-', msgs)
+        console.log('deleteHistoryS-4-', msgs)
       }
 
       // 排序
@@ -1714,7 +1527,7 @@ export default {
 
       // 消息展示
       const deleteIds = [];
-      for(let i = 0; i < msgs.length; i++) {
+      for (let i = 0; i < msgs.length; i++) {
         const item = msgs[i]
         await eventMsg.fnChannelMsgAdd(item.latestChannelMessage, true, deleteIds);
       }
@@ -1754,23 +1567,23 @@ export default {
             if (groupList && groupList.length) {
               const groupInfo = groupList.find((item) => String(item.id) === String(id));
               if (groupInfo) {
-                 const cacheMsgId = Number(groupInfo.MsgID) || 0;
-                 const cacheTime = Number(groupInfo.time) || 0;
-                 const newMsgId = Number(lastMsg.MsgID) || 0;
-                 const newTime = Number(lastMsg.sendTime) || 0;
+                const cacheMsgId = Number(groupInfo.MsgID) || 0;
+                const cacheTime = Number(groupInfo.time) || 0;
+                const newMsgId = Number(lastMsg.MsgID) || 0;
+                const newTime = Number(lastMsg.sendTime) || 0;
 
-                 let sendUserName = lastMsg.sendUserName || "";
-                 // 如果没有发送者名字且不是自己发送的，尝试从用户信息构建
-                 if (!sendUserName && !lastMsg.isSelf && lastMsg.user) {
-                    const name = lastMsg.user.name || lastMsg.user.nickName;
-                    if (name) {
-                       sendUserName = name + "：";
-                    }
-                 }
-                 const cacheSendUserName = groupInfo.sendUserName || "";
-                 // MsgID、时间、发送者名字 不一致，就更新
-                 if (cacheMsgId !== newMsgId || cacheTime !== newTime || cacheSendUserName !== sendUserName) {
-                   eventBase.fnCommunicationSendMsg({
+                let sendUserName = lastMsg.sendUserName || "";
+                // 如果没有发送者名字且不是自己发送的，尝试从用户信息构建
+                if (!sendUserName && !lastMsg.isSelf && lastMsg.user) {
+                  const name = lastMsg.user.name || lastMsg.user.nickName;
+                  if (name) {
+                    sendUserName = name + "：";
+                  }
+                }
+                const cacheSendUserName = groupInfo.sendUserName || "";
+                // MsgID、时间、发送者名字 不一致，就更新
+                if (cacheMsgId !== newMsgId || cacheTime !== newTime || cacheSendUserName !== sendUserName) {
+                  eventBase.fnCommunicationSendMsg({
                     operator: "groupUpdate",
                     data: {
                       id: Number(id),
@@ -1786,7 +1599,7 @@ export default {
                       },
                     },
                   });
-                 }
+                }
               }
             }
           } catch (e) {
@@ -1863,13 +1676,13 @@ export default {
             }, 100);
           }
 
-          if(this.chatContent.type === 'channel') {
+          if (this.chatContent.type === 'channel') {
             const msgList = this.blockList || [];
             // console.log('recentMsgList-1-', msgList)
             const recentMsgList = msgList.at(-1)?.list || [];
-               console.log('recentMsgList-2-', recentMsgList)
+            console.log('recentMsgList-2-', recentMsgList)
             this.getChannelHistoryMsg(recentMsgList.slice(-10));
-          } else if(this.chatContent.type === 'group') {
+          } else if (this.chatContent.type === 'group') {
             const msgList = this.blockList || [];
             const recentMsgList = msgList.at(-1)?.list || [];
             this.checkGroupLastMsgUpdate(recentMsgList.slice(-10));
@@ -2030,11 +1843,11 @@ export default {
   flex: auto;
   position: relative;
 
-  > section {
+  >section {
     height: 100%;
     background: #f6f6f6;
 
-    > img {
+    >img {
       position: absolute;
       left: 50%;
       top: 50%;
@@ -2056,10 +1869,10 @@ export default {
       box-sizing: border-box;
       font-family: PingFangSC-Bold;
 
-      > div {
+      >div {
         overflow: hidden;
 
-        > div {
+        >div {
           position: relative;
           padding: 6px 0;
 
@@ -2070,7 +1883,7 @@ export default {
             transition: background-color 2s ease;
           }
 
-          > section {
+          >section {
             display: flex;
 
             img.fire {
@@ -2095,7 +1908,7 @@ export default {
               position: relative;
             }
 
-            > .other {
+            >.other {
               display: inline-block;
               padding: 12px 22px 16px;
               background: rgba($color: #da2e2e, $alpha: 0.1);
@@ -2103,7 +1916,7 @@ export default {
             }
           }
 
-          > h3 {
+          >h3 {
             margin: 0;
             height: 350px;
             text-align: center;
@@ -2117,7 +1930,7 @@ export default {
               opacity: 0.8;
             }
 
-            > span {
+            >span {
               display: block;
               line-height: 35px;
               background: #eee;
@@ -2137,7 +1950,7 @@ export default {
             &.unreadSeparation {
               padding-top: 80px;
 
-              > h3 {
+              >h3 {
                 top: 40px;
               }
             }
@@ -2171,6 +1984,7 @@ export default {
     border-radius: 5px;
     opacity: 0;
     transition: opacity 0.5s;
+
     &.day-show {
       opacity: 1;
     }
@@ -2178,16 +1992,23 @@ export default {
 
   @keyframes highlight {
     0% {
-      background-color: #f6f6f6; /* 初始背景色 */
+      background-color: #f6f6f6;
+      /* 初始背景色 */
     }
+
     30% {
-      background-color: #e9f3f9; /* 中间高亮颜色 */
+      background-color: #e9f3f9;
+      /* 中间高亮颜色 */
     }
+
     70% {
-      background-color: #e9f3f9; /* 中间高亮颜色 */
+      background-color: #e9f3f9;
+      /* 中间高亮颜色 */
     }
+
     100% {
-      background-color: #f6f6f6; /* 结束时恢复原色 */
+      background-color: #f6f6f6;
+      /* 结束时恢复原色 */
     }
   }
 }
