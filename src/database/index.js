@@ -214,6 +214,8 @@ export default class dbBase {
 
     // 先通过本地id列表 获取
     let msgInfoList = await dbData.bulkGet(customMsgIdList);
+    // 过滤掉未找到的数据（undefined），防止后续操作报错
+    msgInfoList = msgInfoList.filter(item => item);
 
     // 如果存在没有本地id 只有 msgId的，用msgid列表获取本地数据
     if (msgIdOnlyList.length > 0) {
