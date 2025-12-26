@@ -51,13 +51,14 @@
   </div>
 </template>
 <script>
-import BDBase from "@/database";
+import BDBase from "@/database/queue";
 import { initUserCachePath, Cache } from "@/cache";
 
 // 工具
 import { QueryArchiveReq } from "@/api/imBase";
 import { importDB } from "@/utils/cacheDB.js";
 import { getContactsList } from "@/api/imContacation";
+import { getGroupContactList } from "@/api/imGroup";
 import { chatGroupDataFormat, chatFriendDataFormat } from "@/utils/base";
 import { fnKeyObjsInit, fnUpdateOwnKey } from "@/utils/encryption-decryption";
 
@@ -91,6 +92,11 @@ export default {
       letters: [],
       letterIndexs: [],
       friendList: [],
+      groupList: [],
+      groupListPageCount: 0,
+      groupListPageReqList: [],
+      groupListPageReqCompleteList: [],
+      groupFetchId: 0,
       unreadObj: {},
       left: 0,
       tipsVisibleImport: false,
@@ -100,7 +106,12 @@ export default {
   async mounted() {
     console.$collect('初始化开始')
     // 登录id
-    loginId = Number(location.href.slice(location.href.lastIndexOf("=") + 1));
+    const urlParams = new URLSearchParams(window.location.hash.split('?')[1]);
+    loginId = Number(urlParams.get('loginId'));
+    if (!loginId || isNaN(loginId)) {
+        // Fallback for older format if necessary, or just rely on URLSearchParams
+        loginId = Number(location.href.slice(location.href.lastIndexOf("=") + 1));
+    }
 
     // 登录id 设置到公共
     eventCommon.fnCommonInfoRU({
@@ -128,8 +139,11 @@ export default {
     }
 
     // 通过主进程获取用户的文件存储地址
-    console.$collect('初始化-文件存储地址')
-    await initUserCachePath(loginId);
+    // console.$collect('初始化-文件存储地址')
+    // 先注释了：这个应用间数据共享的方案非常不安全，不但容易数据混乱，Cache函数自身没有抛错直接静默失败了
+    // 非常难以定位问题，多用户多app登录容易混淆数据和文件锁死
+    // 需要重新设计
+    // await initUserCachePath(loginId);
 
     // 初始化 账户配置
     console.$collect('初始化-账户配置')
@@ -313,9 +327,9 @@ export default {
           if (percentage) {
             this.friendNum += percentage;
           } else {
-            Cache(`${loginId}-ContactList`, this.friendList);
+            await Cache(`${loginId}-ContactList`, this.friendList);
             this.friendNum = 100;
-            this.handleFriendRemarks()
+            await this.handleFriendRemarks()
           }
           break;
         }
@@ -329,12 +343,14 @@ export default {
       if (this.friendNum === 100 && this.chatNum === 100) {
         // 记录该账户更新完成
         Cache("login-account-list").then((res) => {
-          Cache(
-            "login-account-list",
-            res.map((item) =>
-              item.id === loginId ? { ...item, init: true } : item
-            )
-          );
+          if (res && Array.isArray(res)) {
+            Cache(
+              "login-account-list",
+              res.map((item) =>
+                item.id === loginId ? { ...item, init: true } : item
+              )
+            );
+          }
         });
 
         // 归档初始化
@@ -347,15 +363,113 @@ export default {
      * 同步好友列表
      */
     handleFriends() {
-      Cache(`${loginId}-ContactList`).then((res) => {
-        if (res && res.length > 0) {
-          if (res[0].userInfo) {
-            this.handleUpdateFirendsForApi(1);
+      // Cache(`${loginId}-ContactList`).then((res) => {
+      //   if (res && res.length > 0) {
+      //     if (res[0].userInfo) {
+      //       this.handleUpdateFirendsForApi(1);
+      //     } else {
+      //       this.handleDataFinish("friend");
+      //     }
+      //   } else {
+      //     this.handleUpdateFirendsForApi(1);
+      //   }
+      // });
+
+      // 强制更新好友列表
+      this.handleUpdateFirendsForApi(1);
+    },
+    /**
+     * 同步群列表
+     */
+    handleGroups(pageNum = 1, fetchId = 0) {
+      const pageSize = 200;
+
+      if (pageNum === 1) {
+        this.groupList = [];
+        this.groupListPageReqCompleteList = [];
+        this.groupListPageReqList = [];
+        this.groupListPageCount = 0;
+
+        // 生成新的请求ID，用于防止并发请求冲突
+        const newFetchId = Date.now();
+        this.groupFetchId = newFetchId;
+        fetchId = newFetchId;
+      } else {
+        // 非第一页时，必须匹配当前的fetchId，否则视为过期请求
+        if (fetchId !== this.groupFetchId) {
+          return;
+        }
+      }
+
+      getGroupContactList(
+        {
+          pageNum,
+          pageSize,
+        },
+        () => {
+          setTimeout(() => {
+            // 重试前检查ID是否有效
+            if (fetchId === this.groupFetchId) {
+              this.handleGroups(pageNum, fetchId);
+            }
+          }, 2000);
+        }
+      ).then((res) => {
+        // 响应回来后检查ID是否有效
+        if (fetchId !== this.groupFetchId) {
+          return;
+        }
+        let groups = [];
+        if (res && res.groups) {
+          groups = eventGroup.fnGroupDataFormat(res.groups);
+        }
+
+        if (groups.length > 0) {
+          // 数据去重
+          const existingIds = new Set(this.groupList.map((item) => item.id));
+          const newGroups = groups.filter((item) => !existingIds.has(item.id));
+          if (newGroups.length > 0) {
+            this.groupList.push(...newGroups);
+          }
+        }
+
+        const processNext = () => {
+          if (
+            this.groupListPageReqCompleteList.length >= this.groupListPageCount
+          ) {
+            Cache(`${loginId}-GroupList`, this.groupList);
+          } else if (this.groupListPageReqList.length > 0) {
+            const pageNumNew = this.groupListPageReqList[0];
+            this.groupListPageReqList = this.groupListPageReqList.slice(1);
+            this.handleGroups(pageNumNew, fetchId);
+          }
+        };
+
+        if (pageNum === 1) {
+          // 记录总数
+          const count = res && res.groupCount ? res.groupCount : 0;
+          this.groupListPageCount = Math.ceil(count / pageSize);
+
+          if (groups.length >= count && count > 0) {
+            this.groupListPageCount = 1;
+          }
+
+          if (this.groupListPageCount <= 1) {
+            Cache(`${loginId}-GroupList`, this.groupList);
+            return;
           } else {
-            this.handleDataFinish("friend");
+            this.groupListPageReqList = Array.from(
+              { length: this.groupListPageCount - 1 },
+              (_$, index) => index + 2
+            );
+            this.groupListPageReqCompleteList.push(1);
+
+            // 并发控制：每次取1个
+            processNext();
           }
         } else {
-          this.handleUpdateFirendsForApi(1);
+          this.groupListPageReqCompleteList.push(pageNum);
+          processNext();
         }
       });
     },
@@ -372,7 +486,7 @@ export default {
           remarks.push({id, name})
         }
       });
-      Cache(`${loginId}-FriendRemarks`, remarks);
+      await Cache(`${loginId}-FriendRemarks`, remarks);
     },
     /**
      * 获取所有频道列表
@@ -406,6 +520,12 @@ export default {
         // 已经初始化过，直接完成初始化
         this.text = this.$t("完成");
         this.$emit("loaded");
+        // 后台更新数据
+        setTimeout(() => {
+          this.handleFriends();
+          this.handleGroups();
+          this.handleChatsGet();
+        }, 1000);
       } else {
         // 更新数据
         this.isLoad = true;
@@ -415,6 +535,7 @@ export default {
           // 清空旧的群列表
           Cache(`${loginId}-GroupList`, []);
           this.handleFriends();
+          this.handleGroups();
           this.handleChatsGet();
         }, 10);
       }
@@ -450,6 +571,14 @@ export default {
      */
     handleUpdateFirendsForApi(pageNum) {
       const pageSize = 200;
+
+      if (pageNum === 1) {
+        this.friendList = [];
+        // 重置变量，防止状态污染
+        friendListPageReqList = [];
+        friendListPageReqCompleteList.length = 0;
+        friendListPageCount = 0;
+      }
 
       getContactsList(
         {

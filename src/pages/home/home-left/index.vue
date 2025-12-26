@@ -127,6 +127,7 @@ import eventChannel from "@/event/channel";
 import eventChat from "@/event/chat";
 import eventMsg from "@/event/msg";
 import { _ } from "core-js";
+import { isBatchMode } from "@/utils/batchRenderer";
 
 // 聊天窗口置顶数量
 let chatTopSize = 0;
@@ -231,8 +232,12 @@ export default {
     uniqueById(arr) {
         const map = new Map();
         arr.forEach(item => {
-            if (!map.has(item.id)) {
-                map.set(item.id, item);
+            // 使用 id + type 组合作为唯一键，并确保转为字符串处理，防止 123 和 "123" 被视为不同
+            // 添加分隔符确保 id="1",type="1" 和 id="11",type="" 不会冲突
+            const type = item.type || '';
+            const key = item.id + '_' + type;
+            if (!map.has(key)) {
+                map.set(key, item);
             }
         });
         return Array.from(map.values());
@@ -300,9 +305,19 @@ export default {
     },
     /**
      * 处理事件
+     * @param {Object|Array} info - 消息数据，批量模式下为数组
+     * @param {string} operator - 事件类型
+     * @param {string} operatorType - 操作子类型，批量模式下为 BATCH_MODE
      */
     eventHandling(info, operator, operatorType) {
     //   console.log({ info, operator, operatorType }, "homeLeft --------> 220");
+
+      // 批量模式处理
+      if (isBatchMode(operatorType, info)) {
+        this.handleBatchEvent(info, operator);
+        return;
+      }
+
       if (!info) {
         return;
       }
@@ -462,6 +477,144 @@ export default {
           }
           break;
         default:
+      }
+    },
+    /**
+     * 批量事件处理
+     * @param {Array} messages - 消息数组 [{ data, operatorType, timestamp }]
+     * @param {string} operator - 事件类型
+     */
+    handleBatchEvent(messages, operator) {
+      if (messages.length === 0) return;
+
+      switch (operator) {
+        case "msgNew":
+          this.handleBatchMsgNew(messages);
+          break;
+        case "msgListPropertyUpdate":
+          this.handleBatchMsgPropertyUpdate(messages);
+          break;
+        default:
+          // 未知的批量事件，逐条处理
+          messages.forEach((msg) => {
+            this.eventHandling(msg.data, operator, msg.operatorType);
+          });
+      }
+    },
+    /**
+     * 批量处理新消息 - 更新会话列表
+     * @param {Array} messages - 消息数组
+     */
+    async handleBatchMsgNew(messages) {
+      if (messages.length === 0) return;
+
+      // 过滤掉需要跳过的消息
+      const validMessages = messages.filter((msg) => {
+        const info = msg.data;
+        // 跳过禁言状态的通知消息
+        if (info.messageProtocolId) return false;
+        return true;
+      });
+
+      if (validMessages.length === 0) return;
+
+      // 处理全员禁言消息
+      for (const msg of validMessages) {
+        if (msg.operatorType === "groupShutupAll") {
+          await this.eventHandgroupShutupAll(msg.data);
+        }
+      }
+
+      // 收集所有需要更新的信息，然后批量更新
+      let chats = this.chats;
+      let channels = this.channels;
+      let groups = this.groups;
+      let unreadObj = this.unreadObj;
+      let needNotify = null; // 最后一条需要通知的消息
+
+      for (const msg of validMessages) {
+        const info = msg.data;
+        const updateInfos = await eventChat.fnChatWindowUpdate(
+          {
+            updateInfo: info,
+            chats,
+            channels,
+            groups,
+            friendList: this.friendList,
+            unreadObj,
+          },
+          msg.operatorType
+        );
+
+        if (updateInfos.chatList) {
+          chats = updateInfos.chatList;
+          chatTopSize = updateInfos.chatTopSize;
+          needNotify = info;
+        }
+
+        if (updateInfos.unreadObj) {
+          unreadObj = updateInfos.unreadObj;
+        }
+      }
+
+      // 一次性更新状态
+      if (chats !== this.chats) {
+        this.chats = _.cloneDeep(chats);
+      }
+
+      if (unreadObj !== this.unreadObj) {
+        this.unreadObj = unreadObj;
+      }
+
+      // 只对最后一条消息发通知
+      if (needNotify) {
+        eventMsg.fnAlertNotification(needNotify, this.chats);
+      }
+
+      // 如果当前会话在批量消息中，更新当前会话的未读
+      if (this.infoActive) {
+        const activeKey = this.infoActive.id + this.infoActive.type;
+        const hasActiveUpdate = validMessages.some(
+          (msg) => msg.data.id + msg.data.type === activeKey
+        );
+        if (hasActiveUpdate && this.unreadObj[activeKey]) {
+          eventBase.fnCommunicationSendMsg({
+            operator: "activeChange",
+            data: {
+              ...this.infoActive,
+              unreadObj: this.unreadObj[activeKey],
+            },
+          });
+        }
+      }
+    },
+    /**
+     * 批量处理消息状态更新
+     * @param {Array} messages - 消息数组
+     */
+    handleBatchMsgPropertyUpdate(messages) {
+      if (messages.length === 0) return;
+
+      const chats = _.cloneDeep(this.chats);
+      let hasUpdate = false;
+
+      for (const msg of messages) {
+        const info = msg.data;
+        for (let i = 0; i < chats.length; i++) {
+          if (chats[i].id == info.id) {
+            chats[i].readStatus = info.readStatus;
+            hasUpdate = true;
+            break;
+          }
+        }
+      }
+
+      if (hasUpdate) {
+        this.chats = chats;
+        Cache(
+          `${loginId}MessageGroupList`,
+          chats.filter((item) => item.type === "group")
+        );
       }
     },
     // 设置消息列表的频道静音状态
@@ -795,10 +948,38 @@ export default {
           chats.filter((item) => item.type === "friend")
         );
 
-         Cache(
+        Cache(
           `${loginId}MessageChannelList`,
           chats.filter((item) => item.type === "channel")
         );
+
+        // 清除通讯录列表
+        if (type === "group") {
+          this.groups = this.groups.filter((item) => item.id != id);
+          Cache(`${loginId}-GroupList`, this.groups);
+        } else if (type === "friend") {
+          const friendList = this.friendList.filter((item) => item.id != id);
+          if (friendList.length !== this.friendList.length) {
+            const { letters, letterIndexs, friendList: newFriendList } =
+              eventFriend.fnFriendListFormat(friendList);
+            this.letters = letters;
+            this.letterIndexs = letterIndexs;
+            this.friendList = newFriendList;
+            Cache(`${loginId}-ContactList`, this.friendList);
+          }
+        } else if (type === "channel") {
+          this.channels = this.channels.filter(
+            (item) => (item.channelId || item.id) != id
+          );
+          Cache(`${loginId}-ChannelList`).then((list) => {
+            if (list && list.length) {
+              const newList = list.filter(
+                (item) => (item.channelId || item.id) != id
+              );
+              Cache(`${loginId}-ChannelList`, newList);
+            }
+          });
+        }
 
         // 清除当前聊天框消息列表的数据
         eventMsg.fnMsgDelete({ info: { id, type, idsDelete: [] } });
@@ -929,6 +1110,27 @@ export default {
           if (lastInfo) {
             item.chatType = lastInfo.chatType;
             item.content = this.fnFormatmsgLast(lastInfo);
+
+            // 解决删除消息后，会话框显示的发送名字、时间问题
+            // 更新时间和ID
+            if (lastInfo.sendTime) {
+              item.time = lastInfo.sendTime;
+              item.sendTime = lastInfo.sendTime;
+            }
+            if (lastInfo.MsgID) {
+              item.MsgID = Number(lastInfo.MsgID);
+            }
+            // 更新发送者名字
+            if (item.type === 'group') {
+                let sendUserName = lastInfo.sendUserName || "";
+                if (!sendUserName && !lastInfo.isSelf && lastInfo.user) {
+                   const name = lastInfo.user.name || lastInfo.user.nickName;
+                   if (name) {
+                      sendUserName = name + "：";
+                   }
+                }
+                item.sendUserName = sendUserName;
+            }
           } else {
             item.content = "";
             // 因为删除掉所有数据了，所以把chatType 设为null

@@ -474,7 +474,7 @@
 import dayjs from "dayjs";
 
 // 工具
-import { fnUpdateGroupKey, fnUpdateFriendKey } from "@/utils/encryption-decryption.js";
+import { fnUpdateGroupKey, fnUpdateFriendKey, fnMsgDecryption } from "@/utils/encryption-decryption.js";
 import { chatPageDateformat, chatDate } from "@/utils/base";
 import { Cache } from "@/cache";
 import {
@@ -496,6 +496,7 @@ import eventMsg from "@/event/msg";
 
 // api
 import { getChannelLastMsgInfo } from "@/api/imChannel";
+import { isBatchMode } from "@/utils/batchRenderer";
 
 // 模块消息数量
 const blockMsgSize = 80;
@@ -678,7 +679,7 @@ export default {
     async handleMemberDialogShow(info) {
       let friendList = await this.handleFriendList();
 
-      let friend = friendList.find((item) => item.id == info.id);
+      let friend = Array.isArray(friendList) ? friendList.find((item) => item.id == info.id) : null;
       let values = {
         ...info,
         bfFriend: !!friend,
@@ -722,8 +723,17 @@ export default {
     },
     /**
      * 处理事件
+     * @param {Object|Array} info - 消息数据，批量模式下为数组
+     * @param {string} operator - 事件类型
+     * @param {string} operatorType - 操作子类型，批量模式下为 BATCH_MODE
      */
-    eventHandling(info, operator) {
+    eventHandling(info, operator, operatorType) {
+      // 批量模式处理
+      if (isBatchMode(operatorType, info)) {
+        this.handleBatchEvent(info, operator);
+        return;
+      }
+
       // 如果不是当前窗口则不处理
       if (info.id + info.type !== this.chatContent.id + this.chatContent.type) {
         return;
@@ -772,6 +782,211 @@ export default {
 
         default:
       }
+    },
+    /**
+     * 批量事件处理
+     * @param {Array} messages - 消息数组 [{ data, operatorType, timestamp }]
+     * @param {string} operator - 事件类型
+     */
+    handleBatchEvent(messages, operator) {
+      // 过滤出属于当前聊天窗口的消息
+      const currentChatKey = this.chatContent.id + this.chatContent.type;
+      const relevantMessages = messages.filter(
+        (msg) => msg.data.id + msg.data.type === currentChatKey
+      );
+
+      if (relevantMessages.length === 0) {
+        return;
+      }
+
+      switch (operator) {
+        case "msgNew":
+          this.handleBatchMsgNew(relevantMessages);
+          break;
+        case "msgListPropertyUpdate":
+          this.handleBatchMsgPropertyUpdate(relevantMessages);
+          break;
+        default:
+          // 未知的批量事件，逐条处理
+          relevantMessages.forEach((msg) => {
+            this.eventHandling(msg.data, operator, msg.operatorType);
+          });
+      }
+    },
+    /**
+     * 批量处理新消息
+     * @param {Array} messages - 消息数组
+     */
+    handleBatchMsgNew(messages) {
+      if (messages.length === 0) return;
+
+      const btnToBottomVisibleBefore = this.btnToBottomVisible;
+      let hasNotice = false;
+      let noticeContent = "";
+      let noticeUid = '';
+
+      // 批量格式化消息
+      const newItems = messages.map((msg) => {
+        const info = msg.data;
+
+        // 检查公告
+        if (info.msgType === 8) {
+          hasNotice = true;
+          noticeContent = info.content;
+          noticeUid = info.sendUid;
+        }
+
+        // 更新已读时间
+        if (!info.isSelf && msgReadByMeTime === 0) {
+          msgReadByMeTime = info.sendTime;
+        }
+
+        const showTime = chatDate(info.sendTime, this.$t("昨天"));
+        const showTimeDay = chatPageDateformat(info.sendTime);
+        let infoNew = { ...info, showTimeDay };
+
+        // 名片消息处理
+        if (info.msgType == 5 && info.content && info.content.includes("*|*|*")) {
+          let cardContent = info.content.split("*|*|*");
+          infoNew.content = {
+            name: cardContent[0],
+            pic: cardContent[1],
+            id: cardContent[2],
+          };
+        }
+
+        return { info: infoNew, showTime };
+      });
+
+      // 公告弹窗
+      if (hasNotice) {
+        this.$emit("openGroupTopNoticeDialog", noticeContent, noticeUid);
+      }
+
+      // 批量添加到 blockList
+      if (this.blockList.length > 0) {
+        const blockInfoLast = this.blockList[this.blockList.length - 1];
+
+        if (blockInfoLast.pageNum === this.pageCount) {
+          let lastMsgTime = blockInfoLast.list.length > 0
+            ? blockInfoLast.list[blockInfoLast.list.length - 1].sendTime
+            : null;
+
+          for (const { info: infoNew, showTime } of newItems) {
+            // 判断是否需要显示日期
+            let itemToAdd = infoNew;
+            if (lastMsgTime) {
+              const lastDay = dayjs(Number(lastMsgTime)).format("YYYY-MM-DD");
+              const curDay = dayjs(Number(infoNew.sendTime)).format("YYYY-MM-DD");
+              if (lastDay !== curDay) {
+                itemToAdd = { ...infoNew, showTime };
+              }
+            } else {
+              itemToAdd = { ...infoNew, showTime };
+            }
+
+            // 添加到合适的 block
+            if (blockInfoLast.list.length < blockMsgSize) {
+              blockInfoLast.list.push(itemToAdd);
+              this.pageLastMsgCount += 1;
+            } else {
+              // 需要新建 block
+              this.pageCount += 1;
+              this.pageLastMsgCount = 1;
+              this.blockList.push({
+                pageNum: this.pageCount,
+                list: [itemToAdd],
+              });
+            }
+
+            lastMsgTime = infoNew.sendTime;
+          }
+
+          // 一次性触发响应式更新
+          this.blockList = [...this.blockList];
+        } else {
+          // 最后一页不在视图中，只更新计数
+          for (let i = 0; i < newItems.length; i++) {
+            if (this.pageLastMsgCount < blockMsgSize) {
+              this.pageLastMsgCount += 1;
+            } else {
+              this.pageCount += 1;
+              this.pageLastMsgCount = 1;
+            }
+          }
+        }
+      } else {
+        // 之前没有消息，初始化
+        const firstItem = newItems[0];
+        this.pageCount = 1;
+        this.pageLastMsgCount = 1;
+        this.blockList = [{
+          pageNum: 1,
+          list: [{ ...firstItem.info, showTime: firstItem.showTime }],
+        }];
+
+        // 添加剩余消息
+        if (newItems.length > 1) {
+          let lastMsgTime = firstItem.info.sendTime;
+          for (let i = 1; i < newItems.length; i++) {
+            const { info: infoNew, showTime } = newItems[i];
+            const lastDay = dayjs(Number(lastMsgTime)).format("YYYY-MM-DD");
+            const curDay = dayjs(Number(infoNew.sendTime)).format("YYYY-MM-DD");
+            const itemToAdd = lastDay !== curDay ? { ...infoNew, showTime } : infoNew;
+
+            if (this.blockList[0].list.length < blockMsgSize) {
+              this.blockList[0].list.push(itemToAdd);
+              this.pageLastMsgCount += 1;
+            } else {
+              this.pageCount += 1;
+              this.pageLastMsgCount = 1;
+              this.blockList.push({
+                pageNum: this.pageCount,
+                list: [itemToAdd],
+              });
+            }
+            lastMsgTime = infoNew.sendTime;
+          }
+        }
+
+        this.blockListShowPageNum = 1;
+        this.containerOpacity = 1;
+      }
+
+      // 滚动处理（只执行一次）
+      if (!btnToBottomVisibleBefore || isToBottom) {
+        // 使用 setTimeout 确保 DOM 已更新
+        setTimeout(() => {
+          const dom = this.$refs["container"];
+          if (dom && dom.clientHeight === dom.scrollHeight) {
+            this.handleMsgEnterVisualRange();
+          } else {
+            this.handleScrollTo(-1, 12);
+          }
+        }, 5);
+      } else {
+        setTimeout(() => {
+          this.unreadCount = this.chatContent.unreadObj
+            ? this.chatContent.unreadObj.count
+            : 0;
+        }, 200);
+      }
+    },
+    /**
+     * 批量处理消息属性更新
+     * @param {Array} messages - 消息数组
+     */
+    handleBatchMsgPropertyUpdate(messages) {
+      if (messages.length === 0) return;
+
+      // 批量更新属性
+      let blockList = this.blockList;
+      for (const msg of messages) {
+        blockList = fnMsgPropertyUpdate(msg.data, blockList, this.pageCount);
+      }
+
+      this.blockList = blockList;
+      this.handleMsgEnterVisualRange();
     },
     /**
      * 处理事件 删除消息
@@ -965,7 +1180,7 @@ export default {
     eventHandlingMsgNew(info) {
       // 如果是公告，则显示公告顶部弹窗
       if (info.msgType === 8) {
-        this.$emit("openGroupTopNoticeDialog", info.content);
+        this.$emit("openGroupTopNoticeDialog", info.content, info.sendUid);
       }
 
       const btnToBottomVisibleBefore = this.btnToBottomVisible;
@@ -982,7 +1197,7 @@ export default {
       if (!info.isSelf) {
         // 这里不知道因为什么要这么判断，只生效一次，导致未读消息数量积压，实际上已经上报已读
         // if (msgReadByMeTime === 0) {
-        if (msgReadByMeTime < info.sendTime) {
+          if (msgReadByMeTime < info.sendTime) {
           msgReadByMeTime = info.sendTime + 1;
         }
       }
@@ -1005,11 +1220,11 @@ export default {
         if (blockInfoLast.pageNum === this.pageCount) {
 
           // 之前的最后一条信息
-          const msgInfoLastBefore =
-            blockInfoLast.list[blockInfoLast.list.length - 1];
+          const msgInfoLastBefore = blockInfoLast.list[blockInfoLast.list.length - 1];
           // 上一条跟当前数据不是同一天，则需要显示日期
           // console.log({blockInfoLast, msgInfoLastBefore}, '958 -------------->')
           if (
+            msgInfoLastBefore &&
             dayjs(Number(msgInfoLastBefore.sendTime)).format("YYYY-MM-DD") !==
             dayjs(Number(info.sendTime)).format("YYYY-MM-DD")
           ) {
@@ -1018,9 +1233,9 @@ export default {
               showTime,
             };
           }
-
           // 如果存在则替换
-          const existingIndex = blockInfoLast.list.findIndex(item => item.MsgID == infoNew.MsgID);
+          const existingIndex = blockInfoLast.list.findIndex(item => `${item.customMsgId}-${item.MsgID}` == `${infoNew.customMsgId}-${infoNew.MsgID}`);
+          // const existingIndex = blockInfoLast.list.findIndex(item => item.MsgID == infoNew.MsgID);
           if (existingIndex > -1) {
             blockInfoLast.list[existingIndex] = infoNew;
           }
@@ -1394,8 +1609,6 @@ export default {
       if (res) {
         // 赋值列表
         this.blockList = res;
-        console.log('>>>>', this.blockList);
-
         if (pages.length > 1) {
           await this.handleMsgListForPageGet(pages.slice(1));
         }
@@ -1436,12 +1649,45 @@ export default {
 
       const latestMsgId = Number(lastMsgInfo.latestMsgId);
       const deleteHistoryS = await Cache(`${loginId}-channel-msg-delete-history`) || {}; //本地删除/清空的消息
+      const { clearTime, idsDelete } = deleteHistoryS[Number(channelId)] || {};
 
       // 判断如果本地是最新的则不拉取，由于离线会推最后一条消息，这里根据最后两条进行判断
       // console.log('recentMsgs--', recentMsgs, latestMsgId)
-      const lastOneMsgIsExist = recentMsgs.some(item => Number(item.MsgID) === latestMsgId); // 最后一条消息是否存在
-      const lastTwoMsgIsExist = recentMsgs.some(item => Number(item.MsgID) === (latestMsgId -1)); // 最后第二条消息是否存在
+
+      // 检查消息是否在本地删除列表中
+      const checkMsgIsDelete = (msgId) => {
+        return idsDelete && idsDelete.some(item => Number(item.msgId) === msgId);
+      }
+
+      const lastOneMsgIsExist = recentMsgs.some(item => Number(item.MsgID) === latestMsgId) || checkMsgIsDelete(latestMsgId); // 最后一条消息是否存在
+      const lastTwoMsgIsExist = recentMsgs.some(item => Number(item.MsgID) === (latestMsgId -1)) || checkMsgIsDelete(latestMsgId - 1); // 最后第二条消息是否存在
+      console.log('历史记录是否最新', lastOneMsgIsExist, lastTwoMsgIsExist,recentMsgs,latestMsgId)
+
       if(lastOneMsgIsExist && (latestMsgId <= 1 || lastTwoMsgIsExist)) {
+        // 更新本地频道信息 （解决偶现切换频道不是最新消息的情况）
+        Cache(`${loginId}MessageChannelList`).then((channelList) => {
+          let channelInfo = null;
+          if (channelList && channelList.length) {
+            channelInfo = channelList.find((item) => Number(item.channelId) === Number(channelId));
+            const resItem = recentMsgs.find(item => Number(item.MsgID) === Number(latestMsgId));
+            if (channelInfo && resItem) {
+               // 通知左侧列表更新
+              eventBase.fnCommunicationSendMsg({
+                operator: "channelUpdate",
+                data: {
+                  channelId: Number(channelId),
+                  values: {
+                    ...channelInfo,
+                    MsgID: Number(resItem.MsgID),
+                    content: resItem.content,
+                    time: resItem.sendTime,
+                    chatType: resItem.chatType,
+                  },
+                },
+              });
+            }
+          }
+        });
         return
       }
 
@@ -1457,12 +1703,11 @@ export default {
       }
       // console.log('getChannelHistoryMsg--', params)
       let msgs = await eventChannel.fnGetHistoryMsgs(params)
-      // console.log('getChannelHistoryMsg-2-', msgs)
+      console.log('getChannelHistoryMsg-2-', msgs)
       if(!msgs.length) return;
-
       // 过滤历史本地删除/清空的消息
       // console.log('deleteHistoryS--', deleteHistoryS)
-      const { clearTime, idsDelete } = deleteHistoryS[Number(channelId)] || {};
+      // const { clearTime, idsDelete } = deleteHistoryS[Number(channelId)] || {};
             // console.log('deleteHistoryS-2-', clearTime, idsDelete)
       if(clearTime) {
        msgs = msgs.filter(item => Number(item.latestChannelMessage.msgTime) > clearTime)
@@ -1483,10 +1728,124 @@ export default {
       });
       // console.log('getChannelHistoryMsg-3-', msgs)
 
+      // 最后一条 content为空需要跳过 防止重复刷新UI
+      if (!lastOneMsgIsExist) {
+        const deleteIds = []; // 需要本地删除的消息ID
+        // 从后往前遍历，直到找到有效消息或列表为空
+        while (msgs.length > 0) {
+          const lastMsg = msgs[msgs.length - 1].latestChannelMessage;
+          if (!lastMsg) {
+             msgs.pop();
+             continue;
+          }
+          // 尝试解密
+          const { contentStr } = await fnMsgDecryption({
+            id: Number(channelId),
+            type: "channel",
+            msgType: lastMsg.msgType || 0,
+            msgEncryptionVersion: lastMsg.version,
+            content: lastMsg.content,
+            attachmentKey: lastMsg.attachmentKey,
+          });
+          // 如果内容有效，则停止检查，保留该消息及前面的消息
+          if (contentStr) {
+             break;
+          }
+          // 如果内容无效，移除并添加到待删除列表
+            console.log('无效消息，加入删除列表:', lastMsg.msgId);
+            msgs.pop();
+            const deleteItem = {
+              msgId: Number(lastMsg.msgId),
+              customMsgId: lastMsg.customMsgId || null
+            };
+            if (lastMsg.id) {
+              deleteItem.id = lastMsg.id;
+            }
+            deleteIds.push(deleteItem);
+          }
+
+          // 批量执行本地删除空消息（空消息本身不进入缓存，这里进行直接本地删除，防止后面又刷新历史记录）
+          if (deleteIds.length > 0) {
+            eventBase.fnCommunicationSendMsg({
+              operator: "msgDelete",
+              data: {
+                id: Number(channelId),
+                type: "channel",
+                idsDelete: deleteIds,
+                isOtherPlatformOperate: false,
+                isRemoteDeletion: false,
+                isDeleteChatWindow: false
+              },
+            });
+          }
+      }
+
       // 消息展示
       for(let i = 0; i < msgs.length; i++) {
         const item = msgs[i]
         await eventMsg.fnChannelMsgAdd(item.latestChannelMessage, true);
+      }
+    },
+    // 检查群最后一条消息更新
+    checkGroupLastMsgUpdate(recentMsgs) {
+      try {
+        const { id } = this.chatContent;
+        if (!id || !recentMsgs || recentMsgs.length === 0) return;
+
+        const loginId = eventCommon.fnCommonInfoRU({
+          getId: "loginId",
+        });
+
+        // 获取最后一条消息
+        const lastMsg = recentMsgs[recentMsgs.length - 1];
+        if (!lastMsg) return;
+
+        Cache(`${loginId}MessageGroupList`).then((groupList) => {
+          try {
+            if (groupList && groupList.length) {
+              const groupInfo = groupList.find((item) => String(item.id) === String(id));
+              if (groupInfo) {
+                 const cacheMsgId = Number(groupInfo.MsgID) || 0;
+                 const cacheTime = Number(groupInfo.time) || 0;
+                 const newMsgId = Number(lastMsg.MsgID) || 0;
+                 const newTime = Number(lastMsg.sendTime) || 0;
+
+                 let sendUserName = lastMsg.sendUserName || "";
+                 // 如果没有发送者名字且不是自己发送的，尝试从用户信息构建
+                 if (!sendUserName && !lastMsg.isSelf && lastMsg.user) {
+                    const name = lastMsg.user.name || lastMsg.user.nickName;
+                    if (name) {
+                       sendUserName = name + "：";
+                    }
+                 }
+                 const cacheSendUserName = groupInfo.sendUserName || "";
+                 // MsgID、时间、发送者名字 不一致，就更新
+                 if (cacheMsgId !== newMsgId || cacheTime !== newTime || cacheSendUserName !== sendUserName) {
+                   eventBase.fnCommunicationSendMsg({
+                    operator: "groupUpdate",
+                    data: {
+                      id: Number(id),
+                      type: 'group',
+                      values: {
+                        ...groupInfo,
+                        MsgID: Number(lastMsg.MsgID),
+                        content: lastMsg.content,
+                        time: lastMsg.sendTime,
+                        sendTime: lastMsg.sendTime,
+                        chatType: lastMsg.chatType,
+                        sendUserName: sendUserName
+                      },
+                    },
+                  });
+                 }
+              }
+            }
+          } catch (e) {
+            console.error("checkGroupLastMsgUpdate 缓存 error", e);
+          }
+        });
+      } catch (e) {
+        console.error("checkGroupLastMsgUpdate error", e);
       }
     },
     /**
@@ -1519,7 +1878,6 @@ export default {
           msgBlockList: this.blockList,
         })
         .then((res) => {
-          // console.log('blockList--', res)
           if (res) {
             this.blockList = res?.msgBlockList || [];
             this.blockListShowPageNum = res.pageNumCurrent;
@@ -1560,8 +1918,12 @@ export default {
             const msgList = this.blockList || [];
             // console.log('recentMsgList-1-', msgList)
             const recentMsgList = msgList.at(-1)?.list || [];
-              //  console.log('recentMsgList-2-', recentMsgList)
+               console.log('recentMsgList-2-', recentMsgList)
             this.getChannelHistoryMsg(recentMsgList.slice(-10));
+          } else if(this.chatContent.type === 'group') {
+            const msgList = this.blockList || [];
+            const recentMsgList = msgList.at(-1)?.list || [];
+            this.checkGroupLastMsgUpdate(recentMsgList.slice(-10));
           }
         });
 

@@ -93,6 +93,7 @@ import eventBase from "@/event/base";
 import eventFile from "@/event/file";
 import eventCommon from "@/event/common";
 import { notificationReply } from "@/event/msg";
+import { isBatchMode } from "@/utils/batchRenderer";
 import { lockDomBeforeResize } from "@/utils/widget/lockDomBeforeResize";
 
 export default {
@@ -299,9 +300,19 @@ export default {
     },
     /**
      * 事件的处理
+     * @param {Object|Array} info - 消息数据，批量模式下为数组
+     * @param {string} operator - 事件类型
+     * @param {string} operatorType - 操作子类型，批量模式下为 BATCH_MODE
      */
     async handleEventHandling(info, operator, operatorType) {
-    //   console.log({info, operator, operatorType},  '248 -----------> 主程序')
+      // console.log({info, operator, operatorType},  '248 -----------> 主程序')
+
+      // 批量模式处理
+      if (isBatchMode(operatorType, info)) {
+        this.handleBatchEvent(info, operator);
+        return;
+      }
+
       if (
         [
           "activeChange",
@@ -344,7 +355,7 @@ export default {
           const loginId = eventCommon.fnCommonInfoRU({
             getId: "loginId",
           });
-          const channel = (await Cache(`${loginId}MessageChannelList`)).find((item) => item.id === Number(info.channelId));
+          const channel = (await Cache(`${loginId}MessageChannelList`))?.find((item) => item.id === Number(info.channelId));
           if (channel) {
             eventBase.fnCommunicationSendMsg({
               operator: "channelDetailCache",
@@ -554,6 +565,72 @@ export default {
         key: "infoActive",
         value: this.infoActive,
       });
+    },
+    /**
+     * 批量事件处理
+     * @param {Array} messages - 消息数组 [{ data, operatorType, timestamp }]
+     * @param {string} operator - 事件类型
+     */
+    handleBatchEvent(messages, operator) {
+      if (messages.length === 0) return;
+
+      switch (operator) {
+        case "msgNew":
+          this.handleBatchMsgNew(messages);
+          break;
+        default:
+          // 未知的批量事件，逐条处理
+          messages.forEach((msg) => {
+            this.handleEventHandling(msg.data, operator, msg.operatorType);
+          });
+      }
+    },
+    /**
+     * 批量处理新消息 - 更新当前聊天窗口状态
+     * @param {Array} messages - 消息数组
+     */
+    handleBatchMsgNew(messages) {
+      if (!this.infoActive) return;
+
+      const activeKey = this.infoActive.id + this.infoActive.type;
+      let infoActiveUpdated = false;
+      let newInfoActive = { ...this.infoActive };
+
+      // 只处理属于当前窗口的消息
+      for (const msg of messages) {
+        const info = msg.data;
+        const operatorType = msg.operatorType;
+
+        if (info.id + info.type !== activeKey) {
+          continue;
+        }
+
+        // 全员禁言消息
+        if (operatorType === "groupShutupAll") {
+          newInfoActive.bfShutup = info.bfShutup;
+          infoActiveUpdated = true;
+        }
+
+        // 群消息中用户身份变化
+        if (
+          info.groupId &&
+          info.sendMember &&
+          info.sendUid == this.loginId &&
+          info.sendMember.type != newInfoActive.memberType
+        ) {
+          newInfoActive.memberType = info.sendMember.type;
+          infoActiveUpdated = true;
+        }
+      }
+
+      // 只在有变化时更新
+      if (infoActiveUpdated) {
+        this.infoActive = newInfoActive;
+        eventCommon.fnCommonInfoRU({
+          key: "infoActive",
+          value: this.infoActive,
+        });
+      }
     },
     /**
      * 版本获取

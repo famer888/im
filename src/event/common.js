@@ -2,6 +2,7 @@ import { Cache } from "@/cache";
 import { websocketClose } from "@/socket";
 import i18n from "@/assets/lang/i18n";
 import { Local, getEnvType } from "@/utils";
+import { remote } from "@/platform";
 
 // api
 import { UpdateContacts, getChatSensitive } from "@/api/imBase";
@@ -92,15 +93,35 @@ const fnLoginout = (args) => {
     }
 
     if (res) {
-      const list = res.map((item) => {
-        return item.id === commonInfo.loginId
-          ? {
-            ...item,
-            sourceId: "",
-            sessionId: "",
-          }
-          : item;
-      });
+      // const list = res.map((item) => {
+      //   return item.id === commonInfo.loginId
+      //     ? {
+      //       ...item,
+      //       sourceId: "",
+      //       sessionId: "",
+      //     }
+      //     : item;
+      // });
+      let list = [...res];
+      let index = list.findIndex((item) => item.id === commonInfo.loginId);
+      // 如果通过 loginId 找不到，尝试通过 sourceId 查找（容错）
+      if (index === -1) {
+        try {
+          const sourceId = remote.getCurrentWindow().getMediaSourceId();
+          index = list.findIndex((item) => item.sourceId === sourceId);
+        } catch (e) {
+          console.error("Error sourceId findIndex:", e);
+        }
+      }
+      if (index !== -1) {
+        const item = list[index];
+        list.splice(index, 1);
+        list.push({
+          ...item,
+          sourceId: "",
+          sessionId: "",
+        });
+      }
 
       // 清空公共信息
       commonInfo = {};
@@ -538,7 +559,7 @@ const fnAtClick = async (text, currentGuoupId) => {
   const loginId = commonInfo.loginId;
 
   // 判断是不是好友
-  const friendList = await Cache(`${loginId}-ContactList`)
+  const friendList = (await Cache(`${loginId}-ContactList`)) || [];
   const memberValues = friendList.find(
     (item) => item.nickName === text || item.name === text
   );
@@ -555,7 +576,7 @@ const fnAtClick = async (text, currentGuoupId) => {
   // 判断是否是当前已有的群
   Cache(`${loginId}-GroupList`).then((res) => {
     if (res) {
-      const groupInfo = res.find((item) => item.groupAliasName === text);
+      const groupInfo = (res || []).find((item) => item.groupAliasName === text);
 
       if (groupInfo) {
         if (currentGuoupId == groupInfo.id) {
@@ -611,7 +632,7 @@ const fnClientInfoGet = () => {
     sessionId,
     appVer,
     version: appVer,
-    packageCode: 1000,
+    packageCode: 6000,
     language: languageIndex + 1, // 默认简体中文
     // plat: process.platform === "darwin" ? 3 : 4,
     plat: 4,

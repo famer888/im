@@ -9,6 +9,7 @@ import {
     Menu,
     nativeImage as NativeImage,
     powerMonitor,
+    powerSaveBlocker,
     protocol,
     screen,
     session,
@@ -26,6 +27,7 @@ import { createProtocol } from "vue-cli-plugin-electron-builder/lib";
 import nodePath from "path";
 import { openFile } from "@/utils/server";
 import { showNotification, closeNotification } from  "@/notification";
+import { runMacStartupCleanup, watchUserDataRemoval, stopWatchUserData } from "@/utils/mac/uninstall-errors";
 import { initToggleSideBar } from "@/utils/toggleSideBar";
 const log = require('electron-log');
 initElectronLog();
@@ -108,8 +110,10 @@ let baseIndexList = [];
 let userData = app.getPath("userData");
 let imagesCacheDir = `${userData}/images`;
 let voicesCacheDir = `${userData}/voices`;
+let codeCacheDir = `${userData}/Code Cache`;
 let mainWindowIsFocused = true;
 let downTimers = {};
+let powerBlockerId = null; // 电源阻止器ID
 
 ipcMain.handle("get-user-data-path", () => {
     return userData;
@@ -649,6 +653,7 @@ const setMainWin = async () => {
         nodeIntegrationInWorker: true,
         webviewTag: true,
         allowRunningInsecureContent: true,
+        backgroundThrottling: false, // 禁用渲染器节流，即使窗口在后台也保持正常运行
         // session: ses,
         // partition,
         // 如果想打包之后的版本，不能打开调试控制台，请取消下面的注释
@@ -1090,7 +1095,7 @@ const createMainWindow = async () => {
         global.sharedObj.proto.onAppSuspend();
     });
 
-    [imagesCacheDir, voicesCacheDir].map((e) => {
+    [imagesCacheDir, voicesCacheDir, codeCacheDir].map((e) => {
         if (!fs.existsSync(e)) {
             fs.mkdirSync(e);
         }
@@ -1190,7 +1195,15 @@ function registerLocalResourceProtocol(ses) {
     });
 }
 app.on("ready", () => {
+    // [macOS] 启动前清理可能残留的 IndexedDB 锁文件
+    runMacStartupCleanup();
+
     createMainWindow();
+
+    // 启用电源阻止器，防止系统进入睡眠状态
+    // 'prevent-app-suspension' - 阻止应用挂起，保持CPU运行
+    // 'prevent-display-sleep' - 阻止显示器睡眠
+    powerBlockerId = powerSaveBlocker.start('prevent-app-suspension');
     watchRenderLog();
     log.info('应用启动');
 
@@ -1256,6 +1269,14 @@ app.on("before-quit", async (event) => {
         });
     }
 
+    // 停止电源阻止器
+    if (powerBlockerId !== null && powerSaveBlocker.isStarted(powerBlockerId)) {
+        powerSaveBlocker.stop(powerBlockerId);
+    }
+
+    // [macOS] 停止 userData 目录监听
+    stopWatchUserData();
+
     // Fix issues #14
     baseIndexList[baseIndex] = 0;
 
@@ -1266,8 +1287,8 @@ app.on("before-quit", async (event) => {
     tray = null;
     // }
 });
-app.on("activate", (e) => {
-    if (!mainWindow.isVisible()) {
+app.on("activate", () => {
+    if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.isVisible()) {
         mainWindow.show();
     }
 });
@@ -1327,8 +1348,16 @@ function toggleTrayIcon(icon) {
 }
 
 // 监听软件卸载，关闭应用
-setInterval(() => {
-    if (!fs.existsSync(userData)) {
+if (isOsx) {
+    // macOS: 使用 fs.watch 避免文件锁定问题
+    watchUserDataRemoval(() => {
         app.quit();
-    }
-}, 5000);
+    });
+} else {
+    // Windows: 保持原有的 setInterval 轮询
+    setInterval(() => {
+        if (!fs.existsSync(userData)) {
+            app.quit();
+        }
+    }, 5000);
+}

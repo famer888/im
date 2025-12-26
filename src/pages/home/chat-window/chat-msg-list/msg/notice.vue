@@ -28,6 +28,7 @@ import { splitHtmlStringToObjects, strReplaceEmojiImgLabel } from "@/utils/widge
 
 // 事件
 import eventBase from "@/event/base";
+import eventCommon from "@/event/common";
 
 // 控件
 import ComLableEle from "@/pages/home/com/lable-ele.vue";
@@ -123,7 +124,14 @@ export default {
           notice: this.content,
         },
       });
-      this.provideGroupNotice({ notice: this.content });
+      let editorId = this.msgInfo?.sendUid;
+      // 如果没有发送者id，且是自己发送的，则获取登录者id
+      if (!editorId && this.msgInfo?.isSelf) {
+        editorId = eventCommon.fnCommonInfoRU({
+          getId: "loginId",
+        });
+      }
+      this.provideGroupNotice({ notice: this.content, editorId: Number(editorId) });
     },
   },
 };

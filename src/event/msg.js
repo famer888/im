@@ -32,6 +32,23 @@ import eventFriend from "./friend";
 import eventFile from "./file";
 import eventCommon from "./common";
 import eventChannel from "./channel";
+import { benchmark } from "@/debuggers";
+
+/**
+ * 消息去重检查
+ * @param {number} id - 会话ID (friendId/groupId/channelId)
+ * @param {string} type - 消息类型 (friend/group/channel)
+ * @param {number} msgId - 消息ID
+ * @returns {Promise<boolean>} - true: 重复消息，应跳过; false: 非重复，继续处理
+ */
+const fnCheckMsgRepeat = async (id, type, msgId) => {
+    if (!msgId) return false;
+    const isRepeat = await window.$db.checkRepeat({ id, type, msgId });
+    if (isRepeat) {
+        console.log(`[repeat]${type}MsgAdd blocked`, id, msgId);
+    }
+    return isRepeat;
+};
 
 /**
  * 处理隐藏消息
@@ -78,7 +95,7 @@ const fnHandleHideMessage = (msgNew, type, loginId) => {
 /**
  * 消息 添加
  */
-const fnMsgAdd = async ({ msg, contentStr, fileKey, type }) => {
+export const fnMsgAdd = async ({ msg, contentStr, fileKey, type }) => {
     const msgId = Number(msg.msgId)
     // console.log(`fnMsgAdd-1-msgId:${msgId}`)
     // console.log("fnMsgAdd--", { msg, contentStr, fileKey, type })
@@ -202,7 +219,7 @@ const fnMsgAdd = async ({ msg, contentStr, fileKey, type }) => {
     if (msgNew.msgType === 8) {
         Cache(`${loginId}-groupNotice`).then((res) => {
             const obj = res || {};
-            obj[msgNew.groupId] = msgNew.content;
+            obj[msgNew.groupId] = `^#${msgNew.sendUid}#$-${msgNew.content}`;
 
             Cache(`${loginId}-groupNotice`, obj);
         });
@@ -248,8 +265,12 @@ const fnMsgAdd = async ({ msg, contentStr, fileKey, type }) => {
 const fnGroupMsgAdd = async (msg) => {
     // console.log(msg, 'fnGroupMsgAdd --------> 185')
     const type = "group";
+    const groupId = Number(msg.groupId);
+    const msgId = Number(msg.msgId);
+
+    if (await fnCheckMsgRepeat(groupId, type, msgId)) return;
     const { contentStr, fileKey } = await fnMsgDecryption({
-        id: Number(msg.groupId),
+        id: groupId,
         type,
         msgType: msg.msgType || 0,
         msgEncryptionVersion: msg.version ,
@@ -285,6 +306,8 @@ const fnFriendMsgAdd = async (msg) => {
         loginId == Number(msg.sendUid) ? msg.receiveUid : msg.sendUid
     );
 
+    const msgId = Number(msg.msgId);
+    if (await fnCheckMsgRepeat(friendId, type, msgId)) return;
     // 是否是自己发送的
     const isSelf = Number(msg.sendUid) === loginId;
 
@@ -360,6 +383,7 @@ const fnChannelMsgAdd = async (msg, isOld) => {
         };
     }
 
+    if (await fnCheckMsgRepeat(channelId, type, msgId)) return;
     const { contentStr, fileKey } = await fnMsgDecryption({
         id: channelId,
         type,
@@ -368,12 +392,15 @@ const fnChannelMsgAdd = async (msg, isOld) => {
         content:msg.content,
         attachmentKey: msg.attachmentKey,
     });
-    //  console.log(channelId+'收到一条频道消息-msg-',contentStr, msg)
+    //  console.log(channelId+'收到一条频道消息-msg-',contentStr,'msg', msg)
     if (!contentStr) {
+      console.log('contentStr null')
         return;
     }
+    // 确保channelId和msgId是数字类型，避免因类型不一致导致会话列表匹配失败
+    const msgNum= {...msg, channelId: Number(msg.channelId), msgId: Number(msg.msgId)}
      fnMsgAdd({
-        msg,
+        msg: msgNum,
         contentStr,
         fileKey,
         type,
@@ -1394,6 +1421,9 @@ const fnMsgSend = async (info) => {
         delete item.params.local;
         delete item.params.localThumbUrl;
 
+        // benchmark: 初始化消息发送日志
+        benchmark.initSendLog(item.customMsgId);
+
         const isHide = shouldPreventSendingMessage(item.params?.text);
 
         // 发送
@@ -1424,6 +1454,8 @@ const fnMsgSendSuccess = (msg, type) => {
         updated.time = String(sentOverTime);
         updated.sendTime = String(sentOverTime);
     }
+    // benchmark: 标记收到服务器确认
+    benchmark.markRecieved(customMsgId);
 
     // 数据库内查找该消息，并修改状态 及 msgId
     window.$db
@@ -1494,6 +1526,8 @@ const fnMsgSendTimeout = () => {
  * 消息发送失败
  */
 const fnMsgSendFail = async ({ id, type, customMsgId }) => {
+    // benchmark: 标记发送失败
+    benchmark.markFailed(customMsgId, 'fnMsgSendFail');
     // 数据库内查找该消息，并修改状态 及 msgId
     window.$db
         .updateMsgProperty({
@@ -1694,7 +1728,7 @@ const fnAlertNotification = async (data, chatList) => {
         !eventCommon.fnDisturbIdStrListRU({ idStrIsExist: id + type }) &&
         ![51, 6, 10, 13, 14, 99].includes(msgType)
     ) {
-        const info = chatList.find(item => item.id === id && item.type === type);
+        const info = (chatList || []).find(item => item.id === id && item.type === type);
         if (info) {
             const params = {
                 id,

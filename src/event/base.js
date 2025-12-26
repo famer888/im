@@ -8,6 +8,9 @@ import eventChat from "./chat";
 import eventFriend from "./friend";
 import eventGroup from "./group";
 
+// 批量渲染调度器
+import batchRenderer from "@/utils/batchRenderer";
+
 const fnHint = (idStr) => {
     const isExist = eventCommon.fnDisturbIdStrListRU({
         idStrIsExist: idStr,
@@ -64,28 +67,40 @@ const fnCommunicationMonitoring = (type, eventIdList, runEvent) => {
 
 /**
  * 通讯 发消息
+ * @param {Object} params - 消息参数 { operator, data, operatorType }
+ * @param {boolean} noProcessing - 是否跳过本地处理
  */
 const fnCommunicationSendMsg = (params, noProcessing) => {
-    if (mgsGetFns) {
-        // 如果需要进行处理
-        if (!noProcessing) {
-            // 处理后是否停止信息传递
-            if (!fnCommunicationProcessing(params)) {
-                return;
-            }
-        }
+    if (!mgsGetFns) {
+        return;
+    }
 
-        // 只发送给有注册处理的控件
-        for (const key of Object.keys(mgsGetFns)) {
-            const eventsObj = mgsGetFns[key];
-            if (eventsObj) {
-                if (eventsObj.eventIdList.includes(params.operator)) {
-                    eventsObj.runEvent(
-                        params.data,
-                        params.operator,
-                        params.operatorType
-                    );
-                }
+    // 如果需要进行处理
+    if (!noProcessing) {
+        // 处理后是否停止信息传递
+        if (!fnCommunicationProcessing(params)) {
+            return;
+        }
+    }
+
+    // 对于需要批处理的事件，走批量渲染调度器
+    // 无论 noProcessing 是否为 true，只要通过了 processing 检查，高频事件都走批处理
+    if (batchRenderer.shouldBatch(params.operator)) {
+        batchRenderer.setListeners(mgsGetFns);
+        batchRenderer.add(params.operator, params.data, params.operatorType);
+        return;
+    }
+
+    // 其他事件保持原有逻辑，直接分发
+    for (const key of Object.keys(mgsGetFns)) {
+        const eventsObj = mgsGetFns[key];
+        if (eventsObj) {
+            if (eventsObj.eventIdList.includes(params.operator)) {
+                eventsObj.runEvent(
+                    params.data,
+                    params.operator,
+                    params.operatorType
+                );
             }
         }
     }
@@ -256,12 +271,12 @@ const fnCommunicationProcessing = (values) => {
             break;
         }
         case "openChannelNoticeDialog": {
-            // 添加 频道简介对话框
-            eventCommon.fnCloseListRU({
-                addId: "channelNoticeDialog",
-            });
-            break;
-        }
+          // 添加 频道简介对话框
+          eventCommon.fnCloseListRU({
+              addId: "channelNoticeDialog",
+          });
+          break;
+      }
         case "memberDialogShow": {
             // 添加 好友对话框
             eventCommon.fnCloseListRU({

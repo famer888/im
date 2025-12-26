@@ -88,6 +88,9 @@ module.exports = {
           extendInfo: {
             NSCameraUsageDescription: 'This app requires camera access to record video.',
             NSMicrophoneUsageDescription: 'This app requires microphone access to record audio.',
+            // 允许应用在后台运行
+            LSBackgroundOnly: false,
+            NSSupportsAutomaticGraphicsSwitching: true,
           },
           hardenedRuntime: true,
           gatekeeperAssess: false,

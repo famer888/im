@@ -3,7 +3,7 @@
     <h1>{{ $t("群通知") }}</h1>
     <ul class="notify-box">
       <li v-for="(item, index) in list" :key="index">
-        <ComImage :src="item.pic" type="icon" />
+        <ComImage :src="item.pic" type="group" />
         <div class="top-info">
           <h2>{{ item.name }}</h2>
           <span class="time"> · {{ chatTime(item.updateTime) }}</span>
@@ -113,6 +113,7 @@ export default {
 
     handleUpdateList() {
       getGroupReqList({ pageNum: this.pageNum, pageSize: 100 }).then((res) => {
+        console.log('getGroupReqList--',res)
         if (res && res.groupReqs) {
           let groupInfoList = [];
           res.groupReqs.forEach((item) => {

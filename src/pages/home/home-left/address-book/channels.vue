@@ -1,23 +1,19 @@
 <template>
   <div class="channels-root">
     <h2 @click="
-        listVisible = !listVisible;
-        $emit('onChange', listVisible);
-      ">
+      listVisible = !listVisible;
+    $emit('onChange', listVisible);
+    ">
       频道
       <img src="@/assets/images/headNav/jt-icon.png" :style="listVisible ? {} : { transform: 'rotate(180deg)' }" />
     </h2>
-    <InfiniteScroll
-      v-show="listVisible"
-      :noMore="noMore"
-      :loading="loading"
-       height="356px"
-       @load="this.nextPage"
-     >
+    <InfiniteScroll v-show="listVisible" :noMore="noMore" :loading="loading" height="356px" @load="this.nextPage">
       <ul v-if="listVisible">
-        <li class="channel-item" v-for="(item, index) in listData" :key="'channel'+index" :class="{ active: id === item.channelId }"
-          @click="handleClick(item)">
-          <textAvatar v-if="item.type === 'channel' && !item.pic" class="textAvatar"  :value="item.channelName" :id="item.channelId" />
+        <li class="channel-item" v-for="(item, index) in listData" :key="'channel' + index"
+          :class="{ active: id === item.channelId }" @click="handleClick(item)">
+          <ComTextAvatar v-if="!item.icon" class="textAvatar" :color="item.logoColor" :value="item.channelName"
+            :id="item.channelId" />
+          <!-- <textAvatar v-if="item.type === 'channel' && !item.pic" class="textAvatar"  :value="item.channelName" :id="item.channelId" /> -->
           <ComImage v-else :src="item.icon" :type="item.type" />
           <h3>{{ item.channelName.replaceAll("🪵", "?") }}</h3>
         </li>
@@ -29,7 +25,8 @@
 <script>
 // 组件
 import InfiniteScroll from "@/components/InfiniteScroll"
-import textAvatar from '@/components/text-avatar';
+// import textAvatar from '@/components/text-avatar';
+import ComTextAvatar from "@/components/text-avatar.vue";
 
 // api
 import { getChannelList } from '@/api/imChannel';
@@ -44,7 +41,8 @@ import eventCommon from '@/event/common';
 
 export default {
   props: ['show', 'id'],
-  components: { textAvatar, InfiniteScroll },
+  // textAvatar,
+  components: {  InfiniteScroll, ComTextAvatar },
   data() {
     return {
       noMore: false,

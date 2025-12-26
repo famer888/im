@@ -7,10 +7,13 @@ import {
     RemoveArchiveReq,
 } from "@/api/imBase";
 import { getChannelDetail } from "@/api/imChannel";
+import { getGroupDetail } from "@/api/imGroup";
+import { getContactsDetail } from "@/api/imContacation";
 
 // 事件
 import eventCommon from "./common";
 import eventBase from "./base";
+import sharePromise from "@/utils/sharePromise";
 
 /**
  * 聊天列表排序
@@ -100,10 +103,22 @@ const fnChatWindowUpdate = async (info) => {
             } else {
                 // 如果是好友， 在好友中查找
                 chatInfo = friendList.find((item) => item.id === updateInfo.id);
-
                 // 如果好友信息没找到
                 if (!chatInfo) {
-                    //
+                    try {
+                        const res = await sharePromise({ tag: `friend-update-${updateInfo.id}`, method: getContactsDetail }, { targetUid: Number(updateInfo.id) });
+                        const detail = res?.contactsDetailBase || {};
+                        const userInfo = detail.userInfo || {};
+                        chatInfo = {
+                            ...detail,
+                            ...userInfo,
+                            pic: userInfo.icon || "",
+                            name: userInfo.friendRelation?.remarkName || userInfo.nickName || "",
+                        };
+                    } catch (e) {
+                        console.error("fnChatWindowUpdate friend error", e);
+                        chatInfo = {};
+                    }
                 }
             }
         }
@@ -112,10 +127,20 @@ const fnChatWindowUpdate = async (info) => {
         if (updateInfo.type === "group") {
             // 在群中查找
             chatInfo = groups.find((item) => item.id === updateInfo.id);
-
-            // 如果好友信息没找到
+            // 如果群信息没找到
             if (!chatInfo) {
-                //
+                try {
+                    const res = await sharePromise({ tag: `group-update-${updateInfo.id}`, method: getGroupDetail }, { groupId: Number(updateInfo.id) });
+                    const detail = res?.group || {};
+                    chatInfo = {
+                        ...detail,
+                        pic: detail.pic || "",
+                        name: detail.name || "",
+                    };
+                } catch (e) {
+                    console.error("fnChatWindowUpdate group error", e);
+                    chatInfo = {};
+                }
             }
         }
 
@@ -123,8 +148,7 @@ const fnChatWindowUpdate = async (info) => {
         if (updateInfo.type === "channel") {
             chatInfo = channels.find((item) => item.channelId === updateInfo.id);
             if (!chatInfo?.channelId || !chatInfo?.channelName) {
-                const res = await getChannelDetail({ channelId: updateInfo.id });
-                // console.log("chatInfo-2-", res)
+                const res = await sharePromise({ tag: `channel-update-${updateInfo.id}`, method: getChannelDetail }, { channelId: updateInfo.id })
                 chatInfo = res?.data || {};
             }
         }

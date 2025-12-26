@@ -1,7 +1,7 @@
 import { ipcRenderer } from "@/platform";
 import { remote } from "./platform";
 import { fs } from "./platform";
-import BDBase from "@/database";
+import BDBase from "@/database/queue";
 import _ from "lodash";
 
 // api

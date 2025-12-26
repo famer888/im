@@ -19,7 +19,7 @@
 
 <script>
 import { inFileFun } from "@/platformHelper";
-import BDBase from "@/database";
+import BDBase from "@/database/queue";
 import i18n from "@/assets/lang/i18n";
 
 export default {

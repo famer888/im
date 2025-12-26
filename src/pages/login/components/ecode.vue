@@ -194,7 +194,13 @@ export default {
           });
 
           Cache("login-account-list").then(async (res) => {
-            let sourceId = remote.getCurrentWindow().getMediaSourceId();
+            let sourceId = "";
+            try {
+              sourceId = remote.getCurrentWindow().getMediaSourceId();
+            } catch (e) {
+              console.error("[登录] 获取sourceId失败:", e);
+            }
+
             let loginAccountList = res || [];
 
             const infoOld = loginAccountList.find(
@@ -218,13 +224,8 @@ export default {
 
             // 保存并跳转
             Cache("login-account-list", loginAccountList).then(() => {
-              // // 如果是更新旧的框口，则通知激活该窗口
-              // if (infoOld && infoOld.sourceId === sourceId) {
-              //   //
-              // } else {
               this.$router.push("/home?loginId=" + loginId);
-              // }
-            });
+            })
           });
         } else {
           // 没有获取到成功信息，则1.5s后再进行获取

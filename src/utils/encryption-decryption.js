@@ -5,6 +5,7 @@ import md5 from "js-md5";
 
 // 事件
 import eventCommon from "@/event/common";
+import benchmark from "@/debuggers/benchmark";
 
 // api
 import { GetKeyPair, UpdateKeyPair } from "@/api/imBase";
@@ -509,7 +510,7 @@ export const fnMsgDecryption = async ({
 
             // 如果群密钥没获取到，则直接结束
             if (!relKey) {
-                console.error("群消息 解密失败-1-", optsStr, relKey);
+                console.error("频道消息 解密失败-1-", optsStr, relKey);
                 return {};
             }
 
@@ -518,7 +519,7 @@ export const fnMsgDecryption = async ({
                 contentNew = _decrypt(content, relKey);
             } catch (err) {
                 // 消息解密失败
-                console.error("群消息 解密失败-2-", optsStr, relKey);
+                console.error("频道消息 解密失败-2-", optsStr, relKey);
                 return {};
             }
         } else {
@@ -560,16 +561,26 @@ export const fnMsgDecryption = async ({
     }
 
     // 附加信息解码
-    const otherInfo = fnOtherUtf8ArrayToStr(contentNew, msgType);
+            let otherInfo = {};
+            try {
+                 otherInfo = fnOtherUtf8ArrayToStr(contentNew, msgType);
+            } catch (e) {
+                console.error("fnOtherUtf8ArrayToStr error", e);
+            }
 
-    // 内容解析字符串
-    const contentStr = fnUtf8ArrayToStr(contentNew, msgType);
+            // 内容解析字符串
+            let contentStr = "";
+            try {
+                contentStr = fnUtf8ArrayToStr(contentNew, msgType);
+            } catch (e) {
+                 console.error("fnUtf8ArrayToStr error", e);
+            }
 
-    return {
-        otherInfo,
-        contentStr,
-        fileKey,
-    };
+            return {
+                otherInfo,
+                contentStr,
+                fileKey,
+            };
 };
 
 /**
@@ -580,11 +591,16 @@ const fnUtf8ArrayToStr = (buffer, type) => {
 
     switch (type) {
         case "all": {
-            const encodedString = String.fromCodePoint.apply(
-                null,
-                new Uint8Array(buffer)
-            );
-            return decodeURIComponent(escape(encodedString)); //没有这一步中文会乱码
+            try {
+                const encodedString = String.fromCodePoint.apply(
+                    null,
+                    new Uint8Array(buffer)
+                );
+                return decodeURIComponent(escape(encodedString)); //没有这一步中文会乱码
+            } catch (error) {
+                console.error("fnUtf8ArrayToStr all error:", error);
+                return "";
+            }
         }
         case enumMsgType.image: {
             // 图片
@@ -955,6 +971,8 @@ export const fnFormartMsgParams = async ({ data, customMsgId, id, type }) => {
             // 如果群密钥没获取到，则直接结束
             if (!relKey) {
                 window.$toast(i18n.t("密钥异常，发送消息失败"));
+                // benchmark: 群密钥获取失败
+                benchmark.markFailed(customMsgId, 'fnGroupRelKeyGet');
                 return;
             }
 
@@ -994,6 +1012,8 @@ export const fnFormartMsgParams = async ({ data, customMsgId, id, type }) => {
             if (!data) {
                 console.log(2);
                 window.$toast(i18n.t("密钥异常，发送消息失败"));
+                // benchmark: 私聊密钥获取失败
+                benchmark.markFailed(customMsgId, 'fnFriendRelKeyGet');
                 return;
             }
 
@@ -1002,6 +1022,8 @@ export const fnFormartMsgParams = async ({ data, customMsgId, id, type }) => {
             // 如果群密钥没获取到，则直接结束
             if (!app && !pc && id !== 10002) {
                 window.$toast(i18n.t("密钥异常，发送消息失败"));
+                // benchmark: app和pc密钥都为空
+                benchmark.markFailed(customMsgId, 'noAppAndPcKey');
                 return;
             }
 
