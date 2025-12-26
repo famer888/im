@@ -9,12 +9,12 @@
         opacity: containerOpacity,
       }">
         <div v-for="(item, index) in blockList" :key="'pageNum' + item.pageNum" :id="'pageNum' + item.pageNum" :style="item.minHeight &&
-            blockListShowPageNum > item.pageNum + 1 &&
-            blockListShowPageNum < item.pageNum - 1
-            ? {
-              minHeight: item.minHeight + 'px',
-            }
-            : {}
+          blockListShowPageNum > item.pageNum + 1 &&
+          blockListShowPageNum < item.pageNum - 1
+          ? {
+            minHeight: item.minHeight + 'px',
+          }
+          : {}
           ">
           <template v-if="
             (blockListShowPageNum <= item.pageNum + 1 &&
