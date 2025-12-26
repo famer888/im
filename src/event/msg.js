@@ -357,7 +357,7 @@ const fnFriendMsgAdd = async (msg) => {
 };
 
 
-const fnChannelMsgAdd = async (msg, isOld) => {
+const fnChannelMsgAdd = async (msg, isOld, deleteIds = null) => {
     const channelId = Number(msg.channelId)
     const type = "channel"
     const msgId = Number(msg.msgId)
@@ -392,9 +392,19 @@ const fnChannelMsgAdd = async (msg, isOld) => {
         content:msg.content,
         attachmentKey: msg.attachmentKey,
     });
-    //  console.log(channelId+'收到一条频道消息-msg-',contentStr,'msg', msg)
+     console.log(channelId+'收到一条频道消息-msg-',contentStr,'msg', msg)
     if (!contentStr) {
-      console.log('contentStr null')
+      // 返回空消息本地删除
+        if (deleteIds && Array.isArray(deleteIds)) {
+            const deleteItem = {
+                msgId: Number(msg.msgId),
+                customMsgId: msg.customMsgId || null
+            };
+            if (msg.id) {
+                deleteItem.id = msg.id;
+            }
+            deleteIds.push(deleteItem);
+        }
         return;
     }
     // 确保channelId和msgId是数字类型，避免因类型不一致导致会话列表匹配失败
