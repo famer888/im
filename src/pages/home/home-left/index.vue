@@ -328,7 +328,9 @@ export default {
           if (info.type === "friend") {
             this.eventHandlingFriendUpdate(info);
           } else if(info.type === 'channel') {
-            this.eventSetChannelDisable(info.id, info.isDisturb);
+            // this.eventSetChannelDisable(info.id, info.isDisturb);
+            const state = info.isDisturb !== undefined ? info.isDisturb : info.bfDisturb;
+            this.eventSetChannelDisable(info.id, state);
           } else {
             this.eventHandlingGroupUpdate({
               ...info,

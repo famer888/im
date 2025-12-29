@@ -186,7 +186,9 @@ const fnDisturbSet = (info) => {
     id,
     type,
     bfDisturb: Boolean(bfDisturb),
-    ...type === 'channel' ? { isDisturb: Boolean(bfDisturb || isDisturb) } : {},
+    // 这里确保如果 isDisturb 明确存在，就以它为准。
+    // ...type === 'channel' ? { isDisturb: Boolean(bfDisturb || isDisturb) } : {},
+    ...type === 'channel' ? { isDisturb: isDisturb !== undefined ? Boolean(isDisturb) : Boolean(bfDisturb) } : {},
   });
 
   // 好友
@@ -287,15 +289,17 @@ const fnDisturbIdStrListRU = (data) => {
 /**
  * 同步免打扰数据
  */
-const fnDisturbInfoSync = ({ id, type, bfDisturb }) => {
+const fnDisturbInfoSync = ({ id, type, bfDisturb , isDisturb: isDisturbArg }) => {
   const idStr = id + type;
 
   // 当前是否为免打扰
   const isDisturb = disturbIdStrList.includes(idStr);
 
+  const targetDisturb = isDisturbArg !== undefined ? isDisturbArg : bfDisturb;
+
   // 如果与要设置的不一致，则更改
-  if (isDisturb != bfDisturb) {
-    if (bfDisturb) {
+  if (isDisturb != targetDisturb) {
+    if (targetDisturb) {
       fnDisturbIdStrListRU({ idStrAdd: idStr });
     } else {
       fnDisturbIdStrListRU({ idStrRemove: idStr });

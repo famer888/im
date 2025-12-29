@@ -1500,7 +1500,7 @@ export default {
       }
       // console.log('getChannelHistoryMsg--', params)
       let msgs = await eventChannel.fnGetHistoryMsgs(params)
-      console.log('getChannelHistoryMsg-2-', msgs)
+      // console.log('getChannelHistoryMsg-2-', msgs)
       if (!msgs.length) return;
       // 过滤历史本地删除/清空的消息
       // console.log('deleteHistoryS--', deleteHistoryS)
@@ -1680,7 +1680,7 @@ export default {
             const msgList = this.blockList || [];
             // console.log('recentMsgList-1-', msgList)
             const recentMsgList = msgList.at(-1)?.list || [];
-            console.log('recentMsgList-2-', recentMsgList)
+            // console.log('recentMsgList-2-', recentMsgList)
             this.getChannelHistoryMsg(recentMsgList.slice(-10));
           } else if (this.chatContent.type === 'group') {
             const msgList = this.blockList || [];
