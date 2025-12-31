@@ -392,7 +392,7 @@ const fnChannelMsgAdd = async (msg, isOld, deleteIds = null) => {
         content:msg.content,
         attachmentKey: msg.attachmentKey,
     });
-     console.log(channelId+'收到一条频道消息-msg-',contentStr,'msg', msg)
+    //  console.log(channelId+'收到一条频道消息-msg-',contentStr,'msg', msg)
     if (!contentStr) {
       // 返回空消息本地删除
         if (deleteIds && Array.isArray(deleteIds)) {

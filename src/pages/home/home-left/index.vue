@@ -328,7 +328,9 @@ export default {
           if (info.type === "friend") {
             this.eventHandlingFriendUpdate(info);
           } else if(info.type === 'channel') {
-            this.eventSetChannelDisable(info.id, info.isDisturb);
+            // this.eventSetChannelDisable(info.id, info.isDisturb);
+            const state = info.isDisturb !== undefined ? info.isDisturb : info.bfDisturb;
+            this.eventSetChannelDisable(info.id, state);
           } else {
             this.eventHandlingGroupUpdate({
               ...info,
@@ -473,6 +475,13 @@ export default {
         case "channelDisturbSet":
           const {id, isDisturb} = info;
           if(id) {
+            // 同步状态
+            eventCommon.fnDisturbInfoSync({
+              id,
+              type: 'channel',
+              bfDisturb: Boolean(isDisturb),
+              isDisturb: Boolean(isDisturb)
+            });
             this.eventSetChannelDisable(id, isDisturb);
           }
           break;
@@ -620,9 +629,13 @@ export default {
     // 设置消息列表的频道静音状态
     eventSetChannelDisable(channelId, state) {
         let chats = _.cloneDeep(this.chats);
-       const index = chats.findIndex(item => item.channelId === channelId);
+       // 使用 == 进行弱类型比较，防止 channelId 类型不一致（String vs Number）导致匹配失败
+       const index = chats.findIndex(item => item.channelId == channelId);
        if(index >= 0) {
           chats[index].isDisturb = state;
+          // 必须同时更新 bfDisturb，因为 UI 使用 (bfDisturb || isDisturb) 判断。
+          // 如果只更新 isDisturb 为 false，而 bfDisturb 仍为 true，UI 仍会显示免打扰。
+          chats[index].bfDisturb = state;
           this.chats = chats;
           Cache(
             `${loginId}MessageChannelList`,
