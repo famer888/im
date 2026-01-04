@@ -281,10 +281,10 @@ export default {
     },
     handleGetChannelDetail(info, channelId) {
         getChannelDetail({ channelId }).then( res => {
-         let channelDetail = res?.data || {};
+          let channelDetail = res || {};
           eventBase.fnCommunicationSendMsg({
                 operator: "channelDetailCache",
-                data: channelDetail,
+                data: {...channelDetail, data: channelDetail.data || {}},
           });
           // 快速切换时接口未返回，就别赋值了，否则会覆盖掉当前的值
           if ((this.infoActive?.channelId || this.infoActive?.id) === channelDetail?.channelId) {

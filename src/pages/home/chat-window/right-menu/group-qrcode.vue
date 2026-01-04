@@ -1,8 +1,8 @@
 <template>
-    <MenuQrcode 
+    <MenuQrcode
       :title="$t('群二维码')"
       :codeUrl="groupCodeUrl"
-      :pic="chatContent.pic" 
+      :pic="chatContent.pic"
       :name="chatContent.name"
       :isResetCode="[0].includes(chatContent.memberType) || chatContent.bfResetQrcode"
       @close="$emit('close')"
@@ -25,7 +25,7 @@ export default {
     };
   },
   mounted() {
-    this.groupCodeUrl = this.chatContent.qrUrl;
+    this.groupCodeUrl = this.chatContent.shortLink;
   },
   methods: {
     /**
@@ -36,15 +36,15 @@ export default {
         groupId: this.chatContent.id,
         force: true,
       }).then((res) => {
-        const { qrUrl } = res || {};
+        const { qrUrl, shortLink } = res || {};
         if (qrUrl) {
-          this.groupCodeUrl = qrUrl;
+          this.groupCodeUrl = shortLink;
         } else {
           window.$toast("二维码获取失败！");
         }
       });
     },
-   
+
   },
 };
 </script>

@@ -652,6 +652,7 @@ message GroupDetailResp {
     string              qrUrl           = 11; // 生成二维码相对URL
     int64               qrExpire        = 12; // 二级码URL过期时间戳
     bool                bfResetQrcode   = 13; // 二维码刷新权限
+    string              shortLink       = 15; // 二维码短链 add v6.5.0
 }
 
 //获取群简介详情req [/group/groupNoticeDetail]（暂未使用）

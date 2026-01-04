@@ -19751,6 +19751,7 @@ export const GroupDetailResp = $root.GroupDetailResp = (() => {
      * @property {string|null} [qrUrl] GroupDetailResp qrUrl
      * @property {number|Long|null} [qrExpire] GroupDetailResp qrExpire
      * @property {boolean|null} [bfResetQrcode] GroupDetailResp bfResetQrcode
+     * @property {string|null} [shortLink] GroupDetailResp shortLink
      */
 
     /**
@@ -19873,6 +19874,14 @@ export const GroupDetailResp = $root.GroupDetailResp = (() => {
     GroupDetailResp.prototype.bfResetQrcode = false;
 
     /**
+     * GroupDetailResp shortLink.
+     * @member {string} shortLink
+     * @memberof GroupDetailResp
+     * @instance
+     */
+    GroupDetailResp.prototype.shortLink = "";
+
+    /**
      * Creates a new GroupDetailResp instance using the specified properties.
      * @function create
      * @memberof GroupDetailResp
@@ -19922,6 +19931,8 @@ export const GroupDetailResp = $root.GroupDetailResp = (() => {
             writer.uint32(/* id 12, wireType 0 =*/96).int64(message.qrExpire);
         if (message.bfResetQrcode != null && Object.hasOwnProperty.call(message, "bfResetQrcode"))
             writer.uint32(/* id 13, wireType 0 =*/104).bool(message.bfResetQrcode);
+        if (message.shortLink != null && Object.hasOwnProperty.call(message, "shortLink"))
+            writer.uint32(/* id 15, wireType 2 =*/122).string(message.shortLink);
         return writer;
     };
 
@@ -20008,6 +20019,10 @@ export const GroupDetailResp = $root.GroupDetailResp = (() => {
                 }
             case 13: {
                     message.bfResetQrcode = reader.bool();
+                    break;
+                }
+            case 15: {
+                    message.shortLink = reader.string();
                     break;
                 }
             default:
@@ -20098,6 +20113,9 @@ export const GroupDetailResp = $root.GroupDetailResp = (() => {
         if (message.bfResetQrcode != null && message.hasOwnProperty("bfResetQrcode"))
             if (typeof message.bfResetQrcode !== "boolean")
                 return "bfResetQrcode: boolean expected";
+        if (message.shortLink != null && message.hasOwnProperty("shortLink"))
+            if (!$util.isString(message.shortLink))
+                return "shortLink: string expected";
         return null;
     };
 
@@ -20176,6 +20194,8 @@ export const GroupDetailResp = $root.GroupDetailResp = (() => {
                 message.qrExpire = new $util.LongBits(object.qrExpire.low >>> 0, object.qrExpire.high >>> 0).toNumber();
         if (object.bfResetQrcode != null)
             message.bfResetQrcode = Boolean(object.bfResetQrcode);
+        if (object.shortLink != null)
+            message.shortLink = String(object.shortLink);
         return message;
     };
 
@@ -20210,6 +20230,7 @@ export const GroupDetailResp = $root.GroupDetailResp = (() => {
             } else
                 object.qrExpire = options.longs === String ? "0" : 0;
             object.bfResetQrcode = false;
+            object.shortLink = "";
         }
         if (message.commonResult != null && message.hasOwnProperty("commonResult"))
             object.commonResult = $root.CommonResult.toObject(message.commonResult, options);
@@ -20240,6 +20261,8 @@ export const GroupDetailResp = $root.GroupDetailResp = (() => {
                 object.qrExpire = options.longs === String ? $util.Long.prototype.toString.call(message.qrExpire) : options.longs === Number ? new $util.LongBits(message.qrExpire.low >>> 0, message.qrExpire.high >>> 0).toNumber() : message.qrExpire;
         if (message.bfResetQrcode != null && message.hasOwnProperty("bfResetQrcode"))
             object.bfResetQrcode = message.bfResetQrcode;
+        if (message.shortLink != null && message.hasOwnProperty("shortLink"))
+            object.shortLink = message.shortLink;
         return object;
     };
 

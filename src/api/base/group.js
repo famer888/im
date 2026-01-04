@@ -7833,6 +7833,7 @@ export const GroupDetailResp = $root.GroupDetailResp = (() => {
      * @property {string|null} [qrUrl] GroupDetailResp qrUrl
      * @property {number|Long|null} [qrExpire] GroupDetailResp qrExpire
      * @property {boolean|null} [bfResetQrcode] GroupDetailResp bfResetQrcode
+     * @property {string|null} [shortLink] GroupDetailResp shortLink
      */
 
     /**
@@ -7963,6 +7964,14 @@ export const GroupDetailResp = $root.GroupDetailResp = (() => {
     GroupDetailResp.prototype.bfResetQrcode = false;
 
     /**
+     * GroupDetailResp shortLink.
+     * @member {string} shortLink
+     * @memberof GroupDetailResp
+     * @instance
+     */
+    GroupDetailResp.prototype.shortLink = "";
+
+    /**
      * Creates a new GroupDetailResp instance using the specified properties.
      * @function create
      * @memberof GroupDetailResp
@@ -8014,6 +8023,8 @@ export const GroupDetailResp = $root.GroupDetailResp = (() => {
             writer.uint32(/* id 13, wireType 0 =*/104).int64(message.qrExpire);
         if (message.bfResetQrcode != null && Object.hasOwnProperty.call(message, "bfResetQrcode"))
             writer.uint32(/* id 14, wireType 0 =*/112).bool(message.bfResetQrcode);
+        if (message.shortLink != null && Object.hasOwnProperty.call(message, "shortLink"))
+            writer.uint32(/* id 15, wireType 2 =*/122).string(message.shortLink);
         return writer;
     };
 
@@ -8104,6 +8115,10 @@ export const GroupDetailResp = $root.GroupDetailResp = (() => {
                 }
             case 14: {
                     message.bfResetQrcode = reader.bool();
+                    break;
+                }
+            case 15: {
+                    message.shortLink = reader.string();
                     break;
                 }
             default:
@@ -8197,6 +8212,9 @@ export const GroupDetailResp = $root.GroupDetailResp = (() => {
         if (message.bfResetQrcode != null && message.hasOwnProperty("bfResetQrcode"))
             if (typeof message.bfResetQrcode !== "boolean")
                 return "bfResetQrcode: boolean expected";
+        if (message.shortLink != null && message.hasOwnProperty("shortLink"))
+            if (!$util.isString(message.shortLink))
+                return "shortLink: string expected";
         return null;
     };
 
@@ -8277,6 +8295,8 @@ export const GroupDetailResp = $root.GroupDetailResp = (() => {
                 message.qrExpire = new $util.LongBits(object.qrExpire.low >>> 0, object.qrExpire.high >>> 0).toNumber();
         if (object.bfResetQrcode != null)
             message.bfResetQrcode = Boolean(object.bfResetQrcode);
+        if (object.shortLink != null)
+            message.shortLink = String(object.shortLink);
         return message;
     };
 
@@ -8312,6 +8332,7 @@ export const GroupDetailResp = $root.GroupDetailResp = (() => {
             } else
                 object.qrExpire = options.longs === String ? "0" : 0;
             object.bfResetQrcode = false;
+            object.shortLink = "";
         }
         if (message.commonResult != null && message.hasOwnProperty("commonResult"))
             object.commonResult = $root.CommonResult.toObject(message.commonResult, options);
@@ -8344,6 +8365,8 @@ export const GroupDetailResp = $root.GroupDetailResp = (() => {
                 object.qrExpire = options.longs === String ? $util.Long.prototype.toString.call(message.qrExpire) : options.longs === Number ? new $util.LongBits(message.qrExpire.low >>> 0, message.qrExpire.high >>> 0).toNumber() : message.qrExpire;
         if (message.bfResetQrcode != null && message.hasOwnProperty("bfResetQrcode"))
             object.bfResetQrcode = message.bfResetQrcode;
+        if (message.shortLink != null && message.hasOwnProperty("shortLink"))
+            object.shortLink = message.shortLink;
         return object;
     };
 
@@ -8657,6 +8680,7 @@ export const GroupQrCodeResp = $root.GroupQrCodeResp = (() => {
      * @property {string|null} [qrUrl] GroupQrCodeResp qrUrl
      * @property {number|Long|null} [qrExpire] GroupQrCodeResp qrExpire
      * @property {boolean|null} [bfResetQrcode] GroupQrCodeResp bfResetQrcode
+     * @property {string|null} [shortLink] GroupQrCodeResp shortLink
      */
 
     /**
@@ -8707,6 +8731,14 @@ export const GroupQrCodeResp = $root.GroupQrCodeResp = (() => {
     GroupQrCodeResp.prototype.bfResetQrcode = false;
 
     /**
+     * GroupQrCodeResp shortLink.
+     * @member {string} shortLink
+     * @memberof GroupQrCodeResp
+     * @instance
+     */
+    GroupQrCodeResp.prototype.shortLink = "";
+
+    /**
      * Creates a new GroupQrCodeResp instance using the specified properties.
      * @function create
      * @memberof GroupQrCodeResp
@@ -8738,6 +8770,8 @@ export const GroupQrCodeResp = $root.GroupQrCodeResp = (() => {
             writer.uint32(/* id 3, wireType 0 =*/24).int64(message.qrExpire);
         if (message.bfResetQrcode != null && Object.hasOwnProperty.call(message, "bfResetQrcode"))
             writer.uint32(/* id 4, wireType 0 =*/32).bool(message.bfResetQrcode);
+        if (message.shortLink != null && Object.hasOwnProperty.call(message, "shortLink"))
+            writer.uint32(/* id 5, wireType 2 =*/42).string(message.shortLink);
         return writer;
     };
 
@@ -8790,6 +8824,10 @@ export const GroupQrCodeResp = $root.GroupQrCodeResp = (() => {
                     message.bfResetQrcode = reader.bool();
                     break;
                 }
+            case 5: {
+                    message.shortLink = reader.string();
+                    break;
+                }
             default:
                 reader.skipType(tag & 7);
                 break;
@@ -8839,6 +8877,9 @@ export const GroupQrCodeResp = $root.GroupQrCodeResp = (() => {
         if (message.bfResetQrcode != null && message.hasOwnProperty("bfResetQrcode"))
             if (typeof message.bfResetQrcode !== "boolean")
                 return "bfResetQrcode: boolean expected";
+        if (message.shortLink != null && message.hasOwnProperty("shortLink"))
+            if (!$util.isString(message.shortLink))
+                return "shortLink: string expected";
         return null;
     };
 
@@ -8872,6 +8913,8 @@ export const GroupQrCodeResp = $root.GroupQrCodeResp = (() => {
                 message.qrExpire = new $util.LongBits(object.qrExpire.low >>> 0, object.qrExpire.high >>> 0).toNumber();
         if (object.bfResetQrcode != null)
             message.bfResetQrcode = Boolean(object.bfResetQrcode);
+        if (object.shortLink != null)
+            message.shortLink = String(object.shortLink);
         return message;
     };
 
@@ -8897,6 +8940,7 @@ export const GroupQrCodeResp = $root.GroupQrCodeResp = (() => {
             } else
                 object.qrExpire = options.longs === String ? "0" : 0;
             object.bfResetQrcode = false;
+            object.shortLink = "";
         }
         if (message.commonResult != null && message.hasOwnProperty("commonResult"))
             object.commonResult = $root.CommonResult.toObject(message.commonResult, options);
@@ -8909,6 +8953,8 @@ export const GroupQrCodeResp = $root.GroupQrCodeResp = (() => {
                 object.qrExpire = options.longs === String ? $util.Long.prototype.toString.call(message.qrExpire) : options.longs === Number ? new $util.LongBits(message.qrExpire.low >>> 0, message.qrExpire.high >>> 0).toNumber() : message.qrExpire;
         if (message.bfResetQrcode != null && message.hasOwnProperty("bfResetQrcode"))
             object.bfResetQrcode = message.bfResetQrcode;
+        if (message.shortLink != null && message.hasOwnProperty("shortLink"))
+            object.shortLink = message.shortLink;
         return object;
     };
 
@@ -24412,6 +24458,474 @@ export const GroupMemberOnLineStatusListResp = $root.GroupMemberOnLineStatusList
     };
 
     return GroupMemberOnLineStatusListResp;
+})();
+
+export const GroupQrUrlFromShortLinkReq = $root.GroupQrUrlFromShortLinkReq = (() => {
+
+    /**
+     * Properties of a GroupQrUrlFromShortLinkReq.
+     * @exports IGroupQrUrlFromShortLinkReq
+     * @interface IGroupQrUrlFromShortLinkReq
+     * @property {IClientInfo|null} [clientInfo] GroupQrUrlFromShortLinkReq clientInfo
+     * @property {string|null} [shortLink] GroupQrUrlFromShortLinkReq shortLink
+     */
+
+    /**
+     * Constructs a new GroupQrUrlFromShortLinkReq.
+     * @exports GroupQrUrlFromShortLinkReq
+     * @classdesc Represents a GroupQrUrlFromShortLinkReq.
+     * @implements IGroupQrUrlFromShortLinkReq
+     * @constructor
+     * @param {IGroupQrUrlFromShortLinkReq=} [properties] Properties to set
+     */
+    function GroupQrUrlFromShortLinkReq(properties) {
+        if (properties)
+            for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                if (properties[keys[i]] != null)
+                    this[keys[i]] = properties[keys[i]];
+    }
+
+    /**
+     * GroupQrUrlFromShortLinkReq clientInfo.
+     * @member {IClientInfo|null|undefined} clientInfo
+     * @memberof GroupQrUrlFromShortLinkReq
+     * @instance
+     */
+    GroupQrUrlFromShortLinkReq.prototype.clientInfo = null;
+
+    /**
+     * GroupQrUrlFromShortLinkReq shortLink.
+     * @member {string} shortLink
+     * @memberof GroupQrUrlFromShortLinkReq
+     * @instance
+     */
+    GroupQrUrlFromShortLinkReq.prototype.shortLink = "";
+
+    /**
+     * Creates a new GroupQrUrlFromShortLinkReq instance using the specified properties.
+     * @function create
+     * @memberof GroupQrUrlFromShortLinkReq
+     * @static
+     * @param {IGroupQrUrlFromShortLinkReq=} [properties] Properties to set
+     * @returns {GroupQrUrlFromShortLinkReq} GroupQrUrlFromShortLinkReq instance
+     */
+    GroupQrUrlFromShortLinkReq.create = function create(properties) {
+        return new GroupQrUrlFromShortLinkReq(properties);
+    };
+
+    /**
+     * Encodes the specified GroupQrUrlFromShortLinkReq message. Does not implicitly {@link GroupQrUrlFromShortLinkReq.verify|verify} messages.
+     * @function encode
+     * @memberof GroupQrUrlFromShortLinkReq
+     * @static
+     * @param {IGroupQrUrlFromShortLinkReq} message GroupQrUrlFromShortLinkReq message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    GroupQrUrlFromShortLinkReq.encode = function encode(message, writer) {
+        if (!writer)
+            writer = $Writer.create();
+        if (message.clientInfo != null && Object.hasOwnProperty.call(message, "clientInfo"))
+            $root.ClientInfo.encode(message.clientInfo, writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
+        if (message.shortLink != null && Object.hasOwnProperty.call(message, "shortLink"))
+            writer.uint32(/* id 2, wireType 2 =*/18).string(message.shortLink);
+        return writer;
+    };
+
+    /**
+     * Encodes the specified GroupQrUrlFromShortLinkReq message, length delimited. Does not implicitly {@link GroupQrUrlFromShortLinkReq.verify|verify} messages.
+     * @function encodeDelimited
+     * @memberof GroupQrUrlFromShortLinkReq
+     * @static
+     * @param {IGroupQrUrlFromShortLinkReq} message GroupQrUrlFromShortLinkReq message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    GroupQrUrlFromShortLinkReq.encodeDelimited = function encodeDelimited(message, writer) {
+        return this.encode(message, writer).ldelim();
+    };
+
+    /**
+     * Decodes a GroupQrUrlFromShortLinkReq message from the specified reader or buffer.
+     * @function decode
+     * @memberof GroupQrUrlFromShortLinkReq
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @param {number} [length] Message length if known beforehand
+     * @returns {GroupQrUrlFromShortLinkReq} GroupQrUrlFromShortLinkReq
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    GroupQrUrlFromShortLinkReq.decode = function decode(reader, length, error) {
+        if (!(reader instanceof $Reader))
+            reader = $Reader.create(reader);
+        let end = length === undefined ? reader.len : reader.pos + length, message = new $root.GroupQrUrlFromShortLinkReq();
+        while (reader.pos < end) {
+            let tag = reader.uint32();
+            if (tag === error)
+                break;
+            switch (tag >>> 3) {
+            case 1: {
+                    message.clientInfo = $root.ClientInfo.decode(reader, reader.uint32());
+                    break;
+                }
+            case 2: {
+                    message.shortLink = reader.string();
+                    break;
+                }
+            default:
+                reader.skipType(tag & 7);
+                break;
+            }
+        }
+        return message;
+    };
+
+    /**
+     * Decodes a GroupQrUrlFromShortLinkReq message from the specified reader or buffer, length delimited.
+     * @function decodeDelimited
+     * @memberof GroupQrUrlFromShortLinkReq
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @returns {GroupQrUrlFromShortLinkReq} GroupQrUrlFromShortLinkReq
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    GroupQrUrlFromShortLinkReq.decodeDelimited = function decodeDelimited(reader) {
+        if (!(reader instanceof $Reader))
+            reader = new $Reader(reader);
+        return this.decode(reader, reader.uint32());
+    };
+
+    /**
+     * Verifies a GroupQrUrlFromShortLinkReq message.
+     * @function verify
+     * @memberof GroupQrUrlFromShortLinkReq
+     * @static
+     * @param {Object.<string,*>} message Plain object to verify
+     * @returns {string|null} `null` if valid, otherwise the reason why it is not
+     */
+    GroupQrUrlFromShortLinkReq.verify = function verify(message) {
+        if (typeof message !== "object" || message === null)
+            return "object expected";
+        if (message.clientInfo != null && message.hasOwnProperty("clientInfo")) {
+            let error = $root.ClientInfo.verify(message.clientInfo);
+            if (error)
+                return "clientInfo." + error;
+        }
+        if (message.shortLink != null && message.hasOwnProperty("shortLink"))
+            if (!$util.isString(message.shortLink))
+                return "shortLink: string expected";
+        return null;
+    };
+
+    /**
+     * Creates a GroupQrUrlFromShortLinkReq message from a plain object. Also converts values to their respective internal types.
+     * @function fromObject
+     * @memberof GroupQrUrlFromShortLinkReq
+     * @static
+     * @param {Object.<string,*>} object Plain object
+     * @returns {GroupQrUrlFromShortLinkReq} GroupQrUrlFromShortLinkReq
+     */
+    GroupQrUrlFromShortLinkReq.fromObject = function fromObject(object) {
+        if (object instanceof $root.GroupQrUrlFromShortLinkReq)
+            return object;
+        let message = new $root.GroupQrUrlFromShortLinkReq();
+        if (object.clientInfo != null) {
+            if (typeof object.clientInfo !== "object")
+                throw TypeError(".GroupQrUrlFromShortLinkReq.clientInfo: object expected");
+            message.clientInfo = $root.ClientInfo.fromObject(object.clientInfo);
+        }
+        if (object.shortLink != null)
+            message.shortLink = String(object.shortLink);
+        return message;
+    };
+
+    /**
+     * Creates a plain object from a GroupQrUrlFromShortLinkReq message. Also converts values to other types if specified.
+     * @function toObject
+     * @memberof GroupQrUrlFromShortLinkReq
+     * @static
+     * @param {GroupQrUrlFromShortLinkReq} message GroupQrUrlFromShortLinkReq
+     * @param {$protobuf.IConversionOptions} [options] Conversion options
+     * @returns {Object.<string,*>} Plain object
+     */
+    GroupQrUrlFromShortLinkReq.toObject = function toObject(message, options) {
+        if (!options)
+            options = {};
+        let object = {};
+        if (options.defaults) {
+            object.clientInfo = null;
+            object.shortLink = "";
+        }
+        if (message.clientInfo != null && message.hasOwnProperty("clientInfo"))
+            object.clientInfo = $root.ClientInfo.toObject(message.clientInfo, options);
+        if (message.shortLink != null && message.hasOwnProperty("shortLink"))
+            object.shortLink = message.shortLink;
+        return object;
+    };
+
+    /**
+     * Converts this GroupQrUrlFromShortLinkReq to JSON.
+     * @function toJSON
+     * @memberof GroupQrUrlFromShortLinkReq
+     * @instance
+     * @returns {Object.<string,*>} JSON object
+     */
+    GroupQrUrlFromShortLinkReq.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+    };
+
+    /**
+     * Gets the default type url for GroupQrUrlFromShortLinkReq
+     * @function getTypeUrl
+     * @memberof GroupQrUrlFromShortLinkReq
+     * @static
+     * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+     * @returns {string} The default type url
+     */
+    GroupQrUrlFromShortLinkReq.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === undefined) {
+            typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/GroupQrUrlFromShortLinkReq";
+    };
+
+    return GroupQrUrlFromShortLinkReq;
+})();
+
+export const GroupQrUrlFromShortLinkResp = $root.GroupQrUrlFromShortLinkResp = (() => {
+
+    /**
+     * Properties of a GroupQrUrlFromShortLinkResp.
+     * @exports IGroupQrUrlFromShortLinkResp
+     * @interface IGroupQrUrlFromShortLinkResp
+     * @property {ICommonResult|null} [commonResult] GroupQrUrlFromShortLinkResp commonResult
+     * @property {string|null} [qrUrl] GroupQrUrlFromShortLinkResp qrUrl
+     */
+
+    /**
+     * Constructs a new GroupQrUrlFromShortLinkResp.
+     * @exports GroupQrUrlFromShortLinkResp
+     * @classdesc Represents a GroupQrUrlFromShortLinkResp.
+     * @implements IGroupQrUrlFromShortLinkResp
+     * @constructor
+     * @param {IGroupQrUrlFromShortLinkResp=} [properties] Properties to set
+     */
+    function GroupQrUrlFromShortLinkResp(properties) {
+        if (properties)
+            for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                if (properties[keys[i]] != null)
+                    this[keys[i]] = properties[keys[i]];
+    }
+
+    /**
+     * GroupQrUrlFromShortLinkResp commonResult.
+     * @member {ICommonResult|null|undefined} commonResult
+     * @memberof GroupQrUrlFromShortLinkResp
+     * @instance
+     */
+    GroupQrUrlFromShortLinkResp.prototype.commonResult = null;
+
+    /**
+     * GroupQrUrlFromShortLinkResp qrUrl.
+     * @member {string} qrUrl
+     * @memberof GroupQrUrlFromShortLinkResp
+     * @instance
+     */
+    GroupQrUrlFromShortLinkResp.prototype.qrUrl = "";
+
+    /**
+     * Creates a new GroupQrUrlFromShortLinkResp instance using the specified properties.
+     * @function create
+     * @memberof GroupQrUrlFromShortLinkResp
+     * @static
+     * @param {IGroupQrUrlFromShortLinkResp=} [properties] Properties to set
+     * @returns {GroupQrUrlFromShortLinkResp} GroupQrUrlFromShortLinkResp instance
+     */
+    GroupQrUrlFromShortLinkResp.create = function create(properties) {
+        return new GroupQrUrlFromShortLinkResp(properties);
+    };
+
+    /**
+     * Encodes the specified GroupQrUrlFromShortLinkResp message. Does not implicitly {@link GroupQrUrlFromShortLinkResp.verify|verify} messages.
+     * @function encode
+     * @memberof GroupQrUrlFromShortLinkResp
+     * @static
+     * @param {IGroupQrUrlFromShortLinkResp} message GroupQrUrlFromShortLinkResp message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    GroupQrUrlFromShortLinkResp.encode = function encode(message, writer) {
+        if (!writer)
+            writer = $Writer.create();
+        if (message.commonResult != null && Object.hasOwnProperty.call(message, "commonResult"))
+            $root.CommonResult.encode(message.commonResult, writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
+        if (message.qrUrl != null && Object.hasOwnProperty.call(message, "qrUrl"))
+            writer.uint32(/* id 2, wireType 2 =*/18).string(message.qrUrl);
+        return writer;
+    };
+
+    /**
+     * Encodes the specified GroupQrUrlFromShortLinkResp message, length delimited. Does not implicitly {@link GroupQrUrlFromShortLinkResp.verify|verify} messages.
+     * @function encodeDelimited
+     * @memberof GroupQrUrlFromShortLinkResp
+     * @static
+     * @param {IGroupQrUrlFromShortLinkResp} message GroupQrUrlFromShortLinkResp message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    GroupQrUrlFromShortLinkResp.encodeDelimited = function encodeDelimited(message, writer) {
+        return this.encode(message, writer).ldelim();
+    };
+
+    /**
+     * Decodes a GroupQrUrlFromShortLinkResp message from the specified reader or buffer.
+     * @function decode
+     * @memberof GroupQrUrlFromShortLinkResp
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @param {number} [length] Message length if known beforehand
+     * @returns {GroupQrUrlFromShortLinkResp} GroupQrUrlFromShortLinkResp
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    GroupQrUrlFromShortLinkResp.decode = function decode(reader, length, error) {
+        if (!(reader instanceof $Reader))
+            reader = $Reader.create(reader);
+        let end = length === undefined ? reader.len : reader.pos + length, message = new $root.GroupQrUrlFromShortLinkResp();
+        while (reader.pos < end) {
+            let tag = reader.uint32();
+            if (tag === error)
+                break;
+            switch (tag >>> 3) {
+            case 1: {
+                    message.commonResult = $root.CommonResult.decode(reader, reader.uint32());
+                    break;
+                }
+            case 2: {
+                    message.qrUrl = reader.string();
+                    break;
+                }
+            default:
+                reader.skipType(tag & 7);
+                break;
+            }
+        }
+        return message;
+    };
+
+    /**
+     * Decodes a GroupQrUrlFromShortLinkResp message from the specified reader or buffer, length delimited.
+     * @function decodeDelimited
+     * @memberof GroupQrUrlFromShortLinkResp
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @returns {GroupQrUrlFromShortLinkResp} GroupQrUrlFromShortLinkResp
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    GroupQrUrlFromShortLinkResp.decodeDelimited = function decodeDelimited(reader) {
+        if (!(reader instanceof $Reader))
+            reader = new $Reader(reader);
+        return this.decode(reader, reader.uint32());
+    };
+
+    /**
+     * Verifies a GroupQrUrlFromShortLinkResp message.
+     * @function verify
+     * @memberof GroupQrUrlFromShortLinkResp
+     * @static
+     * @param {Object.<string,*>} message Plain object to verify
+     * @returns {string|null} `null` if valid, otherwise the reason why it is not
+     */
+    GroupQrUrlFromShortLinkResp.verify = function verify(message) {
+        if (typeof message !== "object" || message === null)
+            return "object expected";
+        if (message.commonResult != null && message.hasOwnProperty("commonResult")) {
+            let error = $root.CommonResult.verify(message.commonResult);
+            if (error)
+                return "commonResult." + error;
+        }
+        if (message.qrUrl != null && message.hasOwnProperty("qrUrl"))
+            if (!$util.isString(message.qrUrl))
+                return "qrUrl: string expected";
+        return null;
+    };
+
+    /**
+     * Creates a GroupQrUrlFromShortLinkResp message from a plain object. Also converts values to their respective internal types.
+     * @function fromObject
+     * @memberof GroupQrUrlFromShortLinkResp
+     * @static
+     * @param {Object.<string,*>} object Plain object
+     * @returns {GroupQrUrlFromShortLinkResp} GroupQrUrlFromShortLinkResp
+     */
+    GroupQrUrlFromShortLinkResp.fromObject = function fromObject(object) {
+        if (object instanceof $root.GroupQrUrlFromShortLinkResp)
+            return object;
+        let message = new $root.GroupQrUrlFromShortLinkResp();
+        if (object.commonResult != null) {
+            if (typeof object.commonResult !== "object")
+                throw TypeError(".GroupQrUrlFromShortLinkResp.commonResult: object expected");
+            message.commonResult = $root.CommonResult.fromObject(object.commonResult);
+        }
+        if (object.qrUrl != null)
+            message.qrUrl = String(object.qrUrl);
+        return message;
+    };
+
+    /**
+     * Creates a plain object from a GroupQrUrlFromShortLinkResp message. Also converts values to other types if specified.
+     * @function toObject
+     * @memberof GroupQrUrlFromShortLinkResp
+     * @static
+     * @param {GroupQrUrlFromShortLinkResp} message GroupQrUrlFromShortLinkResp
+     * @param {$protobuf.IConversionOptions} [options] Conversion options
+     * @returns {Object.<string,*>} Plain object
+     */
+    GroupQrUrlFromShortLinkResp.toObject = function toObject(message, options) {
+        if (!options)
+            options = {};
+        let object = {};
+        if (options.defaults) {
+            object.commonResult = null;
+            object.qrUrl = "";
+        }
+        if (message.commonResult != null && message.hasOwnProperty("commonResult"))
+            object.commonResult = $root.CommonResult.toObject(message.commonResult, options);
+        if (message.qrUrl != null && message.hasOwnProperty("qrUrl"))
+            object.qrUrl = message.qrUrl;
+        return object;
+    };
+
+    /**
+     * Converts this GroupQrUrlFromShortLinkResp to JSON.
+     * @function toJSON
+     * @memberof GroupQrUrlFromShortLinkResp
+     * @instance
+     * @returns {Object.<string,*>} JSON object
+     */
+    GroupQrUrlFromShortLinkResp.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+    };
+
+    /**
+     * Gets the default type url for GroupQrUrlFromShortLinkResp
+     * @function getTypeUrl
+     * @memberof GroupQrUrlFromShortLinkResp
+     * @static
+     * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+     * @returns {string} The default type url
+     */
+    GroupQrUrlFromShortLinkResp.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === undefined) {
+            typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/GroupQrUrlFromShortLinkResp";
+    };
+
+    return GroupQrUrlFromShortLinkResp;
 })();
 
 export const ClientInfo = $root.ClientInfo = (() => {
