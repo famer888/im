@@ -208,7 +208,7 @@ export const queryGroupLink = (data) =>
         url: `${baseUrl()}/group/groupDetailFromQrCode`,
         data,
     });
-    
+
 // 群别名查询群
 export const groupSearch = (data) =>
     getUrl({
@@ -241,5 +241,14 @@ export const manageGroupMember = (data) =>
         protoType: "group",
         type: "GroupMember",
         url: `${baseUrl()}/group/groupMember`,
+        data,
+    });
+
+// 短链转长链
+export const groupQrUrlFromShortLink = (data) =>
+    getUrl({
+        protoType: "group",
+        type: "GroupQrUrlFromShortLink",
+        url: `${baseUrl()}/group/groupQrUrlFromShortLink`,
         data,
     });

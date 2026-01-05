@@ -14,6 +14,14 @@ import { FairGuard } from "./base/unit";
 const bodyAesKey = process.env.VUE_APP_SECRET_KEY;
 const domainUrl =  process.env.VUE_APP_OPEN_CHAT_DOMAIN;
 
+export const getHistoryDomain = (data) => {
+  return requestAxios(`/sys/h5HistoryDomain/list`, data, {
+    headers: {
+      ...getSignHeader(),
+    },
+  });
+}
+
 export const channelCheckJoin = (data) => {
   return requestAxios(`/channel/channelEventReq/userCheckJoin`, data, {
     bigIntRequestKeys: ['id'],
