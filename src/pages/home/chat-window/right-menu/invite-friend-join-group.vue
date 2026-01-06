@@ -143,23 +143,25 @@ export default {
         },
         // 过滤掉群成员
         filterGroupMember(friends, groupMembers) {
-            let isFriendMore = friends.length > groupMembers.length
+            // let isFriendMore = friends.length > groupMembers.length
             let friendList = friends
-            if (isFriendMore) {
-                groupMembers.forEach(item => {
-                    let index = friendList.findIndex(i => i.id === item.id)
-                    if (index >= 0) {
-                        friendList[index].isGroupMember = true;
-                    }
-                })
-            } else {
-                friendList.forEach((item, index) => {
-                    const isExist = groupMembers.some(i => i.id === item.id)
-                    if (isExist) {
-                        friendList[index].isGroupMember = true;
-                    }
-                })
-            }
+            // 改成过滤
+            friendList = friendList.filter(item => !groupMembers.some(i => i.id === item.id))
+            // if (isFriendMore) {
+            //     groupMembers.forEach(item => {
+            //         let index = friendList.findIndex(i => i.id === item.id)
+            //         if (index >= 0) {
+            //             friendList[index].isGroupMember = true;
+            //         }
+            //     })
+            // } else {
+            //     friendList.forEach((item, index) => {
+            //         const isExist = groupMembers.some(i => i.id === item.id)
+            //         if (isExist) {
+            //             friendList[index].isGroupMember = true;
+            //         }
+            //     })
+            // }
             return friendList
         },
         // 复制群邀请链接
