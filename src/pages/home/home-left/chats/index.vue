@@ -132,7 +132,7 @@
               >
                 {{ item.sendUserName }}
               </span>
-              <ComChatsText :text="handleContent(item.content)" :id="item.id" />
+              <ComChatsText :text="handleContent(item.content)" :id="item.id" :atUsers="item.atUsers" />
             </div>
             <div v-else></div>
             <span v-if="item.chatType !== -1" class="sendTime">

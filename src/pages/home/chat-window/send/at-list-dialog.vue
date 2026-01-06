@@ -141,7 +141,8 @@ export default {
             break;
           }
           case "Enter": {
-            this.$emit("addAt", this.atShowList[this.atIndexActive].nickName);
+            const {name, nickName} = this.atShowList[this.atIndexActive]
+            this.$emit("addAt", name || nickName);
             break;
           }
           default:
@@ -311,7 +312,7 @@ export default {
       > h2 {
         display: flex;
         align-items: center;
-        
+
         .name,.nickName {
           max-width: 200px;
           overflow: hidden;
