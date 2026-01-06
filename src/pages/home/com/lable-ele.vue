@@ -32,6 +32,7 @@ import { completionUrl } from "@/utils/base";
 
 // 事件
 import eventBase from "@/event/base";
+import InviteLink from "@/utils/InviteLink";
 
 export default {
   name: "lebleEle",
@@ -87,6 +88,7 @@ export default {
       }
     },
     async handleGoLink(info, showConfirm) {
+
       const linkUrl = (info?.href || "").replace("<br>", "")
       if(showConfirm) {
          const confirmState = await window.$confirm({
@@ -96,6 +98,7 @@ export default {
         })
        if(!confirmState) return;
       }
+      return new InviteLink({ link: completionUrl(linkUrl) }).redirect();
 
       try {
         let href = completionUrl(linkUrl)

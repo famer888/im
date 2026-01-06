@@ -333,7 +333,7 @@ export default {
 
           memberInfoList.forEach((item) => {
 
-            let cur = userOnLineStatusList.find(
+            let cur = (userOnLineStatusList || []).find(
               (user) => Number(user.uid) == item.id
             );
             item.online = (cur && cur.online) || false;
