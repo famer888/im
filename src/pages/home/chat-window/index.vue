@@ -771,6 +771,22 @@ export default {
             memberInfos[info.id].name = info.values.name
             this.memberInfos = memberInfos;
           }
+
+          // 同步更新 memberInfoList 中的备注名
+          const memberIndex = memberInfoList.findIndex(item => item.id === info.id);
+          if (memberIndex >= 0) {
+            memberInfoList[memberIndex].name = info.values.name;
+          }
+
+          // 同步更新 friendList 和 Cache，确保 memberDialog 等组件获取到最新备注（包括置空的情况）
+          const loginId = eventCommon.fnCommonInfoRU({
+            getId: "loginId",
+          });
+          const friendIndex = friendList.findIndex(item => item.id === info.id);
+          if (friendIndex >= 0) {
+            friendList[friendIndex].name = info.values.name;
+            Cache(`${loginId}-ContactList`, friendList);
+          }
           break;
         }
 
