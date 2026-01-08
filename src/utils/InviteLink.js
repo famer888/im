@@ -116,6 +116,11 @@ class InviteLink {
       });
     }
   }
+  // 普通链接直接打开
+  redirectNormal() {
+    window.open(this.link);
+  }
+
   fallback(error) {
     console.log('邀请连接解析失败：' + error.message || err);
     this.type === 1 && window.$toast('邀请连接解析失败：' + error.message || err);
@@ -134,7 +139,7 @@ class InviteLink {
     try {
       const linkType = this.type = await this.getInviteLinkType();
       const pipeline = [
-        [],
+        [this.redirectNormal],
         [this.getGroupLinkFromShortLink, this.translateGroupLink, this.getGroupInfoByLink, this.redirectGroup],
         [this.getChannelInfoByLink, this.redirectChannel],
       ][linkType];

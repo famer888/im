@@ -163,80 +163,88 @@ export const strSplitAt = (htmlStr, splitList) => {
     return parts;
 };
 
+const escapeRegExp = (string) => {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 /**
  * 按At列表对字符串进行分割
  */
 const splitStringByAtList = (inputString, splitList) => {
-    const strList = [];
-    let inputStringNew = inputString;
-    let inputStringEnd = inputString;
+    // const strList = [];
+    // let inputStringNew = inputString;
+    // let inputStringEnd = inputString;
+    // for (const strAt of splitList) {
+    //     let needSplit = true;
+    //     while (needSplit) {
+    //         needSplit = false;
+    //         // 开始索引
+    //         const indexStart = inputStringEnd.indexOf(strAt);
+    //         // 结束索引
+    //         const indexEnd = indexStart + strAt.length;
+    //         if (indexStart !== -1) {
+    //             // // at在最前面或前面有空格
+    //             // const charBefore = inputStringEnd.slice(
+    //             //     indexStart - 1,
+    //             //     indexStart
+    //             // );
+    //             // if (
+    //             //     indexStart === 0 ||
+    //             //     (charBefore.length === 1 &&
+    //             //         charBefore.trim().length === 0) ||
+    //             //     charBefore[0] === "@"
+    //             // ) {
+    //           // 移除@前必须有空格的限制
+    //             if (true) {
+    //                 const charAfter = inputStringEnd.slice(
+    //                     indexEnd,
+    //                     indexEnd + 1
+    //                 );
+    //                 // 最后面为结束或者有空格
+    //                 if (
+    //                     indexEnd === inputStringEnd.length ||
+    //                     (charAfter.length === 1 &&
+    //                         charAfter.trim().length === 0)
+    //                 ) {
+    //                     // 如果前面有字符串，则添加
+    //                     if (indexStart !== 0) {
+    //                         strList.push(inputStringEnd.slice(0, indexStart));
+    //                     }
+    //                     // 添加at的内容
+    //                     strList.push(strAt);
+    //                     // 移除已添加的
+    //                     inputStringNew = inputStringNew.slice(indexEnd);
+    //                 }
+    //             }
+    //         }
+    //         // 确认还有没有相同的需要后续分隔
+    //         inputStringEnd = inputStringEnd.slice(indexEnd);
 
-    for (const strAt of splitList) {
-        let needSplit = true;
+    //         if (inputStringEnd.indexOf(strAt) !== -1) {
+    //             needSplit = true;
+    //         }
+    //     }
+    // }
+    // if (inputStringNew !== "") {
+    //     strList.push(inputStringNew);
+    // }
+    // return strList;
 
-        while (needSplit) {
-            needSplit = false;
+    // 优化at识别
+    if (!splitList || splitList.length === 0) return [inputString];
 
-            // 开始索引
-            const indexStart = inputStringEnd.indexOf(strAt);
+    // 按长度降序排序，确保优先匹配长词
+    const sortedList = [...splitList].sort((a, b) => b.length - a.length);
 
-            // 结束索引
-            const indexEnd = indexStart + strAt.length;
+    // 构造正则：匹配列表中的任意一项，且后面跟随 结束符、空白符 或 @
+    const pattern = sortedList.map(item => escapeRegExp(item)).join('|');
+    const reg = new RegExp(`(${pattern})(?=$|[\\s@])`, 'g');
 
-            if (indexStart !== -1) {
-                // // at在最前面或前面有空格
-                // const charBefore = inputStringEnd.slice(
-                //     indexStart - 1,
-                //     indexStart
-                // );
+    // 使用 split 分割
+    const parts = inputString.split(reg);
 
-                // if (
-                //     indexStart === 0 ||
-                //     (charBefore.length === 1 &&
-                //         charBefore.trim().length === 0) ||
-                //     charBefore[0] === "@"
-                // ) {
-              // 移除@前必须有空格的限制
-                if (true) {
-                    const charAfter = inputStringEnd.slice(
-                        indexEnd,
-                        indexEnd + 1
-                    );
-
-                    // 最后面为结束或者有空格
-                    if (
-                        indexEnd === inputStringEnd.length ||
-                        (charAfter.length === 1 &&
-                            charAfter.trim().length === 0)
-                    ) {
-                        // 如果前面有字符串，则添加
-                        if (indexStart !== 0) {
-                            strList.push(inputStringEnd.slice(0, indexStart));
-                        }
-
-                        // 添加at的内容
-                        strList.push(strAt);
-
-                        // 移除已添加的
-                        inputStringNew = inputStringNew.slice(indexEnd);
-                    }
-                }
-            }
-
-            // 确认还有没有相同的需要后续分隔
-            inputStringEnd = inputStringEnd.slice(indexEnd);
-
-            if (inputStringEnd.indexOf(strAt) !== -1) {
-                needSplit = true;
-            }
-        }
-    }
-
-    if (inputStringNew !== "") {
-        strList.push(inputStringNew);
-    }
-
-    return strList;
+    // 过滤空字符串
+    return parts.filter(item => item !== undefined && item !== '');
 };
 
 /**

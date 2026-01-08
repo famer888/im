@@ -387,7 +387,14 @@ export const replaceString = (str, searchChar, replaceChar) => {
  */
 export const repalceLink = (text) => {
     if (!text || !text.replace) return "";
-    const regex = /(https?:\/\/[^\s]+)/g; // 匹配http或https开头的链接
+
+    // URL主体中的禁止字符（空格、引号、HTML、中文、通用标点）
+    const forbiddenChars = '\\s"\'<>\\u4e00-\\u9fa5\\u3000-\\u303F\\uFF00-\\uFFEF\\u2000-\\u206F';
+
+    // 安全结束字符：不得为标点符号或分隔符
+    const safeEndChar = `[^${forbiddenChars}\\.,;:?!()\\[\\]{}]`;
+
+    const regex = new RegExp(`(https?:\\/\\/[^${forbiddenChars}]*${safeEndChar})`, 'g'); // 匹配http或https开头的链接, 排除结尾标点
     return text.replace(regex, '<a href="$1" target="_blank">$1</a>');
 };
 
@@ -395,7 +402,10 @@ export const repalceLink = (text) => {
  * 替换链接 没有前缀
  */
 export const repalceLinkNoPrefix = (text) => {
-    const urlPattern = /([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}(\/[^\s]*)?/g;
+    const forbiddenChars = '\\s"\'<>\\u4e00-\\u9fa5\\u3000-\\u303F\\uFF00-\\uFFEF\\u2000-\\u206F';
+    const safeEndChar = `[^${forbiddenChars}\\.,;:?!()\\[\\]{}]`;
+
+    const urlPattern = new RegExp(`([a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,6}(\\/[^${forbiddenChars}]*${safeEndChar}|\\/)?`, 'g');
 
     return text.replace(urlPattern, (url) => {
         return `<a href="${`https://${url}`}" target="_blank" >${url}</a>`;

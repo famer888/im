@@ -31,16 +31,34 @@ export default {
       if (this.atUsers && this.atUsers.length) {
         // 给atUsers增加备注名
         const friendRemarks = eventCommon.fnFriendRemarksGet();
+        // 收集需要替换的用户信息
+        const replacementList = [];
         this.atUsers.forEach((item) => {
-          const remarkObj = friendRemarks.find((i) => i.id === item.uid);
           let name = item.name;
-          if (remarkObj) {
-            name = remarkObj.name || "";
+          if (!name) {
+            const remarkObj = friendRemarks.find((i) => i.id === item.uid);
+            if (remarkObj) {
+              name = remarkObj.name || "";
+            }
           }
           if (name && item.nickName) {
-            htmlString = htmlString.replace("@" + item.nickName, "@" + name);
+            replacementList.push({ nickName: item.nickName, name: name });
           }
         });
+        // 优化替换逻辑：按昵称长度降序排序，防止短名误匹配长名
+        if (replacementList.length > 0) {
+          replacementList.sort((a, b) => b.nickName.length - a.nickName.length);
+          const nameMap = {};
+          replacementList.forEach(item => { nameMap[item.nickName] = item.name; });
+          // 转义正则特殊字符
+          const escapeRegExp = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          const pattern = replacementList.map(u => escapeRegExp(u.nickName)).join('|');
+          // 匹配 @nickName 后面跟随 结束符、空白字符(包含空格、换行等)或@
+          const reg = new RegExp(`@(${pattern})(?=$|[\\s@])`, 'g');
+          htmlString = htmlString.replace(reg, (match, nickName) => {
+            return '@' + (nameMap[nickName] || nickName);
+          });
+        }
       }
 
       // 字符串替换为表情图片标签

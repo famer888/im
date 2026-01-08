@@ -149,7 +149,21 @@ export const fnMsgAdd = async ({ msg, contentStr, fileKey, type }) => {
 
 
 
-    // at 的信息
+    // at 的信息添加对应备注名
+    if (msgNew.atUsers && Array.isArray(msgNew.atUsers)) {
+        msgNew.atUsers.forEach(item => {
+             const uid = item.uid || item.id;
+             if(uid) {
+                 const remarkName = eventFriend.fnFriendRemarkNameObjRU({
+                    getId: uid,
+                });
+                if(remarkName) {
+                    item.name = remarkName;
+                }
+             }
+        })
+    }
+
     if (msgNew.atUids) {
         const info = msgNew.atUids.find((item) => Number(item) === loginId);
         if (info) {

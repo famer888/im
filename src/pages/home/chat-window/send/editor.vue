@@ -944,11 +944,29 @@ export default {
 
           if (atUsers.length > 0) {
             // 将消息内容中的备注名替换为真实昵称
-            atUsers.forEach(i => {
-              if(i.name) {
-               content = content.replace(i.name, i.nickName);
-              }
-            });
+            // atUsers.forEach(i => {
+            //   if(i.name) {
+            //    content = content.replace(i.name, i.nickName);
+            //   }
+            // });
+            // 如果重复@多个的情况进行处理都要能正确替换到真实昵称
+            const usersWithRemark = atUsers.filter(u => u.name);
+            if (usersWithRemark.length > 0) {
+              // 按长度降序排序，优先匹配长名字
+              usersWithRemark.sort((a, b) => b.name.length - a.name.length);
+
+              const nameMap = {};
+              usersWithRemark.forEach(u => { nameMap[u.name] = u.nickName; });
+
+              const pattern = usersWithRemark.map(u => _.escapeRegExp(u.name)).join('|');
+              // 匹配 @name 后面跟随 结束符、空格或@
+              const reg = new RegExp(`@(${pattern})(?=$|[ @])`, 'g');
+
+              content = content.replace(reg, (match, name) => {
+                 return '@' + (nameMap[name] || name);
+              });
+            }
+
             item.values.content = content;
 
             return {

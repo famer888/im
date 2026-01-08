@@ -123,24 +123,42 @@ export default {
         // 给atUsers增加备注名
         const friendRemarks = eventCommon.fnFriendRemarksGet();
         this.atUsers.forEach(item => {
-          const remarkObj = friendRemarks.find(i => i.id === item.uid);
-          if(remarkObj) {
-            item.name = remarkObj.name || "";
+          if (!item.name) {
+           const remarkObj = friendRemarks.find(i => i.id === item.uid);
+           if(remarkObj) {
+             item.name = remarkObj.name || "";
+           }
           }
         })
-
         // 替换at的好友真实昵称替换为好友备注
-        this.atUsers.forEach(item => {
-          if(item.name) {
-            htmlString = htmlString.replace('@'+item.nickName, '@'+item.name)
-          }
-        })
+        // this.atUsers.forEach(item => {
+        //   if(item.name) {
+        //     htmlString = htmlString.replace('@'+item.nickName, '@'+item.name)
+        //   }
+        // })
+
+        // 替换at的好友真实昵称替换为好友备注 优化 确保能正确替换所有at用户
+        const usersWithRemark = this.atUsers.filter(item => item.name);
+        if (usersWithRemark.length > 0) {
+          // 按长度降序排序，防止短名误匹配长名
+          usersWithRemark.sort((a, b) => b.nickName.length - a.nickName.length);
+          const nameMap = {};
+          usersWithRemark.forEach(item => { nameMap[item.nickName] = item.name; });
+          const escapeRegExp = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          const pattern = usersWithRemark.map(u => escapeRegExp(u.nickName)).join('|');
+          // 匹配 @nickName 后面跟随 结束符、空白字符(包含空格、换行等)或@
+          const reg = new RegExp(`@(${pattern})(?=$|[\\s@])`, 'g');
+          htmlString = htmlString.replace(reg, (match, nickName) => {
+            return '@' + (nameMap[nickName] || nickName);
+          });
+        }
+
       }
       // 拆分html
       const tagList = splitHtmlStringToObjects(htmlString);
       // at的名称列表
       const atNameList = this.atUsers
-        ? this.atUsers.map((item) => "@" + item.name || item.nickName)
+        ? this.atUsers.map((item) => "@" + (item.name || item.nickName))
         : [];
 
       // text再进行拆分 把at拆出来
