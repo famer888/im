@@ -93,6 +93,7 @@ message GroupReqEventMsgDto {
     GroupReqType               groupReqType        = 6; // 群消息来源类型
     GroupReqStatus             groupReqStatus      = 7; // 群申请处理状态
     repeated  GroupMemberBase  groupMember         = 8; // 群成员基本信息【群成员属于targetUser一种情况】
+    bool                       isHide              = 9; // 是否隐藏
 }
 
 // 群通知消息

@@ -693,6 +693,7 @@ const fnGroupMsgEvent = async (data, loginId) => {
         checkUid,
         receiveUid,
         groupNoticeMsgDto,
+        isHide, // 是否隐藏消息（不写入消息列表和数据库）
     } = data;
     const { groupBaseInfo } = commonMsgDto;
     const typeStr = commonMsgDto.evenType === 1 ? "broadcast" : "unicast";
@@ -1467,15 +1468,19 @@ const fnGroupMsgEvent = async (data, loginId) => {
         });
 
         if (info.content !== "") {
-            fnGroupAddMessageNotification(
-                {
-                    ...info,
-                    content: info.content,
-                    groupReqType,
-                    sendTime: info.updateTime,
-                },
-                info.type
-            );
+            // 暂且注释，android还没写完，无法验证
+            // isHide 为 true 时，不往消息列表添加消息，不写入数据库
+            // if (!isHide) {
+                fnGroupAddMessageNotification(
+                    {
+                        ...info,
+                        content: info.content,
+                        groupReqType,
+                        sendTime: info.updateTime,
+                    },
+                    info.type
+                );
+            // }
         }
     }
 
