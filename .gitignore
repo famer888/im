@@ -29,3 +29,4 @@ release
 /src/wfc/av/internal/soundMeter.js
 .npmrc
 output/*
+src/build-time.json

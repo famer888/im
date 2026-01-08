@@ -8,6 +8,7 @@ import { remote } from "@/platform";
 import { UpdateContacts, getChatSensitive } from "@/api/imBase";
 import { GroupUpdate, groupOrUserDetail } from "@/api/imGroup";
 import { updateMember, searchAliasContent } from "@/api/imChannel";
+import buildTimeConfig from "../build-time.json";
 
 // 事件
 import eventBase from "./base";
@@ -631,11 +632,13 @@ const fnClientInfoGet = () => {
   const languageIndex = ["en", "zh", "zh-tw", "vi", "pt"].indexOf(
     deviceConfig.language || "zh"
   );
-  const appVer = "1.6.7".replaceAll(".", "");
+  const version= "1.6.7"
+  const appVer = version.replaceAll(".", "");
+  const buildTime = (buildTimeConfig && buildTimeConfig.buildTime) || "";
   return {
     sessionId,
     appVer,
-    version: appVer,
+    version: `${version} ${buildTime}`,
     packageCode: 6000,
     language: languageIndex + 1, // 默认简体中文
     // plat: process.platform === "darwin" ? 3 : 4,
