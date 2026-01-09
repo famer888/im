@@ -7,7 +7,7 @@ import { ipcRenderer } from "electron";
 let timer = null;
 let lastType = 'none';
 export const lockDomBeforeResize = async(visible, manually) => {
-  console.log('[debug]', lastType, manually, visible);
+  // console.log('[debug]', lastType, manually, visible);
   if (lastType === 'outer' && manually && !visible) {
     const dom = document.querySelector('.messageContent .chatContent');
     const offsetWidth = dom?.offsetWidth;
@@ -48,7 +48,7 @@ const viewportWidthSizeObserver = (cb) => {
   const resizeObserver = new ResizeObserver((entries) => {
     for (let entry of entries) {
       const currentWidth = entry.contentRect.width;
-      console.log('[debug]', currentWidth, lastWidth);
+      // console.log('[debug]', currentWidth, lastWidth);
       // 只在宽度实际变化时触发回调
       if (currentWidth !== lastWidth) {
         cb(currentWidth, lastWidth);

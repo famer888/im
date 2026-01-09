@@ -12,18 +12,19 @@
                             : handleErrorTipsGet(),
             })">
         <slot></slot>
+        <Overlay :loading="true" />
         <div class="content">
             <template v-if="msgInfo.local || msgInfo.localThumbUrl">
                 <i v-if="handleErrorTipsGet()">
                     {{ handleErrorTipsGet() }}
                 </i>
                 <template v-else>
-                    <img
+                    <!-- <img
                         v-if="msgInfo.chatType === 3"
                         src="@/assets/images/message/vedios-icon.png"
                         class="btnPay"
                         @click="handleOpenFile"
-                    />
+                    /> -->
                     <img
                         :src="
                           getUrl()
@@ -41,21 +42,22 @@
                     /> -->
                 </template>
             </template>
-            <i v-else class="file-loading">
+            <!-- <i v-else class="file-loading">
                 <img
                     class="file-img"
                     src="@/assets/images/file/file-loading.gif"
                 />
-            </i>
+            </i> -->
         </div>
     </div>
 </template>
 <script>
 import { remote, ipcRenderer } from "@/platform";
+import Overlay from './overlay.vue';
 
 // 工具
 import { getFileSuffix, isMac } from "@/utils/base";
-import { getNewFileDownUrl } from "@/utils/trendsDomain/manageOssDownUpload";
+import { getFileOssUrls, getNewFileDownUrl } from "@/utils/trendsDomain/manageOssDownUpload";
 import { getOssFirstNormalUrl } from "@/utils/trendsDomain/manageOssDownUpload";
 
 // 事件
@@ -64,21 +66,29 @@ import eventCommon from "@/event/common";
 
 export default {
     props: ["msgInfo", "chatContent"],
+    components: {
+        Overlay,
+    },
     data() {
         return {
             noticeArr: [],
             imgSrc: "",
             isSuccess: true,
             localSrc: "",
+            percent: 0,
         };
     },
     created() {
+        setInterval(() => {
+          this.percent += 1;
+        }, 1000);
         // 图片文件下载
         const { local, localThumbUrl } = this.msgInfo;
-        if (!(local || localThumbUrl)) {
-            // 下载文件
-            this.handleFileDownload("default");
-        }
+        // if (!(local || localThumbUrl)) {
+        //     // 下载文件
+        //     this.handleFileDownload("default");
+        // }
+        this.handleFileDownload("default");
     },
     methods: {
         // 处理mac本地地址异常
@@ -129,8 +139,7 @@ export default {
                 getId: "loginId",
             });
 
-            const { content, chatType, MsgID, fileKey, customMsgId } =
-                this.msgInfo;
+            const { content, chatType, MsgID, fileKey, customMsgId } = this.msgInfo;
 
             // 文件路径
             let fileUrl = content ? content.split("||")[0] : "";
@@ -166,8 +175,7 @@ export default {
             const suffix = getFileSuffix(chatType, fileUrl);
 
             // 文件名
-            const fileName =
-                fileUrl.slice(fileUrl.lastIndexOf("/") + 1) + suffix;
+            const fileName = fileUrl.slice(fileUrl.lastIndexOf("/") + 1) + suffix;
 
             // 优先使用动态域名
             const trendsFileUrl = await getOssFirstNormalUrl(fileUrl)
