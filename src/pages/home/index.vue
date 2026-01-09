@@ -92,6 +92,7 @@ import eventFriend from "@/event/friend";
 import eventBase from "@/event/base";
 import eventFile from "@/event/file";
 import eventCommon from "@/event/common";
+import eventGroup from "@/event/group";
 import { notificationReply } from "@/event/msg";
 import { isBatchMode } from "@/utils/batchRenderer";
 import { lockDomBeforeResize } from "@/utils/widget/lockDomBeforeResize";
@@ -127,6 +128,7 @@ export default {
       groupList: [],
       loginId: null,
       getChannelDetailTimes: {}, // 记录频道详情获取的时间
+      getGroupDetailTimes: {}, // 记录群详情获取的时间
     };
   },
   provide() {
@@ -348,6 +350,12 @@ export default {
           const curGroup = this.groupList.find((item) => item.id == info.id);
           current = {
             memberCount: curGroup?.memberCount || 0
+          }
+          // 群切换也调用详情同步（特别是免打扰状态）
+          const beforeTime = (this.getGroupDetailTimes[info.id] || 0) + 30000;
+          if (beforeTime < Date.now()) {
+            this.getGroupDetailTimes[info.id] = Date.now();
+            eventGroup.fnGroupDetailGet(info.id);
           }
         }
         this.infoActive = {
