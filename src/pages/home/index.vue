@@ -279,12 +279,19 @@ export default {
         },
       });
     },
-    handleGetChannelDetail(info, channelId) {
+     handleGetChannelDetail(info, channelId) {
         getChannelDetail({ channelId }).then( res => {
-          let channelDetail = res || {};
+          // 这个写法导致频道列表不触发了 暂时注释
+          // let channelDetail = res || {};
+          // eventBase.fnCommunicationSendMsg({
+          //       operator: "channelDetailCache",
+          //       data: {...channelDetail, data: channelDetail.data || {}},
+          // });
+
+          let channelDetail = res?.data || {};
           eventBase.fnCommunicationSendMsg({
                 operator: "channelDetailCache",
-                data: {...channelDetail, data: channelDetail.data || {}},
+                data: channelDetail,
           });
           // 快速切换时接口未返回，就别赋值了，否则会覆盖掉当前的值
           if ((this.infoActive?.channelId || this.infoActive?.id) === channelDetail?.channelId) {
