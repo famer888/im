@@ -118,6 +118,7 @@ export const fnDbMsgListFormat = (list, isGroup) => {
             thumbUrl: item.thumbUrl,
             width: item.width,
             height: item.height,
+            duration: item.duration,
             links: item.links || null,
             readUsers: item.readUsers || [],
             readTotal: item.readTotal || 0,

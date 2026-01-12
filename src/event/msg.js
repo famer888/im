@@ -246,6 +246,15 @@ export const fnMsgAdd = async ({ msg, contentStr, fileKey, type }) => {
         msgNew.fileSize = fileInfos[2] || 0
         msgNew.size = fileInfos[2] || 0
     }
+    // 视频信息 (msgType === 3): 格式 url*PthumbUrl||duration||fileSize||width||height
+    if (msgNew.msgType === 3 && msgNew.content) {
+        // 去除引用信息后再解析
+        const [content, duration, fileSize, width, height] = msgNew.content.split('||') || [];
+        Object.assign(msgNew, { duration: parseInt(duration) || 0, fileSize: parseInt(fileSize) || 0, width: parseInt(width) || 0, height: parseInt(height) || 0 });
+        // 更新content为纯净内容
+        msgNew.content = content;
+        console.log('>>> msgNew', content, msgNew);
+    }
     if ([14, 15].includes(msgNew.msgType)) {
         // 收款消息提示不支持
         msgNew.content = '[暂不支持该消息类型]'

@@ -1,6 +1,7 @@
 <template>
     <div
         :class="{ comMsgImage: true, bg: msgInfo.quoteMessage !== undefined }"
+        :style="containerStyle"
         @click.right="
             (e) =>
                 $emit('rightClick', {
@@ -12,8 +13,8 @@
                             : handleErrorTipsGet(),
             })">
         <slot></slot>
-        <Overlay :loading="true" />
-        <div class="content">
+        <div class="content" :style="contentStyle">
+            <Overlay :loading="true" :duration="msgInfo.duration" />
             <template v-if="msgInfo.local || msgInfo.localThumbUrl">
                 <i v-if="handleErrorTipsGet()">
                     {{ handleErrorTipsGet() }}
@@ -69,6 +70,26 @@ export default {
     components: {
         Overlay,
     },
+    computed: {
+        containerStyle() {
+            const { width, height } = this.msgInfo;
+            if (width && height) {
+                return {
+                    minWidth: 'unset',
+                };
+            }
+            return {};
+        },
+        contentStyle() {
+            const { width, height } = this.msgInfo;
+            if (width && height) {
+                return {
+                    aspectRatio: `${width} / ${height}`,
+                };
+            }
+            return {};
+        },
+    },
     data() {
         return {
             noticeArr: [],
@@ -84,6 +105,7 @@ export default {
         }, 1000);
         // 图片文件下载
         const { local, localThumbUrl } = this.msgInfo;
+        console.log('>>> msgInfo', this.msgInfo);
         // if (!(local || localThumbUrl)) {
         //     // 下载文件
         //     this.handleFileDownload("default");
@@ -257,10 +279,17 @@ export default {
 <style scoped lang="scss">
 .comMsgImage {
     position: relative;
-    padding-bottom: 25px;
     max-width: 400px;
     min-width: 120px;
     cursor: pointer;
+    ::v-deep .comTimeStatusLabel {
+      right: 16px;
+      bottom: 12px;
+      z-index: 11;
+      > span {
+        color: white;
+      }
+    }
 
     &.bg {
         background: #fff;
@@ -277,6 +306,10 @@ export default {
         height: 150px;
         width: fit-content;
         position: relative;
+        background: white;
+        padding: 8px;
+        border-radius: 10px;
+        overflow: hidden;
         > .btnPay {
             position: absolute;
             top: 75px;
@@ -291,6 +324,7 @@ export default {
             height: 150px;
             display: block;
             -webkit-user-drag: unset;
+            border-radius: 6px;
         }
 
         > i {

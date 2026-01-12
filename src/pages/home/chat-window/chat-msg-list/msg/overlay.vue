@@ -1,8 +1,8 @@
 <template>
   <div class="overlay" v-if="showOverlay">
     <!-- 左上角标签：duration 优先于 extension -->
-    <div class="top-left-tag" v-if="duration || extension">
-      {{ duration || extension }}
+    <div class="top-left-tag" v-if="formattedDuration || extension">
+      {{ formattedDuration || extension }}
     </div>
 
     <!-- 透明遮罩层 -->
@@ -81,6 +81,15 @@ export default {
       if (!this.hasPercent) return 0;
       const p = Math.min(100, Math.max(0, this.percent));
       return this.circumference * (1 - p / 100);
+    },
+    formattedDuration() {
+      console.log('>>> duration', this.duration);
+      if (this.duration === undefined || this.duration === null) return null;
+      const seconds = Math.floor(Number(this.duration));
+      if (isNaN(seconds) || seconds < 0) return null;
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
     }
   }
 }
@@ -92,22 +101,25 @@ export default {
   top: 0;
   left: 0;
   right: 0;
-  bottom: 25px;
+  bottom: 0;
   pointer-events: none;
   z-index: 10;
+  margin: 8px;
+  border-radius: 10px;
+  overflow: hidden;
 }
 
 /* 左上角标签 */
 .top-left-tag {
   position: absolute;
-  top: 6px;
-  left: 6px;
-  padding: 2px 6px;
+  top: 2px;
+  left: 2px;
+  padding: 2px 8px;
   background: rgba(0, 0, 0, 0.5);
   color: #fff;
   font-size: 11px;
   font-weight: 600;
-  border-radius: 4px;
+  border-radius: 9999px;
   line-height: 1.2;
   z-index: 12;
 }
