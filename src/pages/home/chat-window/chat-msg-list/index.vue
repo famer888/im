@@ -110,7 +110,9 @@
                           isHighlighted: true,
                         })
                     " />
-                  <ComTimeStatusLabel :msgInfo="n" :chatContent="chatContent" />
+                  <template #timeStatus>
+                    <ComTimeStatusLabel :msgInfo="n" :chatContent="chatContent" />
+                  </template>
                 </ComMsgImage>
                 <ComMsgAudio v-else-if="n.chatType === 2" :msgInfo="n" :chatContent="chatContent"
                   @rightClick="(e) => handleEmitInfo({ e, info: n }, 'rightClickMenuDisplay')">

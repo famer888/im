@@ -14,6 +14,7 @@
             })">
         <slot></slot>
         <div class="content" :style="contentStyle">
+            <slot name="timeStatus" v-if="!hasError"></slot>
             <Overlay :loading="loading" :duration="msgInfo.duration" :percent="percent" :status="status" :isVideo="msgInfo.chatType === 3" @click="handleOpenFile" />
             <template v-if="msgInfo.local || msgInfo.localThumbUrl">
                 <i v-if="handleErrorTipsGet()">
@@ -100,6 +101,12 @@ export default {
             const { local, localThumbUrl } = this.msgInfo;
             return local || localThumbUrl;
         },
+        /**
+         * 是否有错误状态
+         */
+        hasError() {
+            return ['downloadError', 'decryptionError'].includes(this.status);
+        },
 
     },
     data() {
@@ -139,11 +146,11 @@ export default {
          * 初始化进度条监听
          */
         initProgressBar() {
-            this.loading = true;
             // 监听下载进度，使用 taskId 守卫
             this._onDownloadProgress = (event, data) => {
                 // 守卫：只响应本文件的进度
                 if (data.taskId !== this.taskId) return;
+                this.loading = true;
                 this.percent = data.percent;
                 if (this.percent === 100) {
                     this.loading = false;
@@ -329,9 +336,9 @@ export default {
     max-width: 400px;
     min-width: 120px;
     cursor: pointer;
-    ::v-deep .comTimeStatusLabel {
-      right: 10px;
-      bottom: 12px;
+    > .content ::v-deep .comTimeStatusLabel {
+      right: 8px;
+      bottom: 4px;
       z-index: 11;
       background: rgba(0, 0, 0, 0.25);
       border-radius: 9999px;
