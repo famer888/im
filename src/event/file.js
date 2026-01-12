@@ -98,7 +98,7 @@ const handleDownloadFileFailed = (_$, data) => {
         let moduleCode = {0: "ossDefaultUrl", 1: "ossChatUrl", 2: "ossLowRateUrl"}[channelType] || "ossDefaultUrl"
         let url = data.trendsFileUrl || data.fileUrl;
         console.error('下载文件失败--', url)
-        reportErrorDomain(url, {errorDesc: "下载失败", moduleCode})  
+        reportErrorDomain(url, {errorDesc: "下载失败", moduleCode})
         let downFailNum = data.downFailNum || 0
         if(downFailNum <=3 ) {
             data.downFailNum = downFailNum + 1
@@ -118,19 +118,21 @@ const handleDownloadFileFailed = (_$, data) => {
 const fnDownloadFileInfoUpdate = (data, errorType) => {
     // console.log('下载成功后更新', data)
     const id = data.groupId || data.channelId || data.userId;
-    const type = data.groupId ? "group" 
+    const type = data.groupId ? "group"
                               : data.channelId ? "channel" : "friend";
-    const { customMsgId, fileLocalPath, isOpen, isDir, chatType, local, localThumbUrl } = data;
-    let updated = { local: errorType || fileLocalPath };
+    const { customMsgId, fileLocalPath, isOpen, isDir, chatType, local, localThumbUrl, taskId } = data;
+    const percent = taskId && !errorType ? { percent: 100 + Number(Math.random().toFixed(6)) }: {};
+    let updated = { local: errorType || fileLocalPath, ...percent };
 
     // 如果是视频
     if (chatType === 3) {
         if ([".mp4", "webm", ".ogg"].includes(fileLocalPath.slice(-4).toLowerCase())) {
-            updated = { local: fileLocalPath };
+            updated = { local: fileLocalPath, ...percent };
         } else {
-            updated = { localThumbUrl: errorType || localThumbUrl || local || fileLocalPath };
+            updated = { localThumbUrl: errorType || localThumbUrl || local || fileLocalPath, ...percent };
         }
     }
+
 
     const params = {
         id,
@@ -408,7 +410,7 @@ const fnFileInfosGet = async (info) => {
 /**
  * 操作文件
  */
-const fnOperatorFile = async ({ id, type, info, openDialog, isDir }) => {
+const fnOperatorFile = async ({ id, type, info, openDialog, isDir, taskId }) => {
     // 文件路径
     let fileUrl = info.local || "";
 
@@ -454,10 +456,11 @@ const fnOperatorFile = async ({ id, type, info, openDialog, isDir }) => {
         localThumbUrl: info.localThumbUrl,
         openDialog,
         isDir,
+        taskId,
     };
-    
+
     if(!info.local) {
-        // 优先使用动态域名    
+        // 优先使用动态域名
         params.trendsFileUrl = await getOssFirstNormalUrl(fileUrl, 0, 0);
     }
     if (openDialog) {

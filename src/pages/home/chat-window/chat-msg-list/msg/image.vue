@@ -14,12 +14,12 @@
             })">
         <slot></slot>
         <div class="content" :style="contentStyle">
-            <Overlay :loading="true" :duration="msgInfo.duration" />
+            <Overlay :loading="loading" :duration="msgInfo.duration" :percent="percent" :status="status" :isVideo="msgInfo.chatType === 3" @click="handleOpenFile" />
             <template v-if="msgInfo.local || msgInfo.localThumbUrl">
                 <i v-if="handleErrorTipsGet()">
-                    {{ handleErrorTipsGet() }}
+                    <!-- {{ handleErrorTipsGet() }} -->
                 </i>
-                <template v-else>
+                <div class="picture-container" v-else>
                     <!-- <img
                         v-if="msgInfo.chatType === 3"
                         src="@/assets/images/message/vedios-icon.png"
@@ -41,7 +41,7 @@
                         class="picture fail-img"
                         @click="handleOpenFile"
                     /> -->
-                </template>
+                </div>
             </template>
             <!-- <i v-else class="file-loading">
                 <img
@@ -89,6 +89,18 @@ export default {
             }
             return {};
         },
+        taskId() {
+            const { chatType, MsgID } = this.msgInfo;
+            return `${chatType}-${MsgID}`;
+        },
+        /**
+         * 合并监听 local 和 localThumbUrl
+         */
+        status() {
+            const { local, localThumbUrl } = this.msgInfo;
+            return local || localThumbUrl;
+        },
+
     },
     data() {
         return {
@@ -96,23 +108,49 @@ export default {
             imgSrc: "",
             isSuccess: true,
             localSrc: "",
-            percent: 0,
+            percent: this.msgInfo?.percent || 0,
+            loading: false,
         };
     },
     created() {
-        setInterval(() => {
-          this.percent += 1;
-        }, 1000);
         // 图片文件下载
-        const { local, localThumbUrl } = this.msgInfo;
-        console.log('>>> msgInfo', this.msgInfo);
         // if (!(local || localThumbUrl)) {
         //     // 下载文件
         //     this.handleFileDownload("default");
         // }
         this.handleFileDownload("default");
     },
+    beforeDestroy() {
+        // 移除监听，避免内存泄漏
+        if (this._onDownloadProgress) {
+            ipcRenderer.removeListener("downloadProgress", this._onDownloadProgress);
+        }
+    },
+    watch: {
+      ['msgInfo.percent'](value) {
+        if (value >= 100) {
+          this.loading = false;
+          this.percent = value;
+        }
+      }
+    },
     methods: {
+        /**
+         * 初始化进度条监听
+         */
+        initProgressBar() {
+            this.loading = true;
+            // 监听下载进度，使用 taskId 守卫
+            this._onDownloadProgress = (event, data) => {
+                // 守卫：只响应本文件的进度
+                if (data.taskId !== this.taskId) return;
+                this.percent = data.percent;
+                if (this.percent === 100) {
+                    this.loading = false;
+                }
+            };
+            ipcRenderer.on("downloadProgress", this._onDownloadProgress);
+        },
         // 处理mac本地地址异常
         macFixImagePath(url) {
             // 1. 处理 app://./ 协议：替换为 file:// 并修正路径
@@ -142,7 +180,11 @@ export default {
          * 打开文件
          */
         handleOpenFile() {
+          const { chatType, MsgID } = this.msgInfo || {};
+          const taskId = chatType === 3 ? `${chatType}-${MsgID}` : null;
+          taskId && this.initProgressBar();
           eventFile.fnOperatorFile({
+              taskId,
               id: this.chatContent.id,
               type: this.chatContent.type,
               info: this.msgInfo.local && this.msgInfo.local.indexOf('http') === 0 ? {...this.msgInfo, local: null} : this.msgInfo,
@@ -202,6 +244,9 @@ export default {
             // 优先使用动态域名
             const trendsFileUrl = await getOssFirstNormalUrl(fileUrl)
 
+            // 初始化进度条
+            chatType === 1 && this.initProgressBar();
+
             // 文件下载
             ipcRenderer.send("fileDownload", {
                 fileUrl,
@@ -226,6 +271,8 @@ export default {
                 customMsgId,
                 isOpen: false,
                 timeout: 5000,
+                fileSize: this.msgInfo.size || this.msgInfo.fileSize || 0,
+                taskId: chatType === 1 ? this.taskId : null,
             });
         },
         /**
@@ -283,9 +330,12 @@ export default {
     min-width: 120px;
     cursor: pointer;
     ::v-deep .comTimeStatusLabel {
-      right: 16px;
+      right: 10px;
       bottom: 12px;
       z-index: 11;
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 9999px;
+      padding: 2px 6px;
       > span {
         color: white;
       }
@@ -294,7 +344,7 @@ export default {
     &.bg {
         background: #fff;
         border: 1px solid #f2efef;
-        padding: 10px 10px 25px;
+        padding: 10px 10px;
         border-radius: 10px;
     }
 
@@ -307,9 +357,16 @@ export default {
         width: fit-content;
         position: relative;
         background: white;
-        padding: 8px;
+        padding: 4px;
         border-radius: 10px;
         overflow: hidden;
+        min-width: 120px;
+        .picture-container {
+          background: #333;
+          border-radius: 6px;
+          overflow: hidden;
+          text-align: center;
+        }
         > .btnPay {
             position: absolute;
             top: 75px;
@@ -322,9 +379,9 @@ export default {
 
         .picture {
             height: 150px;
-            display: block;
+            display: inline-block;
             -webkit-user-drag: unset;
-            border-radius: 6px;
+
         }
 
         > i {
@@ -333,7 +390,7 @@ export default {
             justify-content: center;
             height: 100%;
             padding: 0 15px;
-            background: #fdebeb;
+            // background: #fdebeb;
             width: 150px;
             line-height: 25px;
             border-radius: 5px;

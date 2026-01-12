@@ -122,6 +122,7 @@ export const fnDbMsgListFormat = (list, isGroup) => {
             links: item.links || null,
             readUsers: item.readUsers || [],
             readTotal: item.readTotal || 0,
+            percent: item.percent || 0,
         };
     });
 };
