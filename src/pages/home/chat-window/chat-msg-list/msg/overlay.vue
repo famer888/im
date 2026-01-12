@@ -35,8 +35,13 @@
           />
         </svg>
       </div>
+      <!-- 暂停 icon (loading 时显示) -->
+      <div class="pause-icon" v-if="showPauseIcon">
+        <span class="pause-bar"></span>
+        <span class="pause-bar"></span>
+      </div>
       <!-- 播放三角形 icon -->
-      <div class="play-icon" v-if="showPlayIcon"></div>
+      <div class="play-icon" v-else-if="showPlayIcon"></div>
     </div>
 
     <!-- Status 状态：错误/过期提示 -->
@@ -70,9 +75,12 @@ export default {
       // 非视频：仅在 loading 时显示
       return !this.showStatus && (this.isVideo || this.loading);
     },
+    showPauseIcon() {
+      return this.loading;
+    },
     showPlayIcon() {
-      // 仅视频显示播放按钮
-      return this.isVideo;
+      // 视频非 loading 时显示播放按钮
+      return this.isVideo && !this.loading;
     },
     // downloadError: 图片已过期或已被清理
     // decryptionError: 无法加载图片
@@ -219,6 +227,22 @@ export default {
   border-color: transparent transparent transparent #fff;
   margin-left: 3px;
   z-index: 14;
+}
+
+/* 暂停 icon (两条竖线) */
+.pause-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  z-index: 14;
+
+  .pause-bar {
+    width: 4px;
+    height: 16px;
+    background: #fff;
+    border-radius: 1px;
+  }
 }
 
 /* Status 错误/过期状态 */
