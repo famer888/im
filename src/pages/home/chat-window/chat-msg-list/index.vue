@@ -310,6 +310,7 @@ import eventCommon from "@/event/common";
 import eventBase from "@/event/base";
 import eventChannel from "@/event/channel";
 import eventMsg from "@/event/msg";
+import eventFriend from "@/event/friend";
 
 // api
 import { getChannelLastMsgInfo } from "@/api/imChannel";
@@ -1584,7 +1585,7 @@ export default {
         const lastMsg = recentMsgs[recentMsgs.length - 1];
         if (!lastMsg) return;
 
-        Cache(`${loginId}MessageGroupList`).then((groupList) => {
+        Cache(`${loginId}MessageGroupList`).then(async (groupList) => {
           try {
             if (groupList && groupList.length) {
               const groupInfo = groupList.find((item) => String(item.id) === String(id));
@@ -1595,9 +1596,38 @@ export default {
                 const newTime = Number(lastMsg.sendTime) || 0;
 
                 let sendUserName = lastMsg.sendUserName || "";
-                // 如果没有发送者名字且不是自己发送的，尝试从用户信息构建
-                if (!sendUserName && !lastMsg.isSelf && lastMsg.user) {
-                  const name = lastMsg.user.name || lastMsg.user.nickName;
+                // 如果不是自己发送的，尝试从用户信息构建最新名称
+                if (!lastMsg.isSelf && lastMsg.user) {
+                  const uid = lastMsg.sendUid || lastMsg.user.uid || lastMsg.user.id;
+                  let remarkName = "";
+                  if (uid) {
+                    remarkName = eventFriend.fnFriendRemarkNameObjRU({ getId: Number(uid) });
+                  }
+                  
+                  let name = remarkName;
+
+                  // 如果没有备注名，尝试获取原始昵称
+                  if (!name) {
+                     // 1. 尝试从群成员缓存获取最新昵称
+                     if (uid) {
+                         try {
+                            const memberList = await Cache(`${loginId}_${id}_groupMemberList`);
+                            if (memberList) {
+                                 const member = memberList.find(m => m.id === Number(uid) || m.uid === Number(uid));
+                                 if (member) {
+                                     name = member.nickName || member.name;
+                                 }
+                            }
+                         } catch (e) {
+                             // ignore
+                         }
+                     }
+                     // 2. 降级使用消息体中的信息
+                     if (!name) {
+                        name = lastMsg.user.nickName || lastMsg.user.name;
+                     }
+                  }
+
                   if (name) {
                     sendUserName = name + "：";
                   }

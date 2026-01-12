@@ -767,7 +767,7 @@ export default {
         case "friendRemarkUpdate": {
           // 更新好友备注名，同步更新chatlist里好友的备注名
           const memberInfos = _.cloneDeep(this.memberInfos)
-          if(memberInfos[info.id] && info.values.name) {
+          if(memberInfos[info.id] && info.values.name !== undefined) {
             memberInfos[info.id].name = info.values.name
             this.memberInfos = memberInfos;
           }

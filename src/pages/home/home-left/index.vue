@@ -299,6 +299,7 @@ export default {
           "channelDetailCache", // 缓存频道的详情
           "deleteChat", // 删除聊天窗口
           "channelDisturbSet",  // 频道接收通知设置
+          "contactListReload", // 更新好友列表
         ],
         this.eventHandling
       );
@@ -485,6 +486,10 @@ export default {
             this.eventSetChannelDisable(id, isDisturb);
           }
           break;
+        case "contactListReload": {
+          this.eventHandlingContactListReload(info);
+          break;
+        }
         default:
       }
     },
@@ -786,19 +791,35 @@ export default {
       // 聊天窗口列表，只更新备注名
       if (operatorType === "name") {
         let chats = _.cloneDeep(this.chats);
+        
+        // 1. 更新好友会话名称
         const index = chats.findIndex(
           (item) => item.id === id && item.type === "friend"
         );
-
         if (index !== -1) {
           chats[index].name = values.name;
-          // 更新会话列表的群类型会话框
+        }
+
+        // 2. 更新群聊预览中的发送者名称
+        // 获取好友原始昵称（用于回退）
+        const friend = this.friendList.find(f => f.id === id);
+        const nickName = friend ? friend.nickName : "";
+        const displayName = values.name || nickName; // 有备注用备注，没备注用昵称
+
+        let hasUpdate = false;
+        if (displayName) {
           chats.forEach((item) => {
             if (item.type === "group" && item.sendUid == id) {
-              item.sendUserName = values.name + "：";
+              const newSendUserName = displayName + "：";
+              if (item.sendUserName !== newSendUserName) {
+                item.sendUserName = newSendUserName;
+                hasUpdate = true;
+              }
             }
           });
+        }
 
+        if (index !== -1 || hasUpdate) {
           // 即时渲染
           this.chats = chats;
         }
@@ -895,6 +916,97 @@ export default {
       // 聊天列表更新
       if (dataNew.chats) {
         this.chats = _.cloneDeep(dataNew.chats);
+      }
+    },
+    /**
+     * 处理事件 好友列表全量更新
+     */
+    eventHandlingContactListReload(friendList) {
+      if (friendList && friendList.length > 0) {
+        const { letters, letterIndexs, friendList: formatedList } =
+          eventFriend.fnFriendListFormat(friendList);
+
+        this.letters = _.cloneDeep(letters);
+        this.letterIndexs = _.cloneDeep(letterIndexs);
+        this.friendList = _.cloneDeep(formatedList);
+
+        const newFriendList = this.friendList;
+        const chats = this.chats;
+        let hasUpdate = false;
+        const loginId = eventCommon.fnCommonInfoRU({ getId: "loginId" });
+
+        // 使用 String 确保 ID 类型一致
+        const friendMap = new Map(newFriendList.map((f) => [String(f.id), f]));
+
+        for (let i = 0; i < chats.length; i++) {
+          const chat = chats[i];
+          const chatIdStr = String(chat.id);
+
+          if (chat.type === "friend") {
+            const friend = friendMap.get(chatIdStr);
+            if (friend) {
+              // 全量更新好友信息到会话 - 仅更新必要字段，避免污染会话数据
+              
+              // 1. 基础信息同步 (头像、ID、签名、昵称)
+              chat.pic = friend.pic || ''; 
+              chat.identify = friend.identify;
+              chat.depict = friend.depict || '';
+              chat.nickName = friend.nickName;
+
+              // 2. 状态开关同步（置顶/免打扰/阅后即焚）
+              chat.bfTop = Boolean(friend.bfTop);
+              chat.bfDisturb = Boolean(friend.bfDisturb);
+              chat.bfReadCancel = Boolean(friend.bfReadCancel);
+              
+              // 3. 配置数值同步
+              chat.msgCancelTime = friend.msgCancelTime;
+              if (friend.bfTopTime) chat.bfTopTime = friend.bfTopTime;
+
+              // 4. 显示名称修正 (好友对象里 name 是备注，nickName 是昵称，chat.name 需要是最终显示名)
+              chat.name = friend.name || friend.nickName;
+
+              hasUpdate = true;
+            }
+          } else if (chat.type === "group") {
+            // 更新群聊中最后一条消息发送者的名字（如果是好友）
+            if (chat.sendUid) {
+                const friend = friendMap.get(String(chat.sendUid));
+                if (friend) {
+                    const displayName = friend.name || friend.nickName;
+                    if (displayName) {
+                        const newSendUserName = displayName + "：";
+                        if (chat.sendUserName !== newSendUserName) {
+                            chat.sendUserName = newSendUserName;
+                            hasUpdate = true;
+                        }
+                    }
+                }
+            }
+          }
+        }
+
+        if (hasUpdate) {
+          // 重新排序，确保置顶状态变化后列表顺序正确
+          const info = eventChat.fnChatListSort(chats);
+          this.chats = info.list;
+          chatTopSize = info.chatTopSize;
+          
+          // 更新好友聊天缓存
+          Cache(
+            `${loginId}MessageUserList`,
+            this.chats.filter((item) => item.type === "friend")
+          );
+          // 更新群组聊天缓存
+          Cache(
+            `${loginId}MessageGroupList`,
+            this.chats.filter((item) => item.type === "group")
+          );
+        }
+      } else {
+          // 如果列表为空
+          this.letters = [];
+          this.letterIndexs = [];
+          this.friendList = [];
       }
     },
     /**
