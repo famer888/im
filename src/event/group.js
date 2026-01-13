@@ -1752,6 +1752,7 @@ const fnGroupDetailGet = (groupId) => {
                     bfJoinCheck: Boolean(res.group.bfJoinCheck),
                     groupNotice: res.groupNotice || "",
                     bfResetQrcode: res.bfResetQrcode,
+                    bfDisturb: res.bfDisturb, //免打扰状态
                     ...res.right,
                 },
             ])[0];
@@ -1763,7 +1764,7 @@ const fnGroupDetailGet = (groupId) => {
                     value: info.groupMsgCancelTime,
                 });
             }
-            // console.log(info, '获取群详情 ---------》 1464')
+            // console.log(info, '获取群详情 ---------》 1464',res)
             // 通讯
             eventBase.fnCommunicationSendMsg({
                 operator: "groupUpdate",
@@ -2611,6 +2612,7 @@ const fnGroupDataFormat = (arr) => {
             bfSetAdmin: item.bfSetAdmin,
             bfResetQrcode: item.bfResetQrcode,
             bfUpdateData: item.bfUpdateData,
+            bfDisturb: item.bfDisturb, //免打扰状态
         };
     });
 };

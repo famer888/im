@@ -383,6 +383,10 @@ const fnApiDataFormat = (friendList) => {
       info.bfTop = item.bfTop;
     }
 
+    if (item.bfTopTime) {
+      info.bfTopTime = item.bfTopTime;
+    }
+
     if (item.bfDisturb) {
       info.bfDisturb = item.bfDisturb;
     }

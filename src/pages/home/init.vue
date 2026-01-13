@@ -71,6 +71,7 @@ import eventGroup from "@/event/group";
 import eventFriend from "@/event/friend";
 import eventCommon from "@/event/common";
 import eventChannel from "@/event/channel";
+import eventBase from "@/event/base";
 
 let friendIdsTop = null;
 let timerNetwork = null;
@@ -329,6 +330,11 @@ export default {
           } else {
             await Cache(`${loginId}-ContactList`, this.friendList);
             this.friendNum = 100;
+             // 通知 home-left 更新好友列表 (私聊同步)
+             eventBase.fnCommunicationSendMsg({
+                 operator: "contactListReload",
+                 data: this.friendList
+             });
             await this.handleFriendRemarks()
           }
           break;
