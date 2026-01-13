@@ -887,6 +887,17 @@ export default {
           isDeleteChatWindow: false,
         },
       });
+
+      // 删除未读消息
+      const unreadKey = info.id + "friend";
+      if (this.unreadObj[unreadKey]) {
+        delete this.unreadObj[unreadKey];
+        this.unreadObj = _.cloneDeep(this.unreadObj);
+        Cache(`${loginId}-unread`, {
+          unread: this.unreadObj,
+        });
+        this.updateUnreadCount();
+      }
     },
     /**
      * 处理事件 群详情数据同步
@@ -920,6 +931,11 @@ export default {
     },
     /**
      * 处理事件 好友列表全量更新
+     * 此函数用于处理登录或重连时，从服务器获取到的最新好友列表。
+     * 主要逻辑包括：
+     * 1. 格式化好友列表用于通讯录展示。
+     * 2. 同步更新现有会话列表中的好友信息（头像、昵称、状态等）。
+     * 3. 检测并处理离线期间被删除的好友（存在于会话列表但不在新好友列表中）。
      */
     eventHandlingContactListReload(friendList) {
       if (friendList && friendList.length > 0) {
@@ -932,15 +948,18 @@ export default {
 
         const newFriendList = this.friendList;
         const chats = this.chats;
+        const newChats = [];
+        const deletedIds = [];
         let hasUpdate = false;
         const loginId = eventCommon.fnCommonInfoRU({ getId: "loginId" });
 
-        // 使用 String 确保 ID 类型一致
+        // 将新好友列表转换为 Map，Key 为 String 类型 ID
         const friendMap = new Map(newFriendList.map((f) => [String(f.id), f]));
 
         for (let i = 0; i < chats.length; i++) {
           const chat = chats[i];
           const chatIdStr = String(chat.id);
+          let isDeleted = false;
 
           if (chat.type === "friend") {
             const friend = friendMap.get(chatIdStr);
@@ -966,9 +985,14 @@ export default {
               chat.name = friend.name || friend.nickName;
 
               hasUpdate = true;
+            } else {
+                // 好友已被删除
+                isDeleted = true;
+                deletedIds.push(chat.id);
+                hasUpdate = true;
             }
           } else if (chat.type === "group") {
-            // 更新群聊中最后一条消息发送者的名字（如果是好友）
+            // 确保群聊列表显示的发送者名字是最新的备注或昵称
             if (chat.sendUid) {
                 const friend = friendMap.get(String(chat.sendUid));
                 if (friend) {
@@ -983,11 +1007,57 @@ export default {
                 }
             }
           }
+
+          if (!isDeleted) {
+              newChats.push(chat);
+          }
+        }
+
+        // 批量处理被删除的好友
+        if (deletedIds.length > 0) {
+             let hasUnreadUpdate = false;
+             deletedIds.forEach(id => {
+                 // 发送 msgDelete 事件通知其他组件（如聊天窗口）关闭或清理
+                 eventBase.fnCommunicationSendMsg({
+                    operator: "msgDelete",
+                    data: {
+                      id: id,
+                      type: "friend",
+                      idsDelete: [],
+                      isRemoteDeletion: false,
+                      isDeleteChatWindow: false,
+                    },
+                  });
+
+                  // 清理未读消息计数
+                  const unreadKey = id + "friend";
+                  if (this.unreadObj[unreadKey]) {
+                    delete this.unreadObj[unreadKey];
+                    hasUnreadUpdate = true;
+                  }
+                  
+                  // 如果当前正打开该好友的聊天窗口，触发关闭事件
+                   if (
+                      this.infoActive &&
+                      this.infoActive.id === id &&
+                      this.infoActive.type === "friend"
+                    ) {
+                      this.$emit("handDeleteCurrentChat", { id, type: "friend" });
+                    }
+             });
+
+             if (hasUnreadUpdate) {
+                this.unreadObj = _.cloneDeep(this.unreadObj);
+                Cache(`${loginId}-unread`, {
+                    unread: this.unreadObj,
+                });
+                this.updateUnreadCount();
+             }
         }
 
         if (hasUpdate) {
-          // 重新排序，确保置顶状态变化后列表顺序正确
-          const info = eventChat.fnChatListSort(chats);
+          // 重新排序会话列表，确保置顶状态变化后列表顺序正确
+          const info = eventChat.fnChatListSort(newChats);
           this.chats = info.list;
           chatTopSize = info.chatTopSize;
           
@@ -996,17 +1066,65 @@ export default {
             `${loginId}MessageUserList`,
             this.chats.filter((item) => item.type === "friend")
           );
-          // 更新群组聊天缓存
+          // 更新群组聊天缓存 （主要更新了群聊好友的显示名）
           Cache(
             `${loginId}MessageGroupList`,
             this.chats.filter((item) => item.type === "group")
           );
         }
       } else {
-          // 如果列表为空
+          // 异常处理：如果返回的好友列表为空
           this.letters = [];
           this.letterIndexs = [];
           this.friendList = [];
+          
+          const loginId = eventCommon.fnCommonInfoRU({ getId: "loginId" });
+          // 找出所有好友类型的会话ID，视为被删除
+          const deletedIds = this.chats.filter(c => c.type === 'friend').map(c => c.id);
+          
+          if (deletedIds.length > 0) {
+             let hasUnreadUpdate = false;
+             deletedIds.forEach(id => {
+                  eventBase.fnCommunicationSendMsg({
+                    operator: "msgDelete",
+                    data: {
+                      id: id,
+                      type: "friend",
+                      idsDelete: [],
+                      isRemoteDeletion: false,
+                      isDeleteChatWindow: false,
+                    },
+                  });
+
+                   // 删除未读消息
+                   const unreadKey = id + "friend";
+                   if (this.unreadObj[unreadKey]) {
+                     delete this.unreadObj[unreadKey];
+                     hasUnreadUpdate = true;
+                   }
+
+                   if (
+                      this.infoActive &&
+                      this.infoActive.id === id &&
+                      this.infoActive.type === "friend"
+                    ) {
+                      this.$emit("handDeleteCurrentChat", { id, type: "friend" });
+                    }
+             });
+
+             // 过滤掉好友会话，只保留群组等
+             this.chats = this.chats.filter(c => c.type !== 'friend');
+             // 清空好友会话缓存
+             Cache(`${loginId}MessageUserList`, []);
+
+             if (hasUnreadUpdate) {
+                this.unreadObj = _.cloneDeep(this.unreadObj);
+                Cache(`${loginId}-unread`, {
+                    unread: this.unreadObj,
+                });
+                this.updateUnreadCount();
+             }
+          }
       }
     },
     /**
@@ -1056,6 +1174,7 @@ export default {
      */
     eventHandlingChatDelete(info) {
       console.log('eventHandlingChatDelete-3-', info)
+      const loginId = eventCommon.fnCommonInfoRU({ getId: "loginId" });
       const { id, type } = info;
       let chats = this.chats.filter(
         (item) => item.id !== id || item.type !== type
