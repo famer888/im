@@ -1156,8 +1156,9 @@ export default {
              this.rightMenuVisible = true;
           }, 200)
           this.$refs.rightClickMenu && this.$refs.rightClickMenu.close();
+          const typeName = this.chatContent.type === "group" ? "该群已禁用" : "该频道已禁用";
           if (this.chatContent.isDisable) {
-            window.$toast("该群已禁用");
+            window.$toast(typeName);
           }
           break;
         }
