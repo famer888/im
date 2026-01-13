@@ -18,6 +18,7 @@ import { reportErrorDomain } from "@/utils/trendsDomain/manageReport";
 // 事件
 import eventBase from "./base";
 import eventCommon from "./common";
+import progress from "@/utils/progress";
 
 //////////////////  下载解密
 
@@ -147,6 +148,8 @@ const fnDownloadFileInfoUpdate = (data, errorType) => {
 
     // 修改消息属性
     window.$db.updateMsgProperty(params);
+
+    progress.complete(data);
 
     // 通讯
     eventBase.fnCommunicationSendMsg({

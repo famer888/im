@@ -33,6 +33,7 @@ import eventFile from "./file";
 import eventCommon from "./common";
 import eventChannel from "./channel";
 import { benchmark } from "@/debuggers";
+import progress from "@/utils/progress";
 
 /**
  * 消息去重检查
@@ -1262,12 +1263,16 @@ const fnMsgSend = async (info) => {
 
         // 图片(1)或视频(3)才需要 taskId 用于进度追踪
         const chatType = fileLocalInfos.chatType || values.chatType;
-        const taskId = [1, 3].includes(chatType) ? { taskId: `${chatType}-${customMsgId}` } : {};
+        const task = [1, 3].includes(chatType) ? { taskId: `${chatType}-${customMsgId}` } : {};
+        // 初始化上传进度
+        if (task.taskId) {
+            progress.init({ chatType, customMsgId });
+        }
 
         // 发送参数
         let params = {
             ...values,
-            ...taskId,
+            ...task,
             sendTime,
             sendUser: {
                 nickName: loginInfo.name,
@@ -1373,8 +1378,11 @@ const fnMsgSend = async (info) => {
                 text: fileInfos.text,
                 url: fileInfos.url,
                 size: fileInfos.size,
-                thumbUrl: fileInfos.thumbUrl
+                thumbUrl: fileInfos.thumbUrl,
+                percent: 100 + Number(Math.random().toFixed(6))
             }
+            // 上传完成，清理进度追踪
+            progress.complete({ chatType, customMsgId });
             // 更新ui
             const params = {
                 id,

@@ -314,7 +314,7 @@ export const FairGuard = (() => {
   const tossCoin = () => {
     // 当计算值大到X值或当前时间到达maximumConsumeTime，必中
     if (weight >= X || Date.now() >= maximumConsumeTime) {
-      console.log(`[FairGuard]丢硬币命中, ${weight >= X ? '权重大于X' : '时间大于最大消费时间'}`);
+      // console.log(`[FairGuard]丢硬币命中, ${weight >= X ? '权重大于X' : '时间大于最大消费时间'}`);
       weight = 0; // 重置权重
       return true;
     }
@@ -327,7 +327,7 @@ export const FairGuard = (() => {
     } else {
       weight = 0; // 命中后重置权重
     }
-    console.log(`[FairGuard]丢硬币中：${isHit ? '命中' : '未命中'}, 当前权重为: ${weight}, 随机值为: ${randomValue}`);
+    // console.log(`[FairGuard]丢硬币中：${isHit ? '命中' : '未命中'}, 当前权重为: ${weight}, 随机值为: ${randomValue}`);
     return isHit;
   }
   const recieve = (response) => {
@@ -339,7 +339,7 @@ export const FairGuard = (() => {
       if (tasks.size === 0 || maximumConsumeTime === undefined) {
         maximumConsumeTime = Date.now() + 3000 * 50;
       }
-      console.log(`[FairGuard]收到http请求头部内容为: ${content}, 当前tasks长度为: ${tasks.size}, 最大消费时间为: ${maximumConsumeTime}, 当前权重为: ${weight}`);
+      // console.log(`[FairGuard]收到http请求头部内容为: ${content}, 当前tasks长度为: ${tasks.size}, 最大消费时间为: ${maximumConsumeTime}, 当前权重为: ${weight}`);
       tasks.add(content);
     }
   }

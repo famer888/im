@@ -1,5 +1,6 @@
 import _ from "lodash";
 import { ipcRenderer } from "@/platform";
+import eventBase from "@/event/base";
 
 // api
 import { _encrypt, _decrypt, _encrypt2, _decrypt2 } from "@/api/base/index";
@@ -430,12 +431,14 @@ const ossUpload = async (fileId, File, endpoint, taskId) => {
     // 创建 OSS 客户端实例
     let ALIclient = new OSS(ossOption);
     return ALIclient.multipartUpload(fileId, File, {
-        progress: function (progress) {
-            // 有 taskId 则向渲染进程发送上传进度
+        progress: function (p) {
+            // 有 taskId 则发送上传进度，上限 95
             if (taskId) {
-                ipcRenderer.send("downloadProgress", {
-                    taskId,
-                    percent: Math.round(progress * 100),
+                let percent = Math.round(p * 100);
+                percent = percent >= 95 ? 95 : percent;
+                eventBase.fnCommunicationSendMsg({
+                    operator: "upload-progress",
+                    data: { taskId, percent },
                 });
             }
         },

@@ -122,13 +122,15 @@ export default {
     },
     created() {
         // 图片文件下载
-        // if (!(local || localThumbUrl)) {
-        //     // 下载文件
-        //     this.handleFileDownload("default");
-        // }
-        this.handleFileDownload("default");
+        const { local, localThumbUrl } = this.msgInfo;
+        if (!(local || localThumbUrl)) {
+            // 下载文件
+            this.handleFileDownload("default");
+        }
+        // this.handleFileDownload("default");
 
         // 如果正在进度更新，初始化上传进度监听
+        console.log('>>> loading', this.loading);
         if (this.loading) {
             this.initProgressBar();
         }
@@ -142,9 +144,9 @@ export default {
     watch: {
       ['msgInfo.percent'](value) {
         if (value >= 100) {
+          console.log('>>> msgInfo.percent', value);
           this.loading = false;
           this.percent = value;
-          progress.complete(this.msgInfo);
         }
       }
     },
@@ -155,6 +157,7 @@ export default {
         initProgressBar() {
             progress.init(this.msgInfo);
             this._onProgress = (percent) => {
+                // console.log('>>> onProgress', percent);
                 this.loading = true;
                 this.percent = percent;
                 if (this.percent === 100) {
@@ -343,7 +346,7 @@ export default {
     cursor: pointer;
     > .content ::v-deep .comTimeStatusLabel {
       right: 8px;
-      bottom: 4px;
+      bottom: 8px;
       z-index: 11;
       background: rgba(0, 0, 0, 0.25);
       border-radius: 9999px;
@@ -375,6 +378,7 @@ export default {
         min-width: 120px;
         .picture-container {
           background: #333;
+          height: 100%;
           border-radius: 6px;
           overflow: hidden;
           text-align: center;

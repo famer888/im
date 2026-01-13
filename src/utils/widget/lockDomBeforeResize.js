@@ -18,7 +18,7 @@ export const lockDomBeforeResize = async(visible, manually) => {
     }
   }
   const cleanup = viewportWidthSizeObserver((width, lastWidth) => {
-    console.log('[debug]', lastWidth, width);
+    // console.log('[debug]', lastWidth, width);
     if (lastWidth - width > 250) {
       timer = setTimeout(() => {
         removeAttribute();

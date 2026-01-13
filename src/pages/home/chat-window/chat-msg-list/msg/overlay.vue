@@ -139,8 +139,8 @@ export default {
 /* 左上角标签 */
 .top-left-tag {
   position: absolute;
-  top: 2px;
-  left: 2px;
+  top: 0;
+  left: 0;
   padding: 2px 8px;
   background: rgba(0, 0, 0, 0.5);
   color: #fff;

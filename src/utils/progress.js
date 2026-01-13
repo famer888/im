@@ -1,4 +1,5 @@
 import { ipcRenderer } from "@/platform";
+import eventBase from "@/event/base";
 
 class ProgressManager {
   // key: taskId, value: { percent, loading, taskId, type: upload | download }
@@ -7,9 +8,11 @@ class ProgressManager {
   subscribers = new Map();
   install() {
     ipcRenderer.on("downloadProgress", this.update);
+    eventBase.fnCommunicationMonitoring("upload-progress", ["upload-progress"], (data) => this.update(null, data));
   }
   uninstall() {
     ipcRenderer.removeListener("downloadProgress", this.update);
+    eventBase.fnCommunicationMonitoring("upload-progress", null);
   }
   init(message) {
     const { chatType, MsgID, customMsgId } = message;
@@ -86,6 +89,7 @@ class ProgressManager {
     return task?.percent || {};
   }
   pause() {
+    // 给不知道需不需要做的暂停上传下载预留
 
   }
 }
