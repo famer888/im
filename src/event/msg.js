@@ -1260,9 +1260,14 @@ const fnMsgSend = async (info) => {
             }
         }
 
+        // 图片(1)或视频(3)才需要 taskId 用于进度追踪
+        const chatType = fileLocalInfos.chatType || values.chatType;
+        const taskId = [1, 3].includes(chatType) ? { taskId: `${chatType}-${customMsgId}` } : {};
+
         // 发送参数
         let params = {
             ...values,
+            ...taskId,
             sendTime,
             sendUser: {
                 nickName: loginInfo.name,

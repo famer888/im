@@ -1,4 +1,5 @@
 import _ from "lodash";
+import { ipcRenderer } from "@/platform";
 
 // api
 import { _encrypt, _decrypt, _encrypt2, _decrypt2 } from "@/api/base/index";
@@ -208,7 +209,7 @@ const decodeFile = (buf, fileKey, cb) => {
 
 const compressImg = (file, obj = {}) => {
     var ready = new FileReader();
-    /*开始读取指定的Blob对象或File对象中的内容. 
+    /*开始读取指定的Blob对象或File对象中的内容.
             当读取操作完成时,readyState属性的值会成为DONE,
             如果设置了onloadend事件处理程序,则调用之.
             同时,result属性中将包含一个data: URL格式的字符串以表示所读取文件的内容.*/
@@ -322,7 +323,7 @@ export const uploadFileByLocalPath = (filePath, suffix, options) => {
     });
 };
 
-export const uploadFile = async (file, { chatType, fileKey }, suffix) => {
+export const uploadFile = async (file, { chatType, fileKey, taskId }, suffix) => {
     if (!checkFileSize(file, chatType)) {
         return;
     }
@@ -366,7 +367,7 @@ export const uploadFile = async (file, { chatType, fileKey }, suffix) => {
         const item = trendsOssDomains[i];
         try {
           if(!item?.domainUrl) continue;
-          const result = await ossUpload(keyData.fileId, encodeFile, item.domainUrl);
+          const result = await ossUpload(keyData.fileId, encodeFile, item.domainUrl, taskId);
           if(result) {
             res = result;
             break;
@@ -380,13 +381,13 @@ export const uploadFile = async (file, { chatType, fileKey }, suffix) => {
         if (url && url.lastIndexOf("?uploadId") !== -1) {
             url = url.slice(0, url.lastIndexOf("?uploadId"));
         }
-    
+
         if (url &&url.includes("http:")) {
             url = url.replace("http:", "https:");
         }
-        
+
         return url || '';
-    } 
+    }
 
     let url = _.get(res, "res.requestUrls[0]");
     if(url) {
@@ -395,15 +396,15 @@ export const uploadFile = async (file, { chatType, fileKey }, suffix) => {
 
     // 使用getUploadUrl反url上传
     try {
-        res = await ossUpload(keyData.fileId, encodeFile)
-        url = _.get(res, "res.requestUrls[0]"); 
+        res = await ossUpload(keyData.fileId, encodeFile, undefined, taskId)
+        url = _.get(res, "res.requestUrls[0]");
     } catch (error) {
         console.error(error, '捕获上传异常 --3------------> 371')
     }
     return handleUrl(url);
 };
 
-const ossUpload = async (fileId, File, endpoint) => {
+const ossUpload = async (fileId, File, endpoint, taskId) => {
     // Check oss's info
     const ossData = window.ossData;
     if (!ossData || !ossData.securityToken) {
@@ -430,10 +431,13 @@ const ossUpload = async (fileId, File, endpoint) => {
     let ALIclient = new OSS(ossOption);
     return ALIclient.multipartUpload(fileId, File, {
         progress: function (progress) {
-            if (progress == 1) {
-                // checkUpStauts(param, 3);
+            // 有 taskId 则向渲染进程发送上传进度
+            if (taskId) {
+                ipcRenderer.send("downloadProgress", {
+                    taskId,
+                    percent: Math.round(progress * 100),
+                });
             }
-            // checkUpProgress(param, progress);
         },
         parallel: 4, //并发上传的分片数量
         partSize: 1024 * 512 * 1, //分片大小

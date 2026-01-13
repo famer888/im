@@ -230,7 +230,7 @@ const fnFilePathToType = (path) => {
  */
 const fnFileUploadInfoGet = async (values) => {
     const { file, fileThumb, params, type, id } = values;
-    const { chatType, width, height } = params;
+    const { chatType, width, height, taskId } = params;
 
     let fileInfos = null;
 
@@ -246,6 +246,7 @@ const fnFileUploadInfoGet = async (values) => {
         {
             fileKey,
             chatType,
+            taskId
         },
         suffix
     );

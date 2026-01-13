@@ -91,8 +91,9 @@ export default {
             return {};
         },
         taskId() {
-            const { chatType, MsgID } = this.msgInfo;
-            return `${chatType}-${MsgID}`;
+            const { chatType, MsgID, customMsgId, isSelf } = this.msgInfo;
+            // 自己发送的消息用 customMsgId，接收的消息用 MsgID
+            return `${chatType}-${isSelf ? customMsgId : MsgID}`;
         },
         /**
          * 合并监听 local 和 localThumbUrl
@@ -116,7 +117,7 @@ export default {
             isSuccess: true,
             localSrc: "",
             percent: this.msgInfo?.percent || 0,
-            loading: false,
+            loading: this.msgInfo?.readStatus === -1,
         };
     },
     created() {
@@ -126,6 +127,11 @@ export default {
         //     this.handleFileDownload("default");
         // }
         this.handleFileDownload("default");
+
+        // 如果消息正在发送中，初始化上传进度监听
+        if (this.loading) {
+            this.initProgressBar();
+        }
     },
     beforeDestroy() {
         // 移除监听，避免内存泄漏
