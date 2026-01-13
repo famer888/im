@@ -96,6 +96,7 @@ import eventGroup from "@/event/group";
 import { notificationReply } from "@/event/msg";
 import { isBatchMode } from "@/utils/batchRenderer";
 import { lockDomBeforeResize } from "@/utils/widget/lockDomBeforeResize";
+import progress from "@/utils/progress";
 
 export default {
   components: {
@@ -157,6 +158,8 @@ export default {
     });
     // 添加监听 设置事件监听器以跟踪文件下载成功的状态
     eventFile.fnMonitorDownloadFileDone(true);
+    // 添加监听 下载进度
+    progress.install();
 
     // 添加监听 设置键盘事件的监听机制
     document.addEventListener("keydown", this.handleKeydown);
@@ -223,6 +226,8 @@ export default {
     }
     // 移除监听 移除事件监听器以跟踪文件下载成功的状态
     eventFile.fnMonitorDownloadFileDone(false);
+    // 移除监听 下载进度
+    progress.uninstall();
 
     // 移除监听 移除通信事件的监听机制
     document.removeEventListener("keydown", this.handleKeydown);

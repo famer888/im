@@ -635,7 +635,8 @@ const fnUtf8ArrayToStr = (buffer, type) => {
         case enumMsgType.video: {
             // 视频
             const videoObj = VideoObj.decode(UnitBuffer);
-            let txt = `${videoObj.url}*P${videoObj.thumbUrl}`;
+            // 格式: url*PthumbUrl||duration||fileSize||width||height
+            let txt = `${videoObj.url}*P${videoObj.thumbUrl}||${videoObj.duration || 0}||${Number(videoObj.fileSize) || 0}||${videoObj.width || 0}||${videoObj.height || 0}`;
             if (videoObj.ref) {
                 txt = fnFormartMsgToStr(videoObj.ref, txt);
             }

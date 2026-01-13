@@ -1,6 +1,7 @@
 <template>
     <div
         :class="{ comMsgImage: true, bg: msgInfo.quoteMessage !== undefined }"
+        :style="containerStyle"
         @click.right="
             (e) =>
                 $emit('rightClick', {
@@ -12,18 +13,20 @@
                             : handleErrorTipsGet(),
             })">
         <slot></slot>
-        <div class="content">
+        <div class="content" :style="contentStyle">
+            <slot name="timeStatus" v-if="!hasError"></slot>
+            <Overlay :loading="loading" :duration="msgInfo.duration" :percent="percent" :status="status" :isVideo="msgInfo.chatType === 3" @click="handleOpenFile" />
             <template v-if="msgInfo.local || msgInfo.localThumbUrl">
                 <i v-if="handleErrorTipsGet()">
-                    {{ handleErrorTipsGet() }}
+                    <!-- {{ handleErrorTipsGet() }} -->
                 </i>
-                <template v-else>
-                    <img
+                <div class="picture-container" v-else>
+                    <!-- <img
                         v-if="msgInfo.chatType === 3"
                         src="@/assets/images/message/vedios-icon.png"
                         class="btnPay"
                         @click="handleOpenFile"
-                    />
+                    /> -->
                     <img
                         :src="
                           getUrl()
@@ -39,23 +42,25 @@
                         class="picture fail-img"
                         @click="handleOpenFile"
                     /> -->
-                </template>
+                </div>
             </template>
-            <i v-else class="file-loading">
+            <!-- <i v-else class="file-loading">
                 <img
                     class="file-img"
                     src="@/assets/images/file/file-loading.gif"
                 />
-            </i>
+            </i> -->
         </div>
     </div>
 </template>
 <script>
 import { remote, ipcRenderer } from "@/platform";
+import Overlay from './overlay.vue';
+import progress from "@/utils/progress";
 
 // 工具
 import { getFileSuffix, isMac } from "@/utils/base";
-import { getNewFileDownUrl } from "@/utils/trendsDomain/manageOssDownUpload";
+import { getFileOssUrls, getNewFileDownUrl } from "@/utils/trendsDomain/manageOssDownUpload";
 import { getOssFirstNormalUrl } from "@/utils/trendsDomain/manageOssDownUpload";
 
 // 事件
@@ -64,12 +69,55 @@ import eventCommon from "@/event/common";
 
 export default {
     props: ["msgInfo", "chatContent"],
+    components: {
+        Overlay,
+    },
+    computed: {
+        containerStyle() {
+            const { width, height } = this.msgInfo;
+            if (width && height) {
+                return {
+                    minWidth: 'unset',
+                };
+            }
+            return {};
+        },
+        contentStyle() {
+            const { width, height } = this.msgInfo;
+            if (width && height) {
+                return {
+                    aspectRatio: `${width} / ${height}`,
+                };
+            }
+            return {};
+        },
+        taskId() {
+            return progress.getTask(this.msgInfo)?.taskId;
+        },
+        /**
+         * 合并监听 local 和 localThumbUrl
+         */
+        status() {
+            const { local, localThumbUrl } = this.msgInfo;
+            return local || localThumbUrl;
+        },
+        /**
+         * 是否有错误状态
+         */
+        hasError() {
+            return ['downloadError', 'decryptionError'].includes(this.status);
+        },
+
+    },
     data() {
+        const task = progress.getTask(this.msgInfo);
         return {
             noticeArr: [],
             imgSrc: "",
             isSuccess: true,
             localSrc: "",
+            percent: this.msgInfo?.percent ?? task?.percent ?? 0,
+            loading: this.msgInfo?.percent >= 100 ? false : task?.loading ?? false,
         };
     },
     created() {
@@ -79,8 +127,45 @@ export default {
             // 下载文件
             this.handleFileDownload("default");
         }
+        // this.handleFileDownload("default");
+
+        // 如果正在进度更新，初始化上传进度监听
+        console.log('>>> loading', this.loading);
+        if (this.loading) {
+            this.initProgressBar();
+        }
+    },
+    beforeDestroy() {
+        // 移除监听，避免内存泄漏
+        if (this._onProgress) {
+            progress.unsubscribe(this.taskId, this._onProgress);
+        }
+    },
+    watch: {
+      ['msgInfo.percent'](value) {
+        if (value >= 100) {
+          console.log('>>> msgInfo.percent', value);
+          this.loading = false;
+          this.percent = value;
+        }
+      }
     },
     methods: {
+        /**
+         * 初始化进度条监听
+         */
+        initProgressBar() {
+            progress.init(this.msgInfo);
+            this._onProgress = (percent) => {
+                // console.log('>>> onProgress', percent);
+                this.loading = true;
+                this.percent = percent;
+                if (this.percent === 100) {
+                    this.loading = false;
+                }
+            };
+            progress.subscribe(this.taskId, this._onProgress);
+        },
         // 处理mac本地地址异常
         macFixImagePath(url) {
             // 1. 处理 app://./ 协议：替换为 file:// 并修正路径
@@ -110,7 +195,11 @@ export default {
          * 打开文件
          */
         handleOpenFile() {
+          const { chatType } = this.msgInfo || {};
+          const taskId = chatType === 3 ? progress.getTask(this.msgInfo)?.taskId : null;
+          taskId && this.initProgressBar();
           eventFile.fnOperatorFile({
+              taskId,
               id: this.chatContent.id,
               type: this.chatContent.type,
               info: this.msgInfo.local && this.msgInfo.local.indexOf('http') === 0 ? {...this.msgInfo, local: null} : this.msgInfo,
@@ -129,8 +218,7 @@ export default {
                 getId: "loginId",
             });
 
-            const { content, chatType, MsgID, fileKey, customMsgId } =
-                this.msgInfo;
+            const { content, chatType, MsgID, fileKey, customMsgId } = this.msgInfo;
 
             // 文件路径
             let fileUrl = content ? content.split("||")[0] : "";
@@ -166,11 +254,13 @@ export default {
             const suffix = getFileSuffix(chatType, fileUrl);
 
             // 文件名
-            const fileName =
-                fileUrl.slice(fileUrl.lastIndexOf("/") + 1) + suffix;
+            const fileName = fileUrl.slice(fileUrl.lastIndexOf("/") + 1) + suffix;
 
             // 优先使用动态域名
             const trendsFileUrl = await getOssFirstNormalUrl(fileUrl)
+
+            // 初始化进度条
+            chatType === 1 && this.initProgressBar();
 
             // 文件下载
             ipcRenderer.send("fileDownload", {
@@ -196,6 +286,8 @@ export default {
                 customMsgId,
                 isOpen: false,
                 timeout: 5000,
+                fileSize: this.msgInfo.size || this.msgInfo.fileSize || 0,
+                taskId: chatType === 1 ? this.taskId : null,
             });
         },
         /**
@@ -249,15 +341,25 @@ export default {
 <style scoped lang="scss">
 .comMsgImage {
     position: relative;
-    padding-bottom: 25px;
     max-width: 400px;
     min-width: 120px;
     cursor: pointer;
+    > .content ::v-deep .comTimeStatusLabel {
+      right: 8px;
+      bottom: 8px;
+      z-index: 11;
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 9999px;
+      padding: 2px 6px;
+      > span {
+        color: white;
+      }
+    }
 
     &.bg {
         background: #fff;
         border: 1px solid #f2efef;
-        padding: 10px 10px 25px;
+        padding: 10px 10px;
         border-radius: 10px;
     }
 
@@ -269,6 +371,18 @@ export default {
         height: 150px;
         width: fit-content;
         position: relative;
+        background: white;
+        padding: 4px;
+        border-radius: 10px;
+        overflow: hidden;
+        min-width: 120px;
+        .picture-container {
+          background: #333;
+          height: 100%;
+          border-radius: 6px;
+          overflow: hidden;
+          text-align: center;
+        }
         > .btnPay {
             position: absolute;
             top: 75px;
@@ -281,8 +395,9 @@ export default {
 
         .picture {
             height: 150px;
-            display: block;
+            display: inline-block;
             -webkit-user-drag: unset;
+
         }
 
         > i {
@@ -291,7 +406,7 @@ export default {
             justify-content: center;
             height: 100%;
             padding: 0 15px;
-            background: #fdebeb;
+            // background: #fdebeb;
             width: 150px;
             line-height: 25px;
             border-radius: 5px;

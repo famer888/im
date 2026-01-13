@@ -33,6 +33,7 @@ import eventFile from "./file";
 import eventCommon from "./common";
 import eventChannel from "./channel";
 import { benchmark } from "@/debuggers";
+import progress from "@/utils/progress";
 
 /**
  * 消息去重检查
@@ -245,6 +246,15 @@ export const fnMsgAdd = async ({ msg, contentStr, fileKey, type }) => {
         msgNew.fileName = fileInfos[1] || 'unknown.file'
         msgNew.fileSize = fileInfos[2] || 0
         msgNew.size = fileInfos[2] || 0
+    }
+    // 视频信息 (msgType === 3): 格式 url*PthumbUrl||duration||fileSize||width||height
+    if (msgNew.msgType === 3 && msgNew.content) {
+        // 去除引用信息后再解析
+        const [content, duration, fileSize, width, height] = msgNew.content.split('||') || [];
+        Object.assign(msgNew, { duration: parseInt(duration) || 0, fileSize: parseInt(fileSize) || 0, width: parseInt(width) || 0, height: parseInt(height) || 0 });
+        // 更新content为纯净内容
+        msgNew.content = content;
+        console.log('>>> msgNew', content, msgNew);
     }
     if ([14, 15].includes(msgNew.msgType)) {
         // 收款消息提示不支持
@@ -1251,9 +1261,18 @@ const fnMsgSend = async (info) => {
             }
         }
 
+        // 图片(1)或视频(3)才需要 taskId 用于进度追踪
+        const chatType = fileLocalInfos.chatType || values.chatType;
+        const task = [1, 3].includes(chatType) ? { taskId: `${chatType}-${customMsgId}` } : {};
+        // 初始化上传进度
+        if (task.taskId) {
+            progress.init({ chatType, customMsgId });
+        }
+
         // 发送参数
         let params = {
             ...values,
+            ...task,
             sendTime,
             sendUser: {
                 nickName: loginInfo.name,
@@ -1359,8 +1378,11 @@ const fnMsgSend = async (info) => {
                 text: fileInfos.text,
                 url: fileInfos.url,
                 size: fileInfos.size,
-                thumbUrl: fileInfos.thumbUrl
+                thumbUrl: fileInfos.thumbUrl,
+                percent: 100 + Number(Math.random().toFixed(6))
             }
+            // 上传完成，清理进度追踪
+            progress.complete({ chatType, customMsgId });
             // 更新ui
             const params = {
                 id,

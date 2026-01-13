@@ -580,6 +580,30 @@ const downloadHandler = (event, item, webContents) => {
         }
         timerName = `${data.groupId || data.channelId || data.userId }_${data.msgId}`
         item.setSavePath(data.fileLocalPath);
+        // 只有传入 taskId 时才监听下载进度
+        if (data.taskId) {
+            const fileSize = data.fileSize || item.getTotalBytes();
+            item.on("updated", (event, state) => {
+                if (state === "progressing") {
+                    const receivedBytes = item.getReceivedBytes();
+                    const totalBytes = fileSize || item.getTotalBytes();
+                    let percent = 0;
+                    if (totalBytes > 0) {
+                        percent = Math.round((receivedBytes / totalBytes) * 100);
+                        percent = percent === 100 ? 95 : percent;
+                    }
+                    // 发送下载进度，携带 taskId 守卫
+                    sendMain("downloadProgress", {
+                        ...data,
+                        taskId: data.taskId,
+                        percent,
+                        receivedBytes,
+                        totalBytes,
+                    });
+                }
+            });
+        }
+
         item.once("done", (event, state) => {
            clearDownTimer(timerName)
             sendMain(
@@ -625,7 +649,7 @@ const sendMain = (channel, data, targetWindow = null) => {
   if (win && win.webContents && !win.webContents.isDestroyed()) {
     try {
       win.webContents.send(channel, data);
-      console.log(`[sendMain] 成功向窗口发送消息: ${channel}`);
+      // console.log(`[sendMain] 成功向窗口发送消息: ${channel}`);
       return true;
     } catch (error) {
       console.error(`[sendMain] 发送消息 ${channel} 时发生错误:`, error);
