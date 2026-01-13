@@ -349,7 +349,11 @@ export default {
           if(beforeTime < Date.now()) {
             this.handleGetChannelDetail(info, channelId);
           } else {
-            current = { channelDetailDone: +new Date() }
+            current = { channelDetailDone: +new Date() };
+            // 冷却期内，如果 info 中包含 status，也需要确保 isDisable 正确（频道禁用状态）
+            if (info.status !== undefined) {
+              current.isDisable = info.status === 3;
+            }
           }
         } else if (info?.type === 'group') {
           const curGroup = this.groupList.find((item) => item.id == info.id);
