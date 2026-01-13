@@ -56,6 +56,7 @@
 <script>
 import { remote, ipcRenderer } from "@/platform";
 import Overlay from './overlay.vue';
+import progress from "@/utils/progress";
 
 // 工具
 import { getFileSuffix, isMac } from "@/utils/base";
@@ -91,9 +92,7 @@ export default {
             return {};
         },
         taskId() {
-            const { chatType, MsgID, customMsgId, isSelf } = this.msgInfo;
-            // 自己发送的消息用 customMsgId，接收的消息用 MsgID
-            return `${chatType}-${isSelf ? customMsgId : MsgID}`;
+            return progress.getTask(this.msgInfo)?.taskId;
         },
         /**
          * 合并监听 local 和 localThumbUrl
@@ -111,13 +110,14 @@ export default {
 
     },
     data() {
+        const task = progress.getTask(this.msgInfo);
         return {
             noticeArr: [],
             imgSrc: "",
             isSuccess: true,
             localSrc: "",
-            percent: this.msgInfo?.percent || 0,
-            loading: this.msgInfo?.readStatus === -1,
+            percent: this.msgInfo?.percent ?? task?.percent ?? 0,
+            loading: this.msgInfo?.percent >= 100 ? false : task?.loading ?? false,
         };
     },
     created() {
@@ -128,15 +128,15 @@ export default {
         // }
         this.handleFileDownload("default");
 
-        // 如果消息正在发送中，初始化上传进度监听
+        // 如果正在进度更新，初始化上传进度监听
         if (this.loading) {
             this.initProgressBar();
         }
     },
     beforeDestroy() {
         // 移除监听，避免内存泄漏
-        if (this._onDownloadProgress) {
-            ipcRenderer.removeListener("downloadProgress", this._onDownloadProgress);
+        if (this._onProgress) {
+            progress.unsubscribe(this.taskId, this._onProgress);
         }
     },
     watch: {
@@ -144,6 +144,7 @@ export default {
         if (value >= 100) {
           this.loading = false;
           this.percent = value;
+          progress.complete(this.msgInfo);
         }
       }
     },
@@ -152,17 +153,15 @@ export default {
          * 初始化进度条监听
          */
         initProgressBar() {
-            // 监听下载进度，使用 taskId 守卫
-            this._onDownloadProgress = (event, data) => {
-                // 守卫：只响应本文件的进度
-                if (data.taskId !== this.taskId) return;
+            progress.init(this.msgInfo);
+            this._onProgress = (percent) => {
                 this.loading = true;
-                this.percent = data.percent;
+                this.percent = percent;
                 if (this.percent === 100) {
                     this.loading = false;
                 }
             };
-            ipcRenderer.on("downloadProgress", this._onDownloadProgress);
+            progress.subscribe(this.taskId, this._onProgress);
         },
         // 处理mac本地地址异常
         macFixImagePath(url) {
@@ -193,8 +192,8 @@ export default {
          * 打开文件
          */
         handleOpenFile() {
-          const { chatType, MsgID } = this.msgInfo || {};
-          const taskId = chatType === 3 ? `${chatType}-${MsgID}` : null;
+          const { chatType } = this.msgInfo || {};
+          const taskId = chatType === 3 ? progress.getTask(this.msgInfo)?.taskId : null;
           taskId && this.initProgressBar();
           eventFile.fnOperatorFile({
               taskId,
