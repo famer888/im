@@ -330,11 +330,6 @@ export default {
           } else {
             await Cache(`${loginId}-ContactList`, this.friendList);
             this.friendNum = 100;
-             // 通知 home-left 更新好友列表 (私聊同步)
-             eventBase.fnCommunicationSendMsg({
-                 operator: "contactListReload",
-                 data: this.friendList
-             });
             await this.handleFriendRemarks()
           }
           break;
@@ -380,14 +375,19 @@ export default {
       //     this.handleUpdateFirendsForApi(1);
       //   }
       // });
-
       // 强制更新好友列表
-      this.handleUpdateFirendsForApi(1);
+      return new Promise(resolve => {
+        this.handleUpdateFirendsForApi(1, resolve);
+      });
     },
     /**
      * 同步群列表
      */
-    handleGroups(pageNum = 1, fetchId = 0) {
+    handleGroups(pageNum = 1, fetchId = 0, resolve) {
+      if (pageNum === 1 && !resolve) {
+          return new Promise(r => this.handleGroups(1, 0, r));
+      }
+
       const pageSize = 200;
 
       if (pageNum === 1) {
@@ -403,6 +403,7 @@ export default {
       } else {
         // 非第一页时，必须匹配当前的fetchId，否则视为过期请求
         if (fetchId !== this.groupFetchId) {
+          if(resolve) resolve(); // 过期请求，直接resolve
           return;
         }
       }
@@ -416,13 +417,14 @@ export default {
           setTimeout(() => {
             // 重试前检查ID是否有效
             if (fetchId === this.groupFetchId) {
-              this.handleGroups(pageNum, fetchId);
+              this.handleGroups(pageNum, fetchId, resolve);
             }
           }, 2000);
         }
       ).then((res) => {
         // 响应回来后检查ID是否有效
         if (fetchId !== this.groupFetchId) {
+          if(resolve) resolve();
           return;
         }
         let groups = [];
@@ -444,10 +446,11 @@ export default {
             this.groupListPageReqCompleteList.length >= this.groupListPageCount
           ) {
             Cache(`${loginId}-GroupList`, this.groupList);
+            if (resolve) resolve();
           } else if (this.groupListPageReqList.length > 0) {
             const pageNumNew = this.groupListPageReqList[0];
             this.groupListPageReqList = this.groupListPageReqList.slice(1);
-            this.handleGroups(pageNumNew, fetchId);
+            this.handleGroups(pageNumNew, fetchId, resolve);
           }
         };
 
@@ -462,6 +465,7 @@ export default {
 
           if (this.groupListPageCount <= 1) {
             Cache(`${loginId}-GroupList`, this.groupList);
+            if (resolve) resolve();
             return;
           } else {
             this.groupListPageReqList = Array.from(
@@ -528,9 +532,7 @@ export default {
         this.$emit("loaded");
         // 后台更新数据
         setTimeout(() => {
-          this.handleFriends();
-          this.handleGroups();
-          this.handleChatsGet();
+          this.handleSyncAll();
         }, 1000);
       } else {
         // 更新数据
@@ -540,9 +542,7 @@ export default {
         setTimeout(() => {
           // 清空旧的群列表
           Cache(`${loginId}-GroupList`, []);
-          this.handleFriends();
-          this.handleGroups();
-          this.handleChatsGet();
+          this.handleSyncAll();
         }, 10);
       }
       // this.handleChannels();
@@ -551,6 +551,32 @@ export default {
            this.handleFriendRemarks()
         }
       })
+    },
+    /**
+     * 统一同步所有数据 (好友、群组、频道、聊天列表)
+     */
+    async handleSyncAll() {
+      try {
+        await Promise.all([
+          this.handleFriends(),
+          this.handleGroups(),
+          this.handleChannels()
+        ]);
+
+        await this.handleChatsGet();
+
+        // 统一发送更新事件
+        eventBase.fnCommunicationSendMsg({
+            operator: "contactListReload",
+            data: {
+              friendList: this.friendList,
+              groupList: this.groupList,
+              channelList: await Cache(`${loginId}-ChannelList`) || []
+            }
+        });
+      } catch (e) {
+        console.error("handleSyncAll err:", e);
+      }
     },
     /**
      * 获取密钥
@@ -575,7 +601,7 @@ export default {
     /**
      * api获取好友列表
      */
-    handleUpdateFirendsForApi(pageNum) {
+    handleUpdateFirendsForApi(pageNum, resolve) {
       const pageSize = 200;
 
       if (pageNum === 1) {
@@ -593,7 +619,7 @@ export default {
         },
         () => {
           setTimeout(() => {
-              this.handleUpdateFirendsForApi(pageNum);
+              this.handleUpdateFirendsForApi(pageNum, resolve);
           }, 2000)
         }
       ).then(async (res) => {
@@ -621,7 +647,8 @@ export default {
 
             // 如果只有一页
             if (friendListPageCount === 1) {
-              this.handleDataFinish("friend");
+              await this.handleDataFinish("friend");
+              if (resolve) resolve();
               return;
             } else {
               friendListPageReqCompleteList.push(1);
@@ -630,7 +657,7 @@ export default {
               const pageNumList = friendListPageReqList.slice(0, 1);
               friendListPageReqList = friendListPageReqList.slice(1);
               for (const item of pageNumList) {
-                this.handleUpdateFirendsForApi(item);
+                this.handleUpdateFirendsForApi(item, resolve);
               }
             }
           } else {
@@ -639,20 +666,21 @@ export default {
 
             // 如果完成
             if (friendListPageReqCompleteList.length === friendListPageCount) {
-              this.handleDataFinish("friend");
+              await this.handleDataFinish("friend");
+              if (resolve) resolve();
               return;
             } else if (friendListPageReqList.length > 0) {
               // 如果还有未请求的，继续请求
               const pageNumNew = friendListPageReqList[0];
               friendListPageReqList = friendListPageReqList.slice(1);
-              this.handleUpdateFirendsForApi(pageNumNew);
+              this.handleUpdateFirendsForApi(pageNumNew, resolve);
             }
           }
 
           this.handleDataFinish("friend", this.firendPercentage);
         } else {
           setTimeout(() => {
-            this.handleUpdateFirendsForApi(pageNum);
+            this.handleUpdateFirendsForApi(pageNum, resolve);
           }, 2000);
         }
       });
