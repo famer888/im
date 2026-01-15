@@ -8,7 +8,8 @@ let timer = null;
 let lastType = 'none';
 export const lockDomBeforeResize = async(visible, manually) => {
   // console.log('[debug]', lastType, manually, visible);
-  if (lastType === 'outer' && manually && !visible) {
+  const shouldLock = document.documentElement.clientWidth >= 1056;
+  if (lastType === 'outer' && manually && !visible && shouldLock) {
     const dom = document.querySelector('.messageContent .chatContent');
     const offsetWidth = dom?.offsetWidth;
     if (offsetWidth + 333 !== screen.availWidth) {
