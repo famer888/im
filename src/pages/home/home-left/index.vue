@@ -126,6 +126,10 @@ import eventFriend from "@/event/friend";
 import eventChannel from "@/event/channel";
 import eventChat from "@/event/chat";
 import eventMsg from "@/event/msg";
+import { getGroupDetail } from "@/api/imGroup";
+import { getChannelDetail } from "@/api/imChannel";
+import { getContactsDetail } from "@/api/imContacation";
+import eventCheduledCeletion from "@/event/cheduled-deletion";
 import { _ } from "core-js";
 import { isBatchMode } from "@/utils/batchRenderer";
 
@@ -171,6 +175,7 @@ export default {
       contactsUnreadCount: 0,
       searchSpecifiedChat: {}, // 搜索指定的聊天
       unreadCount: 0, // 未读总数
+      isSyncingDetails: false, // 是否正在同步详情中
     };
   },
   provide() {
@@ -299,7 +304,7 @@ export default {
           "channelDetailCache", // 缓存频道的详情
           "deleteChat", // 删除聊天窗口
           "channelDisturbSet",  // 频道接收通知设置
-          "contactListReload", // 更新好友列表
+          "contactListReload", // 好友、群、频道登录同步逻辑处理
         ],
         this.eventHandling
       );
@@ -791,7 +796,6 @@ export default {
       // 聊天窗口列表，只更新备注名
       if (operatorType === "name") {
         let chats = _.cloneDeep(this.chats);
-        
         // 1. 更新好友会话名称
         const index = chats.findIndex(
           (item) => item.id === id && item.type === "friend"
@@ -930,73 +934,96 @@ export default {
       }
     },
     /**
-     * 处理事件 好友列表全量更新
-     * 此函数用于处理登录或重连时，从服务器获取到的最新好友列表。
-     * 主要逻辑包括：
-     * 1. 格式化好友列表用于通讯录展示。
-     * 2. 同步更新现有会话列表中的好友信息（头像、昵称、状态等）。
-     * 3. 检测并处理离线期间被删除的好友（存在于会话列表但不在新好友列表中）。
+     * 处理事件 通讯录全量更新 (好友、群组、频道)
+     * 接收全量数据列表，进行本地数据的更新、缓存以及聊天列表的同步
+     * @param {Object} data - 包含 friendList, groupList, channelList 的对象
      */
-    eventHandlingContactListReload(friendList) {
-      if (friendList && friendList.length > 0) {
-        const { letters, letterIndexs, friendList: formatedList } =
-          eventFriend.fnFriendListFormat(friendList);
+    eventHandlingContactListReload(data) {
+      if (!data || typeof data !== 'object') return;
 
+      const friendListRaw = data.friendList || [];
+      const groupListRaw = data.groupList || [];
+      const channelListRaw = data.channelList || [];
+
+      const loginId = eventCommon.fnCommonInfoRU({ getId: "loginId" });
+
+      // 1. 更新好友列表数据
+      // 格式化好友数据以适应通讯录组件
+      if (friendListRaw) {
+        const { letters, letterIndexs, friendList: formatedList } =
+          eventFriend.fnFriendListFormat(friendListRaw);
         this.letters = _.cloneDeep(letters);
         this.letterIndexs = _.cloneDeep(letterIndexs);
         this.friendList = _.cloneDeep(formatedList);
+      }
 
-        const newFriendList = this.friendList;
-        const chats = this.chats;
-        const newChats = [];
-        const deletedIds = [];
-        let hasUpdate = false;
-        const loginId = eventCommon.fnCommonInfoRU({ getId: "loginId" });
+      // 2. 更新群组列表数据
+      if (groupListRaw) {
+        this.groups = _.cloneDeep(groupListRaw);
+        Cache(`${loginId}-GroupList`, this.groups);
+      }
 
-        // 将新好友列表转换为 Map，Key 为 String 类型 ID
-        const friendMap = new Map(newFriendList.map((f) => [String(f.id), f]));
+      // 3. 更新频道列表数据
+      if (channelListRaw) {
+        this.channels = _.cloneDeep(channelListRaw);
+        // ChannelList 已经在 init.vue 中缓存了，这里更新内存即可
+      }
 
-        for (let i = 0; i < chats.length; i++) {
-          const chat = chats[i];
-          const chatIdStr = String(chat.id);
-          let isDeleted = false;
+      // 准备 Map 用于快速查找，提高后续遍历聊天列表时的匹配效率
+      const friendMap = new Map(this.friendList.map((f) => [String(f.id), f]));
+      const groupMap = new Map(this.groups.map((g) => [String(g.id), g]));
+      const channelMap = new Map(this.channels.map((c) => [String(c.channelId || c.id), c]));
 
-          if (chat.type === "friend") {
-            const friend = friendMap.get(chatIdStr);
-            if (friend) {
-              // 全量更新好友信息到会话 - 仅更新必要字段，避免污染会话数据
-              
-              // 1. 基础信息同步 (头像、ID、签名、昵称)
-              chat.pic = friend.pic || ''; 
-              chat.identify = friend.identify;
-              chat.depict = friend.depict || '';
-              chat.nickName = friend.nickName;
+      const chats = this.chats;
+      const newChats = [];
+      const deletedIds = []; // 存储已删除或退出的会话 {id, type}
+      let hasUpdate = false;
 
-              // 2. 状态开关同步（置顶/免打扰/阅后即焚）
-              chat.bfTop = Boolean(friend.bfTop);
-              chat.bfDisturb = Boolean(friend.bfDisturb);
-              chat.bfReadCancel = Boolean(friend.bfReadCancel);
-              
-              // 3. 配置数值同步
-              chat.msgCancelTime = friend.msgCancelTime;
-              if (friend.bfTopTime) chat.bfTopTime = friend.bfTopTime;
+      // 遍历当前聊天列表，同步最新信息并标记无效会话
+      for (let i = 0; i < chats.length; i++) {
+        const chat = chats[i];
+        const chatIdStr = String(chat.id);
+        let isDeleted = false;
+        let isUpdated = false;
 
-              // 4. 显示名称修正 (好友对象里 name 是备注，nickName 是昵称，chat.name 需要是最终显示名)
-              chat.name = friend.name || friend.nickName;
+        if (chat.type === "friend") {
+          const friend = friendMap.get(chatIdStr);
+          if (friend) {
+            // 好友存在，同步关键信息 (头像、昵称、备注、免打扰等)
+            if (chat.pic !== (friend.pic || '')) { chat.pic = friend.pic || ''; isUpdated = true; }
+            if (chat.identify !== friend.identify) { chat.identify = friend.identify; isUpdated = true; }
+            if (chat.depict !== (friend.depict || '')) { chat.depict = friend.depict || ''; isUpdated = true; }
+            if (chat.nickName !== friend.nickName) { chat.nickName = friend.nickName; isUpdated = true; }
 
-              hasUpdate = true;
-            } else {
-                // 好友已被删除
-                isDeleted = true;
-                deletedIds.push(chat.id);
-                hasUpdate = true;
+            if (chat.bfTop !== Boolean(friend.bfTop)) { chat.bfTop = Boolean(friend.bfTop); isUpdated = true; }
+            if (friend.bfDisturb !== undefined && chat.bfDisturb !== Boolean(friend.bfDisturb)) {
+                chat.bfDisturb = Boolean(friend.bfDisturb);
+                isUpdated = true;
+                // 同步全局免打扰状态
+                eventCommon.fnDisturbInfoSync({ id: chat.id, type: "friend", bfDisturb: chat.bfDisturb });
             }
-          } else if (chat.type === "group") {
-            // 确保群聊列表显示的发送者名字是最新的备注或昵称
-            if (chat.sendUid) {
-                const friend = friendMap.get(String(chat.sendUid));
-                if (friend) {
-                    const displayName = friend.name || friend.nickName;
+            if (friend.bfReadCancel !== undefined && chat.bfReadCancel !== Boolean(friend.bfReadCancel)) { chat.bfReadCancel = Boolean(friend.bfReadCancel); isUpdated = true; }
+
+            if (friend.msgCancelTime !== undefined && chat.msgCancelTime !== friend.msgCancelTime) { chat.msgCancelTime = friend.msgCancelTime; isUpdated = true; }
+            if (friend.bfTopTime && chat.bfTopTime !== friend.bfTopTime) { chat.bfTopTime = friend.bfTopTime; isUpdated = true; }
+
+            const newName = friend.name || friend.nickName;
+            if (chat.name !== newName) { chat.name = newName; isUpdated = true; }
+
+            if (isUpdated) hasUpdate = true;
+          } else {
+            // 好友已不在最新的好友列表中，标记为删除
+            isDeleted = true;
+          }
+        } else if (chat.type === "group") {
+          const group = groupMap.get(chatIdStr);
+          if (group) {
+             // 群组存在，同步信息
+             // 尝试更新发送者昵称 (如果能找到对应的群成员/好友信息)
+             if (chat.sendUid) {
+                const senderFriend = friendMap.get(String(chat.sendUid));
+                if (senderFriend) {
+                    const displayName = senderFriend.name || senderFriend.nickName;
                     if (displayName) {
                         const newSendUserName = displayName + "：";
                         if (chat.sendUserName !== newSendUserName) {
@@ -1005,128 +1032,386 @@ export default {
                         }
                     }
                 }
-            }
-          }
-
-          if (!isDeleted) {
-              newChats.push(chat);
-          }
-        }
-
-        // 批量处理被删除的好友
-        if (deletedIds.length > 0) {
-             let hasUnreadUpdate = false;
-             deletedIds.forEach(id => {
-                 // 发送 msgDelete 事件通知其他组件（如聊天窗口）关闭或清理
-                 eventBase.fnCommunicationSendMsg({
-                    operator: "msgDelete",
-                    data: {
-                      id: id,
-                      type: "friend",
-                      idsDelete: [],
-                      isRemoteDeletion: false,
-                      isDeleteChatWindow: false,
-                    },
-                  });
-
-                  // 清理未读消息计数
-                  const unreadKey = id + "friend";
-                  if (this.unreadObj[unreadKey]) {
-                    delete this.unreadObj[unreadKey];
-                    hasUnreadUpdate = true;
-                  }
-                  
-                  // 如果当前正打开该好友的聊天窗口，触发关闭事件
-                   if (
-                      this.infoActive &&
-                      this.infoActive.id === id &&
-                      this.infoActive.type === "friend"
-                    ) {
-                      this.$emit("handDeleteCurrentChat", { id, type: "friend" });
-                    }
-             });
-
-             if (hasUnreadUpdate) {
-                this.unreadObj = _.cloneDeep(this.unreadObj);
-                Cache(`${loginId}-unread`, {
-                    unread: this.unreadObj,
-                });
-                this.updateUnreadCount();
              }
-        }
 
-        if (hasUpdate) {
-          // 重新排序会话列表，确保置顶状态变化后列表顺序正确
-          const info = eventChat.fnChatListSort(newChats);
-          this.chats = info.list;
-          chatTopSize = info.chatTopSize;
-          
-          // 更新好友聊天缓存
-          Cache(
-            `${loginId}MessageUserList`,
-            this.chats.filter((item) => item.type === "friend")
-          );
-          // 更新群组聊天缓存 （主要更新了群聊好友的显示名）
-          Cache(
-            `${loginId}MessageGroupList`,
-            this.chats.filter((item) => item.type === "group")
-          );
-        }
-      } else {
-          // 异常处理：如果返回的好友列表为空
-          this.letters = [];
-          this.letterIndexs = [];
-          this.friendList = [];
-          
-          const loginId = eventCommon.fnCommonInfoRU({ getId: "loginId" });
-          // 找出所有好友类型的会话ID，视为被删除
-          const deletedIds = this.chats.filter(c => c.type === 'friend').map(c => c.id);
-          
-          if (deletedIds.length > 0) {
-             let hasUnreadUpdate = false;
-             deletedIds.forEach(id => {
-                  eventBase.fnCommunicationSendMsg({
-                    operator: "msgDelete",
-                    data: {
-                      id: id,
-                      type: "friend",
-                      idsDelete: [],
-                      isRemoteDeletion: false,
-                      isDeleteChatWindow: false,
-                    },
-                  });
-
-                   // 删除未读消息
-                   const unreadKey = id + "friend";
-                   if (this.unreadObj[unreadKey]) {
-                     delete this.unreadObj[unreadKey];
-                     hasUnreadUpdate = true;
-                   }
-
-                   if (
-                      this.infoActive &&
-                      this.infoActive.id === id &&
-                      this.infoActive.type === "friend"
-                    ) {
-                      this.$emit("handDeleteCurrentChat", { id, type: "friend" });
-                    }
-             });
-
-             // 过滤掉好友会话，只保留群组等
-             this.chats = this.chats.filter(c => c.type !== 'friend');
-             // 清空好友会话缓存
-             Cache(`${loginId}MessageUserList`, []);
-
-             if (hasUnreadUpdate) {
-                this.unreadObj = _.cloneDeep(this.unreadObj);
-                Cache(`${loginId}-unread`, {
-                    unread: this.unreadObj,
-                });
-                this.updateUnreadCount();
+             // 同步群组基础信息 (名称、头像、免打扰)
+             const newGroupName = group.name || group.groupName;
+             if (newGroupName && chat.name !== newGroupName) {
+                chat.name = newGroupName;
+                hasUpdate = true;
              }
+             const newGroupPic = group.pic || group.icon || group.headerImage;
+             if (newGroupPic && chat.pic !== newGroupPic) {
+                chat.pic = newGroupPic;
+                hasUpdate = true;
+             }
+             if (group.bfDisturb !== undefined && chat.bfDisturb !== Boolean(group.bfDisturb)) {
+                chat.bfDisturb = Boolean(group.bfDisturb);
+                hasUpdate = true;
+                eventCommon.fnDisturbInfoSync({ id: chat.id, type: "group", bfDisturb: chat.bfDisturb });
+             }
+          } else {
+            // 已退出群组
+            isDeleted = true;
           }
+        } else if (chat.type === "channel") {
+          const channel = channelMap.get(chatIdStr);
+          if (channel) {
+             // 频道存在，同步信息 (名称、头像、免打扰)
+             const newChannelName = channel.channelName || channel.name;
+             if (newChannelName && chat.name !== newChannelName) {
+                chat.name = newChannelName;
+                hasUpdate = true;
+             }
+             const newChannelPic = channel.icon || channel.pic || channel.headerImage;
+             if (newChannelPic && chat.pic !== newChannelPic) {
+                chat.pic = newChannelPic;
+                hasUpdate = true;
+             }
+             // 同步双向免打扰字段
+             if (channel.bfDisturb !== undefined && chat.bfDisturb !== Boolean(channel.bfDisturb)) {
+                chat.bfDisturb = Boolean(channel.bfDisturb);
+                hasUpdate = true;
+                eventCommon.fnDisturbInfoSync({ id: chat.id, type: "channel", bfDisturb: chat.bfDisturb });
+             }
+             if (channel.isDisturb !== undefined && chat.isDisturb !== Boolean(channel.isDisturb)) {
+                chat.isDisturb = Boolean(channel.isDisturb);
+                hasUpdate = true;
+                eventCommon.fnDisturbInfoSync({ id: chat.id, type: "channel", isDisturb: chat.isDisturb });
+             }
+          } else {
+             // 已退出频道
+             isDeleted = true;
+          }
+        }
+
+        if (isDeleted) {
+          deletedIds.push({ id: chat.id, type: chat.type });
+          hasUpdate = true;
+        } else {
+          newChats.push(chat);
+        }
       }
-    },
+
+      // 处理被删除的会话 (好友被删、退群、退频道)
+      if (deletedIds.length > 0) {
+        let hasUnreadUpdate = false;
+        deletedIds.forEach(item => {
+           const { id, type } = item;
+
+           // 发送 msgDelete 事件通知其他组件清理
+           eventBase.fnCommunicationSendMsg({
+            operator: "msgDelete",
+            data: {
+              id: id,
+              type: type,
+              idsDelete: [],
+              isRemoteDeletion: false,
+              isDeleteChatWindow: false,
+            },
+          });
+
+          // 清理未读消息缓存
+          const unreadKey = id + type;
+          if (this.unreadObj[unreadKey]) {
+            delete this.unreadObj[unreadKey];
+            hasUnreadUpdate = true;
+          }
+
+          // 如果是当前正在打开的窗口，需要触发关闭或提示
+           if (
+              this.infoActive &&
+              this.infoActive.id === id &&
+              this.infoActive.type === type
+            ) {
+              this.$emit("handDeleteCurrentChat", { id, type });
+            }
+        });
+
+        // 如果有未读数变化，更新全局未读缓存
+        if (hasUnreadUpdate) {
+            this.unreadObj = _.cloneDeep(this.unreadObj);
+            Cache(`${loginId}-unread`, {
+                unread: this.unreadObj,
+            });
+            this.updateUnreadCount();
+        }
+      }
+
+      if (hasUpdate) {
+         // 对新的聊天列表进行排序
+         const info = eventChat.fnChatListSort(newChats);
+         this.chats = info.list;
+         chatTopSize = info.chatTopSize;
+
+         // 更新各类型本地缓存，确保下次加载时数据准确
+         const friendChats = [];
+         const groupChats = [];
+         const channelChats = [];
+
+         this.chats.forEach(item => {
+            if (item.type === "friend") friendChats.push(item);
+            else if (item.type === "group") groupChats.push(item);
+            else if (item.type === "channel") channelChats.push(item);
+         });
+
+         Cache(`${loginId}MessageUserList`, friendChats);
+         Cache(`${loginId}MessageGroupList`, groupChats);
+         Cache(`${loginId}MessageChannelList`, channelChats);
+
+         // 刷新界面未读数
+         this.updateUnreadCount();
+       }
+
+       // 4. 异步同步群组和频道的详细状态（如免打扰），因为列表接口可能不返回这些字段
+       // 这步操作只针对存在的会话进行，且分批执行，避免阻塞 UI
+       this.syncChatDetails();
+     },
+    /**
+     * 异步同步聊天列表中群组和频道的详情（主要是免打扰状态）
+     * 采用分批处理 + 延时策略，避免瞬间高并发导致页面卡顿或接口阻塞
+     */
+    async syncChatDetails() {
+       // 防止重入：如果正在同步中，则跳过
+       if (this.isSyncingDetails) return;
+       this.isSyncingDetails = true;
+
+       try {
+           // 1. 筛选出需要更新的会话 (仅针对当前聊天列表中的会话，不涉及整个通讯录)
+           const chatFriends = this.chats.filter(c => c.type === 'friend');
+           const chatGroups = this.chats.filter(c => c.type === 'group');
+           const chatChannels = this.chats.filter(c => c.type === 'channel');
+
+           if (chatFriends.length === 0 && chatGroups.length === 0 && chatChannels.length === 0) return;
+
+           let hasUpdate = false;
+
+           // 更新单个会话的辅助函数：对比数据并在变化时更新
+           const updateChat = (id, type, data) => {
+             const index = this.chats.findIndex(c => String(c.id) === String(id) && c.type === type);
+             if (index > -1) {
+                 let isChanged = false;
+                 const chat = this.chats[index];
+
+                 Object.keys(data).forEach(key => {
+                      // bfDisturb: 免打扰
+                      // bfReadCancel/bfGroupReadCancel: 阅后即焚
+                      // bfJoinCheck: 进群审核
+                      // bfJoinFriend: 群内加好友
+                      // bfShutup: 禁言
+                      // bfAddress: 保存到通讯录
+                      // bfStar: 星标
+                      // bfTop: 置顶
+                      // bfPushNotice: 推送通知
+                      if (['bfDisturb', 'isDisturb', 'bfReadCancel', 'bfGroupReadCancel', 'bfJoinCheck', 'bfJoinFriend', 'bfShutup', 'bfAddress', 'bfStar', 'bfTop', 'bfPushNotice'].includes(key)) {
+                           if (data[key] !== undefined && chat[key] !== Boolean(data[key])) {
+                               chat[key] = Boolean(data[key]);
+                               isChanged = true;
+
+                               // 特殊处理免打扰同步，确保通知其他组件（如系统托盘、通知栏）
+                               if (key === 'bfDisturb') eventCommon.fnDisturbInfoSync({ id: chat.id, type, bfDisturb: chat.bfDisturb });
+                               if (key === 'isDisturb' && type === 'channel') eventCommon.fnDisturbInfoSync({ id: chat.id, type, isDisturb: chat.isDisturb });
+                           }
+                      } else if (data[key] !== undefined && chat[key] !== data[key]) {
+                           // 增加 undefined 检查，防止意外覆盖
+                           chat[key] = data[key];
+                           isChanged = true;
+                      }
+                 });
+
+                 if (isChanged) {
+                     // 使用 splice 替换对象来触发响应式更新，确保 UI 即时反映
+                     this.chats.splice(index, 1, chat);
+                     return true;
+                 }
+             }
+             return false;
+           };
+
+           // 分批处理函数：控制并发数量并插入延时
+           const processBatch = async (items, type, fn) => {
+              const batchSize = 5; // 每次并发 5 个请求
+              for (let i = 0; i < items.length; i += batchSize) {
+                  const batch = items.slice(i, i + batchSize);
+                  // 并行处理当前批次
+                  await Promise.all(batch.map(item => fn(item)));
+
+                  // 主动延时 100ms，让出主线程，防止密集请求占用过多 CPU 或网络资源
+                  await new Promise(r => setTimeout(r, 100));
+              }
+           };
+
+           // 2. 分别处理三种类型的会话详情同步
+           // 并行执行三种类型的同步，提高效率
+           await Promise.all([
+               // 同步好友 (私聊) 详情
+               processBatch(chatFriends, 'friend', async (chat) => {
+                  try {
+                      // 构造参数，注意这里只传 targetUid
+                      const res = await getContactsDetail({ targetUid: chat.id });
+                      const info = res?.contactsDetailBase;
+                      if (info) {
+                          // 构造更新数据，参考 eventFriend.fnFriendDetailsGet 的逻辑
+                          const updateData = {
+                             bfDisturb: info.bfDisturb,
+                             bfReadCancel: info.bfReadCancel,
+                             msgCancelTime: info.msgCancelTime,
+                             bfMyBlack: info.bfMyBlack,
+                             addToken: info.addToken,
+                          };
+
+                          // 同步头像和昵称
+                          if (info.userInfo) {
+                              if (info.userInfo.icon) {
+                                  updateData.pic = info.userInfo.icon;
+                              }
+                              // 优先使用备注名
+                              const name = _.get(info.userInfo, "friendRelation.remarkName") || info.userInfo.nickName;
+                              if (name) {
+                                  updateData.name = name;
+                              }
+                          }
+
+                          if (updateChat(chat.id, 'friend', updateData)) {
+                              hasUpdate = true;
+                          }
+
+                          // 同步好友阅后即焚配置
+                          if (info.bfReadCancel) {
+                               eventCheduledCeletion.fnFriendMsgConfigRUD({
+                                   key: chat.id,
+                                   value: info.msgCancelTime,
+                               });
+                           }
+                      }
+                  } catch (e) {
+                      console.warn(`同步好友详情失败 ${chat.id}`, e);
+                  }
+               }),
+
+               // 同步群组详情
+              processBatch(chatGroups, 'group', async (chat) => {
+                try {
+                    const res = await getGroupDetail({ groupId: chat.id });
+                    if (res && res.group) {
+                        // 使用标准格式化函数
+                        const groups = eventGroup.fnGroupDataFormat([
+                           {
+                               ...res.group,
+                               bfAddress: true, // 保持与 fnGroupDetailGet 一致
+                               qrExpire: res.qrExpire,
+                               qrUrl: res.qrUrl,
+                               shortLink: res.shortLink,
+                               memberType: res.memberType,
+                               bfJoinCheck: Boolean(res.group.bfJoinCheck),
+                               groupNotice: res.groupNotice || "",
+                               bfResetQrcode: res.bfResetQrcode,
+                               bfDisturb: res.bfDisturb,
+                                ...res.right,
+                           }
+                        ]);
+
+                        if(groups && groups.length > 0) {
+                            const info = groups[0];
+
+                            // 同步群阅后即焚配置 (event/group.js 中的处理逻辑)
+                            eventCheduledCeletion.fnGroupMsgConfigRUD(
+                                info.bfGroupReadCancel
+                                    ? {
+                                          key: chat.id,
+                                          value: info.groupMsgCancelTime,
+                                      }
+                                    : { deleteId: chat.id }
+                            );
+
+                            // 移除 undefined 字段，防止 updateChat 误判
+                            const updateData = {};
+                            Object.keys(info).forEach(key => {
+                                // 过滤掉不需要同步的字段：
+                                if (['bfAddress'].includes(key)) {
+                                    return;
+                                }
+
+                                if (info[key] !== undefined) {
+                                    updateData[key] = info[key];
+                                }
+                            });
+
+                            if (updateChat(chat.id, 'group', updateData)) {
+                                hasUpdate = true;
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.warn(`同步群详情失败 ${chat.id}`, e);
+                }
+              }),
+
+              // 同步频道详情
+              processBatch(chatChannels, 'channel', async (chat) => {
+                  try {
+                      const res = await getChannelDetail({ channelId: chat.id });
+                      const info = res.data || res;
+                      if (info) {
+                          // 确保 channelId 存在
+                          if (!info.channelId) info.channelId = chat.id;
+
+                          // 使用标准格式化函数，确保数据格式统一
+                          const channelData = eventChannel.fnChannelFormat(info);
+
+                          // 如果名称或头像变化，更新显示的 name/pic 字段
+                          if(channelData.channelName) channelData.name = channelData.channelName;
+                          if(channelData.icon) channelData.pic = channelData.icon;
+
+                          // 移除 undefined 字段，防止 updateChat 误判
+                          const updateData = {};
+                          Object.keys(channelData).forEach(key => {
+                              if (channelData[key] !== undefined) {
+                                  updateData[key] = channelData[key];
+                              }
+                          });
+
+                          // 免打扰状态同步
+                          if (info.isDisturb !== undefined) {
+                              const state = Boolean(info.isDisturb);
+                              updateData.isDisturb = state;
+                              // updateData.bfDisturb = state;
+                          }
+
+                          if (updateChat(chat.id, 'channel', updateData)) {
+                              hasUpdate = true;
+                          }
+                      }
+                  } catch (e) {
+                      console.warn(`同步频道详情失败 ${chat.id}`, e);
+                  }
+              })
+          ]);
+
+          // 3. 如果有任何状态更新，同步到本地缓存并刷新未读数
+      if (hasUpdate) {
+          const friendChats = [];
+          const groupChats = [];
+          const channelChats = [];
+
+          this.chats.forEach(item => {
+             if (item.type === "friend") friendChats.push(item);
+             else if (item.type === "group") groupChats.push(item);
+             else if (item.type === "channel") channelChats.push(item);
+          });
+
+          Cache(`${loginId}MessageUserList`, friendChats);
+          Cache(`${loginId}MessageGroupList`, groupChats);
+          Cache(`${loginId}MessageChannelList`, channelChats);
+
+          // 刷新未读数
+          this.updateUnreadCount();
+      }
+    } finally {
+        // 释放锁
+        this.isSyncingDetails = false;
+    }
+  },
     /**
      * 处理事件 好友更新
      */

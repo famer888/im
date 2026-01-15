@@ -304,7 +304,7 @@ const fnChannelAdd = async (info) => {
     }
 }
 
-const fnChannelFormat = (info) => {
+export const fnChannelFormat = (info) => {
     return {
         adminPrivacy: info.adminPrivacy || 0,
         channelId: Number(info.channelId),
@@ -691,4 +691,5 @@ export default {
     // isRepetitiveSocketMsg,
     isValidSocketMsg,
     fnGetHistoryMsgs,
+    fnChannelFormat
 }
