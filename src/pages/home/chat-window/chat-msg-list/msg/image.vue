@@ -13,8 +13,8 @@
                             : handleErrorTipsGet(),
             })">
         <slot></slot>
-        <div class="content" :style="contentStyle">
-            <slot name="timeStatus" v-if="!hasError"></slot>
+        <div class="content">
+            <!-- <slot name="timeStatus" v-if="!hasError"></slot> -->
             <Overlay :loading="loading" :duration="msgInfo.duration" :percent="percent" :status="status" :isVideo="msgInfo.chatType === 3" @click="handleOpenFile" />
             <template v-if="msgInfo.local || msgInfo.localThumbUrl">
                 <i v-if="handleErrorTipsGet()">
@@ -344,17 +344,18 @@ export default {
     max-width: 400px;
     min-width: 120px;
     cursor: pointer;
-    > .content ::v-deep .comTimeStatusLabel {
-      right: 8px;
-      bottom: 8px;
-      z-index: 11;
-      background: rgba(0, 0, 0, 0.25);
-      border-radius: 9999px;
-      padding: 2px 6px;
-      > span {
-        color: white;
-      }
-    }
+    padding-bottom: 25px;
+    // > .content ::v-deep .comTimeStatusLabel {
+    //   right: 8px;
+    //   bottom: 8px;
+    //   z-index: 11;
+    //   background: rgba(0, 0, 0, 0.25);
+    //   border-radius: 9999px;
+    //   padding: 2px 6px;
+    //   > span {
+    //     color: white;
+    //   }
+    // }
 
     &.bg {
         background: #fff;
@@ -377,7 +378,6 @@ export default {
         overflow: hidden;
         min-width: 120px;
         .picture-container {
-          background: #333;
           height: 100%;
           border-radius: 6px;
           overflow: hidden;

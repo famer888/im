@@ -1,9 +1,9 @@
 <template>
   <div class="overlay" v-if="showOverlay">
     <!-- 左上角标签：duration 优先于 extension -->
-    <div class="top-left-tag" v-if="formattedDuration || extension">
+    <!-- <div class="top-left-tag" v-if="formattedDuration || extension">
       {{ formattedDuration || extension }}
-    </div>
+    </div> -->
 
     <!-- 透明遮罩层 -->
     <div class="mask" v-if="loading"></div>
@@ -20,7 +20,7 @@
             cy="24"
             r="21"
             fill="none"
-            stroke-width="3"
+            stroke-width="2"
           />
           <!-- 进度圆环 -->
           <circle
@@ -29,7 +29,7 @@
             cy="24"
             r="21"
             fill="none"
-            stroke-width="3"
+            stroke-width="2"
             :stroke-dasharray="circumference"
             :stroke-dashoffset="progressOffset"
           />
@@ -181,8 +181,17 @@ export default {
   position: absolute;
   width: 48px;
   height: 48px;
+  // 背景只覆盖内圈，不要超过最外层圆环
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 4px;
+    background: rgba(0, 0, 0, 0.75);
+    border-radius: 50%;
+  }
 
   svg {
+    position: relative;
     width: 100%;
     height: 100%;
     transform: rotate(-90deg);

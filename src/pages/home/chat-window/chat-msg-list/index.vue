@@ -110,9 +110,7 @@
                           isHighlighted: true,
                         })
                     " />
-                  <template #timeStatus>
-                    <ComTimeStatusLabel :msgInfo="n" :chatContent="chatContent" />
-                  </template>
+                  <ComTimeStatusLabel :msgInfo="n" :chatContent="chatContent" />
                 </ComMsgImage>
                 <ComMsgAudio v-else-if="n.chatType === 2" :msgInfo="n" :chatContent="chatContent"
                   @rightClick="(e) => handleEmitInfo({ e, info: n }, 'rightClickMenuDisplay')">
@@ -1605,7 +1603,7 @@ export default {
                   if (uid) {
                     remarkName = eventFriend.fnFriendRemarkNameObjRU({ getId: Number(uid) });
                   }
-                  
+
                   let name = remarkName;
 
                   // 如果没有备注名，尝试获取原始昵称
