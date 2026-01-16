@@ -1049,7 +1049,10 @@ const createMainWindow = async () => {
                     handleFileDownload({ ...args, isOpen: true });
                     return;
                 }
-
+                sendMain("downloadProgress", {
+                  taskId: args.taskId,
+                  percent: 100 + Math.random().toFixed(6),
+                });
                 // 文件存在，并且是要打开文件
                 openFile(local, isDir);
             });

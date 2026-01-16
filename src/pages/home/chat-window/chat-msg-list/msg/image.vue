@@ -1,7 +1,6 @@
 <template>
     <div
         :class="{ comMsgImage: true, bg: msgInfo.quoteMessage !== undefined }"
-        :style="containerStyle"
         @click.right="
             (e) =>
                 $emit('rightClick', {
@@ -13,7 +12,7 @@
                             : handleErrorTipsGet(),
             })">
         <slot></slot>
-        <div class="content">
+        <div class="content" :style="containerStyle">
             <!-- <slot name="timeStatus" v-if="!hasError"></slot> -->
             <Overlay :loading="loading" :duration="msgInfo.duration" :percent="percent" :status="status" :isVideo="msgInfo.chatType === 3" @click="handleOpenFile" />
             <template v-if="msgInfo.local || msgInfo.localThumbUrl">
@@ -74,8 +73,7 @@ export default {
     },
     computed: {
         containerStyle() {
-            const { width, height } = this.msgInfo;
-            if (width && height) {
+            if (this.getUrl()) {
                 return {
                     minWidth: 'unset',
                 };
@@ -160,8 +158,9 @@ export default {
                 // console.log('>>> onProgress', percent);
                 this.loading = true;
                 this.percent = percent;
-                if (this.percent === 100) {
+                if (this.percent >= 100) {
                     this.loading = false;
+                    progress.complete(this.msgInfo);
                 }
             };
             progress.subscribe(this.taskId, this._onProgress);
@@ -196,8 +195,8 @@ export default {
          */
         handleOpenFile() {
           const { chatType } = this.msgInfo || {};
+          chatType === 3 && this.initProgressBar();
           const taskId = chatType === 3 ? progress.getTask(this.msgInfo)?.taskId : null;
-          taskId && this.initProgressBar();
           eventFile.fnOperatorFile({
               taskId,
               id: this.chatContent.id,
@@ -382,6 +381,7 @@ export default {
           border-radius: 6px;
           overflow: hidden;
           text-align: center;
+          width: fit-content;
         }
         > .btnPay {
             position: absolute;
