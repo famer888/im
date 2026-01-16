@@ -150,6 +150,10 @@ export default {
     console.$collect('初始化-账户配置')
     await eventCommon.fnConfigInit(true);
 
+    // 初始化 全局配置(群/频道)
+    console.$collect('初始化-全局配置')
+    await eventCommon.fnGlobalConfigInit();
+
     // 初始化群事件
     console.$collect('初始化-群事件')
     eventGroup.fnGroupEventExecIdObjGet();

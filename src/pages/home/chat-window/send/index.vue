@@ -1,6 +1,6 @@
 <template>
   <div class="comSend">
-    <div v-if="chatContent.type === 'channel' && chatContent.isDisable" class="shutupTip disable">
+    <div v-if="!globalConfig.channel.disableUnperceived && (chatContent.type === 'channel' && chatContent.isDisable)" class="shutupTip disable">
         <img class="disabled-icon" src="@/assets/images/chat/disabled-1.png" alt="">{{ $t("该频道已禁用") }}
     </div>
     <div class="shutupTip disable channel-disable"
@@ -16,7 +16,7 @@
         {{ (chatContent.isDisturb) ? '永久静音' : '接收通知' }}
     </div>
     <div
-      v-else-if="(chatContent.bfShutup && chatContent.memberType > 1) || chatContent.isDisable"
+      v-else-if="!globalConfig.group.disableUnperceived && ((chatContent.bfShutup && chatContent.memberType > 1) || chatContent.isDisable)"
       class="shutupTip disable"
     >
      <img class="disabled-icon" src="@/assets/images/chat/disabled-1.png" alt=""> {{chatContent.isDisable ? $t("该群已禁用") : $t("全员禁言中")}}
@@ -45,6 +45,7 @@
 // 事件
 import eventBase from "@/event/base";
 import eventChannel from '@/event/channel';
+import eventCommon from '@/event/common';
 
 // 控件
 import ComEditor from "./editor.vue";
@@ -59,6 +60,11 @@ export default {
     ComReplyInfo: () => import("./quote-info.vue"),
   },
   props: ["chatContent", "quoteInfo", "groupMemberUpdateNum", "editInfo"],
+  data() {
+    return {
+      globalConfig: eventCommon.fnGlobalConfigGet(), //禁用 是否静默
+    }
+  },
   computed: {
     /**
      * 判断是否有发布消息权限

@@ -4,7 +4,14 @@
  *时间：2022年10月01日 16:28:44
  *版本：v1.3.0
  * */
-import { getUrl, baseUrl } from "./base/unit";
+import { getUrl, baseUrl, getSignHeader } from "./base/unit";
+import axios from "axios";
+const crypto = require("crypto");
+const JSONBig = require("json-bigint")({ storeAsString: true });
+import { FairGuard } from "./base/unit";
+const bodyAesKey = process.env.VUE_APP_SECRET_KEY;
+const domainUrl =  process.env.VUE_APP_OPEN_CHAT_DOMAIN;
+
 
 // 获取群列表
 export const getGroupContactList = (data, errCallback) =>
@@ -252,3 +259,133 @@ export const groupQrUrlFromShortLink = (data) =>
         url: `${baseUrl()}/group/groupQrUrlFromShortLink`,
         data,
     });
+
+// 群配置（全局配置 禁用无感知）
+export const groupGlobalConfigAPI = (data) => {
+    return requestAxios(`/group/groupConfig/globalConfig`, data, {
+        headers: {
+            ...getSignHeader(),
+        },
+    });
+};
+
+
+function concatBuffers(buffers) {
+    const totalLength = buffers.reduce((acc, buf) => acc + buf.length, 0);
+    const result = Buffer.alloc(totalLength);
+    let offset = 0;
+
+    for (const buf of buffers) {
+        buf.copy(result, offset);
+        offset += buf.length;
+    }
+
+    return result;
+}
+// AES encryption function
+function aesEncode(data, key) {
+    const cipher = crypto.createCipheriv("aes-128-ecb", Buffer.from(key), null);
+    let encrypted = cipher.update(data, "utf8", "hex");
+    encrypted += cipher.final("hex");
+    return Buffer.from(encrypted, "hex");
+}
+
+// Convert integer to bytes (big-endian)
+function toBytes(val) {
+    const buffer = Buffer.alloc(4);
+    buffer.writeUInt32BE(val, 0);
+    return buffer;
+}
+function postEncrypted(key, data) {
+    // Convert data to string if it's an object
+    if (typeof data === "object") {
+        data = JSON.stringify(data);
+    }
+
+    const dataBuffer = Buffer.from(data, "utf8");
+    const signed = aesEncode(dataBuffer, key);
+
+    // Create header [0xC1, 0x80]
+    const header = Buffer.from([0xc1, 0x80]);
+
+    // Create length buffer (4 bytes)
+    const length = toBytes(signed.length);
+
+    // Combine buffers
+    return concatBuffers([header, length, signed]);
+}
+function requestAxios(url, params, opts) {
+    const { method = "POST", headers = {}, bigIntRequestKeys = [], useBigIntResponseBody = false } = opts || {};
+    const reqBody = params || {
+        // "channelId": 100095,
+        pageNum: 1,
+        pageSize: 10,
+    };
+    // console.log('bodyAesKey', bodyAesKey)
+    let reqBodyStr;
+    if (bigIntRequestKeys && bigIntRequestKeys.length > 0) {
+        // 先用普通 JSON.stringify 序列化
+        reqBodyStr = JSON.stringify(reqBody);
+        // 只对指定的 key 把字符串值转成数字（去掉引号），如 "id":"123" -> "id":123
+        bigIntRequestKeys.forEach(key => {
+            const regex = new RegExp(`"${key}":"(\\d+)"`, 'g');
+            reqBodyStr = reqBodyStr.replace(regex, `"${key}":$1`);
+        });
+    } else {
+        reqBodyStr = reqBody;
+    }
+    const encryptedBody = postEncrypted(bodyAesKey, reqBodyStr);
+
+    return new Promise(async (resolve, reject) => {
+        const finalHeaders = {
+            "Content-Type": "application/octet-stream",
+             'Accept': 'application/json', // 最终生效的 Accept 头，仅保留 JSON
+            ...headers,
+        };
+
+        const httpDefault = {
+            method,
+            url: domainUrl + url,
+            data: encryptedBody,
+            timeout: 5000,
+            headers: finalHeaders, // 设置请求头
+            responseType: "arraybuffer",
+        };
+        axios(httpDefault)
+            .then((res) => {
+                if (res.status === 200) {
+                    // aesDecrypted()
+                    FairGuard.recieve(res);
+                    const responseData = Buffer.from(res.data);
+                    const header = responseData.slice(0, 6);
+                    const body = responseData.slice(6);
+                    // console.log('requestAxios--', body)
+                    const result = aesDecode(body, bodyAesKey);
+                        //    console.log('requestAxios-2-', result)
+                    resolve(useBigIntResponseBody ? JSONBig.parse(result) : JSON.parse(result));
+                } else {
+                    reject(res);
+                }
+            })
+            .catch((err) => {
+                reject(err);
+            });
+    });
+}
+function aesDecode(encryptedData) {
+    // 将加密数据从 Buffer 转换为十六进制字符串（如果输入是 Buffer）
+    let encryptedHex = encryptedData.toString("hex");
+
+    // 创建解密器
+    const decipher = crypto.createDecipheriv(
+        "aes-128-ecb",
+        Buffer.from(bodyAesKey),
+        null
+    );
+
+    // 解密数据
+    let decrypted = decipher.update(encryptedHex, "hex", "utf8");
+    decrypted += decipher.final("utf8");
+
+    return decrypted;
+}
