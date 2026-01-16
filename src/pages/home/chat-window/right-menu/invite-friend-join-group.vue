@@ -167,7 +167,7 @@ export default {
         // 复制群邀请链接
         async copyGroupInviteLink() {
           try {
-            const qrUrl = this.qrcodeUrl || (await groupQrCode({ groupId: this.groupId, force: false }))?.qrUrl;
+            const qrUrl = this.qrcodeUrl || (await groupQrCode({ groupId: this.groupId, force: false }))?.shortLink;
             if (qrUrl) {
               copyToClipboard(qrUrl);
               window.$toast(this.$t("链接已复制在剪贴板"));

@@ -74,7 +74,7 @@
       v-if="inviteFriendDialogVisible"
        :groupId="chatContent.id"
        :memberInfoList="memberInfoList"
-       :qrcodeUrl="chatContent.qrUrl"
+       :qrcodeUrl="chatContent.shortLink"
       @close="inviteFriendDialogVisible = false"
     />
     </div>
