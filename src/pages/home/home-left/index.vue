@@ -1810,7 +1810,8 @@ export default {
       }
       let chatInfo = null;
       // 聊天窗口 添加信息
-      if (info.content !== "") {
+      // isHide 为 true 时，不更新会话列表最后一条消息
+      if (info.content !== "" && !info.isHide) {
         chatInfo = chats.find(
           (item) => item.type === "group" && item.id === info.groupId
         );

@@ -1420,6 +1420,7 @@ const fnGroupMsgEvent = async (data, loginId) => {
         groupName: info.name,
         pic: info.pic,
         memberCount: info.memberCount,
+        isHide, // 是否隐藏消息（不更新会话列表最后一条消息）
     };
 
     // 群身份变更
@@ -1470,7 +1471,7 @@ const fnGroupMsgEvent = async (data, loginId) => {
         if (info.content !== "") {
             // 暂且注释，android还没写完，无法验证
             // isHide 为 true 时，不往消息列表添加消息，不写入数据库
-            // if (!isHide) {
+            if (!isHide) {
                 fnGroupAddMessageNotification(
                     {
                         ...info,
@@ -1480,7 +1481,7 @@ const fnGroupMsgEvent = async (data, loginId) => {
                     },
                     info.type
                 );
-            // }
+            }
         }
     }
 

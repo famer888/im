@@ -34808,6 +34808,7 @@ export const GroupReqEventMsgDto = $root.GroupReqEventMsgDto = (() => {
      * @property {GroupReqType|null} [groupReqType] GroupReqEventMsgDto groupReqType
      * @property {GroupReqStatus|null} [groupReqStatus] GroupReqEventMsgDto groupReqStatus
      * @property {Array.<IGroupMemberBase>|null} [groupMember] GroupReqEventMsgDto groupMember
+     * @property {boolean|null} [isHide] GroupReqEventMsgDto isHide
      */
 
     /**
@@ -34891,6 +34892,14 @@ export const GroupReqEventMsgDto = $root.GroupReqEventMsgDto = (() => {
     GroupReqEventMsgDto.prototype.groupMember = $util.emptyArray;
 
     /**
+     * GroupReqEventMsgDto isHide.
+     * @member {boolean} isHide
+     * @memberof GroupReqEventMsgDto
+     * @instance
+     */
+    GroupReqEventMsgDto.prototype.isHide = false;
+
+    /**
      * Creates a new GroupReqEventMsgDto instance using the specified properties.
      * @function create
      * @memberof GroupReqEventMsgDto
@@ -34931,6 +34940,8 @@ export const GroupReqEventMsgDto = $root.GroupReqEventMsgDto = (() => {
         if (message.groupMember != null && message.groupMember.length)
             for (let i = 0; i < message.groupMember.length; ++i)
                 $root.GroupMemberBase.encode(message.groupMember[i], writer.uint32(/* id 8, wireType 2 =*/66).fork()).ldelim();
+        if (message.isHide != null && Object.hasOwnProperty.call(message, "isHide"))
+            writer.uint32(/* id 9, wireType 0 =*/72).bool(message.isHide);
         return writer;
     };
 
@@ -34999,6 +35010,10 @@ export const GroupReqEventMsgDto = $root.GroupReqEventMsgDto = (() => {
                     if (!(message.groupMember && message.groupMember.length))
                         message.groupMember = [];
                     message.groupMember.push($root.GroupMemberBase.decode(reader, reader.uint32()));
+                    break;
+                }
+            case 9: {
+                    message.isHide = reader.bool();
                     break;
                 }
             default:
@@ -35099,6 +35114,9 @@ export const GroupReqEventMsgDto = $root.GroupReqEventMsgDto = (() => {
                     return "groupMember." + error;
             }
         }
+        if (message.isHide != null && message.hasOwnProperty("isHide"))
+            if (typeof message.isHide !== "boolean")
+                return "isHide: boolean expected";
         return null;
     };
 
@@ -35269,6 +35287,8 @@ export const GroupReqEventMsgDto = $root.GroupReqEventMsgDto = (() => {
                 message.groupMember[i] = $root.GroupMemberBase.fromObject(object.groupMember[i]);
             }
         }
+        if (object.isHide != null)
+            message.isHide = Boolean(object.isHide);
         return message;
     };
 
@@ -35307,6 +35327,7 @@ export const GroupReqEventMsgDto = $root.GroupReqEventMsgDto = (() => {
             object.groupNoticeMsgDto = null;
             object.groupReqType = options.enums === String ? "GROUP_TRANSFER" : 0;
             object.groupReqStatus = options.enums === String ? "CHECKING" : 0;
+            object.isHide = false;
         }
         if (message.commonMsgDto != null && message.hasOwnProperty("commonMsgDto"))
             object.commonMsgDto = $root.CommonMsgDto.toObject(message.commonMsgDto, options);
@@ -35336,6 +35357,8 @@ export const GroupReqEventMsgDto = $root.GroupReqEventMsgDto = (() => {
             for (let j = 0; j < message.groupMember.length; ++j)
                 object.groupMember[j] = $root.GroupMemberBase.toObject(message.groupMember[j], options);
         }
+        if (message.isHide != null && message.hasOwnProperty("isHide"))
+            object.isHide = message.isHide;
         return object;
     };
 
