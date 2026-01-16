@@ -130,7 +130,7 @@ export default {
         // this.handleFileDownload("default");
 
         // 如果正在进度更新，初始化上传进度监听
-        console.log('>>> loading', this.loading);
+        // console.log('>>> loading', this.loading);
         if (this.loading) {
             this.initProgressBar();
         }

@@ -18,6 +18,7 @@
 <script>
 import { remote, ipcRenderer } from "@/platform";
 import { isMac } from "@/utils/base";
+import { lockDomBeforeResize } from "@/utils/widget/lockDomBeforeResize";
 
 export default {
   data() {
@@ -26,8 +27,9 @@ export default {
     };
   },
   methods: {
-    minimize() {
+    async minimize() {
       const win = remote.getCurrentWindow();
+      await lockDomBeforeResize(false);
       win.minimize();
     },
     maximize() {

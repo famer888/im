@@ -96,7 +96,7 @@ export default {
           const names = Array.from(contactsMap.values()).flatMap(item => item.nickName).join(',');
           window.$confirm({
             title: this.$t("邀请成功"),
-            remark: `${names}，${this.$t("用户昵称开启了入群需审核，对方同意后才会进入群聊")}`,
+            remark: `${names}${this.$t("开启了入群需审核，对方同意后才会进入群聊")}`,
           })
         },
         getSelectState(info) {

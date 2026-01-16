@@ -95,6 +95,7 @@ export const fnDbMsgListFormat = (list, isGroup) => {
             MsgID: item.MsgID,
             content,
             sendTime: Number(item.sendTime),
+            isHide: item.isHide,
             chatType: item.chatType,
             msgType: item.msgType,
             result: item.result,
