@@ -430,6 +430,7 @@ export default {
       isRun: null, // 定时器
       readUsersInfo: [], // 消息的已读用户信息
       readUserTotal: 0,
+      globalConfig: eventCommon.fnGlobalConfigGet(), //禁用 是否静默
     };
   },
   computed: {
@@ -1156,9 +1157,11 @@ export default {
              this.rightMenuVisible = true;
           }, 200)
           this.$refs.rightClickMenu && this.$refs.rightClickMenu.close();
-          const typeName = this.chatContent.type === "group" ? "该群已禁用" : "该频道已禁用";
-          if (this.chatContent.isDisable) {
-            window.$toast(typeName);
+          if(this.chatContent.type === "group" && !this.globalConfig.group.disableUnperceived && this.chatContent.isDisable){
+            window.$toast('该群已禁用');
+          }
+          if(this.chatContent.type === "channel" && !this.globalConfig.channel.disableUnperceived && this.chatContent.isDisable){
+            window.$toast('该频道已禁用');
           }
           break;
         }

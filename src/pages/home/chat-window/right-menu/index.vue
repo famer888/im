@@ -5,7 +5,8 @@
      <template v-if="chatContent.type === 'channel'">
        <ChannelLink v-if="chatContent.linkType !== 1 || [1, 2].includes(chatContent.memberType)"  :chatContent="chatContent"  @showQrCode="channelQrcodeVisilbe = true" />
        <ComChannelQrcode v-if="channelQrcodeVisilbe" :chatContent="chatContent"  @close="channelQrcodeVisilbe = false" />
-      <div class="channel-notice">
+     <!-- 频道静默禁用判断 -->
+       <div class="channel-notice" v-if="!globalConfig.channel.disableUnperceived">
          <ChannelNotice :remark="remark" :memberInfoList="channelUserList" :chatContent="chatContent" />
       </div>
      </template>
@@ -14,8 +15,8 @@
       :chatContent="chatContent"
       @showGroupQrCode="groupQrcodeVisilbe = true"
       />
-
-      <ComGroupNotice :notice="notice" :memberInfoList="memberInfoList" :chatContent="chatContent" />
+      <!-- 群静默禁用判断 -->
+      <ComGroupNotice v-if="!globalConfig.group.disableUnperceived" :notice="notice" :memberInfoList="memberInfoList" :chatContent="chatContent" />
       <ComGroupQrcode
         v-if="groupQrcodeVisilbe"
         :chatContent="chatContent"
@@ -137,6 +138,7 @@ export default {
       friendList: [],
       channelUserList: [], // 频道成员列表
       inviteFriendDialogVisible: false, // 邀请好友入群会话框 是否显示
+      globalConfig: eventCommon.fnGlobalConfigGet(), //禁用 是否静默
     };
   },
   created() {

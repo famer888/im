@@ -6,8 +6,8 @@ import { remote } from "@/platform";
 
 // api
 import { UpdateContacts, getChatSensitive } from "@/api/imBase";
-import { GroupUpdate, groupOrUserDetail } from "@/api/imGroup";
-import { updateMember, searchAliasContent } from "@/api/imChannel";
+import { GroupUpdate, groupOrUserDetail, groupGlobalConfigAPI } from "@/api/imGroup";
+import { updateMember, searchAliasContent, channelGlobalConfigAPI } from "@/api/imChannel";
 import buildTimeConfig from "../build-time.json";
 
 // 事件
@@ -461,6 +461,7 @@ const fnNewFriendOrGroup = (text) => {
               bfJoinFriend: groupAlias.groupBaseResp.bfJoinFriend,
               bfJoinCheck: groupAlias.groupBaseResp.bfJoinCheck,
               remark: groupAlias.groupBaseResp.remark,
+              bfBanned: groupAlias.groupBaseResp.bfBanned, // 群禁用
             },
           },
         });
@@ -498,6 +499,39 @@ const fnNewFriendOrGroup = (text) => {
       window.$toast(res?.msg || i18n.t("抱歉，该用户/群似乎不存在"));
     }
   });
+};
+
+// 全局配置信息
+let globalConfig = {
+  group: {},
+  channel: {}
+};
+
+/**
+ * 全局配置信息 初始化
+ */
+const fnGlobalConfigInit = async () => {
+  try {
+    const [resGroup, resChannel] = await Promise.all([
+      groupGlobalConfigAPI({}),
+      channelGlobalConfigAPI({})
+    ]);
+    if (resGroup && resGroup.code === 200) {
+      globalConfig.group = resGroup.data;
+    }
+    if (resChannel && resChannel.code === 200) {
+      globalConfig.channel = resChannel.data;
+    }
+  } catch (error) {
+    console.error("fnGlobalConfigInit error:", error);
+  }
+};
+
+/**
+ * 全局配置信息 获取
+ */
+const fnGlobalConfigGet = () => {
+  return globalConfig;
 };
 
 // 设置信息 账户的
@@ -770,4 +804,6 @@ export default {
   fnInitOnlineInfo,
   fnOnlineInfoGet,
   fnFakeSendSensitivesGet,
+  fnGlobalConfigInit,
+  fnGlobalConfigGet,
 };

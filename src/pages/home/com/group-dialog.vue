@@ -7,7 +7,8 @@
       <ComImage :src="groupInfo.pic" type="group" />
       <span>{{ groupInfo.name }}</span>
       <p>{{ memberCountRemark }}</p>
-      <div class="remark-container">
+      <!-- 群禁用状态 不展示简介 -->
+      <div class="remark-container" v-if="!groupInfo.bfBanned">
         <div class="remark-content" ref="remarkContent" :class="{ 'expanded': isRemarkExpanded }">
           <ComLableEle v-for="(item, index) in remarkTagList" :key="index" :info="item" @atClick="handleAtClick" />
         </div>
@@ -371,6 +372,10 @@ export default {
         msg: "申请入群",
       }).then(async (res) => {
         const { errMsg, errCode } = res?.commonResult || {};
+        if (res === 1021) {
+          window.$toast(this.$t("请联系客服#00001"));
+          return;
+        }
         if (errCode != 200) {
           window.$toast(errMsg || res?.errorDesc || this.$t("加入群聊失败"));
         } else {
@@ -380,10 +385,10 @@ export default {
           } else {
             // 直接入群成功
             window.$toast(this.$t("加入群聊成功"));
-            
+
             // 更新缓存
             await this.addToGroupList(this.groupInfo);
-            
+
             // 发送入群通知
             eventGroup.fnGroupAddMessageNotification({
               groupId: Number(id),

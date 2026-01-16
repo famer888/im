@@ -179,6 +179,15 @@ export const getGameGlobalConfig = (data) =>
         }
     );
 
+// 频道配置（全局配置 禁用无感知）
+export const channelGlobalConfigAPI = (data) => {
+    return requestAxios(`/channel/channelConfig/globalConfig`, data, {
+        headers: {
+            ...getSignHeader(),
+        },
+    });
+};
+
 function concatBuffers(buffers) {
     const totalLength = buffers.reduce((acc, buf) => acc + buf.length, 0);
     const result = Buffer.alloc(totalLength);
