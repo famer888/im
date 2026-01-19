@@ -117,6 +117,10 @@ message GroupBase {
     int32       groupMsgCancelTime   = 11; //群消息销毁时间[秒] v1.3.0
     bool        bfBanned   = 12;  //群是否未被限制 0未 1是 v1.4.0
     string      groupAliasName = 13; //群别名
+    string      remark          = 14; //群简介
+    int32       maxMemberCount  = 15; //最大成员数 add v6.4.0
+    bool        bfJoinNotice  = 16; // 进群通知
+    string      notice  = 17; // 群简介 6.5.0
 }
 
 // 群请求记录信息体

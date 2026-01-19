@@ -71,6 +71,7 @@ class InviteLink {
       groupAliasName: groupBase.groupAliasName,
       addToken: groupInfo.addToken,
       bfMember: groupInfo.bfMember,
+      remark: groupBase.notice,
     };
 
     if (groupInfo?.bfMember) {

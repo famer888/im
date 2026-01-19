@@ -614,6 +614,10 @@ export const GroupBase = $root.GroupBase = (() => {
      * @property {number|null} [groupMsgCancelTime] GroupBase groupMsgCancelTime
      * @property {boolean|null} [bfBanned] GroupBase bfBanned
      * @property {string|null} [groupAliasName] GroupBase groupAliasName
+     * @property {string|null} [remark] GroupBase remark
+     * @property {number|null} [maxMemberCount] GroupBase maxMemberCount
+     * @property {boolean|null} [bfJoinNotice] GroupBase bfJoinNotice
+     * @property {string|null} [notice] GroupBase notice
      */
 
     /**
@@ -736,6 +740,38 @@ export const GroupBase = $root.GroupBase = (() => {
     GroupBase.prototype.groupAliasName = "";
 
     /**
+     * GroupBase remark.
+     * @member {string} remark
+     * @memberof GroupBase
+     * @instance
+     */
+    GroupBase.prototype.remark = "";
+
+    /**
+     * GroupBase maxMemberCount.
+     * @member {number} maxMemberCount
+     * @memberof GroupBase
+     * @instance
+     */
+    GroupBase.prototype.maxMemberCount = 0;
+
+    /**
+     * GroupBase bfJoinNotice.
+     * @member {boolean} bfJoinNotice
+     * @memberof GroupBase
+     * @instance
+     */
+    GroupBase.prototype.bfJoinNotice = false;
+
+    /**
+     * GroupBase notice.
+     * @member {string} notice
+     * @memberof GroupBase
+     * @instance
+     */
+    GroupBase.prototype.notice = "";
+
+    /**
      * Creates a new GroupBase instance using the specified properties.
      * @function create
      * @memberof GroupBase
@@ -785,6 +821,14 @@ export const GroupBase = $root.GroupBase = (() => {
             writer.uint32(/* id 12, wireType 0 =*/96).bool(message.bfBanned);
         if (message.groupAliasName != null && Object.hasOwnProperty.call(message, "groupAliasName"))
             writer.uint32(/* id 13, wireType 2 =*/106).string(message.groupAliasName);
+        if (message.remark != null && Object.hasOwnProperty.call(message, "remark"))
+            writer.uint32(/* id 14, wireType 2 =*/114).string(message.remark);
+        if (message.maxMemberCount != null && Object.hasOwnProperty.call(message, "maxMemberCount"))
+            writer.uint32(/* id 15, wireType 0 =*/120).int32(message.maxMemberCount);
+        if (message.bfJoinNotice != null && Object.hasOwnProperty.call(message, "bfJoinNotice"))
+            writer.uint32(/* id 16, wireType 0 =*/128).bool(message.bfJoinNotice);
+        if (message.notice != null && Object.hasOwnProperty.call(message, "notice"))
+            writer.uint32(/* id 17, wireType 2 =*/138).string(message.notice);
         return writer;
     };
 
@@ -873,6 +917,22 @@ export const GroupBase = $root.GroupBase = (() => {
                     message.groupAliasName = reader.string();
                     break;
                 }
+            case 14: {
+                    message.remark = reader.string();
+                    break;
+                }
+            case 15: {
+                    message.maxMemberCount = reader.int32();
+                    break;
+                }
+            case 16: {
+                    message.bfJoinNotice = reader.bool();
+                    break;
+                }
+            case 17: {
+                    message.notice = reader.string();
+                    break;
+                }
             default:
                 reader.skipType(tag & 7);
                 break;
@@ -947,6 +1007,18 @@ export const GroupBase = $root.GroupBase = (() => {
         if (message.groupAliasName != null && message.hasOwnProperty("groupAliasName"))
             if (!$util.isString(message.groupAliasName))
                 return "groupAliasName: string expected";
+        if (message.remark != null && message.hasOwnProperty("remark"))
+            if (!$util.isString(message.remark))
+                return "remark: string expected";
+        if (message.maxMemberCount != null && message.hasOwnProperty("maxMemberCount"))
+            if (!$util.isInteger(message.maxMemberCount))
+                return "maxMemberCount: integer expected";
+        if (message.bfJoinNotice != null && message.hasOwnProperty("bfJoinNotice"))
+            if (typeof message.bfJoinNotice !== "boolean")
+                return "bfJoinNotice: boolean expected";
+        if (message.notice != null && message.hasOwnProperty("notice"))
+            if (!$util.isString(message.notice))
+                return "notice: string expected";
         return null;
     };
 
@@ -1016,6 +1088,14 @@ export const GroupBase = $root.GroupBase = (() => {
             message.bfBanned = Boolean(object.bfBanned);
         if (object.groupAliasName != null)
             message.groupAliasName = String(object.groupAliasName);
+        if (object.remark != null)
+            message.remark = String(object.remark);
+        if (object.maxMemberCount != null)
+            message.maxMemberCount = object.maxMemberCount | 0;
+        if (object.bfJoinNotice != null)
+            message.bfJoinNotice = Boolean(object.bfJoinNotice);
+        if (object.notice != null)
+            message.notice = String(object.notice);
         return message;
     };
 
@@ -1062,6 +1142,10 @@ export const GroupBase = $root.GroupBase = (() => {
             object.groupMsgCancelTime = 0;
             object.bfBanned = false;
             object.groupAliasName = "";
+            object.remark = "";
+            object.maxMemberCount = 0;
+            object.bfJoinNotice = false;
+            object.notice = "";
         }
         if (message.groupId != null && message.hasOwnProperty("groupId"))
             if (typeof message.groupId === "number")
@@ -1101,6 +1185,14 @@ export const GroupBase = $root.GroupBase = (() => {
             object.bfBanned = message.bfBanned;
         if (message.groupAliasName != null && message.hasOwnProperty("groupAliasName"))
             object.groupAliasName = message.groupAliasName;
+        if (message.remark != null && message.hasOwnProperty("remark"))
+            object.remark = message.remark;
+        if (message.maxMemberCount != null && message.hasOwnProperty("maxMemberCount"))
+            object.maxMemberCount = message.maxMemberCount;
+        if (message.bfJoinNotice != null && message.hasOwnProperty("bfJoinNotice"))
+            object.bfJoinNotice = message.bfJoinNotice;
+        if (message.notice != null && message.hasOwnProperty("notice"))
+            object.notice = message.notice;
         return object;
     };
 
