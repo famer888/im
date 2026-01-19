@@ -1293,6 +1293,13 @@ export default {
               processBatch(chatGroups, 'group', async (chat) => {
                 try {
                     const res = await getGroupDetail({ groupId: chat.id });
+                    if (res === 1021) {
+                        // 群被禁用
+                         if (updateChat(chat.id, 'group', { isDisable: true })) {
+                            hasUpdate = true;
+                        }
+                        return;
+                    }
                     if (res && res.group) {
                         // 使用标准格式化函数
                         const groups = eventGroup.fnGroupDataFormat([

@@ -1740,6 +1740,14 @@ const fnGroupInitDelayedList = () => {
  */
 const fnGroupDetailGet = (groupId) => {
     getGroupDetail({ groupId }).then((res) => {
+        if (res === 1021) {
+             eventBase.fnCommunicationSendMsg({
+                operator: "groupUpdate",
+                data: { type: "group", id: groupId, values: { id: groupId, isDisable: true } },
+            });
+            return;
+        }
+
         if (res && res.group) {
             const info = fnGroupDataFormat([
                 {
@@ -1915,6 +1923,12 @@ const fnGroupDetailInit = (groupId) => {
                 // console.log(`[${groupId}]getGroupDetail--`,res)
                 // 如果该群聊因违反相关规定，已被限制使用
                 if (res === 1021) {
+                    // 通讯
+                    eventBase.fnCommunicationSendMsg({
+                        operator: "groupUpdate",
+                        data: { type: "group", id: groupId, values: { id: groupId, isDisable: true } },
+                    });
+
                     // 移除详情获取
                     groupInitDetailsGetList = groupInitDetailsGetList.filter(
                         (item) => item !== groupId

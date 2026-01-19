@@ -1470,7 +1470,45 @@ const fnMsgSend = async (info) => {
         // benchmark: 初始化消息发送日志
         benchmark.initSendLog(item.customMsgId);
 
-        const isHide = shouldPreventSendingMessage(item.params?.text);
+        // 再添加一个判断是否群、频道禁用后静默发送
+        // 获取全局配置
+        const globalConfig = eventCommon.fnGlobalConfigGet() || { group: {}, channel: {} };
+        let isSilentDisabled = false;
+
+        // 检查静默禁用状态
+        if (type === "group" && globalConfig.group?.disableUnperceived) {
+            const infoActive = eventCommon.fnCommonInfoRU({ getId: "infoActive" });
+            let groupInfo = null;
+
+            if (infoActive && String(infoActive.id) === String(id) && infoActive.type === type) {
+                groupInfo = infoActive;
+            } else {
+                const loginId = eventCommon.fnCommonInfoRU({ getId: "loginId" });
+                const list = await Cache(`${loginId}-GroupList`) || [];
+                groupInfo = list.find(i => String(i.id) === String(id));
+            }
+
+            if (groupInfo && groupInfo.isDisable) {
+                isSilentDisabled = true;
+            }
+        } else if (type === "channel" && globalConfig.channel?.disableUnperceived) {
+            const infoActive = eventCommon.fnCommonInfoRU({ getId: "infoActive" });
+            let channelInfo = null;
+
+            if (infoActive && String(infoActive.id) === String(id) && infoActive.type === type) {
+                channelInfo = infoActive;
+            } else {
+                const loginId = eventCommon.fnCommonInfoRU({ getId: "loginId" });
+                const list = await Cache(`${loginId}-ChannelList`) || [];
+                channelInfo = list.find(i => String(i.channelId) === String(id));
+            }
+
+            if (channelInfo && channelInfo.isDisable) {
+                isSilentDisabled = true;
+            }
+        }
+
+        const isHide = isSilentDisabled || shouldPreventSendingMessage(item.params?.text);
 
         // 发送
         sendMessage(
