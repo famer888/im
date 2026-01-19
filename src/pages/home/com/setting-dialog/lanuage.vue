@@ -67,3 +67,8 @@ export default {
   },
 };
 </script>
+<style lang="scss">
+  .select {
+    font-family: "Times New Roman";
+  }
+</style>
