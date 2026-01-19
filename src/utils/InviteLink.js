@@ -82,6 +82,7 @@ class InviteLink {
           ...formatted,
           type: "group",
           comType: "chat",
+          showTip: true,
         },
       });
     } else {

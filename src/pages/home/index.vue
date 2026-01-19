@@ -356,6 +356,10 @@ export default {
             }
           }
         } else if (info?.type === 'group') {
+          if (info.showTip && this.infoActive?.id == info.id) {
+            window.$toast("您已在该群聊");
+            return;
+          }
           const curGroup = this.groupList.find((item) => item.id == info.id);
           current = {
             memberCount: curGroup?.memberCount || 0
