@@ -619,7 +619,7 @@ const fnAtClick = async (text, currentGuoupId) => {
 
       if (groupInfo) {
         if (currentGuoupId == groupInfo.id) {
-          window.$toast(i18n.t("您已在该群聊"));
+          window.$toast(i18n.t("您已在群聊"));
           return;
         }
 
