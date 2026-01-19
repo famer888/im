@@ -1410,5 +1410,8 @@ export default {
       white-space: nowrap;
     }
   }
+  .input_div{
+    font-family: "Times New Roman"
+  }
 }
 </style>

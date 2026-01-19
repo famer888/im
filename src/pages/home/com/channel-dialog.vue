@@ -43,6 +43,7 @@ import {
 // 事件
 import eventBase from "@/event/base";
 import eventChannel from "@/event/channel";
+import eventCommon from '@/event/common';
 
 import ComTextAvatar from '@/components/text-avatar';
 import ComLableEle from "@/pages/home/com/lable-ele.vue";
@@ -459,6 +460,7 @@ export default {
       padding: 0 20px;
       box-sizing: border-box;
       position: relative;
+      font-family: "Times New Roman";
 
       .remark-content {
         font-size: 12px;

@@ -1921,7 +1921,8 @@ export default {
       overflow-y: auto;
       padding: 10px 10px 16px 10px;
       box-sizing: border-box;
-      font-family: PingFangSC-Bold;
+      // font-family: PingFangSC-Bold;
+      font-family: "Times New Roman";
 
       >div {
         overflow: hidden;

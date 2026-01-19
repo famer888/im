@@ -121,6 +121,7 @@ export default {
 
   .notice-content {
     overflow-y: scroll;
+    font-family: "Times New Roman";
 
     >.at {
       margin: 0;

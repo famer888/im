@@ -515,6 +515,7 @@ export default {
     padding: 0 20px;
     box-sizing: border-box;
     position: relative;
+    font-family: "Times New Roman";
 
     .remark-content {
       font-size: 12px;
