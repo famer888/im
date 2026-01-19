@@ -8,7 +8,7 @@
       <span>{{ groupInfo.name }}</span>
       <p>{{ memberCountRemark }}</p>
       <!-- 群禁用状态 不展示简介 -->
-      <div class="remark-container" v-if="!groupInfo.bfBanned">
+      <div class="remark-container" v-if="!(globalConfig.group.disableUnperceived && groupInfo.bfBanned)">
         <div class="remark-content" ref="remarkContent" :class="{ 'expanded': isRemarkExpanded }">
           <ComLableEle v-for="(item, index) in remarkTagList" :key="index" :info="item" @atClick="handleAtClick" />
         </div>
@@ -50,6 +50,7 @@ export default {
       isRemarkExpanded: false,
       showToggleBtn: false,
       remarkTagList: [],
+      globalConfig: eventCommon.fnGlobalConfigGet(), //禁用 是否静默
     };
   },
   mounted() {
