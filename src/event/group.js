@@ -1242,8 +1242,11 @@ const fnGroupMsgEvent = async (data, loginId) => {
             const { msg } = commonMsgDto;
             info.type = "groupDisable";
             info.isDisable = true;
-            info.content = msg;
-            info.notification = msg;
+            // isHide true群静默禁用
+            if (!isHide) {
+                info.content = msg;
+                info.notification = msg;
+            }
             break;
         }
         case 12: {
@@ -1345,8 +1348,11 @@ const fnGroupMsgEvent = async (data, loginId) => {
             const { msg } = commonMsgDto;
             info.type = "groupDisable";
             info.isDisable = false;
-            info.content = msg;
-            info.notification = msg;
+            // isHide true群静默启用
+            if (!isHide) {
+                info.content = msg;
+                info.notification = msg;
+            }
             delete info.name;
             break;
         }
