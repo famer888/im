@@ -73,6 +73,7 @@ export default {
     };
   },
   created() {
+    console.error('GroupInvitation component created');
     // 监听群通知事件
     eventBase.fnCommunicationMonitoring(
       "groupInvitationUpdate",
@@ -118,6 +119,7 @@ export default {
           let groupInfoList = [];
           res.groupReqs.forEach((item) => {
             let row = {
+              isHide: item.isHide,
               content: "",
               createTime: Number(item.createTime),
               groupId: Number(item.groupId),
@@ -134,7 +136,8 @@ export default {
             groupInfoList.push(row);
           });
           // console.log('>>>>>>>>>>>>>>>>> 108 handleUpdateList', res)
-          this.list = groupInfoList;
+          // 静默过滤禁用启用
+          this.list = groupInfoList.filter(item => !item.isHide);
         }
       });
     },

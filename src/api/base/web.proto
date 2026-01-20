@@ -30,7 +30,7 @@ import "common.proto";
 //黑名单列表req [/contacts/blackList]  --BlackListResp
 //我的群聊（通讯录）req [/group/groupContractList] --GroupContactListResp
 //群成员列表req [/group/groupMemberList] --groupMemberList
-//获取群简介详情req [/group/groupNoticeDetail] --GroupNoticeDetailReq
+//获取群公告详情req [/group/groupNoticeDetail] --GroupNoticeDetailReq
 //更新群设置req [/group/groupUpdate] --GroupUpdateResp
 //群聊消息回执详情req [/group/groupMsgReceipt] --GroupMsgReceiptResp
 //群详情请求req [/group/groupDetail] -- GroupDetailResp
@@ -347,6 +347,7 @@ enum ContactsAddType {
     REQ_MSG = 4; //朋友申请信息
     LINK    = 5; //链接 v1.4.0
     IDENTIFY = 6; //68号 v1.4.0
+    CHANNEL  = 7; //频道
 }
 
 // 投诉类型(原因)
@@ -539,8 +540,8 @@ enum GroupOperator {
     UPDATE_GROUP_PIC    = 9; // 更新群头像 UpdateReq
     JOIN_FRIEND         = 10; // 更新禁止加好友
     SHUTUP              = 11; // 禁言
-    NOTICE              = 12; // 群简介[发布]
-    CLEAR_NOTICE        = 13; // 群简介[清除]
+    NOTICE              = 12; // 群公告[发布]
+    CLEAR_NOTICE        = 13; // 群公告[清除]
     ADD_ADMIN           = 14; // 新增管理员
     EDIT_ADMIN          = 15; // 编辑管理员
     GROUP_READ_CANCEL_OP       = 16;// 群阅后即焚 v1.3.0
@@ -564,6 +565,7 @@ message GroupReqInfo {
     int64       updateTime          = 13; // 更新时间戳
     int64       groupHostUid        = 14; // 群主UID
     GroupMemberType checkUserType   = 21; // 审核人群身份类型 add V1.1.0 未使用到
+    bool              isHide        = 22; // 是否隐藏  v650
 }
 
 // 群基本信息
@@ -596,8 +598,8 @@ message GroupParam {
     string          pic             = 9; // 群图标
     bool            joinFriend      = 10; // 是否禁止加好友
     bool            shutup          = 11; // 是否禁言
-    string          notice          = 12; // 群简介内容
-    bool            bfAll     = 13; // 群简介是否通知所有人
+    string          notice          = 12; // 群公告内容
+    bool            bfAll     = 13; // 群公告是否通知所有人
     bool            bfGroupReadCancel    = 14;  //群阅后即焚 add v1.3.0
     int32           groupMsgCancelTime   = 15;  //群消息销毁时间[秒] add v1.3.0
 }
@@ -647,7 +649,7 @@ message GroupDetailResp {
     bool                bfDisturb       = 6; // 当前用户免打扰
     bool                bfAddress       = 7; // 当前用户保存通讯录
     AdminRightBase      right           = 8; // 当前用户管理员权限   add v1.1.0
-    GroupNoticeBase     groupNotice     = 9; // 群简介 add v1.1.0
+    GroupNoticeBase     groupNotice     = 9; // 群公告 add v1.1.0
     GroupMemberType     memberType      = 10; // 当前用户群身份类型 add v1.1.0
     string              qrUrl           = 11; // 生成二维码相对URL
     int64               qrExpire        = 12; // 二级码URL过期时间戳
@@ -655,17 +657,17 @@ message GroupDetailResp {
     string              shortLink       = 15; // 二维码短链 add v6.5.0
 }
 
-//获取群简介详情req [/group/groupNoticeDetail]（暂未使用）
+//获取群公告详情req [/group/groupNoticeDetail]（暂未使用）
 message GroupNoticeDetailReq {
     ClientInfo clientInfo = 1; // 客户端信息
     int64 groupId = 2; // 群组id
     int64 noticeId = 3; // 公告id
 }
 
-//获取群简介详情resp
+//获取群公告详情resp
 message GroupNoticeDetailResp {
     CommonResult commonResult = 1; // 结果信息
-    GroupNoticeBase notice = 2; // 群简介
+    GroupNoticeBase notice = 2; // 群公告
 }
 
 // 更新群设置请求 [/group/groupUpdate]
@@ -678,7 +680,7 @@ message GroupUpdateReq {
 // 更新群设置响应
 message GroupUpdateResp {
     CommonResult commonResult = 1; // 结果信息
-    int64 noticeId = 2; //op为发布群简介时下发
+    int64 noticeId = 2; //op为发布群公告时下发
 }
 
 //群聊消息回执详情req [/group/groupMsgReceipt]（暂未使用）

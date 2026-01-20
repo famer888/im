@@ -140,6 +140,7 @@ message GroupReqInfo {
     int64       updateTime          = 13; // 更新时间戳
     int64       groupHostUid        = 14; // 群主UID
     GroupMemberType checkUserType   = 21; // 审核人（审核时）群身份类型 add V1.1.0(暂未使用)
+    bool              isHide        = 22; // 是否隐藏  v650
 }
 
 // 群发助手消息发送体

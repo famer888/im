@@ -1246,6 +1246,7 @@ export const GroupReqInfo = $root.GroupReqInfo = (() => {
      * @property {number|Long|null} [updateTime] GroupReqInfo updateTime
      * @property {number|Long|null} [groupHostUid] GroupReqInfo groupHostUid
      * @property {GroupMemberType|null} [checkUserType] GroupReqInfo checkUserType
+     * @property {boolean|null} [isHide] GroupReqInfo isHide
      */
 
     /**
@@ -1384,6 +1385,14 @@ export const GroupReqInfo = $root.GroupReqInfo = (() => {
     GroupReqInfo.prototype.checkUserType = 0;
 
     /**
+     * GroupReqInfo isHide.
+     * @member {boolean} isHide
+     * @memberof GroupReqInfo
+     * @instance
+     */
+    GroupReqInfo.prototype.isHide = false;
+
+    /**
      * Creates a new GroupReqInfo instance using the specified properties.
      * @function create
      * @memberof GroupReqInfo
@@ -1437,6 +1446,8 @@ export const GroupReqInfo = $root.GroupReqInfo = (() => {
             writer.uint32(/* id 14, wireType 0 =*/112).int64(message.groupHostUid);
         if (message.checkUserType != null && Object.hasOwnProperty.call(message, "checkUserType"))
             writer.uint32(/* id 21, wireType 0 =*/168).int32(message.checkUserType);
+        if (message.isHide != null && Object.hasOwnProperty.call(message, "isHide"))
+            writer.uint32(/* id 22, wireType 0 =*/176).bool(message.isHide);
         return writer;
     };
 
@@ -1531,6 +1542,10 @@ export const GroupReqInfo = $root.GroupReqInfo = (() => {
                 }
             case 21: {
                     message.checkUserType = reader.int32();
+                    break;
+                }
+            case 22: {
+                    message.isHide = reader.bool();
                     break;
                 }
             default:
@@ -1654,6 +1669,9 @@ export const GroupReqInfo = $root.GroupReqInfo = (() => {
             case 2:
                 break;
             }
+        if (message.isHide != null && message.hasOwnProperty("isHide"))
+            if (typeof message.isHide !== "boolean")
+                return "isHide: boolean expected";
         return null;
     };
 
@@ -1865,6 +1883,8 @@ export const GroupReqInfo = $root.GroupReqInfo = (() => {
             message.checkUserType = 2;
             break;
         }
+        if (object.isHide != null)
+            message.isHide = Boolean(object.isHide);
         return message;
     };
 
@@ -1917,6 +1937,7 @@ export const GroupReqInfo = $root.GroupReqInfo = (() => {
             } else
                 object.groupHostUid = options.longs === String ? "0" : 0;
             object.checkUserType = options.enums === String ? "HOST" : 0;
+            object.isHide = false;
         }
         if (message.groupReqId != null && message.hasOwnProperty("groupReqId"))
             if (typeof message.groupReqId === "number")
@@ -1963,6 +1984,8 @@ export const GroupReqInfo = $root.GroupReqInfo = (() => {
                 object.groupHostUid = options.longs === String ? $util.Long.prototype.toString.call(message.groupHostUid) : options.longs === Number ? new $util.LongBits(message.groupHostUid.low >>> 0, message.groupHostUid.high >>> 0).toNumber() : message.groupHostUid;
         if (message.checkUserType != null && message.hasOwnProperty("checkUserType"))
             object.checkUserType = options.enums === String ? $root.GroupMemberType[message.checkUserType] === undefined ? message.checkUserType : $root.GroupMemberType[message.checkUserType] : message.checkUserType;
+        if (message.isHide != null && message.hasOwnProperty("isHide"))
+            object.isHide = message.isHide;
         return object;
     };
 
