@@ -1489,7 +1489,16 @@ export default {
           let channelInfo = null;
           if (channelList && channelList.length) {
             channelInfo = channelList.find((item) => Number(item.channelId) === Number(channelId));
-            const resItem = recentMsgs.find(item => Number(item.MsgID) === Number(latestMsgId));
+            // const resItem = recentMsgs.find(item => Number(item.MsgID) === Number(latestMsgId));
+            // 倒序查找第一条非隐藏消息（排除他人发送的 isHide）
+            let resItem = null;
+            for (let i = recentMsgs.length - 1; i >= 0; i--) {
+                const item = recentMsgs[i];
+                if (!(item.isHide && !item.isSelf)) {
+                    resItem = item;
+                    break;
+                }
+            }
             if (channelInfo && resItem) {
               // 通知左侧列表更新
               eventBase.fnCommunicationSendMsg({
@@ -1582,7 +1591,16 @@ export default {
         });
 
         // 获取最后一条消息
-        const lastMsg = recentMsgs[recentMsgs.length - 1];
+        // const lastMsg = recentMsgs[recentMsgs.length - 1];
+        let lastMsg = null;
+        for (let i = recentMsgs.length - 1; i >= 0; i--) {
+            const item = recentMsgs[i];
+            // 排除隐藏消息（非自己发送的 isHide）
+            if (!(item.isHide && !item.isSelf)) {
+                lastMsg = item;
+                break;
+            }
+        }
         if (!lastMsg) return;
 
         Cache(`${loginId}MessageGroupList`).then(async (groupList) => {
