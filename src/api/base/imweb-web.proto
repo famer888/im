@@ -19,7 +19,7 @@ enum MessageType {
     nameCard = 5; //名片
     system = 6;//系统
     file    = 7; // 文件
-    notice  = 8; // 群简介
+    notice  = 8; // 群公告
     dynamicImage = 9; // 动图
     redPacket = 10; // 红包
     html      = 11; // 机器人消息占用
@@ -30,6 +30,8 @@ enum MessageType {
     html2      = 16; // html
     mediasCaption      = 17; // 多视频图片和文字描述
     animatedGame  = 18; // 游戏消息
+    redPacketCountChange  = 19; // 红包游戏-领取数量变化
+    redPacketGameEvent  = 20; // 红包游戏-（游戏开包， 游戏结束）-通过RedPacketObj pushType字段进行区分
 }
 // 聊天消息类型
 enum ChatMessageType {
@@ -128,6 +130,7 @@ message  ChannelMessage {
     UploadChannelType channelType = 12;       // OSS上传通道类型
     int32                 msgFrom = 13;       // 消息来源 0-68,1-机器人
     repeated LinkObj  links       = 14;       // links 文本消息中带的链接数组
+    bool         isHide           = 15;       // 是否是 隐藏消息
 }
 
 message AtUser {
@@ -506,7 +509,7 @@ message SystemObj {
     string content = 1; //系统消息文本内容
 }
 
-//群简介消息 add V1.1.0
+//群公告消息 add V1.1.0
 message GroupNoticeObj {
     string content = 1; // 公告内容
     int64 noticeId = 2; //公告ID
@@ -587,7 +590,8 @@ message ChatSensitivePushMsg {
     repeated string addSensitives       = 1; // 新增集合
     repeated string delSensitives       = 2; // 删除集合
     int64           version             = 3; // 当前更新版本
-    repeated string fakeSendSensitives  = 4; // 假发送集合-每次全推送
+    repeated string updateFakeSendSensitives  = 4; // 新增-假发送集合
+    repeated string delFakeSendSensitives  = 5; // 删除-假发送集合
 }
 
 // imWeb白名单翻译推送实体  7002

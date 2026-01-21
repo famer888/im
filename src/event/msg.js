@@ -382,6 +382,11 @@ const fnFriendMsgAdd = async (msg) => {
 
 
 const fnChannelMsgAdd = async (msg, isOld, deleteIds = null) => {
+  // 隐藏消息
+  if(msg.isHide){
+    return;
+  }
+
     const channelId = Number(msg.channelId)
     const type = "channel"
     const msgId = Number(msg.msgId)

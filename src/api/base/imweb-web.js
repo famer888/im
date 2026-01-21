@@ -30,6 +30,8 @@ const $root = $protobuf.roots["default"] || ($protobuf.roots["default"] = {});
  * @property {number} html2=16 html2 value
  * @property {number} mediasCaption=17 mediasCaption value
  * @property {number} animatedGame=18 animatedGame value
+ * @property {number} redPacketCountChange=19 redPacketCountChange value
+ * @property {number} redPacketGameEvent=20 redPacketGameEvent value
  */
 export const MessageType = $root.MessageType = (() => {
     const valuesById = {}, values = Object.create(valuesById);
@@ -52,6 +54,8 @@ export const MessageType = $root.MessageType = (() => {
     values[valuesById[16] = "html2"] = 16;
     values[valuesById[17] = "mediasCaption"] = 17;
     values[valuesById[18] = "animatedGame"] = 18;
+    values[valuesById[19] = "redPacketCountChange"] = 19;
+    values[valuesById[20] = "redPacketGameEvent"] = 20;
     return values;
 })();
 
@@ -878,6 +882,8 @@ export const OneToOneMessage = $root.OneToOneMessage = (() => {
             case 16:
             case 17:
             case 18:
+            case 19:
+            case 20:
                 break;
             }
         if (message.content != null && message.hasOwnProperty("content"))
@@ -1091,6 +1097,14 @@ export const OneToOneMessage = $root.OneToOneMessage = (() => {
         case "animatedGame":
         case 18:
             message.msgType = 18;
+            break;
+        case "redPacketCountChange":
+        case 19:
+            message.msgType = 19;
+            break;
+        case "redPacketGameEvent":
+        case 20:
+            message.msgType = 20;
             break;
         }
         if (object.content != null)
@@ -1839,6 +1853,8 @@ export const GroupMessage = $root.GroupMessage = (() => {
             case 16:
             case 17:
             case 18:
+            case 19:
+            case 20:
                 break;
             }
         if (message.content != null && message.hasOwnProperty("content"))
@@ -2031,6 +2047,14 @@ export const GroupMessage = $root.GroupMessage = (() => {
         case "animatedGame":
         case 18:
             message.msgType = 18;
+            break;
+        case "redPacketCountChange":
+        case 19:
+            message.msgType = 19;
+            break;
+        case "redPacketGameEvent":
+        case 20:
+            message.msgType = 20;
             break;
         }
         if (object.content != null)
@@ -2325,6 +2349,7 @@ export const ChannelMessage = $root.ChannelMessage = (() => {
      * @property {UploadChannelType|null} [channelType] ChannelMessage channelType
      * @property {number|null} [msgFrom] ChannelMessage msgFrom
      * @property {Array.<ILinkObj>|null} [links] ChannelMessage links
+     * @property {boolean|null} [isHide] ChannelMessage isHide
      */
 
     /**
@@ -2457,6 +2482,14 @@ export const ChannelMessage = $root.ChannelMessage = (() => {
     ChannelMessage.prototype.links = $util.emptyArray;
 
     /**
+     * ChannelMessage isHide.
+     * @member {boolean} isHide
+     * @memberof ChannelMessage
+     * @instance
+     */
+    ChannelMessage.prototype.isHide = false;
+
+    /**
      * Creates a new ChannelMessage instance using the specified properties.
      * @function create
      * @memberof ChannelMessage
@@ -2513,6 +2546,8 @@ export const ChannelMessage = $root.ChannelMessage = (() => {
         if (message.links != null && message.links.length)
             for (let i = 0; i < message.links.length; ++i)
                 $root.LinkObj.encode(message.links[i], writer.uint32(/* id 14, wireType 2 =*/114).fork()).ldelim();
+        if (message.isHide != null && Object.hasOwnProperty.call(message, "isHide"))
+            writer.uint32(/* id 15, wireType 0 =*/120).bool(message.isHide);
         return writer;
     };
 
@@ -2614,6 +2649,10 @@ export const ChannelMessage = $root.ChannelMessage = (() => {
                     message.links.push($root.LinkObj.decode(reader, reader.uint32()));
                     break;
                 }
+            case 15: {
+                    message.isHide = reader.bool();
+                    break;
+                }
             default:
                 reader.skipType(tag & 7);
                 break;
@@ -2678,6 +2717,8 @@ export const ChannelMessage = $root.ChannelMessage = (() => {
             case 16:
             case 17:
             case 18:
+            case 19:
+            case 20:
                 break;
             }
         if (message.content != null && message.hasOwnProperty("content"))
@@ -2729,6 +2770,9 @@ export const ChannelMessage = $root.ChannelMessage = (() => {
                     return "links." + error;
             }
         }
+        if (message.isHide != null && message.hasOwnProperty("isHide"))
+            if (typeof message.isHide !== "boolean")
+                return "isHide: boolean expected";
         return null;
     };
 
@@ -2845,6 +2889,14 @@ export const ChannelMessage = $root.ChannelMessage = (() => {
         case 18:
             message.msgType = 18;
             break;
+        case "redPacketCountChange":
+        case 19:
+            message.msgType = 19;
+            break;
+        case "redPacketGameEvent":
+        case 20:
+            message.msgType = 20;
+            break;
         }
         if (object.content != null)
             if (typeof object.content === "string")
@@ -2923,6 +2975,8 @@ export const ChannelMessage = $root.ChannelMessage = (() => {
                 message.links[i] = $root.LinkObj.fromObject(object.links[i]);
             }
         }
+        if (object.isHide != null)
+            message.isHide = Boolean(object.isHide);
         return message;
     };
 
@@ -2978,6 +3032,7 @@ export const ChannelMessage = $root.ChannelMessage = (() => {
             object.attachmentKey = "";
             object.channelType = options.enums === String ? "OSS_DEFAULT" : 0;
             object.msgFrom = 0;
+            object.isHide = false;
         }
         if (message.sendUid != null && message.hasOwnProperty("sendUid"))
             if (typeof message.sendUid === "number")
@@ -3028,6 +3083,8 @@ export const ChannelMessage = $root.ChannelMessage = (() => {
             for (let j = 0; j < message.links.length; ++j)
                 object.links[j] = $root.LinkObj.toObject(message.links[j], options);
         }
+        if (message.isHide != null && message.hasOwnProperty("isHide"))
+            object.isHide = message.isHide;
         return object;
     };
 
@@ -4455,6 +4512,8 @@ export const ReceiptMessage = $root.ReceiptMessage = (() => {
             case 16:
             case 17:
             case 18:
+            case 19:
+            case 20:
                 break;
             }
         if (message.snapchatTime != null && message.hasOwnProperty("snapchatTime"))
@@ -4623,6 +4682,14 @@ export const ReceiptMessage = $root.ReceiptMessage = (() => {
         case "animatedGame":
         case 18:
             message.messageType = 18;
+            break;
+        case "redPacketCountChange":
+        case 19:
+            message.messageType = 19;
+            break;
+        case "redPacketGameEvent":
+        case 20:
+            message.messageType = 20;
             break;
         }
         if (object.snapchatTime != null)
@@ -18912,6 +18979,8 @@ export const ReferenceObj = $root.ReferenceObj = (() => {
             case 16:
             case 17:
             case 18:
+            case 19:
+            case 20:
                 break;
             }
         if (message.uid != null && message.hasOwnProperty("uid"))
@@ -19028,6 +19097,14 @@ export const ReferenceObj = $root.ReferenceObj = (() => {
         case "animatedGame":
         case 18:
             message.type = 18;
+            break;
+        case "redPacketCountChange":
+        case 19:
+            message.type = 19;
+            break;
+        case "redPacketGameEvent":
+        case 20:
+            message.type = 20;
             break;
         }
         if (object.uid != null)
@@ -21110,7 +21187,8 @@ export const ChatSensitivePushMsg = $root.ChatSensitivePushMsg = (() => {
      * @property {Array.<string>|null} [addSensitives] ChatSensitivePushMsg addSensitives
      * @property {Array.<string>|null} [delSensitives] ChatSensitivePushMsg delSensitives
      * @property {number|Long|null} [version] ChatSensitivePushMsg version
-     * @property {Array.<string>|null} [fakeSendSensitives] ChatSensitivePushMsg fakeSendSensitives
+     * @property {Array.<string>|null} [updateFakeSendSensitives] ChatSensitivePushMsg updateFakeSendSensitives
+     * @property {Array.<string>|null} [delFakeSendSensitives] ChatSensitivePushMsg delFakeSendSensitives
      */
 
     /**
@@ -21124,7 +21202,8 @@ export const ChatSensitivePushMsg = $root.ChatSensitivePushMsg = (() => {
     function ChatSensitivePushMsg(properties) {
         this.addSensitives = [];
         this.delSensitives = [];
-        this.fakeSendSensitives = [];
+        this.updateFakeSendSensitives = [];
+        this.delFakeSendSensitives = [];
         if (properties)
             for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
                 if (properties[keys[i]] != null)
@@ -21156,12 +21235,20 @@ export const ChatSensitivePushMsg = $root.ChatSensitivePushMsg = (() => {
     ChatSensitivePushMsg.prototype.version = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
 
     /**
-     * ChatSensitivePushMsg fakeSendSensitives.
-     * @member {Array.<string>} fakeSendSensitives
+     * ChatSensitivePushMsg updateFakeSendSensitives.
+     * @member {Array.<string>} updateFakeSendSensitives
      * @memberof ChatSensitivePushMsg
      * @instance
      */
-    ChatSensitivePushMsg.prototype.fakeSendSensitives = $util.emptyArray;
+    ChatSensitivePushMsg.prototype.updateFakeSendSensitives = $util.emptyArray;
+
+    /**
+     * ChatSensitivePushMsg delFakeSendSensitives.
+     * @member {Array.<string>} delFakeSendSensitives
+     * @memberof ChatSensitivePushMsg
+     * @instance
+     */
+    ChatSensitivePushMsg.prototype.delFakeSendSensitives = $util.emptyArray;
 
     /**
      * Creates a new ChatSensitivePushMsg instance using the specified properties.
@@ -21195,9 +21282,12 @@ export const ChatSensitivePushMsg = $root.ChatSensitivePushMsg = (() => {
                 writer.uint32(/* id 2, wireType 2 =*/18).string(message.delSensitives[i]);
         if (message.version != null && Object.hasOwnProperty.call(message, "version"))
             writer.uint32(/* id 3, wireType 0 =*/24).int64(message.version);
-        if (message.fakeSendSensitives != null && message.fakeSendSensitives.length)
-            for (let i = 0; i < message.fakeSendSensitives.length; ++i)
-                writer.uint32(/* id 4, wireType 2 =*/34).string(message.fakeSendSensitives[i]);
+        if (message.updateFakeSendSensitives != null && message.updateFakeSendSensitives.length)
+            for (let i = 0; i < message.updateFakeSendSensitives.length; ++i)
+                writer.uint32(/* id 4, wireType 2 =*/34).string(message.updateFakeSendSensitives[i]);
+        if (message.delFakeSendSensitives != null && message.delFakeSendSensitives.length)
+            for (let i = 0; i < message.delFakeSendSensitives.length; ++i)
+                writer.uint32(/* id 5, wireType 2 =*/42).string(message.delFakeSendSensitives[i]);
         return writer;
     };
 
@@ -21251,9 +21341,15 @@ export const ChatSensitivePushMsg = $root.ChatSensitivePushMsg = (() => {
                     break;
                 }
             case 4: {
-                    if (!(message.fakeSendSensitives && message.fakeSendSensitives.length))
-                        message.fakeSendSensitives = [];
-                    message.fakeSendSensitives.push(reader.string());
+                    if (!(message.updateFakeSendSensitives && message.updateFakeSendSensitives.length))
+                        message.updateFakeSendSensitives = [];
+                    message.updateFakeSendSensitives.push(reader.string());
+                    break;
+                }
+            case 5: {
+                    if (!(message.delFakeSendSensitives && message.delFakeSendSensitives.length))
+                        message.delFakeSendSensitives = [];
+                    message.delFakeSendSensitives.push(reader.string());
                     break;
                 }
             default:
@@ -21308,12 +21404,19 @@ export const ChatSensitivePushMsg = $root.ChatSensitivePushMsg = (() => {
         if (message.version != null && message.hasOwnProperty("version"))
             if (!$util.isInteger(message.version) && !(message.version && $util.isInteger(message.version.low) && $util.isInteger(message.version.high)))
                 return "version: integer|Long expected";
-        if (message.fakeSendSensitives != null && message.hasOwnProperty("fakeSendSensitives")) {
-            if (!Array.isArray(message.fakeSendSensitives))
-                return "fakeSendSensitives: array expected";
-            for (let i = 0; i < message.fakeSendSensitives.length; ++i)
-                if (!$util.isString(message.fakeSendSensitives[i]))
-                    return "fakeSendSensitives: string[] expected";
+        if (message.updateFakeSendSensitives != null && message.hasOwnProperty("updateFakeSendSensitives")) {
+            if (!Array.isArray(message.updateFakeSendSensitives))
+                return "updateFakeSendSensitives: array expected";
+            for (let i = 0; i < message.updateFakeSendSensitives.length; ++i)
+                if (!$util.isString(message.updateFakeSendSensitives[i]))
+                    return "updateFakeSendSensitives: string[] expected";
+        }
+        if (message.delFakeSendSensitives != null && message.hasOwnProperty("delFakeSendSensitives")) {
+            if (!Array.isArray(message.delFakeSendSensitives))
+                return "delFakeSendSensitives: array expected";
+            for (let i = 0; i < message.delFakeSendSensitives.length; ++i)
+                if (!$util.isString(message.delFakeSendSensitives[i]))
+                    return "delFakeSendSensitives: string[] expected";
         }
         return null;
     };
@@ -21353,12 +21456,19 @@ export const ChatSensitivePushMsg = $root.ChatSensitivePushMsg = (() => {
                 message.version = object.version;
             else if (typeof object.version === "object")
                 message.version = new $util.LongBits(object.version.low >>> 0, object.version.high >>> 0).toNumber();
-        if (object.fakeSendSensitives) {
-            if (!Array.isArray(object.fakeSendSensitives))
-                throw TypeError(".ChatSensitivePushMsg.fakeSendSensitives: array expected");
-            message.fakeSendSensitives = [];
-            for (let i = 0; i < object.fakeSendSensitives.length; ++i)
-                message.fakeSendSensitives[i] = String(object.fakeSendSensitives[i]);
+        if (object.updateFakeSendSensitives) {
+            if (!Array.isArray(object.updateFakeSendSensitives))
+                throw TypeError(".ChatSensitivePushMsg.updateFakeSendSensitives: array expected");
+            message.updateFakeSendSensitives = [];
+            for (let i = 0; i < object.updateFakeSendSensitives.length; ++i)
+                message.updateFakeSendSensitives[i] = String(object.updateFakeSendSensitives[i]);
+        }
+        if (object.delFakeSendSensitives) {
+            if (!Array.isArray(object.delFakeSendSensitives))
+                throw TypeError(".ChatSensitivePushMsg.delFakeSendSensitives: array expected");
+            message.delFakeSendSensitives = [];
+            for (let i = 0; i < object.delFakeSendSensitives.length; ++i)
+                message.delFakeSendSensitives[i] = String(object.delFakeSendSensitives[i]);
         }
         return message;
     };
@@ -21379,7 +21489,8 @@ export const ChatSensitivePushMsg = $root.ChatSensitivePushMsg = (() => {
         if (options.arrays || options.defaults) {
             object.addSensitives = [];
             object.delSensitives = [];
-            object.fakeSendSensitives = [];
+            object.updateFakeSendSensitives = [];
+            object.delFakeSendSensitives = [];
         }
         if (options.defaults)
             if ($util.Long) {
@@ -21402,10 +21513,15 @@ export const ChatSensitivePushMsg = $root.ChatSensitivePushMsg = (() => {
                 object.version = options.longs === String ? String(message.version) : message.version;
             else
                 object.version = options.longs === String ? $util.Long.prototype.toString.call(message.version) : options.longs === Number ? new $util.LongBits(message.version.low >>> 0, message.version.high >>> 0).toNumber() : message.version;
-        if (message.fakeSendSensitives && message.fakeSendSensitives.length) {
-            object.fakeSendSensitives = [];
-            for (let j = 0; j < message.fakeSendSensitives.length; ++j)
-                object.fakeSendSensitives[j] = message.fakeSendSensitives[j];
+        if (message.updateFakeSendSensitives && message.updateFakeSendSensitives.length) {
+            object.updateFakeSendSensitives = [];
+            for (let j = 0; j < message.updateFakeSendSensitives.length; ++j)
+                object.updateFakeSendSensitives[j] = message.updateFakeSendSensitives[j];
+        }
+        if (message.delFakeSendSensitives && message.delFakeSendSensitives.length) {
+            object.delFakeSendSensitives = [];
+            for (let j = 0; j < message.delFakeSendSensitives.length; ++j)
+                object.delFakeSendSensitives[j] = message.delFakeSendSensitives[j];
         }
         return object;
     };
