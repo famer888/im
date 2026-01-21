@@ -67,6 +67,11 @@ export default {
             console.log("GroupMember--", pra)
             GroupMember(pra).then(res => {
                 const { errCode } = res?.commonResult || {}
+                if (res === 1021) {
+                  window.$toast(this.$t("请联系客服#00001"));
+                  return;
+                }
+
                 if (errCode == 200) {
                     if (Array.isArray(res?.needCheckUids) && res?.needCheckUids?.length > 0) {
                       this.waitForUsersConfirm(res.needCheckUids)
