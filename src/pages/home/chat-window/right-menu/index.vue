@@ -155,6 +155,7 @@ export default {
       [
         "closeOperator", // 关闭操作
         "groupNoticeSet", // 群简介设置
+        "memberListUpdate", // 群成员列表更新
       ],
       this.eventHandling
     );
@@ -194,6 +195,12 @@ export default {
     eventHandling(info, operator) {
 
       switch (operator) {
+        case "memberListUpdate": {
+          if (info && info.groupId === this.chatContent.id) {
+            this.memberInfoList = this.provideMemberList();
+          }
+          break;
+        }
         case "groupNoticeSet": {
           const { id, type, notice } = info;
 

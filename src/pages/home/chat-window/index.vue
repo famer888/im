@@ -1308,6 +1308,13 @@ export default {
           }
           this.syncFriendAndGroupMemberInfo()
           this.updateMemberInfos();
+          // 通知右键菜单更新成员列表
+          eventBase.fnCommunicationSendMsg({
+            operator: "memberListUpdate",
+            data: {
+              groupId: this.chatContent.id
+            }
+          });
         }
       });
     },
