@@ -142,7 +142,6 @@ export default {
     watch: {
       ['msgInfo.percent'](value) {
         if (value >= 100) {
-          console.log('>>> msgInfo.percent', value);
           this.loading = false;
           this.percent = value;
         }
@@ -167,6 +166,7 @@ export default {
         },
         // 处理mac本地地址异常
         macFixImagePath(url) {
+            url = url || '';
             // 1. 处理 app://./ 协议：替换为 file:// 并修正路径
             if (url.startsWith('app://./')) {
                 const relativePath = url.replace('app://./', '');

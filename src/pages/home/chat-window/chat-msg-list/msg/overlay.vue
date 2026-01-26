@@ -131,7 +131,6 @@ export default {
   bottom: 0;
   pointer-events: none;
   z-index: 10;
-  margin: 8px;
   border-radius: 10px;
   overflow: hidden;
 }

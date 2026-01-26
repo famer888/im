@@ -65,7 +65,7 @@ export default {
     ComEditor,
   },
   data() {
-    return { list: [] };
+    return { list: [], loading: false };
   },
   mounted() {
     // 文件列表
@@ -95,6 +95,10 @@ export default {
      * 消息发送
      */
     handleSendMessage(list) {
+      // 上传锁，防止重复触发
+      if (this.loading) return;
+      this.loading = true;
+
       let { id, channelId, type } = this.chatContent;
       id = type === 'channel' ? (channelId || id) : id;
 
