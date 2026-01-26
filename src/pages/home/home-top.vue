@@ -5,7 +5,7 @@
       <div class="box" @click="minimize()">
         <img src="@/assets/images/system/top1.png" />
       </div>
-      <div class="box" @click="maximize()">
+      <div class="box maximize" @click="maximize()">
         <img src="@/assets/images/system/top2.png" />
       </div>
       <div class="box" @click="close()">

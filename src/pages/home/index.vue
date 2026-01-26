@@ -237,12 +237,24 @@ export default {
   },
   methods: {
     /**
+     * 判断是否应该关闭右键菜单
+     * @param {MouseEvent} e - 鼠标事件
+     * @returns {boolean} 是否应该关闭右键菜单
+     */
+    shouldCloseRightMenu(e) {
+      // 目标.box.maximize，如果e.target或.parent是这个，且按下的按钮为鼠标左键，则不触发
+      const isMaximizeTarget = e?.target?.closest?.('.box.maximize');
+      const isLeftClick = e?.button === 0;
+      return !(isMaximizeTarget && isLeftClick);
+    },
+    /**
      * app的dom被点击
      */
-    handleAppDomClick() {
+    handleAppDomClick(e) {
       // 关闭 右键点击菜单， 聊天右菜单，表情会话框
+      const shouldCloseRightMenu = this.shouldCloseRightMenu(e) ? ['chatRightMenu'] : [];
       eventCommon.fnCloseListRU({
-        removeIds: ["rightClickMenu", "chatRightMenu", "emojiDialog"],
+        removeIds: [...shouldCloseRightMenu, "rightClickMenu", "emojiDialog"],
       });
     },
     /**
