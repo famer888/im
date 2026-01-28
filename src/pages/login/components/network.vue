@@ -40,18 +40,57 @@
 
 <script>
 import { getTrendsDomainPool } from "@/utils/trendsDomain/manageDomain";
-import { checkDomainIsNormal, generateSign } from "@/utils/trendsDomain/workTools";
+import { checkDomainIsNormal, generateSign, domainListSort } from "@/utils/trendsDomain/workTools";
 import { getCurrentTimestamp13Digits } from "@/utils/trendsDomain/tools";
 import { getClientTokenData } from "@/utils/trendsDomain/manageToken";
 import { getDomainListApi } from "@/api/imDomain";
-import { handleEncode, AES_KEY } from "@/api/base/unit";
+import { handleEncode, AES_KEY, baseBuildUrl } from "@/api/base/unit";
 import { getAesKeySync, getApiMacAddress } from "@/utils/trendsAesKey";
 import eventCommon from "@/event/common.js";
 import config from "@/config.js";
 
+/**
+ * 获取动态域名列表（用于QrCode）
+ * @param {string} moduleCode - 模块代码，默认 "webBiz"
+ * @returns {Promise<string[]>} - 域名URL列表
+ */
+export const getDynamicDomainListForQrCode = async (moduleCode = "webBiz") => {
+  const { mchId, secretKey, accessToken } = await getClientTokenData();
+  const reqTime = getCurrentTimestamp13Digits();
+  const listDomainReq = {
+    mchId,
+    reqTime,
+    sign: "",
+    moduleCode,
+    deviceIp: "",
+    deviceNo: "",
+  };
+  listDomainReq.sign = generateSign(listDomainReq, secretKey);
+
+  const payload = {
+    secretKey,
+    datas: listDomainReq,
+    headers: { accessToken },
+  };
+
+  const res = await getDomainListApi(payload);
+  let domainDtoList = res?.domainDtoList || [];
+
+  // 按优先级排序
+  domainDtoList = domainListSort(domainDtoList);
+
+  // 筛选对应模块的域名并去重
+  const domainUrls = [...new Set(
+    domainDtoList
+      .filter((item) => item.moduleCode === moduleCode)
+      .map((item) => item.domainUrl)
+  )];
+
+  return domainUrls;
+}
 export default {
   name: "NetworkCheck",
-  emits: ["validDynamicDomain", "close"],
+  emits: ["validDomainList", "close"],
   data() {
     return {
       domainList: [],
@@ -144,6 +183,11 @@ export default {
       }
 
       let domainUrls = trendsDomains.map((item) => item.domainUrl);
+
+      // 将 baseBuildUrl 作为默认域名加入列表
+      if (baseBuildUrl && !domainUrls.includes(baseBuildUrl)) {
+        domainUrls.push(baseBuildUrl);
+      }
 
       // 去重并过滤已检测过的URL
       domainUrls = [...new Set(domainUrls)].filter(url => !this.checkedUrls.includes(url));
@@ -259,37 +303,12 @@ export default {
     // 获取域名并添加到本页列表（无节流，不影响其他模块）
     async fetchAndUpdateDomainPool() {
       try {
-        const { mchId, secretKey, accessToken } = await getClientTokenData();
-        const reqTime = getCurrentTimestamp13Digits();
-        const listDomainReq = {
-          mchId,
-          reqTime,
-          sign: "",
-          moduleCode: "",
-          deviceIp: "",
-          deviceNo: "",
-        };
-        listDomainReq.sign = generateSign(listDomainReq, secretKey);
+        const webBizDomains = await getDynamicDomainListForQrCode("webBiz");
 
-        const payload = {
-          secretKey,
-          datas: listDomainReq,
-          headers: { accessToken },
-        };
-
-        const res = await getDomainListApi(payload);
-        const domainDtoList = res?.domainDtoList || [];
-
-        // 筛选 webBiz 模块的域名
-        const webBizDomains = domainDtoList
-          .filter((item) => item.moduleCode === "webBiz")
-          .map((item) => item.domainUrl);
-
-        // 去重并过滤已检测过的URL
-        const newUrls = [...new Set(webBizDomains)].filter(
+        // 过滤已检测过的URL
+        const newUrls = webBizDomains.filter(
           (url) => !this.checkedUrls.includes(url)
         );
-        console.log(`[NetworkCheck] newUrls:`, res);
 
         if (newUrls.length) {
           // 记录本次要检测的URL
@@ -316,13 +335,14 @@ export default {
     handleButtonClick() {
       this.cancelled = true;
 
-      // 找到第一个有效的域名
-      const validDomain = this.domainList.find(
-        (item) => item.dnsStatus === 1 && item.qrStatus === 200
-      );
+      // 获取所有有效的域名列表
+      const validDomainList = this.domainList
+        .filter((item) => item.dnsStatus === 1 && item.qrStatus === 200)
+        .map((item) => item.url);
 
-      if (validDomain) {
-        this.$emit("validDynamicDomain", validDomain.url);
+      // 发送所有有效域名列表
+      if (validDomainList.length) {
+        this.$emit("validDomainList", validDomainList);
       }
 
       this.$emit("close");

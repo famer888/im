@@ -10,6 +10,7 @@
     <NetworkCheck
       v-if="networkCheckVisible"
       @close="networkCheckVisible = false"
+      @validDomainList="handleValidDomainList"
     />
     <section @click="handleReGetQrCodeUrl">
       <qrcode-vue
@@ -46,12 +47,15 @@ import QrcodeVue from "qrcode.vue";
 
 // api
 import { getQrCodeUrl, getIsLogin } from "@/api/imBase";
+import { baseBuildUrl } from "@/api/base/unit";
+import { getDynamicDomainListForQrCode } from "./network.vue";
 
 // 事件
 import eventCommon from "@/event/common";
 
 // 定时器
 let timerOutTimer = null;
+let loginPollingTimer = null;
 
 export default {
   components: {
@@ -70,6 +74,8 @@ export default {
       qrCodeUrlError: false, // 二维码错误
       isLoading: false, // 是否读取中
       lastLoginInfo: {}, // 最后的登录信息
+      domainlist: [baseBuildUrl],
+      urlIndex: 0,
     };
   },
   mounted() {
@@ -117,10 +123,21 @@ export default {
     if (timerOutTimer) {
       clearTimeout(timerOutTimer);
     }
+    if (loginPollingTimer) {
+      clearTimeout(loginPollingTimer);
+    }
   },
   computed: {
     hasLast() {
       return Object.keys(this.lastInfo).length > 0;
+    },
+    // 获取当前baseurl，处理边界条件
+    currentBaseUrl() {
+      if (!this.domainlist || !this.domainlist.length) {
+        return baseBuildUrl;
+      }
+      const index = Math.max(0, Math.min(this.urlIndex, this.domainlist.length - 1));
+      return this.domainlist[index] || baseBuildUrl;
     },
   },
   methods: {
@@ -129,10 +146,24 @@ export default {
      */
     handleGetQrCodeUrl() {
       this.isLoading = true;
-      getQrCodeUrl(() => {
+      getQrCodeUrl(this.currentBaseUrl, () => {
         // 显示错误
         this.qrCodeUrlError = true;
         this.isLoading = false;
+
+        // 如果动态域名池已获取(list > 1)，下标+1尝试下一个域名
+        if (this.domainlist.length > 1) {
+          this.urlIndex++;
+        } else {
+          // 否则获取动态域名列表
+          getDynamicDomainListForQrCode().then((domainUrls) => {
+            if (domainUrls && domainUrls.length) {
+              this.domainlist = domainUrls;
+            }
+          }).catch((err) => {
+            console.error("[登录] 获取动态域名失败:", err);
+          });
+        }
       }).then((res) => {
         const { token } = res || {};
         this.isLoading = false;
@@ -147,7 +178,7 @@ export default {
           }, 20000);
 
           // 1.5s后开始获取是否登录成功
-          setTimeout(() => {
+          loginPollingTimer = setTimeout(() => {
             this.handleIsLoginGet();
           }, 1500);
 
@@ -178,12 +209,53 @@ export default {
       }, 1500);
     },
     /**
+     * 处理有效域名列表（从网络检测组件返回）
+     * @param {string[]} validList - 有效域名列表
+     */
+    handleValidDomainList(validList) {
+      if (!validList || !validList.length) return;
+
+      // 去重：过滤掉已存在的域名
+      const existingSet = new Set(this.domainlist);
+      const newDomains = validList.filter((url) => !existingSet.has(url));
+
+      if (newDomains.length) {
+        // 拼接到域名列表
+        this.domainlist = [...this.domainlist, ...newDomains];
+      }
+
+      // 切换下标到第一个有效域名的位置
+      const firstValidIndex = this.domainlist.indexOf(validList[0]);
+      if (firstValidIndex !== -1) {
+        this.urlIndex = firstValidIndex;
+      }
+
+      // 重新触发获取二维码
+      this.qrCodeUrlError = false;
+      this.isOutTime = false;
+      this.isLoading = true;
+
+      // 清除之前的定时器
+      if (timerOutTimer) {
+        clearTimeout(timerOutTimer);
+        timerOutTimer = null;
+      }
+      if (loginPollingTimer) {
+        clearTimeout(loginPollingTimer);
+        loginPollingTimer = null;
+      }
+
+      setTimeout(() => {
+        this.handleGetQrCodeUrl();
+      }, 500);
+    },
+    /**
      * 是否登录获取
      */
     handleIsLoginGet() {
       const { sysMac, sysModel } = this.deviceConfig;
 
-      getIsLogin({ token: this.loginToken, sysMac, sysModel }).then((res) => {
+      getIsLogin(this.currentBaseUrl, { token: this.loginToken, sysMac, sysModel }).then((res) => {
         if (res && Number(res.uid)) {
           const { sessionId, nickName, icon, uploadFileSize, urls } = res;
           const loginId = Number(res.uid);
@@ -239,7 +311,7 @@ export default {
           });
         } else {
           // 没有获取到成功信息，则1.5s后再进行获取
-          setTimeout(() => {
+          loginPollingTimer = setTimeout(() => {
             // 如果当前超时或错误，则不需要继续获取
             if (this.isOutTime || this.qrCodeUrlError) {
               return;
