@@ -3,9 +3,14 @@
     <div class="lastBox">
       <img
         :src="lastLoginInfo.icon || require('@/assets/images/logo/logo.png')"
+        @click="networkCheckVisible = true"
       />
       <div v-if="lastLoginInfo.name">{{ lastLoginInfo.name }}</div>
     </div>
+    <NetworkCheck
+      v-if="networkCheckVisible"
+      @close="networkCheckVisible = false"
+    />
     <section @click="handleReGetQrCodeUrl">
       <qrcode-vue
         class="ecode"
@@ -49,10 +54,15 @@ import eventCommon from "@/event/common";
 let timerOutTimer = null;
 
 export default {
-  components: { QrcodeVue, ComFileIn: () => import("./fileIn.vue") },
+  components: {
+    QrcodeVue,
+    ComFileIn: () => import("./fileIn.vue"),
+    NetworkCheck: () => import("./network.vue"),
+  },
   data() {
     return {
       comFileInVisible: false, // 显示文件导入
+      networkCheckVisible: false, // 显示网络检测
       deviceConfig: null, // 设备信息
       loginToken: "", //  登录token
       officialUrl: "ocs.com", // 官方地址
