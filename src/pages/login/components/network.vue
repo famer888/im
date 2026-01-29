@@ -44,7 +44,7 @@ import { checkDomainIsNormal, generateSign, domainListSort } from "@/utils/trend
 import { getCurrentTimestamp13Digits } from "@/utils/trendsDomain/tools";
 import { getClientTokenData } from "@/utils/trendsDomain/manageToken";
 import { getDomainListApi } from "@/api/imDomain";
-import { handleEncode, AES_KEY, baseBuildUrl } from "@/api/base/unit";
+import { handleEncode, handleDecode, AES_KEY, baseBuildUrl } from "@/api/base/unit";
 import { getAesKeySync, getApiMacAddress } from "@/utils/trendsAesKey";
 import eventCommon from "@/event/common.js";
 import config from "@/config.js";
@@ -295,7 +295,28 @@ export default {
           body,
           headers,
         });
-        return response.status;
+
+        // 检查HTTP状态码
+        if (response.status !== 200) {
+          return response.status;
+        }
+
+        // 解析响应数据，验证 token 是否有正常值
+        const data = await response.arrayBuffer();
+        const message = handleDecode({
+          data,
+          protoType: undefined,
+          type: "QrCodeUrl",
+          aesKey: aesKey.toString(),
+        });
+
+        // 检查 token 是否有有效值
+        if (message?.token) {
+          return 200;
+        }
+
+        // token 无效，返回错误状态
+        return 0;
       } catch (error) {
         return 0;
       }
