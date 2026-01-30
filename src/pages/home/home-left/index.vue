@@ -128,7 +128,7 @@ import eventChat from "@/event/chat";
 import eventMsg from "@/event/msg";
 import { getGroupDetail } from "@/api/imGroup";
 import { getChannelDetail } from "@/api/imChannel";
-import { getContactsDetail } from "@/api/imContacation";
+import { getContactsDetail, getContactsList } from "@/api/imContacation";
 import eventCheduledCeletion from "@/event/cheduled-deletion";
 import { _ } from "core-js";
 import { isBatchMode } from "@/utils/batchRenderer";
@@ -176,6 +176,7 @@ export default {
       searchSpecifiedChat: {}, // 搜索指定的聊天
       unreadCount: 0, // 未读总数
       isSyncingDetails: false, // 是否正在同步详情中
+      isRefreshingFriends: false, // 是否正在刷新好友列表
     };
   },
   provide() {
@@ -246,6 +247,48 @@ export default {
             }
         });
         return Array.from(map.values());
+    },
+    /**
+     * 刷新好友列表
+     */
+    async refreshFriendList() {
+      if (this.isRefreshingFriends) return;
+      this.isRefreshingFriends = true;
+
+      if (!loginId) {
+        loginId = eventCommon.fnCommonInfoRU({ getId: "loginId" });
+      }
+
+      const pageSize = 200;
+      let allContacts = [];
+
+      try {
+        const res = await getContactsList({ pageNum: 1, pageSize });
+        if (!res?.contactsList) return;
+
+        allContacts = eventFriend.fnApiDataFormat(res.contactsList);
+        const totalPages = Math.ceil((res.count || 0) / pageSize);
+
+        // 获取剩余页面
+        if (totalPages > 1) {
+          for (let p = 2; p <= totalPages; p++) {
+            const pageRes = await getContactsList({ pageNum: p, pageSize });
+            if (!pageRes?.contactsList) throw new Error(`第${p}页加载失败或为空`);
+            allContacts = allContacts.concat(eventFriend.fnApiDataFormat(pageRes.contactsList));
+          }
+        }
+
+        // 更新 Cache
+        Cache(`${loginId}-ContactList`, allContacts);
+
+        // 更新ui
+        this.eventHandlingContactListReload({ friendList: allContacts });
+
+      } catch (err) {
+        console.error("联系人列表 error", err);
+      } finally {
+        this.isRefreshingFriends = false;
+      }
     },
     /**
      * 获取聊天窗口列表
@@ -941,31 +984,27 @@ export default {
     eventHandlingContactListReload(data) {
       if (!data || typeof data !== 'object') return;
 
-      const friendListRaw = data.friendList || [];
-      const groupListRaw = data.groupList || [];
-      const channelListRaw = data.channelList || [];
-
       const loginId = eventCommon.fnCommonInfoRU({ getId: "loginId" });
 
       // 1. 更新好友列表数据
       // 格式化好友数据以适应通讯录组件
-      if (friendListRaw) {
+      if (Array.isArray(data.friendList)) {
         const { letters, letterIndexs, friendList: formatedList } =
-          eventFriend.fnFriendListFormat(friendListRaw);
+          eventFriend.fnFriendListFormat(data.friendList);
         this.letters = _.cloneDeep(letters);
         this.letterIndexs = _.cloneDeep(letterIndexs);
         this.friendList = _.cloneDeep(formatedList);
       }
 
       // 2. 更新群组列表数据
-      if (groupListRaw) {
-        this.groups = _.cloneDeep(groupListRaw);
+      if (Array.isArray(data.groupList)) {
+        this.groups = _.cloneDeep(data.groupList);
         Cache(`${loginId}-GroupList`, this.groups);
       }
 
       // 3. 更新频道列表数据
-      if (channelListRaw) {
-        this.channels = _.cloneDeep(channelListRaw);
+      if (Array.isArray(data.channelList)) {
+        this.channels = _.cloneDeep(data.channelList);
         // ChannelList 已经在 init.vue 中缓存了，这里更新内存即可
       }
 
@@ -2030,6 +2069,8 @@ export default {
       if(value === 0) {
         this.addAction = false;
         this.searchText = "";
+      } else if (value === 1) {
+        this.refreshFriendList();
       }
     }
   },
