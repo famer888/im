@@ -49,14 +49,19 @@
               :type="item.type"
               class="icon"
             />
-            <h3>
-              <img class="channel-feature" v-if="item.type === 'channel'" src="@/assets/images/channel/feature.png" />
-              {{
-                item.id === "invitation"
-                  ? $t("群通知")
-                  : item.name || item.nickName || item.channelName
-              }}
-            </h3>
+            <div class="name-time-wrapper">
+              <h3>
+                <img class="channel-feature" v-if="item.type === 'channel'" src="@/assets/images/channel/feature.png" />
+                {{
+                  item.id === "invitation"
+                    ? $t("群通知")
+                    : item.name || item.nickName || item.channelName
+                }}
+              </h3>
+              <span v-if="item.chatType !== -1" class="sendTime">
+                {{ chatTime(item.sendTime, $t("昨天")) }}
+              </span>
+            </div>
             <div
               class="chats-82"
               v-if="
@@ -135,9 +140,6 @@
               <ComChatsText :text="handleContent(item.content)" :id="item.id" :atUsers="item.atUsers" />
             </div>
             <div v-else></div>
-            <span v-if="item.chatType !== -1" class="sendTime">
-              {{ chatTime(item.sendTime, $t("昨天")) }}
-            </span>
             <i
               v-if="
                 unreadObj[item.id + item.type] &&
@@ -713,16 +715,32 @@ export default {
             }
           }
 
-          > h3 {
-            margin: 0;
-            width: 120px;
-            white-space: nowrap;
-            text-overflow: ellipsis;
-            overflow: hidden;
-            font-size: 14px;
-            color: #333;
-            font-weight: normal;
-            line-height: 18px;
+          .name-time-wrapper {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-right: -6px;
+
+            > h3 {
+              flex: 1;
+              margin: 0;
+              white-space: nowrap;
+              text-overflow: ellipsis;
+              overflow: hidden;
+              font-size: 14px;
+              color: #333;
+              font-weight: normal;
+              line-height: 18px;
+              min-width: 0;
+            }
+
+            > .sendTime {
+              font-size: 11px;
+              color: #999;
+              margin-left: 10px;
+              white-space: nowrap;
+              flex-shrink: 0;
+            }
           }
 
           > p {
@@ -745,7 +763,7 @@ export default {
             object-fit: cover;
           }
 
-          > div {
+          > div:not(.name-time-wrapper) {
             font-size: 12px;
             color: #999;
             line-height: 20px;
@@ -772,13 +790,7 @@ export default {
             }
           }
 
-          > span {
-            position: absolute;
-            right: 10px;
-            top: 14px;
-            font-size: 11px;
-            color: #999;
-          }
+
 
           > i {
             position: absolute;
