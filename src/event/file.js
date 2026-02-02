@@ -98,7 +98,7 @@ const handleDownloadFileFailed = (_$, data) => {
         let moduleCode = {0: "ossDefaultUrl", 1: "ossChatUrl", 2: "ossLowRateUrl"}[channelType] || "ossDefaultUrl"
         let url = data.trendsFileUrl || data.fileUrl;
         console.log('handleDownloadFileFailed--', url)
-        reportErrorDomain(url, {errorDesc: "下载失败", moduleCode})  
+        reportErrorDomain(url, {errorDesc: "下载失败", moduleCode})
         let downFailNum = data.downFailNum || 0
         if(downFailNum <=3 ) {
             data.downFailNum = downFailNum + 1
@@ -117,7 +117,7 @@ const handleDownloadFileFailed = (_$, data) => {
 const fnDownloadFileInfoUpdate = (data, errorType) => {
     // console.log('下载成功后更新', data)
     const id = data.groupId || data.channelId || data.userId;
-    const type = data.groupId ? "group" 
+    const type = data.groupId ? "group"
                               : data.channelId ? "channel" : "friend";
     const { customMsgId, fileLocalPath, isOpen, isDir, chatType, local, localThumbUrl } = data;
     let updated = { local: errorType || fileLocalPath };
@@ -438,9 +438,15 @@ const fnOperatorFile = async ({ id, type, info, openDialog, isDir }) => {
     // 后缀
     const suffix = getFileSuffix(info.chatType, info.fileName || fileUrl);
 
+    // 优先使用 info.fileName，如果不存在则从 fileUrl 中提取
+    let baseFileName = info.fileName;
+    if (!baseFileName) {
+        baseFileName = fileUrl.split("/").pop();
+    }
+
     let params = {
         fileUrl,
-        fileName: fileUrl.split("/").pop() + suffix,
+        fileName: baseFileName + suffix,
         uid: loginId,
         userId: type === "group" ? null : id,
         groupId: type === "group" ? id : null,
@@ -454,9 +460,9 @@ const fnOperatorFile = async ({ id, type, info, openDialog, isDir }) => {
         openDialog,
         isDir,
     };
-    
+
     if(!info.local) {
-        // 优先使用动态域名    
+        // 优先使用动态域名
         params.trendsFileUrl = await getOssFirstNormalUrl(fileUrl, 0, 0);
     }
     if (openDialog) {
