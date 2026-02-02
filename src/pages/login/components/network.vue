@@ -48,7 +48,6 @@ import { handleEncode, handleDecode, AES_KEY, baseBuildUrl } from "@/api/base/un
 import { getAesKeySync, getApiMacAddress } from "@/utils/trendsAesKey";
 import eventCommon from "@/event/common.js";
 import config from "@/config.js";
-import { domainsTesting } from "./domains";
 
 /**
  * 获取动态域名列表（用于QrCode）
@@ -79,7 +78,6 @@ export const getDynamicDomainListForQrCode = async (moduleCode = "webBiz") => {
 
   // 按优先级排序
   domainDtoList = domainListSort(domainDtoList);
-
   // 筛选对应模块的域名并去重
   const domainUrls = [...new Set(
     domainDtoList
@@ -112,7 +110,6 @@ export default {
     },
   },
   mounted() {
-    domainsTesting();
     this.fetchDomainList();
   },
   beforeDestroy() {
