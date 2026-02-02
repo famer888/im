@@ -20,7 +20,7 @@
         <ComSwitch :value="bfAddress" @input="handelBfAddressChange" />
       </li> -->
     </template>
-    <template v-if="!isChannel && !isGroup && chatContent.memberType !== 2 && chatContent.id !== 10002">
+    <template v-if="!isChannel && !isGroup && chatContent.memberType !== 2 && ![10001, 10002].includes(Number(chatContent.id))">
       <li>
         <span> {{ $t("阅后即焚") }}</span>
         <ComSwitch
@@ -46,7 +46,7 @@
         </vue-context>
       </li>
     </template>
-    <template v-if="!isChannel && !isGroup">
+    <template v-if="!isChannel && !isGroup && ![10001, 10002].includes(Number(chatContent.id))">
       <li>
         <span>加入黑名单</span>
         <ComSwitch :value="bfMyBlack" @input="handelBfMyBlackChange" />
@@ -75,7 +75,7 @@
       </li>
     </template>
     <template v-else-if="isChannel"></template>
-    <template v-else>
+    <template v-else-if="![10001, 10002].includes(Number(chatContent.id))">
         <li class="clearHistory" @click="handelDeleteFriend" :class="{ [chatContent.type]: true }">
           删除联系人
         </li>

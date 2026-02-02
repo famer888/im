@@ -89,16 +89,15 @@ const fnChatWindowUpdate = async (info) => {
     } else {
         // 聊天窗信息
         let chatInfo = null;
-
         // 如果不存在则获取信息后，再变更
         if (updateInfo.type === "friend") {
             // 如果是 系统账户的消息
-            if ([10001, 10005, "channelNotice"].includes(updateInfo.id)) {
+            if ([10005, "channelNotice"].includes(updateInfo.id) || (updateInfo.id === 10001 && !updateInfo.isSelf)) {
                 chatInfo = {
                     pic: _.get(updateInfo, "sendUser.icon"),
                     name:
                         _.get(updateInfo, "sendUser.nickName") ||
-                        (updateInfo.id === 10001 ? "68 Messenger" : "系统助手"),
+                        (updateInfo.id === 10001 ? "55 Messenger" : "系统助手"),
                 };
             } else {
                 // 如果是好友， 在好友中查找
@@ -152,7 +151,6 @@ const fnChatWindowUpdate = async (info) => {
                 chatInfo = res?.data || {};
             }
         }
-
 
         // 添加新窗口
         chatList.push({ ...chatInfo, ...updateInfo });

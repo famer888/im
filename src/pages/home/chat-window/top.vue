@@ -1,6 +1,6 @@
 <template>
   <div class="comTop">
-    <template v-if="chatContent && chatContent.id !== '10002'">
+    <template v-if="chatContent && Number(chatContent.id) !== 10002">
       <picture @click.stop="handleChatRightMenuVisibleChange">
         <ComTextAvatar
           v-if="showChannelTextIcon"
@@ -51,7 +51,7 @@
           />
         </div>
       </div>
-      <img class="icon-search" src="@/assets/images/headNav/icon-search-black.png" @click="serachChat"/>
+      <img class="icon-search" src="@/assets/images/headNav/icon-search-black.png" @click="serachChat" v-if="chatContent?.id != 10002"/>
       <div class="more" v-if="![10001, 10005].includes(chatContent.id)" @click.stop="handleChatRightMenuVisibleChange">
         <img src="@/assets/images/system/icon-menu.png" />
       </div>
@@ -83,7 +83,7 @@
       </section>
     </template>
     <template v-else-if="chatContent">
-      <picture>
+      <picture @click.stop="handleChatRightMenuVisibleChange">
         <img src="@/assets/images/message/cszs-icon.png" />
       </picture>
       {{ $t("传输助手") }}
