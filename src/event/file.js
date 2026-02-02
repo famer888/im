@@ -407,7 +407,7 @@ const fnFileInfosGet = async (info) => {
 /**
  * 操作文件
  */
-const fnOperatorFile = async ({ id, type, info, openDialog, isDir }) => {
+const fnOperatorFile = async ({ id, type, info, openDialog, isDir }, keepOriginName) => {
     // 文件路径
     let fileUrl = info.local || "";
 
@@ -439,9 +439,9 @@ const fnOperatorFile = async ({ id, type, info, openDialog, isDir }) => {
     const suffix = getFileSuffix(info.chatType, info.fileName || fileUrl);
 
     // 优先使用 info.fileName，如果不存在则从 fileUrl 中提取
-    let baseFileName = info.fileName;
-    if (!baseFileName) {
-        baseFileName = fileUrl.split("/").pop();
+    let baseFileName = fileUrl.split("/").pop();
+    if(keepOriginName) {
+        baseFileName = info.fileName || baseFileName;
     }
 
     let params = {

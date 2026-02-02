@@ -153,7 +153,7 @@
                 type: chatContent.type,
                 info: rightClickSelectedInfo,
                 openDialog: true,
-              })
+              }, true)
             "
           >
             <a>
@@ -329,7 +329,7 @@ import { Cache } from "@/cache";
 import { getChannelUsers, getChannelManages } from "@/api/imChannel";
 
 // 工具
-import { setMaxLengthStr, textToEmojiText, formatTimeStamp, copyToClipboard, freeTime, channelMemberSort } from "@/utils/base";
+import { setMaxLengthStr, textToEmojiText, formatTimeStamp, copyToClipboard, freeTime, channelMemberSort, enumMsgType } from "@/utils/base";
 import { copyText, copyImg } from "@/utils/clipboard";
 import { getEnvType } from "@/utils";
 import { formatChannelManages } from "@/utils/formats";
@@ -562,7 +562,7 @@ export default {
     /**
      * 文件操作
      */
-    handleOperatorFile(data) {
+    handleOperatorFile(data, keepOriginName) {
       if (data.info.local && data.info.local.indexOf("http") === 0) {
         data.info = {
           ...data.info,
@@ -570,7 +570,7 @@ export default {
         };
       }
 
-      eventFile.fnOperatorFile(data);
+      eventFile.fnOperatorFile(data, keepOriginName && data.info.chatType === enumMsgType.file);
     },
     /**
      * 转发选择对话框显示

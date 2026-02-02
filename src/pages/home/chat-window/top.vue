@@ -83,7 +83,7 @@
       </section>
     </template>
     <template v-else-if="chatContent">
-      <picture @click.stop="handleChatRightMenuVisibleChange">
+      <picture>
         <img src="@/assets/images/message/cszs-icon.png" />
       </picture>
       {{ $t("传输助手") }}
