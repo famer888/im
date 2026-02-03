@@ -97,7 +97,7 @@ const fnChatWindowUpdate = async (info) => {
                     pic: _.get(updateInfo, "sendUser.icon"),
                     name:
                         _.get(updateInfo, "sendUser.nickName") ||
-                        (updateInfo.id === 10001 ? "55 Messenger" : "系统助手"),
+                        (updateInfo.id === 10001 ? "68 Messenger" : "系统助手"),
                 };
             } else {
                 // 如果是好友， 在好友中查找

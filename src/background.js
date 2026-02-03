@@ -662,7 +662,7 @@ const setMainWin = async () => {
     mainWindow.center();
     if (process.env.WEBPACK_DEV_SERVER_URL) {
         await mainWindow.loadURL(process.env.WEBPACK_DEV_SERVER_URL);
-        mainWindow.openDevTools({ mode: 'detach' });
+        // mainWindow.openDevTools({ mode: 'detach' });
     } else {
         createProtocol("app");
         mainWindow.loadURL("app:// ./index.html", {
