@@ -424,6 +424,8 @@ export default {
      * 确认删除
      */
     handleDeleteConfirm() {
+      const chatInfo = this.chatInfoRightClick;
+      if (!chatInfo) return;
       window
         .$confirm({
           remark: this.$t(
@@ -435,15 +437,15 @@ export default {
             eventBase.fnCommunicationSendMsg({
               operator: "msgDelete",
               data: {
-                id: this.chatInfoRightClick.id,
-                type: this.chatInfoRightClick.type,
+                id: chatInfo.id,
+                type: chatInfo.type,
                 idsDelete: [],
                 isRemoteDeletion: false,
                 isDeleteChatWindow: true,
               },
             });
 
-            this.$emit("handleDeleteChats", this.chatInfoRightClick);
+            this.$emit("handleDeleteChats", chatInfo);
           }
         });
     },
