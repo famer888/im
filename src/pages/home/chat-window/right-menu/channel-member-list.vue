@@ -55,7 +55,7 @@ import { formatChannelManages } from "@/utils/formats";
 import { channelMemberSort } from "@/utils/base";
 
 export default {
-  props: ["chatContent", "showIndex", "friendList"],
+  props: ["chatContent", "showIndex", "friendList", "memberInfoList"],
   data() {
     return {
       searchText: "",
@@ -104,7 +104,16 @@ export default {
     },
   },
   mounted() {
-    this.memberList = this.provideChannelUserList();
+    // 优先使用传入的 memberInfoList，否则使用 inject 的方法
+    this.memberList = (this.memberInfoList && this.memberInfoList.length > 0) 
+      ? this.memberInfoList 
+      : this.provideChannelUserList();
+    
+    // 初始化时判断是否已经加载完（如果初始数据小于 pageSize，说明没有更多数据了）
+    if (this.memberList.length < this.pageSize) {
+      this.isEnd = true;
+    }
+
     // 初始化高度
     this.memberListHeight = this.memberList.length * 50;
 
@@ -117,6 +126,19 @@ export default {
       ],
       this.eventHandling
     );
+  },
+  watch: {
+    memberInfoList: {
+      handler(val) {
+        if (val && val.length > 0) {
+          this.memberList = val;
+          if (this.memberList.length < this.pageSize) {
+            this.isEnd = true;
+          }
+        }
+      },
+      deep: true
+    }
   },
   beforeDestroy() {
     eventBase.fnCommunicationMonitoring("rightMenuMemberList", null);

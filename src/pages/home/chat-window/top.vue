@@ -186,6 +186,12 @@ export default {
         // 如果是群，获取一次群详情
         if (this.chatContent.type == "group") {
           eventGroup.fnGroupDetailGet(this.chatContent.id);
+        }else if (this.chatContent.type === "channel") {
+          const data = this.chatContent;
+           eventBase.fnCommunicationSendMsg({
+              operator: "triggerChannelDetailUpdate",
+              data,
+            });
         }
       }
     },

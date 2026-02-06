@@ -197,6 +197,7 @@ export default {
         "updateChannelIdentity", // 频道身份变更
         "channelUpdate", // 频道更新
         "channelToggleDisabled", // 频道启用/禁用
+        "triggerChannelDetailUpdate", // 频道开启右边菜单栏
       ],
       this.handleEventHandling
     );
@@ -358,6 +359,7 @@ export default {
           const channelId = operator === 'chatMsgListSearchScrollTo' ? info?.id : info?.channelId;
           const beforeTime = (this.getChannelDetailTimes[channelId] || 0) + 30000;
 
+          console.log('handleGetChannelDetail111',info)
           if(beforeTime < Date.now()) {
             this.handleGetChannelDetail(info, channelId);
           } else {
@@ -594,6 +596,11 @@ export default {
             ...this.infoActive,
             isDisable: info.isDisable,
           };
+          break;
+        }
+        case "triggerChannelDetailUpdate": {
+          const channelId =  info?.channelId;
+           this.handleGetChannelDetail(info, channelId);
           break;
         }
           default:
