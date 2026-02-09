@@ -3,6 +3,7 @@ import { getChannelUsers, getChannelManages, getHistoryDomain, isChannelLink } f
 import { groupQrCode, groupQrUrlFromShortLink, queryGroupLink } from "@/api/imGroup";
 import sharePromise from "./sharePromise";
 import eventBase from "@/event/base";
+import eventCommon from "@/event/common";
 
 class InviteLink {
   link = '';
@@ -45,7 +46,12 @@ class InviteLink {
     const data = await queryGroupLink({ qrCode, IdCode, groupId });
     // 禁用toast 根据app写的提示语
     if(data === 1021){
-      window.$toast("请联系客服#00001");
+      const globalConfig = eventCommon.fnGlobalConfigGet();
+      let isSilentDisabled = globalConfig.group?.disableUnperceived;
+
+      if (isSilentDisabled) {
+        window.$toast("请联系客服#00001");
+      }
     }
     if (data?.commonResult?.errCode === 200) {
       return data;

@@ -65,11 +65,14 @@ export default {
                 members,
             }
             console.log("GroupMember--", pra)
-            GroupMember(pra).then(res => {
+            GroupMember(pra).then(async res => {
                 const { errCode } = res?.commonResult || {}
                 if (res === 1021) {
-                  window.$toast(this.$t("请联系客服#00001"));
-                  return;
+                  const globalConfig = eventCommon.fnGlobalConfigGet();
+                  if (globalConfig.group?.disableUnperceived) {
+                    window.$toast(this.$t("请联系客服#00001"));
+                    return;
+                  }
                 }
 
                 if (errCode == 200) {
