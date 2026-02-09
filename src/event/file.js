@@ -120,6 +120,7 @@ const fnDownloadFileInfoUpdate = (data, errorType) => {
     // console.log('下载成功后更新', data)
     const id = data.groupId || data.channelId || data.userId;
     const type = data.groupId ? "group"
+    const type = data.groupId ? "group"
                               : data.channelId ? "channel" : "friend";
     const { customMsgId, fileLocalPath, isOpen, isDir, chatType, local, localThumbUrl, taskId } = data;
     const percent = taskId && !errorType ? { percent: 100 + Number(Math.random().toFixed(6)) }: {};
@@ -445,9 +446,15 @@ const fnOperatorFile = async ({ id, type, info, openDialog, isDir, taskId }) => 
     // 后缀
     const suffix = getFileSuffix(info.chatType, info.fileName || fileUrl);
 
+    // 优先使用 info.fileName，如果不存在则从 fileUrl 中提取
+    let baseFileName = fileUrl.split("/").pop();
+    if(keepOriginName) {
+        baseFileName = info.fileName || baseFileName;
+    }
+
     let params = {
         fileUrl,
-        fileName: fileUrl.split("/").pop() + suffix,
+        fileName: baseFileName + suffix,
         uid: loginId,
         userId: type === "group" ? null : id,
         groupId: type === "group" ? id : null,
@@ -463,7 +470,9 @@ const fnOperatorFile = async ({ id, type, info, openDialog, isDir, taskId }) => 
         taskId,
     };
 
+
     if(!info.local) {
+        // 优先使用动态域名
         // 优先使用动态域名
         params.trendsFileUrl = await getOssFirstNormalUrl(fileUrl, 0, 0);
     }
