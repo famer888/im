@@ -45,7 +45,7 @@ class InviteLink {
     const data = await queryGroupLink({ qrCode, IdCode, groupId });
     // 禁用toast 根据app写的提示语
     if(data === 1021){
-      window.$toast(this.$t("请联系客服#00001"));
+      window.$toast("请联系客服#00001");
     }
     if (data?.commonResult?.errCode === 200) {
       return data;

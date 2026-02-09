@@ -120,7 +120,6 @@ const fnDownloadFileInfoUpdate = (data, errorType) => {
     // console.log('下载成功后更新', data)
     const id = data.groupId || data.channelId || data.userId;
     const type = data.groupId ? "group"
-    const type = data.groupId ? "group"
                               : data.channelId ? "channel" : "friend";
     const { customMsgId, fileLocalPath, isOpen, isDir, chatType, local, localThumbUrl, taskId } = data;
     const percent = taskId && !errorType ? { percent: 100 + Number(Math.random().toFixed(6)) }: {};
