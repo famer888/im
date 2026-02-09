@@ -10,15 +10,13 @@ const crypto = require('crypto');
 import eventCommon from "@/event/common.js";
 
 // 获取token
-export const getQrCodeUrl = (errCallback) =>
+export const getQrCodeUrl = (baseurl, errCallback) =>
     getUrl(
-        // { type: "QrCodeUrl", url: `${baseBuildUrl}/login/qrCodeUrl` },
-        { type: "QrCodeUrl", url: `${baseUrl()}/login/qrCodeUrl` },
+        { type: "QrCodeUrl", url: `${baseurl || baseBuildUrl}/login/qrCodeUrl` },
         errCallback
     );
-export const getIsLogin = (data) =>
-    // getUrl({ type: "IsLogin", url: `${baseBuildUrl}/login/isLogin`, data });
-    getUrl({ type: "IsLogin", url: `${baseUrl()}/login/isLogin`, data });
+export const getIsLogin = (baseurl, data) =>
+    getUrl({ type: "IsLogin", url: `${baseurl || baseBuildUrl}/login/isLogin`, data });
 export const getUserInfo = (data) =>
     getUrl({ type: "UserInfo", url: `${baseUrl()}/user/userInfo`, data });
 export const GetKeyPairList = (data) =>
