@@ -17,6 +17,7 @@
       <ComTextEmojiImage
         v-if="msgList[0].chatType === 0"
         :text="msgList[0].content"
+        :currentChatId="chatContent?.id || chatContent?.channelId"
       />
       <div v-else>
         {{
@@ -30,7 +31,7 @@
     <div v-else>
       <section>
         <div v-for="(item, i) in msgList" :key="i">
-          <ComTextEmojiImage v-if="item.chatType === 0" :text="item.content" />
+          <ComTextEmojiImage v-if="item.chatType === 0" :text="item.content" :currentChatId="chatContent?.id || chatContent?.channelId" />
           <div v-else>
             {{
               messageTypeToText({
@@ -59,7 +60,7 @@ import eventMsg from "@/event/msg";
 import eventCommon from "@/event/common";
 
 export default {
-  props: ["forwardMessageList"],
+  props: ["forwardMessageList", "chatContent"],
   components: {
     ComTextEmojiImage,
   },

@@ -27,6 +27,7 @@
             v-for="(item, index) in tagList"
             :key="index"
             :info="item"
+            :currentChatId="msgInfo.groupId || msgInfo.channelId"
           />
         </p>
         <p v-else>{{ content }}</p>

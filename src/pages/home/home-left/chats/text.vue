@@ -5,6 +5,7 @@
       :key="index"
       :info="item"
       :isNotification="id === 'invitation'"
+      :currentChatId="currentChatId"
     />
   </div>
 </template>
@@ -23,7 +24,7 @@ export default {
   components: {
     ComLableEle,
   },
-  props: ["text", "id", "atUsers"],
+  props: ["text", "id", "atUsers", "currentChatId"],
   computed: {
     tagList() {
       let htmlString = this.text;

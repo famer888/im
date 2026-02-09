@@ -1,6 +1,6 @@
 <template>
   <div class="comTextEmojiImage">
-    <ComLableEle v-for="(item, index) in tagList" :key="index" :info="item" />
+    <ComLableEle v-for="(item, index) in tagList" :key="index" :info="item" :currentChatId="currentChatId" />
   </div>
 </template>
 <script>
@@ -16,7 +16,7 @@ export default {
   components: {
     ComLableEle,
   },
-  props: ["text"],
+  props: ["text", "currentChatId"],
   computed: {
     tagList() {
       // 字符串替换为表情图片标签

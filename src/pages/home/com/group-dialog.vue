@@ -10,7 +10,7 @@
       <!-- 群禁用状态 不展示简介 -->
       <div class="remark-container" v-if="!(globalConfig.group.disableUnperceived && groupInfo.bfBanned)">
         <div class="remark-content" ref="remarkContent" :class="{ 'expanded': isRemarkExpanded }">
-          <ComLableEle v-for="(item, index) in remarkTagList" :key="index" :info="item" @atClick="handleAtClick" />
+          <ComLableEle v-for="(item, index) in remarkTagList" :key="index" :info="item" :currentChatId="groupInfo.id" @atClick="handleAtClick" />
         </div>
         <span class="toggle-btn" v-if="showToggleBtn" @click="toggleRemark">
           {{ isRemarkExpanded ? '折叠' : '更多' }}

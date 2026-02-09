@@ -2,7 +2,7 @@
   <div class="groupNoticeView">
     <template v-if="tagList.length > 0">
       <div :style="styleInfo" class="notice-content">
-        <ComLableEle v-for="(item, index) in tagList" :key="index" :info="item" @atClick="handleAtClick" />
+        <ComLableEle v-for="(item, index) in tagList" :key="index" :info="item" :currentChatId="chatContent?.channelId" @atClick="handleAtClick" />
       </div>
     </template>
     <template v-else>

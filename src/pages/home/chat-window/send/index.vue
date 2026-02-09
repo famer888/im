@@ -36,6 +36,7 @@
         chatContent.forwardMessageList.length > 0
       "
       :forwardMessageList="chatContent.forwardMessageList"
+      :chatContent="chatContent"
     />
     <ComReplyInfo v-if="quoteInfo" :msgInfo="quoteInfo" />
   </div>

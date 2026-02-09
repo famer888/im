@@ -15,6 +15,7 @@
             v-for="(item, index) in remarkTagList"
             :key="index"
             :info="item"
+            :currentChatId="info.channelId"
             @atClick="handleAtClick"
           />
         </div>

@@ -26,6 +26,7 @@
           v-for="(item, index) in tagList"
           :key="index"
           :info="item"
+          :currentChatId="chatContent?.id || chatContent?.channelId"
         />
       </p>
       <p v-else>{{ !msgInfo ? $t("已删除的消息") : content || $t("已删除的消息") }}</p>

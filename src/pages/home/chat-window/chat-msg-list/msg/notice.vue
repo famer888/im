@@ -15,6 +15,7 @@
         v-for="(item, index) in tagList"
         :key="index"
         :info="item"
+        :currentChatId="chatContent?.id"
         @atClick="handleAtClick"
       />
     </div>

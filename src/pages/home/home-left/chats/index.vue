@@ -137,7 +137,7 @@
               >
                 {{ item.sendUserName }}
               </span>
-              <ComChatsText :text="handleContent(item.content)" :id="item.id" :atUsers="item.atUsers" />
+              <ComChatsText :text="handleContent(item.content)" :id="item.id" :atUsers="item.atUsers" :currentChatId="item.id" />
             </div>
             <div v-else></div>
             <i

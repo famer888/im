@@ -32,11 +32,14 @@ import { completionUrl } from "@/utils/base";
 
 // 事件
 import eventBase from "@/event/base";
+import eventCommon from "@/event/common";
 import InviteLink from "@/utils/InviteLink";
+
+import { Cache } from "@/cache";
 
 export default {
   name: "lebleEle",
-  props: ["info", "isNotification"],
+  props: ["info", "isNotification", "currentChatId"],
   methods: {
     filterSensitiveWords,
     /**
@@ -88,6 +91,56 @@ export default {
       }
     },
     async handleGoLink(info, showConfirm) {
+      // 判断静默禁用
+      const infoActive = eventCommon.fnCommonInfoRU({ getId: "infoActive" });
+      const globalConfig = eventCommon.fnGlobalConfigGet();
+      let isSilentDisabled = false;
+
+      // 检查静默禁用状态
+      if (this.currentChatId) {
+        if (infoActive && String(infoActive.id) === String(this.currentChatId)) {
+          // 当前窗口匹配
+          if (infoActive.type === 'group') {
+             if (globalConfig.group?.disableUnperceived && infoActive.isDisable) {
+               isSilentDisabled = true;
+             }
+          } else if (infoActive.type === 'channel') {
+             if (globalConfig.channel?.disableUnperceived && infoActive.isDisable) {
+               isSilentDisabled = true;
+             }
+          }
+        } else {
+          // 当前窗口不匹配（可能是后台更新了 infoActive，或者在非激活窗口操作）
+          // 需要从缓存查状态
+           const loginId = eventCommon.fnCommonInfoRU({ getId: "loginId" });
+           
+           // 尝试判断类型（infoActive 不匹配时，无法直接得知 currentChatId 是 group 还是 channel，
+           // 但可以通过尝试查找缓存来确定）
+           // 优先假设是 group
+           let groupList = await Cache(`${loginId}-GroupList`) || [];
+           let groupInfo = groupList.find(i => String(i.id) === String(this.currentChatId));
+           
+           if (groupInfo) {
+              if (globalConfig.group?.disableUnperceived && groupInfo.isDisable) {
+                isSilentDisabled = true;
+              }
+           } else {
+             // 尝试 channel
+             let channelList = await Cache(`${loginId}-ChannelList`) || [];
+             let channelInfo = channelList.find(i => String(i.channelId) === String(this.currentChatId));
+             if (channelInfo) {
+                if (globalConfig.channel?.disableUnperceived && channelInfo.isDisable) {
+                  isSilentDisabled = true;
+                }
+             }
+           }
+        }
+      }
+
+      if (isSilentDisabled) {
+        window.$toast(this.$t("请联系客服 #00001"));
+        return;
+      }
 
       const linkUrl = (info?.href || "").replace("<br>", "")
       if(showConfirm) {

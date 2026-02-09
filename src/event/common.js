@@ -428,6 +428,10 @@ const fnNewFriendOrGroup = (text) => {
     fromUid: commonInfo.loginId,
     content: text,
   }).then(async (res) => {
+  //   console.log('searchAliasContent',res,'传参',{
+  //   fromUid: commonInfo.loginId,
+  //   content: text,
+  // })
     if (res?.code === 200) {
       const { groupAlias, userDetail, channelInfo, searchType } = res.data;
       console.log('别名--', res.data)
@@ -596,6 +600,50 @@ const fnConfigRU = (values) => {
 const fnAtClick = async (text, currentGuoupId) => {
   // 登录id
   const loginId = commonInfo.loginId;
+
+  // 判断静默禁用
+  const infoActive = fnCommonInfoRU({ getId: "infoActive" });
+  const globalConfig = fnGlobalConfigGet();
+  let isSilentDisabled = false;
+
+  if (infoActive && (String(infoActive.id) === String(currentGuoupId))) {
+    if (infoActive.type === 'group') {
+      // 群组：静默开启 且 群组禁用
+      if (globalConfig.group?.disableUnperceived && infoActive.isDisable) {
+        isSilentDisabled = true;
+      }
+    } else if (infoActive.type === 'channel') {
+      // 频道：静默开启 且 频道禁用
+      if (globalConfig.channel?.disableUnperceived && infoActive.isDisable) {
+        isSilentDisabled = true;
+      }
+    }
+  } else {
+     // 不匹配当前窗口，查缓存
+     // 优先假设是 group
+     let groupList = await Cache(`${loginId}-GroupList`) || [];
+     let groupInfo = groupList.find(i => String(i.id) === String(currentGuoupId));
+     
+     if (groupInfo) {
+        if (globalConfig.group?.disableUnperceived && groupInfo.isDisable) {
+          isSilentDisabled = true;
+        }
+     } else {
+       // 尝试 channel
+       let channelList = await Cache(`${loginId}-ChannelList`) || [];
+       let channelInfo = channelList.find(i => String(i.channelId) === String(currentGuoupId));
+       if (channelInfo) {
+          if (globalConfig.channel?.disableUnperceived && channelInfo.isDisable) {
+            isSilentDisabled = true;
+          }
+       }
+     }
+  }
+
+  if (isSilentDisabled) {
+    window.$toast(i18n.t("请联系客服 #00001"));
+    return;
+  }
 
   // 判断是不是好友
   const friendList = (await Cache(`${loginId}-ContactList`)) || [];
