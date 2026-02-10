@@ -526,6 +526,7 @@ const fnGlobalConfigInit = async () => {
     if (resChannel && resChannel.code === 200) {
       globalConfig.channel = resChannel.data;
     }
+    console.log('群、频道静默开关', globalConfig,'resGroup',resGroup,'resChannel',resChannel)
   } catch (error) {
     console.error("fnGlobalConfigInit error:", error);
   }
@@ -623,7 +624,7 @@ const fnAtClick = async (text, currentGuoupId) => {
      // 优先假设是 group
      let groupList = await Cache(`${loginId}-GroupList`) || [];
      let groupInfo = groupList.find(i => String(i.id) === String(currentGuoupId));
-     
+
      if (groupInfo) {
         if (globalConfig.group?.disableUnperceived && groupInfo.isDisable) {
           isSilentDisabled = true;
