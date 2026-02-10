@@ -5,7 +5,7 @@
             <ComImage :src="targetUserInfo.icon" type="friend" class="icon" />
             <span class="name">{{ targetUserInfo.nickName }}</span>
             <template v-if="!isOwn">
-                <div class="primaryBtn" v-if="targetUserInfo.friendRelation?.bfFriend" @click="handleToFriendChat()">
+                <div class="primaryBtn" v-if="isFriend" @click="handleToFriendChat()">
                     {{ $t("发送消息") }}
                 </div>
                 <div class="primaryBtn" v-else @click="showVerify(targetUserInfo)">
@@ -53,6 +53,7 @@ export default {
             addInfo: {},
             loginInfo: {},
             groupList: [],
+            isFriendDeleted: false, // 标记好友是否被删除
         }
     },
     computed: {
@@ -71,13 +72,34 @@ export default {
         isOwn() {
             return this.targetUserInfo?.uid == this.loginInfo?.id
         },
+        isFriend() {
+            // 如果好友被删除，返回 false
+            if (this.isFriendDeleted) {
+                return false;
+            }
+            return this.targetUserInfo.friendRelation?.bfFriend;
+        },
         isGroupMember() {
-           const groupId = Number(this.targetGroupInfo?.groupId) 
+           const groupId = Number(this.targetGroupInfo?.groupId)
            if(groupId && this.groupList.length) {
              return this.groupList.some(item => item.id === groupId)
            } else {
              return false
            }
+        }
+    },
+    watch: {
+        // 监听 info 变化，重置状态并重新获取数据
+        info: {
+            handler(newVal) {
+                // 重置好友删除状态
+                this.isFriendDeleted = false;
+                // 如果是群聊，重新获取群列表
+                if (newVal?.groupOrUserType == 0) {
+                    this.getGroupList();
+                }
+            },
+            immediate: false
         }
     },
     mounted() {
@@ -87,8 +109,34 @@ export default {
         if(this.info.groupOrUserType == 0) {
             this.getGroupList()
         }
+        // 监听群通知事件，以便在群成员变化时更新群列表
+        // 监听好友删除事件，以便在好友被删除时更新状态
+        eventBase.fnCommunicationMonitoring(
+            "addContactsDetail",
+            ["groupNotification", "deleteFriend"],
+            this.handleNotification
+        );
+    },
+    beforeDestroy() {
+        // 移除事件监听
+        eventBase.fnCommunicationMonitoring("addContactsDetail", null, null);
     },
     methods: {
+        handleNotification(info, operator, operatorType) {
+            if (operator === "groupNotification") {
+                // 当收到自己退群/被移出/群解散等通知时，刷新群列表
+                // exit 类型只在当前用户相关的退群事件时触发
+                if (operatorType === "exit") {
+                    this.getGroupList();
+                }
+            } else if (operator === "deleteFriend") {
+                // 当好友被删除时，检查是否是当前显示的联系人
+                const targetUid = Number(this.targetUserInfo?.uid);
+                if (targetUid && info.id === targetUid) {
+                    this.isFriendDeleted = true;
+                }
+            }
+        },
         getGroupList() {
              const loginId = this.loginInfo?.id
              Cache(`${loginId}-GroupList`).then(res => {
@@ -177,6 +225,13 @@ export default {
             }).then((res) => {
                 console.log('groupJoin--', res)
                 const { errMsg, errCode } = res?.commonResult || {};
+                // 静默禁用判断
+                const globalConfig = eventCommon.fnGlobalConfigGet();
+                const isSilentDisabled = globalConfig.group?.disableUnperceived;
+                if (res === 1021 && isSilentDisabled) {
+                    window.$toast(this.$t("请联系客服#00001"));
+                    return;
+                }
                 if (errCode != 200) {
                     window.$toast(errMsg || res?.errorDesc || this.$t("加入群聊失败"));
                 } else {

@@ -2515,6 +2515,17 @@ const fnGroupClear = (groupId) => {
     const cacheName = `${loginId}_${groupId}_groupMemberList`;
     Cache(cacheName, []);
 
+    // 从群列表缓存中移除该群
+    Cache(`${loginId}-GroupList`).then(groupList => {
+        if (groupList && groupList.length > 0) {
+            const hasGroup = groupList.some(item => item.id === groupId);
+            if (hasGroup) {
+                const updatedGroupList = groupList.filter(item => item.id !== groupId);
+                Cache(`${loginId}-GroupList`, updatedGroupList);
+            }
+        }
+    });
+
     // 清空 之前阻塞的补偿信息
     delete groupEventObj[groupId + "broadcast"];
     delete groupEventObj[groupId + "unicast"];
