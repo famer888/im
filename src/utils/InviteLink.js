@@ -105,7 +105,7 @@ class InviteLink {
   }
   redirectChannel(info) {
     if (!info) {
-      return window.$toast(data?.msg || '此频道已失效或过期');
+      return window.$toast(info?.msg || '此频道已失效或过期');
     }
     // 公开频道或已加入 → 直接跳转聊天窗口
     if (!info.linkType || info.memberType) {
