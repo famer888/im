@@ -1149,6 +1149,10 @@ export default class dbBase {
       this.version += 1;
     }
     await Cache(`${this.userId}storageVersion`, this.version + 1);
+    // 关闭旧连接，防止版本更新阻塞
+    if (this.db) {
+      this.db.close();
+    }
     this.db = new Dexie(this.userId + afterfix);
 
     if (!Object.keys(tables).length) {
@@ -1156,7 +1160,6 @@ export default class dbBase {
       return;
     }
 
-    this.db.close();
     this.db.version(this.version).stores(tables);
 
     try {
