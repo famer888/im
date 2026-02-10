@@ -223,15 +223,7 @@ export default {
                 addToken: this.targetGroup.addToken,
                 msg: "申请加入群聊",
             }).then((res) => {
-                console.log('groupJoin--', res)
                 const { errMsg, errCode } = res?.commonResult || {};
-                // 静默禁用判断
-                const globalConfig = eventCommon.fnGlobalConfigGet();
-                const isSilentDisabled = globalConfig.group?.disableUnperceived;
-                if (res === 1021 && isSilentDisabled) {
-                    window.$toast(this.$t("请联系客服#00001"));
-                    return;
-                }
                 if (errCode != 200) {
                     window.$toast(errMsg || res?.errorDesc || this.$t("加入群聊失败"));
                 } else {
@@ -246,7 +238,7 @@ export default {
                         }, 500)
                     }
                 }
-            });
+            })
         }
     }
 }

@@ -215,7 +215,8 @@ const requestApi = async (opt) => {
 
                 // 该群聊因违反相关规定，已被限制使用。
                 if (errCode == 1021) {
-                    resolve(errCode);
+                    resolve(message);
+                    return;
                 }
 
                 if (errCode != 200 && errCode != 1023) {

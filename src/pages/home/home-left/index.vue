@@ -1332,7 +1332,8 @@ export default {
               processBatch(chatGroups, 'group', async (chat) => {
                 try {
                     const res = await getGroupDetail({ groupId: chat.id });
-                    if (res === 1021) {
+                    const {  errCode } = res?.commonResult || {};
+                    if (res == 1021 || res == 12009 || errCode == 1021 || errCode == 12009) {
                         // 群被禁用
                          if (updateChat(chat.id, 'group', { isDisable: true })) {
                             hasUpdate = true;

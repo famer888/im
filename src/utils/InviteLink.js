@@ -44,18 +44,11 @@ class InviteLink {
   }
   async getGroupInfoByLink({ qrCode, IdCode, groupId }) {
     const data = await queryGroupLink({ qrCode, IdCode, groupId });
-    // 禁用toast 根据app写的提示语
-    if(data === 1021){
-      const globalConfig = eventCommon.fnGlobalConfigGet();
-      let isSilentDisabled = globalConfig.group?.disableUnperceived;
-
-      if (isSilentDisabled) {
-        window.$toast("请联系客服#00001");
-      }
-    }
-    if (data?.commonResult?.errCode === 200) {
+    const { errMsg, errCode } = data?.commonResult || {};
+    if (errCode === 200) {
       return data;
     } else {
+      window.$toast(errMsg || data?.errorDesc || this.$t("加入群聊失败"));
       throw new Error('获取群信息失败：' + data?.commonResult?.errMsg);
     }
   }

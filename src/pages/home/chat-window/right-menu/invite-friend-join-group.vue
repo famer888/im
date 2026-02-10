@@ -66,15 +66,7 @@ export default {
             }
             console.log("GroupMember--", pra)
             GroupMember(pra).then(async res => {
-                const { errCode } = res?.commonResult || {}
-                if (res === 1021) {
-                  const globalConfig = eventCommon.fnGlobalConfigGet();
-                  if (globalConfig.group?.disableUnperceived) {
-                    window.$toast(this.$t("请联系客服#00001"));
-                    return;
-                  }
-                }
-
+                const { errMsg, errCode } = res?.commonResult || {}
                 if (errCode == 200) {
                     if (Array.isArray(res?.needCheckUids) && res?.needCheckUids?.length > 0) {
                       this.waitForUsersConfirm(res.needCheckUids)
@@ -88,7 +80,7 @@ export default {
                     //     remark: op === 6 ? "加入黑名单后，你将不再接收到对方的任何消息" : "确认移除黑名单吗",
                     // })
                 } else {
-                    window.$toast('邀请失败')
+                    window.$toast(errMsg || res?.errorDesc || this.$t("邀请失败"));
                 }
             })
         },

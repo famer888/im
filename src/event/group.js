@@ -1746,7 +1746,10 @@ const fnGroupInitDelayedList = () => {
  */
 const fnGroupDetailGet = (groupId) => {
     getGroupDetail({ groupId }).then((res) => {
-        if (res === 1021) {
+      const { errCode } = res?.commonResult || {};
+       // 无感知未开启：返回1021
+       // 无感知已开启：返回12009
+        if (res === 1021 || res === 12009 || errCode === 1021 || errCode === 12009) {
              eventBase.fnCommunicationSendMsg({
                 operator: "groupUpdate",
                 data: { type: "group", id: groupId, values: { id: groupId, isDisable: true } },
@@ -1928,7 +1931,10 @@ const fnGroupDetailInit = (groupId) => {
             }).then((res) => {
                 // console.log(`[${groupId}]getGroupDetail--`,res)
                 // 如果该群聊因违反相关规定，已被限制使用
-                if (res === 1021) {
+                const { errCode } = res?.commonResult || {};
+                  // 无感知未开启：返回1021
+                  // 无感知已开启：返回12009
+                 if (res === 1021 || res === 12009 || errCode === 1021 || errCode === 12009) {
                     // 通讯
                     eventBase.fnCommunicationSendMsg({
                         operator: "groupUpdate",

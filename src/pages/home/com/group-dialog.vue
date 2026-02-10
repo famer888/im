@@ -374,11 +374,11 @@ export default {
         msg: "申请入群",
       }).then(async (res) => {
         const { errMsg, errCode } = res?.commonResult || {};
-        const isSilentDisabled = this.globalConfig.group?.disableUnperceived;
-        if (res === 1021 && isSilentDisabled) {
-          window.$toast(this.$t("请联系客服#00001"));
-          return;
-        }
+        // const isSilentDisabled = this.globalConfig.group?.disableUnperceived;
+        // if (res === 1021 && isSilentDisabled) {
+        //   window.$toast(this.$t("请联系客服#00001"));
+        //   return;
+        // }
         if (errCode != 200) {
           window.$toast(errMsg || res?.errorDesc || this.$t("加入群聊失败"));
         } else {
