@@ -6,7 +6,8 @@
        <ChannelLink v-if="chatContent.linkType !== 1 || [1, 2].includes(chatContent.memberType)"  :chatContent="chatContent"  @showQrCode="channelQrcodeVisilbe = true" />
        <ComChannelQrcode v-if="channelQrcodeVisilbe" :chatContent="chatContent"  @close="channelQrcodeVisilbe = false" />
      <!-- 频道静默禁用判断 -->
-       <div class="channel-notice" v-if="!(chatContent.isDisable && globalConfig.channel.disableUnperceived)">
+      <!--  && globalConfig.channel.disableUnperceived -->
+       <div class="channel-notice" v-if="!(chatContent.isDisable)">
          <ChannelNotice :remark="remark" :memberInfoList="channelUserList" :chatContent="chatContent" />
       </div>
      </template>
@@ -16,7 +17,8 @@
       @showGroupQrCode="groupQrcodeVisilbe = true"
       />
       <!-- 群静默禁用判断 -->
-      <ComGroupNotice v-if="!(chatContent.isDisable && globalConfig.group.disableUnperceived)" :notice="notice" :memberInfoList="memberInfoList" :chatContent="chatContent" />
+       <!--  && globalConfig.group.disableUnperceived -->
+      <ComGroupNotice v-if="!(chatContent.isDisable)" :notice="notice" :memberInfoList="memberInfoList" :chatContent="chatContent" />
       <ComGroupQrcode
         v-if="groupQrcodeVisilbe"
         :chatContent="chatContent"
