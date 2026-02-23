@@ -670,11 +670,13 @@ const setMainWin = async () => {
         });
     }
     require("@electron/remote/main").enable(mainWindow.webContents);
-    mainWindow.webContents.on("did-finish-load", (e) => {
+    mainWindow.webContents.on("did-finish-load", async (e) => {
         try {
-            mainWindow.show();
-            mainWindow.focus();
-            setTimeout(() => mainWindow.setOpacity(1), 1000 / 60);
+            const win = mainWindow || (BrowserWindow.getAllWindows() || [])[0];
+            win && win.show();
+            win && win.focus();
+            await new Promise(resolve => setTimeout(resolve, 1000 / 60));
+            win && win.setOpacity(1);
         } catch (ex) {
             // do nothing
         }
