@@ -394,7 +394,7 @@ export default {
         display: none;
         position: absolute;
         top: 35px;
-        right: 1px;
+        right: -105px;
         line-height: 26px;
         padding: 0 8px;
         background: #3daee9;
@@ -410,7 +410,7 @@ export default {
         &::after {
           position: absolute;
           top: -10px;
-          right: 3px;
+          right: 105px;
           display: block;
           font-size: 0;
           line-height: 0;

@@ -30,22 +30,32 @@ import { runMacStartupCleanup, watchUserDataRemoval, stopWatchUserData } from "@
 
 app.on("gpu-process-crashed", (event, kill) => {
     // console.warn("app:gpu-process-crashed", event, kill);
-    reloadWindows("gpu-process-crashed");
+    reloadWindows("gpu-process-crashed", { killed: kill });
 });
 
 app.on("renderer-process-crashed", (event, webContents, kill) => {
     // console.warn("app:renderer-process-crashed", event, webContents, kill);
-    reloadWindows("renderer-process-crashed");
+    reloadWindows("renderer-process-crashed", { killed: kill, url: (webContents && webContents.getURL) ? webContents.getURL() : '未知' });
 });
 
 app.on("render-process-gone", (event, webContents, details) => {
     // console.warn("app:render-process-gone", event, webContents, details);
-    reloadWindows("render-process-gone");
+    reloadWindows("render-process-gone", {
+        reason: (details && details.reason) || '未知',
+        exitCode: details && details.exitCode,
+        url: (webContents && webContents.getURL) ? webContents.getURL() : '未知'
+    });
 });
 
 app.on("child-process-gone", (event, details) => {
     // console.warn("app:child-process-gone", event, details);
-    reloadWindows("child-process-gone");
+    reloadWindows("child-process-gone", {
+        reason: (details && details.reason) || '未知',
+        exitCode: details && details.exitCode,
+        type: (details && details.type) || '未知',
+        serviceName: (details && details.serviceName) || '',
+        name: (details && details.name) || ''
+    });
 });
 // app.disableHardwareAcceleration()
 
@@ -104,8 +114,114 @@ ipcMain.handle("get-working-dir", () => {
     return workingDir;
 });
 
-function reloadWindows(type) {
+// 标志：应用生命周期内是否已打开过崩溃文档
+let crashDocOpened = false;
+
+function reloadWindows(type, details = {}) {
     try {
+        // 确保 userData 目录存在
+        if (!fs.existsSync(userData)) {
+            fs.mkdirSync(userData, { recursive: true });
+        }
+
+        // 写入崩溃文档
+        const crashDocPath = nodePath.join(userData, 'CrashReports');
+        if (!fs.existsSync(crashDocPath)) {
+            fs.mkdirSync(crashDocPath, { recursive: true });
+        }
+
+        const timestamp = new Date();
+        const dateStr = timestamp.toISOString().replace(/[:.]/g, '-').slice(0, 19);
+        const crashFilePath = nodePath.join(crashDocPath, `crash_${dateStr}.txt`);
+
+        // 崩溃原因详情
+        const crashReasons = {
+            'gpu-process-crashed': 'GPU进程崩溃：显卡驱动异常或GPU资源耗尽，建议更新显卡驱动或降低图形设置',
+            'renderer-process-crashed': '渲染进程崩溃：页面渲染时发生错误，可能由内存不足或代码异常引起',
+            'render-process-gone': '渲染进程已终止：渲染进程意外退出，可能由系统资源不足或外部因素导致',
+            'child-process-gone': '子进程已终止：子进程意外退出，可能由系统资源不足或进程被强制结束'
+        };
+
+        // 退出原因说明
+        const reasonDescriptions = {
+            'clean-exit': '正常退出',
+            'abnormal-exit': '异常退出',
+            'killed': '被系统终止',
+            'crashed': '进程崩溃',
+            'oom': '内存不足(OOM)',
+            'launch-failed': '启动失败',
+            'integrity-failure': '完整性校验失败'
+        };
+
+        // 构建详情信息
+        let detailsText = '';
+        if (details.killed !== undefined) {
+            detailsText += `是否被强制终止: ${details.killed ? '是' : '否'}\n`;
+        }
+        if (details.reason) {
+            detailsText += `退出原因: ${reasonDescriptions[details.reason] || details.reason}\n`;
+        }
+        if (details.exitCode !== undefined) {
+            detailsText += `退出代码: ${details.exitCode}\n`;
+        }
+        if (details.type) {
+            detailsText += `进程类型: ${details.type}\n`;
+        }
+        if (details.serviceName) {
+            detailsText += `服务名称: ${details.serviceName}\n`;
+        }
+        if (details.name) {
+            detailsText += `进程名称: ${details.name}\n`;
+        }
+        if (details.url) {
+            detailsText += `页面URL: ${details.url}\n`;
+        }
+
+        const crashContent = `========================================
+应用崩溃报告【请提供此报告给客服，以便技术排查问题】
+========================================
+
+崩溃时间: ${timestamp.toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}
+崩溃类型: ${type}
+崩溃原因: ${crashReasons[type] || '未知崩溃类型'}
+
+----------------------------------------
+详细信息
+----------------------------------------
+${detailsText || '无额外详情'}
+----------------------------------------
+系统信息
+----------------------------------------
+应用版本: ${pkg.version || '未知'}
+Electron版本: ${process.versions.electron || '未知'}
+Chrome版本: ${process.versions.chrome || '未知'}
+Node版本: ${process.versions.node || '未知'}
+操作系统: ${process.platform} ${process.arch}
+
+----------------------------------------
+处理措施
+----------------------------------------
+应用已自动重新加载窗口以恢复正常运行。
+
+如果问题持续发生，请尝试以下操作：
+1. 重启应用程序
+2. 检查系统资源使用情况（内存、CPU）
+3. 更新显卡驱动程序 ***重要***
+4. 清理应用缓存数据
+5. 联系技术支持并提供此报告
+
+========================================
+`;
+
+        // 写入文件
+        fs.writeFileSync(crashFilePath, crashContent, 'utf8');
+
+        // 使用默认程序打开崩溃文档（应用生命周期内仅打开一次）
+        if (!crashDocOpened) {
+            crashDocOpened = true;
+            shell.openPath(crashFilePath);
+        }
+
         setTimeout(() => {
             mainWindow.reload();
             mainWindow.send("collapse", {
@@ -1105,7 +1221,8 @@ setTimeout(() => {
 
 if (!app.requestSingleInstanceLock()) {
     console.log("获取到没有呢", baseIndex);
-    app.setPath("userData", nodePath.join(userData, `/DATA_${baseIndex}/`));
+    userData = nodePath.join(userData, `/DATA_${baseIndex}/`);
+    app.setPath("userData", userData);
     buildCollapseDoc();
 } else {
     console.log("这里是设置");
