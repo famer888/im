@@ -414,7 +414,7 @@ const fnFileInfosGet = async (info) => {
 /**
  * 操作文件
  */
-const fnOperatorFile = async ({ id, type, info, openDialog, isDir, taskId }) => {
+const fnOperatorFile = async ({ id, type, info, openDialog, isDir, taskId }, keepOriginName) => {
     // 文件路径
     let fileUrl = info.local || "";
 
