@@ -269,6 +269,15 @@ export const groupGlobalConfigAPI = (data) => {
     });
 };
 
+// 查询群申请UID列表
+export const checkUidList = (data) => {
+    return requestAxios(`/group/groupReq/checkUidList`, data, {
+        headers: {
+            ...getSignHeader(),
+        },
+    });
+};
+
 
 function concatBuffers(buffers) {
     const totalLength = buffers.reduce((acc, buf) => acc + buf.length, 0);

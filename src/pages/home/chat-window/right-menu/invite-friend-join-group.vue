@@ -13,10 +13,11 @@
                 </div>
             </div>
             <ul class="friend-list">
-                <li class="friend-item" :class="{ disable: item.isGroupMember || item.nickName === '账号已注销' }" v-for="(item, index) in friendList" :key="index" @click="selectFriend(item)">
+                <li class="friend-item" :class="{ disable: penddingAuditUserList.includes(Number(item.id)) || item.isGroupMember || item.nickName === '账号已注销' }" v-for="(item, index) in friendList" :key="index" @click="selectFriend(item)">
                     <div class="left">
                         <ComImage type="friend" :src="item.pic" class="member-avatar" />
                         <span class="name">{{ item.name || item.nickName }}</span>
+                        <div class="pending-tag" v-if="penddingAuditUserList.includes(Number(item.id))">{{ $t('进群审核中') }}</div>
                     </div>
                     <ComCheckbox :value="getSelectState(item)"></ComCheckbox>
                 </li>
@@ -33,9 +34,8 @@ import ComSearch from "../../com/search.vue";
 import ComCheckbox from "@/components/Checkbox";
 import { Cache } from "@/cache";
 import eventCommon from "@/event/common";
-import { GroupMember, groupQrCode } from "@/api/imGroup.js";
+import { GroupMember, groupQrCode, checkUidList } from "@/api/imGroup.js";
 import { copyToClipboard } from "@/utils/base";
-
 export default {
     name: "inviteFriendJoinGroup",
     props: ["groupId", "memberInfoList", "qrcodeUrl"],
@@ -47,12 +47,21 @@ export default {
             selectFriends: [],
             timerSearch: null,
             searchText: "",
+            penddingAuditUserList: [],
         }
     },
     mounted() {
         this.getFriendList()
+        this.getPendingAuditUserMap()
     },
     methods: {
+        getPendingAuditUserMap() {
+            checkUidList({ groupId: this.groupId }).then((res) => {
+                if (res?.code === 200) {
+                  this.penddingAuditUserList = res?.data?.checkList || []
+                }
+            });
+        },
         confirmInvite() {
             const members = this.selectFriends.map(item => item.id)
             if (!members.length) {
@@ -267,6 +276,19 @@ export default {
         .left {
             display: flex;
             align-items: center;
+            flex: 1;
+            position: relative;
+        }
+
+        .pending-tag {
+            position: absolute;
+            right: 5px;
+            font-size: 12px;
+            color: white;
+            background: #178AFF;
+            padding: 2px 8px;
+            border-radius: 10px;
+            top: 11px;
         }
 
         .member-avatar {
@@ -279,6 +301,10 @@ export default {
             font-size: 14px;
             color: #494949;
             margin-left: 10px;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
     }
 

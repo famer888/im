@@ -251,6 +251,7 @@
   "确认发布": "confirm release",
   "邀请成功": "Invitation successful",
   "开启了入群需审核，对方同意后才会进入群聊": "has enabled group join approval. They will enter the group chat after approval",
-  "请联系客服#00001":"Please contact customer service #00001"
+  "请联系客服#00001":"Please contact customer service #00001",
+  "进群审核中": "Pending approval"
 }
   
