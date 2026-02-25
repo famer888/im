@@ -73,6 +73,10 @@ module.exports = {
       builderOptions: {
         // 产品名称
         productName: process.env.VUE_APP_PACKNAME,
+        // 使用 extraMetadata 覆盖打包后的 name（决定 userData 路径），不会修改源 package.json
+        extraMetadata: {
+          name: process.env.VUE_APP_PACKNAME,
+        },
         // 修改appId是，需要同时修改backgroud.js里面设置的appUserModelId，设置见：app.setAppUserModelId(xxx)
         appId: 'cn.otc.chat',
         compression: 'normal',
