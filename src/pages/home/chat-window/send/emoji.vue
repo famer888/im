@@ -89,7 +89,8 @@ export default {
   border-radius: 8px;
   border: 1px solid #cccccc;
   bottom: 50px;
-  left: -60px;
+  // left: -60px;
+  left: 10px;
   z-index: 10;
 
   > div {
