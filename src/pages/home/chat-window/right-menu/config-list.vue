@@ -67,10 +67,10 @@
     </li>
 
     <template v-if="isGroup">
-      <li class="clearHistory" v-if="chatContent.memberType == 0" @click="handelDisbandGroup">
+      <li class="clearHistory" :class="{ 'highlight-btn': chatContent.isDisable }" v-if="chatContent.memberType == 0" @click="handelDisbandGroup">
         解散群聊
       </li>
-      <li class="clearHistory" v-else @click="handelExitGroup">
+      <li class="clearHistory" :class="{ 'highlight-btn': chatContent.isDisable }" v-else @click="handelExitGroup">
         删除并退出
       </li>
     </template>
@@ -514,6 +514,11 @@ export default {
       &.friend {
         justify-content: flex-start !important;
       }
+    }
+    &.highlight-btn {
+      position: relative;
+      z-index: 11;
+      background-color: #fff;
     }
   }
 }
