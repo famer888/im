@@ -384,7 +384,7 @@ export default {
         } else {
           if (this.groupInfo.bfJoinCheck) {
             // 入群需要验证
-            window.$toast(this.$t("已提交申请入群"));
+            window.$toast(this.$t("已向群主发送申请，等待群主审核"));
           } else {
             // 直接入群成功
             window.$toast(this.$t("加入群聊成功"));

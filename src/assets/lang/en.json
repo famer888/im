@@ -252,6 +252,9 @@
   "邀请成功": "Invitation successful",
   "开启了入群需审核，对方同意后才会进入群聊": "has enabled group join approval. They will enter the group chat after approval",
   "请联系客服#00001":"Please contact customer service #00001",
-  "进群审核中": "Pending approval"
+  "进群审核中": "Pending approval",
+  "已向群主发送申请，等待群主审核": "Application sent to the group owner, waiting for approval",
+  "加入群聊成功": "Joined group chat successfully",
+  "您已加入群聊": "You have joined the group chat"
 }
   

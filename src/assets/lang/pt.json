@@ -252,6 +252,9 @@
   "邀请成功": "Convite bem-sucedido",
   "开启了入群需审核，对方同意后才会进入群聊": "ativou a aprovação de entrada no grupo. Eles entrarão no grupo após a aprovação",
   "请联系客服#00001":"Por favor, entre em contato com o nosso suporte ao cliente #00001",
-  "进群审核中": "Aguardando aprovação"
+  "进群审核中": "Aguardando aprovação",
+  "已向群主发送申请，等待群主审核": "A solicitação foi enviada ao proprietário do grupo, aguardando aprovação",
+  "加入群聊成功": "Entrada no grupo bem-sucedida",
+  "您已加入群聊": "Você entrou no grupo"
 }
   

@@ -229,9 +229,9 @@ export default {
                 } else {
                     if (this.targetGroupInfo.bfJoinCheck) {
                         // 入群需要验证
-                        window.$toast("请耐心等待群主审核");
+                        window.$toast(this.$t("已向群主发送申请，等待群主审核"));
                     } else {
-                        window.$toast("加入群成功");
+                        window.$toast(this.$t("加入群聊成功"));
                         setTimeout(() => {
                            this.$emit("close");
                            this.handleToChat(this.targetGroupInfo);
