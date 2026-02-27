@@ -643,7 +643,16 @@ export default {
      * 获取聊天窗口列表
      */
     async handleChatsGet() {
-      Cache(`${loginId}MessageGroupList`).then((res) => {
+      // 10秒超时 Promise
+      const timeout = (ms) => new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('timeout')), ms)
+      );
+
+      // MessageGroupList 带 10s 超时
+      Promise.race([
+        Cache(`${loginId}MessageGroupList`),
+        timeout(10000)
+      ]).then((res) => {
         if (res && res.length > 0) {
           if (res[0].id) {
             this.handleDataFinish("chat");
@@ -658,9 +667,16 @@ export default {
         } else {
           this.handleDataFinish("chat");
         }
+      }).catch(() => {
+        // 超时或错误，直接完成进度
+        this.handleDataFinish("chat");
       });
 
-      Cache(`${loginId}MessageUserList`).then((res) => {
+      // MessageUserList 带 10s 超时
+      Promise.race([
+        Cache(`${loginId}MessageUserList`),
+        timeout(10000)
+      ]).then((res) => {
         if (res && res.length > 0) {
           if (res[0].id) {
             this.handleDataFinish("chat");
@@ -678,6 +694,9 @@ export default {
         } else {
           this.handleDataFinish("chat");
         }
+      }).catch(() => {
+        // 超时或错误，直接完成进度
+        this.handleDataFinish("chat");
       });
     },
     /**

@@ -975,6 +975,22 @@ const handleFileDownload = (args) => {
     // console.log(fileUrl)
 };
 
+const preValidateLoalFile = (dataPath, data) => {
+  try {
+    JSON.parse(data);
+    return data;
+  } catch (error) {
+    // 解析失败，写入空文件覆盖损坏的文件
+    // 先检查目录是否存在，不存在则创建
+    const dirPath = (nodePath || '').dirname(dataPath);
+    if (!fs.existsSync(dirPath)) {
+      fs.mkdirSync(dirPath, { recursive: true });
+    }
+    fs.writeFileSync(dataPath, "", { encoding: "utf-8" });
+    return "";
+  }
+}
+
 const getLocalFile = async (args) => {
     try {
         let { key, value } = args;
@@ -993,15 +1009,25 @@ const getLocalFile = async (args) => {
                         }
                     });
                 }
-                return await fs.readFileSync(dataPath, {
+                const data = await fs.readFileSync(dataPath, {
                     encoding: "utf-8",
                 });
+                return preValidateLoalFile(dataPath, data);
             } else {
                 fs.writeFileSync(dataPath, "", { encoding: "utf-8" });
                 return "";
             }
         }
-    } catch (error) {}
+    } catch (error) {
+        // 发送错误到渲染进程 console
+        // 只发送可序列化的数据，args.value 可能包含不可序列化的内容
+        sendMain("main-error-log", {
+            type: "getLocalFile",
+            message: (error && error.message) || String(error),
+            stack: (error && error.stack) || "",
+            key: (args && args.key) || ""
+        }, mainWindow);
+    }
 };
 
 const createMainWindow = async () => {

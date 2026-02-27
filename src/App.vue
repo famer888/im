@@ -27,6 +27,11 @@ export default {
     }
   },
   async mounted() {
+    // 监听主进程错误报告，打印到 console
+    ipcRenderer.on("main-error-log", (e, data) => {
+      console.error("[主进程错误]", data?.type, data?.message, data?.args, data?.stack);
+    });
+
     ipcRenderer.on("visibilitychange", (e, windowShowState) => {
       Local("windowShowState", windowShowState);
     });
