@@ -666,7 +666,8 @@ const fnUtf8ArrayToStr = (buffer, type) => {
         }
         case enumMsgType.groupNotice: {
             // 群简介
-            return GroupNoticeObj.decode(UnitBuffer).content;
+            const obj = GroupNoticeObj.decode(UnitBuffer);
+            return JSON.stringify(obj);
         }
         case enumMsgType.dice: {
             // 骰子

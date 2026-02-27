@@ -431,7 +431,8 @@ export default {
       let unreadSeparation = this.unreadSeparationId === message.customMsgId;
       const selected = this.selectedIdList.some((cur) => cur.id == message.id);
       // 如果是假消息，非我发送，隐藏自己
-      const hidden = message.isHide && !message.isSelf;
+      // 添加群简介判断isHide （showNotify不为true时视为隐藏）
+      const hidden = (message.isHide && !message.isSelf) || (message.msgType === 8 && message.isHide);
       // const hidden = typeof message.content === 'string' && message.content.includes('xxx');
       // 并且是最后一条，隐藏所有挂件
       if (hidden && index === this.maxIndex - 1) {
@@ -1490,11 +1491,12 @@ export default {
           if (channelList && channelList.length) {
             channelInfo = channelList.find((item) => Number(item.channelId) === Number(channelId));
             // const resItem = recentMsgs.find(item => Number(item.MsgID) === Number(latestMsgId));
-            // 倒序查找第一条非隐藏消息（排除他人发送的 isHide）
+            // 倒序查找第一条非隐藏消息（排除他人发送的 isHide，但保留群公告预览，即使 showNotify=false）
             let resItem = null;
             for (let i = recentMsgs.length - 1; i >= 0; i--) {
                 const item = recentMsgs[i];
-                if (!(item.isHide && !item.isSelf)) {
+                // 排除隐藏消息（非自己发送的 isHide），但群公告(8)除外
+                if (!((item.isHide && !item.isSelf) && item.msgType !== 8)) {
                     resItem = item;
                     break;
                 }
@@ -1595,8 +1597,8 @@ export default {
         let lastMsg = null;
         for (let i = recentMsgs.length - 1; i >= 0; i--) {
             const item = recentMsgs[i];
-            // 排除隐藏消息（非自己发送的 isHide）
-            if (!(item.isHide && !item.isSelf)) {
+            // 排除隐藏消息（非自己发送的 isHide），但群公告(8)除外
+            if (!((item.isHide && !item.isSelf) && item.msgType !== 8)) {
                 lastMsg = item;
                 break;
             }

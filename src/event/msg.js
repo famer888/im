@@ -61,7 +61,8 @@ const fnCheckMsgRepeat = async (id, type, msgId) => {
  */
 const fnHandleHideMessage = (msgNew, type, loginId) => {
     // 判断是否为隐藏消息（isHide: true && sendUid !== loginUid）
-    const isHiddenMessage = msgNew.isHide && msgNew.sendUid !== loginId;
+    // 群简介(8)需更新会话列表预览，即使 showNotify=false (isHide=true) 也不拦截，交由前端控制渲染隐藏
+    const isHiddenMessage = msgNew.isHide && msgNew.sendUid !== loginId && msgNew.msgType !== 8;
     // const isHideMessage = typeof msgNew.content === 'string' && msgNew.content.includes('xxx');
 
     if (!isHiddenMessage) {
@@ -293,7 +294,7 @@ const fnGroupMsgAdd = async (msg) => {
     const msgId = Number(msg.msgId);
 
     if (await fnCheckMsgRepeat(groupId, type, msgId)) return;
-    const { contentStr, fileKey } = await fnMsgDecryption({
+    let { contentStr, fileKey } = await fnMsgDecryption({
         id: groupId,
         type,
         msgType: msg.msgType || 0,
@@ -305,6 +306,32 @@ const fnGroupMsgAdd = async (msg) => {
     // 如果解密失败，则终止执行
     if (!contentStr) {
         return;
+    }
+
+    // 群简介处理
+    if(msg.msgType === enumMsgType.groupNotice) {
+        try {
+            let contentObj = null;
+            try {
+                contentObj = JSON.parse(contentStr);
+            } catch (e) {
+                // 不是 JSON，说明是旧数据，保持 contentObj 为 null
+            }
+            // 如果是新格式
+            if(contentObj && typeof contentObj === 'object') {
+                // 更新 contentStr 为实际内容
+                contentStr = contentObj.content;
+                if(contentObj.noticeId) {
+                    msg.noticeId = contentObj.noticeId;
+                }
+                msg.showNotify = !!contentObj.showNotify
+                if(!contentObj.showNotify){
+                    msg.isHide = true;
+                }
+            }
+        } catch (error) {
+            console.error("群简介解析失败", error);
+        }
     }
 
     fnMsgAdd({
