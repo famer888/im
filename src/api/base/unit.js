@@ -214,7 +214,9 @@ const requestApi = async (opt) => {
                 const errCode = message?.commonResult?.errCode;
 
                 // 该群聊因违反相关规定，已被限制使用。
-                if (errCode == 1021) {
+                // 无感知未开启：返回1021
+                // 无感知已开启：返回12009
+                if (errCode == 1021 || errCode == 12009) {
                     resolve(message);
                     return;
                 }

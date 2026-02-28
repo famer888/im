@@ -252,6 +252,9 @@
   "邀请成功": "Mời thành công",
   "开启了入群需审核，对方同意后才会进入群聊": "đã bật phê duyệt tham gia nhóm. Họ sẽ vào nhóm sau khi được phê duyệt",
   "请联系客服#00001":"Vui lòng liên hệ với khách hàng #00001",
-  "进群审核中": "Đang chờ phê duyệt"
+  "进群审核中": "Đang chờ phê duyệt",
+  "已向群主发送申请，等待群主审核": "Đã gửi yêu cầu vào nhóm, đang chờ phê duyệt",
+  "加入群聊成功": "Tham gia nhóm thành công",
+  "您已加入群聊": "Bạn đã tham gia nhóm"
 }
  

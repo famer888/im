@@ -390,6 +390,7 @@ export default {
   // border-left: 1px solid rgba(238, 238, 238, 0.3);
   color: #333;
   .right-menu-content{
+    flex: 1;
     position: relative;
     flex-direction: column;
     padding-bottom: 60px;

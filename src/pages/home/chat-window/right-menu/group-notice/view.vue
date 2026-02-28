@@ -39,6 +39,14 @@ export default {
     // 连接处理
     this.handleContent()
   },
+  watch: {
+    content() {
+      this.handleContent();
+    },
+    atNameList() {
+      this.handleContent();
+    }
+  },
   methods: {
     handleContent() {
       let htmlString = repalceLink(this.content);
