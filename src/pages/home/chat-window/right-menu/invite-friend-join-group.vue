@@ -150,12 +150,13 @@ export default {
                 this.friendList = this.contactList;
             })
         },
-        // 过滤掉群成员
+        // 过滤掉群成员和已注销
         filterGroupMember(friends, groupMembers) {
             // let isFriendMore = friends.length > groupMembers.length
             let friendList = friends
             // 改成过滤
-            friendList = friendList.filter(item => !groupMembers.some(i => i.id === item.id))
+            // 硬编码账号已注销，前人代码，not a good idea,but照搬好了
+            friendList = friendList.filter(item => !groupMembers.some(i => i.id === item.id) && item.nickName !== '账号已注销')
             // if (isFriendMore) {
             //     groupMembers.forEach(item => {
             //         let index = friendList.findIndex(i => i.id === item.id)

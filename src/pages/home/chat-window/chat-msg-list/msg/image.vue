@@ -30,6 +30,7 @@
                         :src="
                           getUrl()
                         "
+                        :key="loading"
                         class="picture"
                         @error="handleFileDownload()"
                         @load="isSuccess = true"
@@ -190,6 +191,13 @@ export default {
             }
             return url
         },
+        // 本地文件不存在了，重新触发下载
+        retriggerDownloadWhenFailed() {
+            const localUrl = this.getUrl();
+            if (!this.loading && localUrl && localUrl.indexOf('http') !== 0) {
+                this.loading = true;
+            }
+        },
         /**
          * 打开文件
          */
@@ -218,7 +226,8 @@ export default {
             });
 
             const { content, chatType, MsgID, fileKey, customMsgId } = this.msgInfo;
-
+            // 本地文件不存在了，重新触发下载
+            this.retriggerDownloadWhenFailed();
             // 文件路径
             let fileUrl = content ? content.split("||")[0] : "";
             if (chatType === 3) {
