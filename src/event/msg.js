@@ -1553,6 +1553,11 @@ const fnMsgSend = async (info) => {
  */
 const fnMsgSendSuccess = (msg, type) => {
     const { flag, msgId, groupId, channelId, receiveUid, sentOverTime } = msg;
+    if (!msgId || (typeof msgId === 'object' && msgId.isZero && msgId.isZero())) {
+        console.error('fnMsgSendSuccess-异常: 收到成功回执但缺少有效的 msgId', msg);
+        return;
+    }
+
     const id = type === "group" ? Number(groupId)
                : type === "channel" ? Number(channelId)
                : Number(receiveUid);
