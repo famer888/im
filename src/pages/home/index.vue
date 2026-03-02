@@ -24,6 +24,7 @@
             <AddContactsDetail
               v-else-if="infoActive.comType === 'addContact'"
               :info="infoActive"
+              :groupList="groupList"
             />
             <NewFriendExamine
               v-else-if="infoActive.comType === 'newFriendExamine'"

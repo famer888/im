@@ -1493,20 +1493,24 @@ const fnGroupMsgEvent = async (data, loginId) => {
 
     // 更新本地缓存 GroupList (例如成员数量变更)
     // 通过发送 groupUpdate 事件通知 home-left 更新
-    const updateValues = {};
-    if (info.memberCount !== undefined) updateValues.memberCount = info.memberCount;
-    if (info.isDisable !== undefined) updateValues.isDisable = info.isDisable;
-    if (info.memberType !== undefined) updateValues.memberType = info.memberType;
+    // 退群事件不发送 groupUpdate，因为 groupNotification exit 已将群从列表移除，
+    // 再发 groupUpdate 会导致 fuGroupUpdate 将群重新 push 回列表
+    if (info.type !== "exit") {
+        const updateValues = {};
+        if (info.memberCount !== undefined) updateValues.memberCount = info.memberCount;
+        if (info.isDisable !== undefined) updateValues.isDisable = info.isDisable;
+        if (info.memberType !== undefined) updateValues.memberType = info.memberType;
 
-    if (Object.keys(updateValues).length > 0) {
-        eventBase.fnCommunicationSendMsg({
-            operator: "groupUpdate",
-            data: {
-                type: "group",
-                id: info.groupId,
-                values: updateValues,
-            },
-        });
+        if (Object.keys(updateValues).length > 0) {
+            eventBase.fnCommunicationSendMsg({
+                operator: "groupUpdate",
+                data: {
+                    type: "group",
+                    id: info.groupId,
+                    values: updateValues,
+                },
+            });
+        }
     }
 
     // 确认完成

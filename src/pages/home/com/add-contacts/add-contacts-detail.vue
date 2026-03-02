@@ -38,21 +38,19 @@ import addVerifyDialog from "./add-verify-dialog";
 // 事件
 import eventCommon from "@/event/common";
 import eventBase from "@/event/base";
-import { Cache } from "@/cache";
 
 export default {
     name: "addContactsDetail",
     components: {
         addVerifyDialog
     },
-    props: ['info'],
+    props: ['info', 'groupList'],
     data() {
         return {
             verifierVisble: false,
             verifyValue: '',
             addInfo: {},
             loginInfo: {},
-            groupList: [],
             isFriendDeleted: false, // 标记好友是否被删除
         }
     },
@@ -81,23 +79,20 @@ export default {
         },
         isGroupMember() {
            const groupId = Number(this.targetGroupInfo?.groupId)
-           if(groupId && this.groupList.length) {
-             return this.groupList.some(item => item.id === groupId)
+           const list = this.groupList || []
+           if(groupId && list.length) {
+             return list.some(item => item.id === groupId)
            } else {
              return false
            }
         }
     },
     watch: {
-        // 监听 info 变化，重置状态并重新获取数据
+        // 监听 info 变化，重置状态
         info: {
             handler(newVal) {
                 // 重置好友删除状态
                 this.isFriendDeleted = false;
-                // 如果是群聊，重新获取群列表
-                if (newVal?.groupOrUserType == 0) {
-                    this.getGroupList();
-                }
             },
             immediate: false
         }
@@ -106,14 +101,10 @@ export default {
         this.loginInfo = eventCommon.fnCommonInfoRU({
             getId: "loginInfo",
         });
-        if(this.info.groupOrUserType == 0) {
-            this.getGroupList()
-        }
-        // 监听群通知事件，以便在群成员变化时更新群列表
         // 监听好友删除事件，以便在好友被删除时更新状态
         eventBase.fnCommunicationMonitoring(
             "addContactsDetail",
-            ["groupNotification", "deleteFriend"],
+            ["deleteFriend"],
             this.handleNotification
         );
     },
@@ -123,25 +114,13 @@ export default {
     },
     methods: {
         handleNotification(info, operator, operatorType) {
-            if (operator === "groupNotification") {
-                // 当收到自己退群/被移出/群解散等通知时，刷新群列表
-                // exit 类型只在当前用户相关的退群事件时触发
-                if (operatorType === "exit") {
-                    this.getGroupList();
-                }
-            } else if (operator === "deleteFriend") {
+            if (operator === "deleteFriend") {
                 // 当好友被删除时，检查是否是当前显示的联系人
                 const targetUid = Number(this.targetUserInfo?.uid);
                 if (targetUid && info.id === targetUid) {
                     this.isFriendDeleted = true;
                 }
             }
-        },
-        getGroupList() {
-             const loginId = this.loginInfo?.id
-             Cache(`${loginId}-GroupList`).then(res => {
-                this.groupList = res || [];
-             });
         },
         /**
          * 到群聊天窗
