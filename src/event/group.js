@@ -2905,7 +2905,7 @@ const bfJoinFriendSet = (info) => {
 const fnNoticeSet = (info) => {
     const { id, notice, bfAll } = info;
 
-    GroupUpdate({
+    return GroupUpdate({
         op: 12,
         groupParam: notice
             ? { notice, bfAll, groupId: id }

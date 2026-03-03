@@ -665,9 +665,9 @@ const fnUtf8ArrayToStr = (buffer, type) => {
             return txt;
         }
         case enumMsgType.groupNotice: {
-            // 群简介
+            // 群简介 - 返回纯文本内容，元数据由 fnOtherUtf8ArrayToStr 提取
             const obj = GroupNoticeObj.decode(UnitBuffer);
-            return JSON.stringify(obj);
+            return obj.content || '';
         }
         case enumMsgType.dice: {
             // 骰子
@@ -723,6 +723,13 @@ const fnOtherUtf8ArrayToStr = (buffer, type) => {
     let UnitBuffer = Uint8Array.from(buffer);
     if (type == enumMsgType.TWMessageTypeRobot) {
         return HtmlObj.decode(UnitBuffer);
+    } else if (type == enumMsgType.groupNotice) {
+        // 群简介元数据：noticeId、showNotify
+        const obj = GroupNoticeObj.decode(UnitBuffer);
+        return {
+            noticeId: obj.noticeId ? Number(obj.noticeId) : 0,
+            showNotify: !!obj.showNotify,
+        };
     } else {
         return {};
     }
@@ -847,6 +854,15 @@ const fnEncode = (str, type, picData) => {
                 icon: dataList[1],
             }).finish();
         }
+        case enumMsgType.groupNotice: {
+          // 群简介
+            const { noticeId, showNotify } = picData || {};
+            return GroupNoticeObj.encode({
+                content: str,
+                noticeId: noticeId ? Number(noticeId) : 0,
+                showNotify: !!showNotify,
+            }).finish();
+        }
         case enumMsgType.dice: {
             // 骰子
             return SetImageObj.encode({
@@ -910,6 +926,8 @@ export const fnFormartMsgParams = async ({ data, customMsgId, id, type }) => {
         ownAppAttachmentKey,
         appAttachmentKey,
         webAttachmentKey,
+        noticeId,
+        showNotify,
     } = data;
 
     // 是否是官方
@@ -927,6 +945,8 @@ export const fnFormartMsgParams = async ({ data, customMsgId, id, type }) => {
         fileType,
         thumbUrl,
         duration,
+        noticeId,
+        showNotify,
     });
 
     const params = {

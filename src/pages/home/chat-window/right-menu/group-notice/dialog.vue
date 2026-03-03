@@ -53,6 +53,8 @@ import ComSwitch from "@/pages/home/com/switch.vue";
 import eventBase from "@/event/base";
 import eventCommon from "@/event/common";
 import eventMsg from "@/event/msg";
+import eventGroup from "@/event/group";
+import { Cache } from "@/cache";
 
 export default {
   components: { ComGroupNoticeView, ComSwitch },
@@ -228,49 +230,80 @@ export default {
           })
           .then(() => {
             this.handleSendNotice(true);
-            // 推送公告
-            eventMsg.fnMsgSend({
-              id: this.chatContent.id,
-              type: "group",
-              list: [
-                {
-                  type: "text",
-                  values: {
-                    chatType: 8,
-                    content: this.noticeText,
-                    bfAll: this.bfAll,
-                  },
-                },
-              ],
-            });
           });
       } else {
         this.handleSendNotice(false);
       }
     },
-    handleSendNotice(bfAll) {
+    /**
+     * 发送群简介
+     * 数据格式与接收群简介保持一致：content 为纯文本，noticeId/showNotify/isHide 为独立字段。
+     * 编码时通过 fnEncode(enumMsgType.groupNotice) 将 content/noticeId/showNotify 编码为 GroupNoticeObj protobuf。
+     * 接收端通过 fnUtf8ArrayToStr 解码为纯文本 + fnOtherUtf8ArrayToStr 提取元数据，两端数据流一致。
+     *
+     * @param {boolean} bfAll - 是否通知全部成员（决定 showNotify 和 isHide）
+     */
+    async handleSendNotice(bfAll) {
       const { id, type } = this.chatContent;
-      // 发送
-      eventBase.fnCommunicationSendMsg({
-        operator: "groupNoticeSet",
-        data: {
+      const noticeText = this.noticeText;
+      try {
+        const res = await eventGroup.fnNoticeSet({
           id,
-          type,
-          notice: this.noticeText,
+          notice: noticeText,
           bfAll,
-        },
+        });
+
+        // 通知其他组件更新
+        eventBase.fnCommunicationSendMsg({
+          operator: "groupNoticeSet",
+          data: { id, type, notice: noticeText, bfAll },
+        }, true);
+
+        const noticeId = String(res?.noticeId || '');
+
+        // 发送群简介消息：content 为纯文本，元数据为独立字段
+        // bfAll=false 时 isHide=true，消息在聊天窗口隐藏，仅显示顶部公告弹窗
+        eventMsg.fnMsgSend({
+          id,
+          type: "group",
+          list: [
+            {
+              type: "text",
+              values: {
+                chatType: 8,
+                content: noticeText,
+                noticeId,
+                showNotify: bfAll,
+                bfAll,
+                isHide: !bfAll,
+              },
+            },
+          ],
+        });
+      } catch (e) {
+        console.error('群简介设置失败', e);
+        return;
+      }
+
+      const loginId = eventCommon.fnCommonInfoRU({
+        getId: "loginId",
       });
-      this.provideSetTopNotice({ notice: this.noticeText, editorId: id });
-      // 更新本地 chatContent 数据
+
+      // 顶部公告弹窗
+      this.provideSetTopNotice({ notice: noticeText, editorId: loginId });
+
+      // 同步更新顶部公告缓存（与 fnMsgAdd 中接收群简介的缓存逻辑一致）
+      Cache(`${loginId}-groupNotice`).then((res) => {
+        const obj = res || {};
+        obj[id] = `^#${loginId}#$-${noticeText}`;
+        Cache(`${loginId}-groupNotice`, obj);
+      });
+
       if (this.chatContent) {
         if (!this.chatContent.groupNotice) {
           this.$set(this.chatContent, "groupNotice", {});
         }
-        this.$set(this.chatContent.groupNotice, "notice", this.noticeText);
-        // 更新编辑者信息
-        const loginId = eventCommon.fnCommonInfoRU({
-          getId: "loginId",
-        });
+        this.$set(this.chatContent.groupNotice, "notice", noticeText);
         const memberInfoList = this.provideMemberList();
         const currentUser = memberInfoList.find((item) => item.id == loginId);
 
@@ -282,7 +315,6 @@ export default {
           this.$set(this.chatContent.groupNotice, "editUser", editUserInfo);
         }
       }
-      // 关闭
       this.handleClose();
     },
   },

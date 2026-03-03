@@ -432,7 +432,7 @@ export default {
       const selected = this.selectedIdList.some((cur) => cur.id == message.id);
       // 如果是假消息，非我发送，隐藏自己
       // 添加群简介判断isHide （showNotify不为true时视为隐藏）
-      const hidden = (message.isHide && !message.isSelf) || (message.msgType === 8 && message.isHide);
+      const hidden = (message.isHide && !message.isSelf) || ((message.msgType === 8 || message.chatType === 8) && message.isHide);
       // const hidden = typeof message.content === 'string' && message.content.includes('xxx');
       // 并且是最后一条，隐藏所有挂件
       if (hidden && index === this.maxIndex - 1) {
@@ -649,7 +649,7 @@ export default {
         const info = msg.data;
 
         // 检查公告
-        if (info.msgType === 8) {
+        if (info.msgType === 8 || info.chatType === 8) {
           hasNotice = true;
           noticeContent = info.content;
           noticeUid = info.sendUid;

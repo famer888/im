@@ -231,7 +231,7 @@ export const fnMsgAdd = async ({ msg, contentStr, fileKey, type }) => {
         }
     }
 
-    // 如果是公告则需要记录
+    // 群简介消息：更新顶部公告缓存
     if (msgNew.msgType === 8) {
         Cache(`${loginId}-groupNotice`).then((res) => {
             const obj = res || {};
@@ -294,7 +294,7 @@ const fnGroupMsgAdd = async (msg) => {
     const msgId = Number(msg.msgId);
 
     if (await fnCheckMsgRepeat(groupId, type, msgId)) return;
-    let { contentStr, fileKey } = await fnMsgDecryption({
+    let { contentStr, fileKey, otherInfo } = await fnMsgDecryption({
         id: groupId,
         type,
         msgType: msg.msgType || 0,
@@ -303,34 +303,20 @@ const fnGroupMsgAdd = async (msg) => {
         attachmentKey: msg.attachmentKey,
     });
 
-    // 如果解密失败，则终止执行
-    if (!contentStr) {
+    // 解密失败（contentStr 为 undefined）终止执行；
+    // 空内容仅群简介允许（清空群简介场景），其他消息类型空内容则跳过
+    if (contentStr == null || (!contentStr && msg.msgType !== enumMsgType.groupNotice)) {
         return;
     }
 
-    // 群简介处理
-    if(msg.msgType === enumMsgType.groupNotice) {
-        try {
-            let contentObj = null;
-            try {
-                contentObj = JSON.parse(contentStr);
-            } catch (e) {
-                // 不是 JSON，说明是旧数据，保持 contentObj 为 null
-            }
-            // 如果是新格式
-            if(contentObj && typeof contentObj === 'object') {
-                // 更新 contentStr 为实际内容
-                contentStr = contentObj.content;
-                if(contentObj.noticeId) {
-                    msg.noticeId = contentObj.noticeId;
-                }
-                msg.showNotify = !!contentObj.showNotify
-                if(!contentObj.showNotify){
-                    msg.isHide = true;
-                }
-            }
-        } catch (error) {
-            console.error("群简介解析失败", error);
+    // 群简介处理：contentStr 已是纯文本（由 fnUtf8ArrayToStr 解码），
+    // 元数据 noticeId/showNotify 由 fnOtherUtf8ArrayToStr 提取到 otherInfo 中。
+    // 处理逻辑与自己发送群简介一致：content 为纯文本，noticeId/showNotify/isHide 为独立字段。
+    if (msg.msgType === enumMsgType.groupNotice && otherInfo) {
+        msg.noticeId = otherInfo.noticeId;
+        msg.showNotify = !!otherInfo.showNotify;
+        if (!otherInfo.showNotify) {
+            msg.isHide = true;
         }
     }
 
@@ -1838,11 +1824,13 @@ const fnAlertNotification = async (data, chatList) => {
     const showReplyIcon = await shouldShowReplyIcon(type, id, loginId);
     const isSelf = Number(sendUid) === loginId || !sendUid;
     // console.log("fnAlertNotification--", deviceConfig.isMessageReminderWhenMinimized, !isSelf, !eventCommon.fnDisturbIdStrListRU({ idStrIsExist: id + type }), ![51].includes(msgType))
+    // 群简介 showNotify=false 时不弹系统通知
     if (
         deviceConfig.isMessageReminderWhenMinimized &&
         !isSelf &&
         !eventCommon.fnDisturbIdStrListRU({ idStrIsExist: id + type }) &&
-        ![51, 6, 10, 13, 14, 99].includes(msgType)
+        ![51, 6, 10, 13, 14, 99].includes(msgType) &&
+        !(msgType === 8 && data.isHide)
     ) {
         const info = (chatList || []).find(item => item.id === id && item.type === type);
         if (info) {
