@@ -45,6 +45,9 @@ let groupKeyObjs = {};
 // 频道 密钥对象集
 let channelKeyObjs = {};
 
+// 好友密钥已通过API补全检查的记录（会话级别，避免重复请求）
+let friendKeyApiSupplemented = new Set();
+
 /**
  * 全部密钥的对象初始化
  */
@@ -87,7 +90,22 @@ export const fnInitAllChannelKey = (loginId) => {
 
 export const fnInitAllFriendKey = (loginId) => {
     friendKeyObjs = {};
+    friendKeyApiSupplemented = new Set();
     Cache(`${loginId}-friend-key-objs`, null);
+};
+
+/**
+ * 尝试修复自身密钥（限制10分钟内只触发1次）
+ */
+const fnTryRepairOwnKey = () => {
+    const beforeTime = window.beforeUploadOwnKeyTime || 0;
+    const currentTime = new Date().getTime();
+    if (currentTime > beforeTime + 1000 * 60 * 10) {
+        window.beforeUploadOwnKeyTime = currentTime;
+        fnUpdateOwnKey().catch(err => {
+            console.error('密钥自动修复失败-', err);
+        });
+    }
 };
 
 /**
@@ -102,17 +120,17 @@ export const fnChannelRelKeyGet = async (id) => {
 
     // 密钥不存在，则需要api获取
     if (!keyInfos) {
-             console.log('GetKeyPair-1-', {
-            targetId: id,
-            flag: 3,
-            channelKeyVersion: 1,
-        })
+        //      console.log('GetKeyPair-1-', {
+        //     targetId: id,
+        //     flag: 3,
+        //     channelKeyVersion: 1,
+        // })
         const keyPair = await GetKeyPair({
             targetId: id,
             flag: 3,
             channelKeyVersion: 1,
         });
-        console.log('GetKeyPair-2-', keyPair)
+        // console.log('GetKeyPair-2-', keyPair)
 
         if (keyPair && !_.isEmpty(keyPair.channelKeyPair)) {
             keyInfos = keyPair.channelKeyPair;
@@ -135,12 +153,24 @@ export const fnChannelRelKeyGet = async (id) => {
     // 自己的私key，同账户app的公key
     const { privateKey } = accountConfig;
 
+    if (!privateKey || !keyInfos.publicKey || !keyInfos.msgKey) {
+        console.error('频道解密-密钥数据不完整-', privateKey, keyInfos);
+        delete channelKeyObjs[id];
+        Cache(`${loginId}-channel-key-objs`, channelKeyObjs);
+        fnTryRepairOwnKey();
+        return null;
+    }
+
     // 解密出真实的密钥
     let key = null;
     try {
          key = secret(privateKey, keyInfos.publicKey).toUpperCase();
     } catch (error) {
-        console.error('解密-生成秘钥异常-2-',privateKey, keyInfos)
+        console.error('频道解密-生成秘钥异常-2-',privateKey, keyInfos)
+        delete channelKeyObjs[id];
+        Cache(`${loginId}-channel-key-objs`, channelKeyObjs);
+        fnTryRepairOwnKey();
+        return null;
     }
 
     const msgKeyBuffer = Uint8Array.from(Buffer.from(keyInfos.msgKey, "hex"));
@@ -148,7 +178,11 @@ export const fnChannelRelKeyGet = async (id) => {
     try {
       msgkey = _decrypt(msgKeyBuffer, key);
     } catch (error) {
-        console.error('解密异常-msgkey-', privateKey, keyInfos)
+        console.error('频道解密异常-msgkey-', privateKey, keyInfos)
+        delete channelKeyObjs[id];
+        Cache(`${loginId}-channel-key-objs`, channelKeyObjs);
+        fnTryRepairOwnKey();
+        return null;
     }
     const buffer = ConcatInt8([
         Uint8Array.from([10]),
@@ -156,7 +190,7 @@ export const fnChannelRelKeyGet = async (id) => {
         msgkey,
     ]);
 
-    // 返回真实的群密钥
+    // 返回真实的频道密钥
     return fnUtf8ArrayToStr(buffer).trim();
 };
 
@@ -199,12 +233,24 @@ export const fnGroupRelKeyGet = async (id) => {
     // 自己的私key，同账户app的公key
     const { privateKey } = accountConfig;
 
+    if (!privateKey || !keyInfos.publicKey || !keyInfos.msgKey) {
+        console.error('群解密-密钥数据不完整-', privateKey, keyInfos);
+        delete groupKeyObjs[id];
+        Cache(`${loginId}-group-key-objs`, groupKeyObjs);
+        fnTryRepairOwnKey();
+        return null;
+    }
+
     // 解密出真实的密钥
     let key = null;
     try {
          key = secret(privateKey, keyInfos.publicKey).toUpperCase();
     } catch (error) {
-        console.error('解密-生成秘钥异常-2-',privateKey, keyInfos)
+        console.error('群解密-生成秘钥异常-2-',privateKey, keyInfos)
+        delete groupKeyObjs[id];
+        Cache(`${loginId}-group-key-objs`, groupKeyObjs);
+        fnTryRepairOwnKey();
+        return null;
     }
 
     const msgKeyBuffer = Uint8Array.from(Buffer.from(keyInfos.msgKey, "hex"));
@@ -212,16 +258,11 @@ export const fnGroupRelKeyGet = async (id) => {
     try {
       msgkey = _decrypt(msgKeyBuffer, key);
     } catch (error) {
-        console.error('解密异常-msgkey-', privateKey, keyInfos)
-        // 同步下自己和服务器的密钥
-        const beforeTime = window.beforeUploadOwnKeyTime || 0;
-        const currentTime = new Date().getTime();
-        const limitTime = beforeTime + 1000 * 60 * 10;
-         // 限制10分钟内只能更新1次
-        if(currentTime > limitTime) {
-          window.beforeUploadOwnKeyTime = currentTime;
-          fnUpdateOwnKey();
-        }
+        console.error('群解密异常-msgkey-', privateKey, keyInfos)
+        delete groupKeyObjs[id];
+        Cache(`${loginId}-group-key-objs`, groupKeyObjs);
+        fnTryRepairOwnKey();
+        return null;
     }
     const buffer = ConcatInt8([
         Uint8Array.from([10]),
@@ -273,8 +314,8 @@ export const fnFriendRelKeyGet = async ({
             };
         } catch (error) {
             console.error("解密-生成秘钥异常-1-", optsStr, accountConfig)
+            return null;
         }
-
     }
 
     // 旧的密钥信息
@@ -286,6 +327,9 @@ export const fnFriendRelKeyGet = async ({
     if (msgEncryptionVersion === -1) {
         // 获取最新
         for (const key of Object.keys(keyInfos)) {
+            const publicKey = keyInfos[key];
+            if (!publicKey) continue;
+
             if (!keyInfosActive) {
                 keyInfosActive = {};
             }
@@ -300,7 +344,7 @@ export const fnFriendRelKeyGet = async ({
                     keyInfosActive.appKeyPair.keyVersion < keyVersion
                 ) {
                     keyInfosActive.appKeyPair = {
-                        publicKey: keyInfos[key],
+                        publicKey,
                         keyVersion,
                     };
                 }
@@ -310,7 +354,7 @@ export const fnFriendRelKeyGet = async ({
                     keyInfosActive.webKeyPair.keyVersion < keyVersion
                 ) {
                     keyInfosActive.webKeyPair = {
-                        publicKey: keyInfos[key],
+                        publicKey,
                         keyVersion,
                     };
                 }
@@ -338,8 +382,17 @@ export const fnFriendRelKeyGet = async ({
         }
     }
 
-    // 如果指定版本的密钥不存在，则需要api获取
-    if (!keyInfosActive && (!isSelf || msgEncryptionVersion === -1)) {
+    // 发送时缓存不完整（缺少 app 或 web 密钥），需要从API补全（每个好友每会话仅补全一次）
+    const needsApiSupplement = msgEncryptionVersion === -1 && keyInfosActive
+        && (!keyInfosActive.appKeyPair || !keyInfosActive.webKeyPair)
+        && !friendKeyApiSupplemented.has(id);
+
+    // 如果指定版本的密钥不存在，或发送时缓存不完整，则需要api获取
+    if ((!keyInfosActive || needsApiSupplement) && (!isSelf || msgEncryptionVersion === -1)) {
+        if (needsApiSupplement) {
+            friendKeyApiSupplemented.add(id);
+        }
+
         const params = {
             targetId: id,
         };
@@ -363,7 +416,9 @@ export const fnFriendRelKeyGet = async ({
 
             // 如果
             if (appKeyVersion || pcKeyVersion) {
-                if (appKeyVersion) {
+                let hasValidKey = false;
+
+                if (appKeyVersion && appKeyPair.publicKey) {
                     keyInfos["app-" + appKeyVersion] = appKeyPair.publicKey;
 
                     if (source === 0 || msgEncryptionVersion === -1) {
@@ -372,9 +427,10 @@ export const fnFriendRelKeyGet = async ({
                             appKeyPair,
                         };
                     }
+                    hasValidKey = true;
                 }
 
-                if (pcKeyVersion) {
+                if (pcKeyVersion && webKeyPair.publicKey) {
                     keyInfos["pc-" + pcKeyVersion] = webKeyPair.publicKey;
 
                     if (source === 1 || msgEncryptionVersion === -1) {
@@ -383,21 +439,32 @@ export const fnFriendRelKeyGet = async ({
                             webKeyPair,
                         };
                     }
+                    hasValidKey = true;
                 }
-                // 记录
-                friendKeyObjs[id] = keyInfos;
 
-                // 保存到本地
-                Cache(`${loginId}-friend-key-objs`, friendKeyObjs);
+                if (hasValidKey) {
+                    // 记录
+                    friendKeyObjs[id] = keyInfos;
+
+                    // 保存到本地
+                    Cache(`${loginId}-friend-key-objs`, friendKeyObjs);
+                } else if (!keyInfosActive) {
+                    console.error("解密-获取密钥失败-1-",optsStr, keyPair, params);
+                    return null;
+                }
             } else {
-                // 解密错误
-                console.error("解密-获取密钥失败-1-",optsStr, keyPair, params);
-                return null;
+                if (!keyInfosActive) {
+                    // 解密错误
+                    console.error("解密-获取密钥失败-1-",optsStr, keyPair, params);
+                    return null;
+                }
             }
         } else {
-            // 解密错误
-            console.error("解密-获取密钥失败-2-",optsStr, keyPair, params );
-            return null;
+            if (!keyInfosActive) {
+                // 解密错误
+                console.error("解密-获取密钥失败-2-",optsStr, keyPair, params );
+                return null;
+            }
         }
     }
 
@@ -416,14 +483,14 @@ export const fnFriendRelKeyGet = async ({
                 },
             };
 
-            if (webKeyPair) {
+            if (webKeyPair && webKeyPair.publicKey) {
                 data.pc = {
                     relKey: secret(privateKey, webKeyPair.publicKey).toUpperCase(),
                     keyVersion: webKeyPair.keyVersion,
                 };
             }
 
-            if (appKeyPair) {
+            if (appKeyPair && appKeyPair.publicKey) {
                 data.app = {
                     relKey: secret(privateKey, appKeyPair.publicKey).toUpperCase(),
                     keyVersion: appKeyPair.keyVersion,
@@ -433,6 +500,7 @@ export const fnFriendRelKeyGet = async ({
             return data;
         } catch (error) {
             console.error('解密-生成秘钥异常-3-',optsStr, privateKey, appKeyPairOwn, webKeyPair, appKeyPair)
+            return null;
         }
     } else {
         try {
@@ -444,13 +512,21 @@ export const fnFriendRelKeyGet = async ({
 
             if (source === 1) {
                 // 好友的 pc 密钥
-                return secret(privateKey, webKeyPair.publicKey).toUpperCase();
+                if (webKeyPair && webKeyPair.publicKey) {
+                    return secret(privateKey, webKeyPair.publicKey).toUpperCase();
+                }
+            } else {
+                // 好友的 app 密钥
+                if (appKeyPair && appKeyPair.publicKey) {
+                    return secret(privateKey, appKeyPair.publicKey).toUpperCase();
+                }
             }
 
-            // 好友的 app 密钥
-            return secret(privateKey, appKeyPair.publicKey).toUpperCase();
+            console.error('解密-密钥publicKey为空-4-', optsStr, source, webKeyPair, appKeyPair)
+            return null;
         } catch (error) {
             console.error('解密-生成秘钥异常-4-',optsStr, privateKey, appKeyPairOwn, webKeyPair, appKeyPair)
+            return null;
         }
 
     }
@@ -474,7 +550,6 @@ export const fnMsgDecryption = async ({
         type,
         msgType,
         msgEncryptionVersion,
-        content,
         attachmentKey,
         source,
         isSelf})
@@ -501,25 +576,27 @@ export const fnMsgDecryption = async ({
             try {
                 contentNew = _decrypt(content, relKey);
             } catch (err) {
-                // 消息解密失败
+                // 消息解密失败，清除可能过期的群密钥缓存，下次从API重新获取
                 console.error("群消息 解密失败-2-", optsStr, relKey);
+                delete groupKeyObjs[id];
                 return {};
             }
         } else if (type === "channel") {
             relKey = await fnChannelRelKeyGet(id);
 
-            // 如果群密钥没获取到，则直接结束
+            // 如果频道密钥没获取到，则直接结束
             if (!relKey) {
                 console.error("频道消息 解密失败-1-", optsStr, relKey);
                 return {};
             }
 
-            // 群消息解密
+            // 频道消息解密
             try {
                 contentNew = _decrypt(content, relKey);
             } catch (err) {
-                // 消息解密失败
+                // 消息解密失败，清除可能过期的频道密钥缓存，下次从API重新获取
                 console.error("频道消息 解密失败-2-", optsStr, relKey);
+                delete channelKeyObjs[id];
                 return {};
             }
         } else {
@@ -1109,8 +1186,8 @@ const getNewKey = async () => {
         }
     } catch (error) {
         console.error('获取新秘钥异常', error)
-        return {}
     }
+    return {}
 }
 
 export const fnUpdateOwnKey = () => {
@@ -1159,6 +1236,7 @@ export const fnUpdateOwnKey = () => {
  */
 export const fnUpdateKeyFriend = async ({ appKeyPair, webKeyPair, uid, noSendReceive = false }) => {
     const friendId = Number(uid);
+    if (!friendId) return;
 
     if (appKeyPair || webKeyPair) {
         if (!friendKeyObjs[friendId]) {
@@ -1166,13 +1244,13 @@ export const fnUpdateKeyFriend = async ({ appKeyPair, webKeyPair, uid, noSendRec
         }
 
         // app的key
-        if (appKeyPair) {
+        if (appKeyPair && appKeyPair.publicKey && appKeyPair.keyVersion) {
             friendKeyObjs[friendId]["app-" + appKeyPair.keyVersion] =
                 appKeyPair.publicKey;
         }
 
         // pc的key
-        if (webKeyPair) {
+        if (webKeyPair && webKeyPair.publicKey && webKeyPair.keyVersion) {
             friendKeyObjs[friendId]["pc-" + webKeyPair.keyVersion] =
                 webKeyPair.publicKey;
         }
@@ -1199,15 +1277,16 @@ export const fnUpdateFriendKey = async ({ id }) => {
     });
     const { appKeyPair, webKeyPair } = keyPair || {};
     let keyPar = {
+        uid: id,
         noSendReceive: true
     }
     if(appKeyPair?.keyVersion && appKeyPair?.publicKey) {
         keyPar.appKeyPair = appKeyPair;
     }
     if(webKeyPair?.keyVersion && webKeyPair?.publicKey) {
-        keyPar.webKeyPair = appKeyPair;
+        keyPar.webKeyPair = webKeyPair;
     }
-    if(appKeyPair) return
+    if(!keyPar.appKeyPair && !keyPar.webKeyPair) return
     fnUpdateKeyFriend(keyPar)
 }
 
