@@ -617,9 +617,37 @@ export const fnMsgDecryption = async ({
             try {
                 contentNew = _decrypt(content, relKey);
             } catch (err) {
-                // 消息解密失败
-                console.error("消息 解密失败", optsStr, relKey);
-                return {};
+                if (!isSelf) {
+                    console.error("消息 解密失败", optsStr, relKey);
+                    return {};
+                }
+                // isSelf解密失败，可能是本地appKeyPair过期，尝试刷新密钥后重试（限频：60秒内仅触发一次）
+                const now = Date.now();
+                const lastRefresh = window._isSelfDecryptRetryTime || 0;
+                if (now - lastRefresh < 60000) {
+                    console.error("消息 解密失败(限频跳过重试)", optsStr, relKey);
+                    return {};
+                }
+                window._isSelfDecryptRetryTime = now;
+                try {
+                    await fnUpdateOwnKey();
+                    const newRelKey = await fnFriendRelKeyGet({
+                        id,
+                        msgEncryptionVersion,
+                        source,
+                        isSelf,
+                    });
+                    if (newRelKey && newRelKey !== relKey) {
+                        contentNew = _decrypt(content, newRelKey);
+                        relKey = newRelKey;
+                    } else {
+                        console.error("消息 解密失败(密钥未变更)", optsStr, relKey);
+                        return {};
+                    }
+                } catch (retryErr) {
+                    console.error("消息 解密失败", optsStr, relKey);
+                    return {};
+                }
             }
         }
 

@@ -360,7 +360,6 @@ export default {
           const channelId = operator === 'chatMsgListSearchScrollTo' ? info?.id : info?.channelId;
           const beforeTime = (this.getChannelDetailTimes[channelId] || 0) + 30000;
 
-          console.log('handleGetChannelDetail111',info)
           if(beforeTime < Date.now()) {
             this.handleGetChannelDetail(info, channelId);
           } else {

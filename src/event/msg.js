@@ -359,8 +359,22 @@ const fnFriendMsgAdd = async (msg) => {
         attachmentKey = msg.myselfWebContent.attachmentKey;
     } else if (msg.msgType == enumMsgType.dice || (!msg.version && !msg.text)) {
         content = msg.appContent?.content || msg.content;
+    } else if (isSelf) {
+        // myselfWebContent不存在或version为空，尝试用myselfAppContent降级（ECDH共享密钥相同）
+        if (msg.myselfAppContent && msg.myselfAppContent.version) {
+            content = msg.myselfAppContent.content;
+            version = msg.myselfAppContent.version;
+            attachmentKey = msg.myselfAppContent.attachmentKey;
+        } else {
+            console.error("isSelf消息缺少可用的自身消息副本", Number(msg.msgId), msg.source, msg.version);
+            return;
+        }
     } else {
         // 好友发送
+        if (!msg.webContent) {
+            console.error("好友消息缺少webContent", Number(msg.msgId), msg.source, msg.version);
+            return;
+        }
         version = msg.version;
         content = msg.webContent.content;
         attachmentKey = msg.webContent.attachmentKey;
