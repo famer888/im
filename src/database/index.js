@@ -606,8 +606,13 @@ export default class dbBase {
 
       if (type === "channel") {
         const channelId = id;
-        const msgIds = msgReadList.map((item) => Number(item.MsgID));
-        CReqChannelMessageReceipt(channelId, msgIds);
+        // 仅使用已确认消息的真实 MsgID：readStatus === -1 为发送中
+        const msgIds = msgReadList
+          .filter((item) => item.readStatus !== -1)
+          .map((item) => Number(item.MsgID));
+        if (msgIds.length) {
+          CReqChannelMessageReceipt(channelId, msgIds);
+        }
         return;
       }
 

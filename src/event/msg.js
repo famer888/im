@@ -34,6 +34,7 @@ import eventCommon from "./common";
 import eventChannel from "./channel";
 import { benchmark } from "@/debuggers";
 import progress from "@/utils/progress";
+import { CReqChannelMessageReceipt } from "@/socket/api/message";
 
 /**
  * 消息去重检查
@@ -1577,6 +1578,11 @@ const fnMsgSendSuccess = (msg, type) => {
                 sendingInfoList = sendingInfoList.filter(
                     (item) => item.customMsgId !== customMsgId
                 );
+
+                // 频道消息发送成功后，用真实 msgId 补发该条已读
+                if (type === "channel" && msgId != null) {
+                    CReqChannelMessageReceipt(id, [Number(msgId)]);
+                }
 
                 // 通讯
                 eventBase.fnCommunicationSendMsg({
