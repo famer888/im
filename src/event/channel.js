@@ -325,14 +325,19 @@ const fnGetAllChannel = () => {
         const pageSize = 10;
         let resultList = [];
         async function getChannelPolling() {
-            const res = await getChannelList({pageSize, pageNum})
-            const list = res.data?.rowList || []
-            resultList = [...resultList, ...list];
-            if(list.length >= 10) {
-                pageNum += 1;
-                getChannelPolling()
-            } else {
-                resolve(resultList)
+            try {
+                const res = await getChannelList({pageSize, pageNum})
+                const list = res.data?.rowList || []
+                resultList = [...resultList, ...list];
+                if(list.length >= 10) {
+                    pageNum += 1;
+                    getChannelPolling()
+                } else {
+                    resolve(resultList)
+                }
+            } catch (err) {
+                console.error('fnGetAllChannel 获取频道列表失败:', err);
+                resolve(resultList); // 出错时返回已获取的列表
             }
         }
         getChannelPolling()
