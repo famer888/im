@@ -348,6 +348,10 @@ export default {
           "chatMsgListSearchScrollTo",
         ].includes(operator)
       ) {
+        if (!info) {
+          this.infoActive = null;
+          return;
+        }
         let current = {};
         lockDomBeforeResize(false);
         if (info?.type === "channel" || info?.comType === "detailsChannel") {
@@ -530,7 +534,7 @@ export default {
                 ...info.permissions,
               };
             }
-            if (info.groupReqType == 6 && operatorType == "exit") {
+            if ([6, 7, 13].includes(info.groupReqType) && operatorType == "exit") {
               this.infoActive = null;
             }
             // 群禁用

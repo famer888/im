@@ -53,6 +53,12 @@ let groupInitInterfaceGetueue = [];
 // 补偿参数
 let compensateParams = {};
 
+// 群事件处理队列（确保同群事件顺序执行，防止并发读写缓存导致数据竞态）
+let groupEventProcessQueue = {};
+
+// groupUpdate 通知防抖定时器（批量踢人等场景下，多个事件只发一次最终的 groupUpdate）
+let groupUpdateDebounceTimers = {};
+
 /**
  * 检查退群/解散群事件是否应该被执行的守卫函数
  * 如果是退群或解散群聊事件，检查本地存储包括数据库缓存和会话列表
@@ -121,9 +127,15 @@ const fnGroupEventGuard = async (data, loginId) => {
         if (groupReqType === 13) {
             // 群解散事件：无论谁解散，都删除会话列表
             shouldDeleteChat = true;
-        } else if ([6, 7].includes(groupReqType) && exitEventFromUid === loginId) {
-            // 群成员退出事件：只有当退出的是本人时才删除会话列表
+        } else if (groupReqType === 7 && exitEventFromUid === loginId) {
+            // 主动退群事件：判断是否是自己
             shouldDeleteChat = true;
+        } else if (groupReqType === 6) {
+            // 被踢出群事件：被踢的人在 groupMember 中，fromUid 是管理员
+            const kickedUid = Number(exitOrDismissEvent.groupMember?.[0]?.user?.uid);
+            if (kickedUid === loginId) {
+                shouldDeleteChat = true;
+            }
         }
 
         // 4. 从会话列表中移除该群（如果需要）
@@ -138,11 +150,17 @@ const fnGroupEventGuard = async (data, loginId) => {
             });
         }
 
-        // 5. 发送回执确认收到事件（避免服务器重复推送）
+        // 5. 发送回执确认收到+完成事件（避免服务器重复推送）
         data.groupReqEventMsgDto.forEach((item) => {
             receiveGroupEvent({
                 groupId,
                 receiptStatus: 0,
+                msgType: item.commonMsgDto.msgType,
+                msgId: [Number(item.commonMsgDto.msgId)],
+            });
+            receiveGroupEvent({
+                groupId,
+                receiptStatus: 3,
                 msgType: item.commonMsgDto.msgType,
                 msgId: [Number(item.commonMsgDto.msgId)],
             });
@@ -228,7 +246,7 @@ const fnRnGroupEvent = async (data, isGroupInitEvent) => {
                 break;
             }
             case 1: {
-                let msg = groupReqEventInfo.commonMsgDto.msg;
+                let msg = groupReqEventInfo.commonMsgDto.msg || '';
                 let msgs = [
                     "邀请你加入群聊",
                     "你通过扫描二维码加入了群聊",
@@ -290,11 +308,10 @@ const fnRnGroupEvent = async (data, isGroupInitEvent) => {
                 }
                 typeStr = "broadcast";
                 // 如果退群，则上次事件改到，退群的上一个
-                const exitId = Math.max(
-                    data.groupReqEventMsgDto
-                        .filter((item) => item.commonMsgDto.msgType === 3)
-                        .map((item) => Number(item.commonMsgDto.msgId))
-                );
+                const exitMsgIds = data.groupReqEventMsgDto
+                    .filter((item) => item.commonMsgDto.msgType === 3)
+                    .map((item) => Number(item.commonMsgDto.msgId));
+                const exitId = exitMsgIds.length > 0 ? Math.max(...exitMsgIds) : 0;
 
                 if (exitId !== 0) {
                     groupEventExecIdObj[
@@ -456,12 +473,49 @@ const fnRnGroupEvent = async (data, isGroupInitEvent) => {
         }
     }
 
+    // 从之前缓冲区中取出现在可以连续执行的事件（间隙已被填补）
+    if (groupEventObj[key] && groupEventObj[key].events && groupEventObj[key].events.length > 0) {
+        const sortedBuffer = [...groupEventObj[key].events].sort(
+            (a, b) => Number(a.commonMsgDto.msgId) - Number(b.commonMsgDto.msgId)
+        );
+        const replayable = [];
+        for (const evt of sortedBuffer) {
+            const eid = Number(evt.commonMsgDto.msgId);
+            if (eid <= msgIdLast) continue;
+            if (eid === msgIdLast + 1) {
+                replayable.push(evt);
+                msgIdLast++;
+            } else {
+                break;
+            }
+        }
+        if (replayable.length > 0) {
+            const remaining = groupEventObj[key].events.filter(
+                e => Number(e.commonMsgDto.msgId) > msgIdLast
+            );
+            if (remaining.length > 0) {
+                groupEventObj[key].events = remaining;
+                groupEventObj[key].execIdList = remaining.map(e => Number(e.commonMsgDto.msgId));
+            } else {
+                delete groupEventObj[key];
+                msgIdListAfter = [];
+            }
+            for (const evt of replayable) {
+                const eid = Number(evt.commonMsgDto.msgId);
+                if (!msgIdList.includes(eid)) {
+                    list.push(evt);
+                    msgIdList.push(eid);
+                }
+            }
+        }
+    }
+
     // 新的列表
     const listNew = [];
 
     // 被记录事件的id列表
     let eventRecordIdList = [];
-    if (msgIdListAfter.length > 0) {
+    if (msgIdListAfter.length > 0 && groupEventObj[key]) {
         eventRecordIdList = groupEventObj[key].events.map((item) =>
             Number(item.commonMsgDto.msgId)
         );
@@ -516,17 +570,28 @@ const fnRnGroupEvent = async (data, isGroupInitEvent) => {
     // console.log(listNew);
     // console.log("=================循环执行", {typeStr, groupEventExecIdObj});
 
-    // 如果有多个事件则依次处理
+    // 如果有多个事件则依次处理（通过队列确保同群事件串行，避免缓存竞态）
     for (let i = 0; i < listNew.length; i++) {
-        setTimeout(() => {
-            if (typeStr === "update") {
-                // 更新事件
-                fnGroupUpdataEvent(list[i], loginId);
-            } else {
-                // 消息事件
-                fnGroupMsgEvent(list[i], loginId);
+        const event = listNew[i];
+        if (!groupEventProcessQueue[groupId]) {
+            groupEventProcessQueue[groupId] = Promise.resolve();
+        }
+        groupEventProcessQueue[groupId] = groupEventProcessQueue[groupId].then(async () => {
+            // 如果群已被清理（退群/被踢/解散后 fnGroupClear 会 delete 此 key），跳过后续事件
+            if (!groupEventProcessQueue[groupId]) {
+                return;
             }
-        }, 30 + i * 30);
+            await new Promise(r => setTimeout(r, 30));
+            try {
+                if (typeStr === "update") {
+                    await fnGroupUpdataEvent(event, loginId);
+                } else {
+                    await fnGroupMsgEvent(event, loginId);
+                }
+            } catch (e) {
+                console.error("群事件处理出错:", e);
+            }
+        });
     }
 
     // 检查并发送群邀请更新通知（筛选入群消息，目标成员为自身，状态为1）
@@ -541,7 +606,8 @@ const fnGroupUpdataEvent = async (data, loginId) => {
     const { commonMsgDto, fromUid, handleType } = data;
     // console.log('群更新事件 >>>>>>>>>>>>', data)
     if (commonMsgDto && commonMsgDto.groupBaseInfo) {
-        const { groupBaseInfo, updateTime, msgType, msgId, msg } = commonMsgDto;
+        const { groupBaseInfo, updateTime, msgType, msgId } = commonMsgDto;
+        const msg = commonMsgDto.msg || "";
         const groupId = Number(groupBaseInfo.groupId);
         const {
             groupName,
@@ -663,8 +729,12 @@ const fnGroupUpdataEvent = async (data, loginId) => {
             msgId: [Number(msgId)],
         });
 
-        // ////////////////// 事件执行的最后的id信息
-        groupEventExecIdObj[groupId + "update"] = Number(commonMsgDto.msgId);
+        // ////////////////// 事件执行的最后的id信息（只能向前推进，防止异步回调覆盖回滚）
+        const currentUpdateExecId = groupEventExecIdObj[groupId + "update"] || 0;
+        const newUpdateExecId = Number(commonMsgDto.msgId);
+        if (newUpdateExecId > currentUpdateExecId) {
+            groupEventExecIdObj[groupId + "update"] = newUpdateExecId;
+        }
 
         // 到本地
         if (timerGroupEventExecIdObjToLocal) {
@@ -710,7 +780,6 @@ const fnGroupMsgEvent = async (data, loginId) => {
         groupReqType,
         groupReqStatus,
         customMsgId,
-        memberCount: groupMember.length,
     };
     let bfTop = false;
 
@@ -729,6 +798,7 @@ const fnGroupMsgEvent = async (data, loginId) => {
                 // 创群
                 if (commonMsgDto.msgType === 1) {
                     info.memberType = 2;
+                    info.memberCount = groupMember.length;
                     // 群主id
                     const hostId = Number(fromUid);
 
@@ -807,6 +877,7 @@ const fnGroupMsgEvent = async (data, loginId) => {
                     );
                 } else if (commonMsgDto.msgType === 2) {
                     info.memberType = 2;
+                    info.memberCount = groupMember.length;
                     // 被好友邀请，直接加入群
                     // 获取邀请你的好友信息
                     const contactList =
@@ -1065,7 +1136,9 @@ const fnGroupMsgEvent = async (data, loginId) => {
                 );
 
                 info.notification = `${
-                    friendInfo.name || friendInfo.nickName || ""
+                    friendInfo
+                        ? friendInfo.name || friendInfo.nickName || ""
+                        : ""
                 } 拒绝加入${info.name}群`;
             }
             break;
@@ -1391,9 +1464,9 @@ const fnGroupMsgEvent = async (data, loginId) => {
                 if (Number(groupOwner.uid) === loginId) {
                     let curItem = groupMemberList.find(
                         (item) => item.id == Number(mange.uid)
-                    );
+                    ) || {};
 
-                    remarkName = curItem.name || curItem.nickName;
+                    remarkName = curItem.name || curItem.nickName || "";
                     info.notification = remarkName + " 将群转让给你";
                     info.content = "你已成为群主";
                     info.memberType = 0;
@@ -1502,14 +1575,37 @@ const fnGroupMsgEvent = async (data, loginId) => {
         if (info.memberType !== undefined) updateValues.memberType = info.memberType;
 
         if (Object.keys(updateValues).length > 0) {
-            eventBase.fnCommunicationSendMsg({
-                operator: "groupUpdate",
-                data: {
-                    type: "group",
-                    id: info.groupId,
-                    values: updateValues,
-                },
-            });
+            // 仅成员数量/身份变更时防抖发送
+            const memberOnlyKeys = ['memberCount', 'memberType'];
+            const isMemberOnly = Object.keys(updateValues).every(
+                key => memberOnlyKeys.includes(key)
+            );
+
+            if (isMemberOnly) {
+                if (groupUpdateDebounceTimers[info.groupId]) {
+                    clearTimeout(groupUpdateDebounceTimers[info.groupId]);
+                }
+                groupUpdateDebounceTimers[info.groupId] = setTimeout(() => {
+                    eventBase.fnCommunicationSendMsg({
+                        operator: "groupUpdate",
+                        data: {
+                            type: "group",
+                            id: info.groupId,
+                            values: updateValues,
+                        },
+                    });
+                    delete groupUpdateDebounceTimers[info.groupId];
+                }, 300);
+            } else {
+                eventBase.fnCommunicationSendMsg({
+                    operator: "groupUpdate",
+                    data: {
+                        type: "group",
+                        id: info.groupId,
+                        values: updateValues,
+                    },
+                });
+            }
         }
     }
 
@@ -1522,10 +1618,13 @@ const fnGroupMsgEvent = async (data, loginId) => {
     });
 
     if (info.type !== "exit") {
-        // 设置事件执行的最后的id信息
-        groupEventExecIdObj[info.groupId + typeStr] = Number(
-            commonMsgDto.msgId
-        );
+        // 设置事件执行的最后的id信息（只能向前推进，不能回滚，
+        // 因为同步阶段已提前设置了最新id，异步回调不能用较小的id覆盖）
+        const currentExecId = groupEventExecIdObj[info.groupId + typeStr] || 0;
+        const newExecId = Number(commonMsgDto.msgId);
+        if (newExecId > currentExecId) {
+            groupEventExecIdObj[info.groupId + typeStr] = newExecId;
+        }
 
         // 到本地
         if (timerGroupEventExecIdObjToLocal) {
@@ -1711,15 +1810,13 @@ const fnInitDelayedAdd = (id) => {
     delete memberListObj[id];
 
     // 如果不在延迟排队中，添加延迟5秒等待排队
-    if (groupInitDelayedList.some((item) => item.id === id)) {
-        const info = groupInitInfoList.find(item.id === id);
+    if (!groupInitDelayedList.some((item) => item.id === id)) {
+        const info = groupInitInfoList.find((item) => item.id === id);
         let time = 5000;
 
-        // 如果是第二次则，5分钟后再获取
-        if (info.reReqTimes === 2) {
+        if (info && info.reReqTimes === 2) {
             time = 1000 * 60 * 5;
-        } else if (info.reReqTimes > 2) {
-            // 如果已经获取两次了，就不再获取了
+        } else if (info && info.reReqTimes > 2) {
             groupInitInfoList = groupInitInfoList.filter(
                 (item) => item.id !== id
             );
@@ -1727,6 +1824,7 @@ const fnInitDelayedAdd = (id) => {
         }
 
         groupInitDelayedList.push({
+            id,
             time: new Date().valueOf() + time,
         });
     }
@@ -1737,12 +1835,15 @@ const fnInitDelayedAdd = (id) => {
  */
 const fnGroupInitDelayedList = () => {
     const now = new Date().getTime();
-    for (const i in _.cloneDeep(groupInitDelayedList)) {
-        if (groupInitDelayedList[i].time <= now) {
-            groupInitDetailsGetList.push(groupInitDelayedList[i].id);
-            delete groupInitDelayedList[i];
+    const remaining = [];
+    for (const item of groupInitDelayedList) {
+        if (item.time <= now) {
+            groupInitDetailsGetList.push(item.id);
+        } else {
+            remaining.push(item);
         }
     }
+    groupInitDelayedList = remaining;
 };
 
 /**
@@ -2535,6 +2636,15 @@ const fnGroupClear = (groupId) => {
             }
         }
     });
+
+    // 清空该群的事件处理队列（防止退群后还有残留事件继续处理）
+    delete groupEventProcessQueue[groupId];
+
+    // 清空 groupUpdate 防抖定时器
+    if (groupUpdateDebounceTimers[groupId]) {
+        clearTimeout(groupUpdateDebounceTimers[groupId]);
+        delete groupUpdateDebounceTimers[groupId];
+    }
 
     // 清空 之前阻塞的补偿信息
     delete groupEventObj[groupId + "broadcast"];

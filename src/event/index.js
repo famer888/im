@@ -179,6 +179,7 @@ const dispatch = (code, data) => {
       break;
     }
     case 20701: {
+      // 群相关事件
       eventGroup.fnRnGroupEvent(data);
       break;
     }
@@ -269,7 +270,7 @@ const fnSocketMessage = (arrayBuffer) => {
     20501: "PushKeyPairChangeMessageResp",
     29999: "ErrrMessageResp", // 消息报错
     20601: "PushUserOnOrOffLineMessageResp", // 推送用户上下线
-    20701: "PushGroupEventMessage",
+    20701: "PushGroupEventMessage", //群相关事件
     20403: "PushGroupMsgReceiptMessage",
     4203: "PushChannelMessage", // 频道消息接收
     4205: "PushRecallChannelMessage", // 频道消息撤回/删除

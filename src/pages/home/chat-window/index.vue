@@ -481,8 +481,8 @@ export default {
     // 获取好友列表
     this.handleFriendList();
     if (type === "group") {
-      // 获取群成员列表
-      this.handleMemberListGet();
+      // 获取群成员列表（初始加载立即执行，不走防抖）
+      this._doMemberListGet();
       // 获取群公告信
       Cache(`${loginId}-groupNotice`).then((res) => {
         if (res) {
@@ -530,9 +530,11 @@ export default {
   beforeDestroy() {
     eventBase.fnCommunicationMonitoring("chatWindow", null);
     if (this.runTime < 180000) {
-      // 如果小于三分钟离开群了，则不执行三分钟补偿机制
-      // console.log('小于三分钟')
       clearInterval(this.isRun)
+    }
+    if (this._memberListGetTimer) {
+      clearTimeout(this._memberListGetTimer);
+      this._memberListGetTimer = null;
     }
   },
   methods: {
@@ -828,13 +830,21 @@ export default {
         case "groupUpdate": {
           // 群更新
           this.isGroupUpdate = true;
-          this.keyComRightMenu++;
-          // console.log('groupUpdate >>>>>>>>>> 585', info)
           if (info.values){
+            // 仅成员数量/身份变更不需要重建右侧菜单，通过 memberListUpdate 事件更新即可；
+            // 避免批量踢人时每个事件都重建 right-menu 导致 getGroupMemberOnLineStatusList 接口被频繁调用
+            const memberOnlyKeys = ['memberCount', 'memberType'];
+            const hasNonMemberUpdate = Object.keys(info.values).some(
+              key => !memberOnlyKeys.includes(key)
+            );
+            if (hasNonMemberUpdate) {
+              this.keyComRightMenu++;
+            }
             if (info.values.memberCount && info.values.memberCount !== this.memberCount) {
-              // 群成员数量发生变化，则重新获取群成员列表
               this.handleMemberListGet();
             }
+          } else {
+            this.keyComRightMenu++;
           }
           break;
         }
@@ -846,6 +856,8 @@ export default {
       // console.log(info, 'chat-window ----群主更换---->575', operatorType)
       if (["groupRemoveMember", "groupAddMember", "memberExit"].includes(operatorType)) {
         this.memberCount = info.memberCount;
+      }
+      if (["groupRemoveMember", "groupAddMember", "memberExit", "setAdmin", "removeAdmin"].includes(operatorType)) {
         setTimeout(() => {
           this.handleMemberListGet();
         }, 100);
@@ -1287,9 +1299,18 @@ export default {
       }
     },
     /**
-     * 获取群成员
+     * 获取群成员（带防抖：批量踢人时多次触发只执行最后一次，避免重复读取缓存和刷新 UI）
      */
     handleMemberListGet() {
+      if (this._memberListGetTimer) {
+        clearTimeout(this._memberListGetTimer);
+      }
+      this._memberListGetTimer = setTimeout(() => {
+        this._memberListGetTimer = null;
+        this._doMemberListGet();
+      }, 200);
+    },
+    _doMemberListGet() {
       // 登录id
       const loginId = eventCommon.fnCommonInfoRU({
         getId: "loginId",
