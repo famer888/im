@@ -101,7 +101,7 @@ function aesEncode(data, key) {
 export const getSignHeader = () => {
     let client = eventCommon.fnClientInfoGet();
     client.sysMac = getApiMacAddressSync();
-    client.packageCode = 6000;
+    client.packageCode = 7100;
 
     // console.log('HEAD_AES_KEY:', HEAD_AES_KEY, 'SECRET_NAME:', SECRET_NAME, client)
     let clientStr = JSON.stringify(client);

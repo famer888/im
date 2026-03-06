@@ -159,7 +159,7 @@ export default {
         const searchParams = hrefData.searchParams;
         // 判断 如果点的是群链接，则进入入群操作等相关逻辑，未入群则申请入群，已入群，则跳转过去
         if (
-          hrefData.origin == "https://ocs.com" &&
+          hrefData.origin == "https://97chat.com" &&
           searchParams.has("qrCode") &&
           searchParams.has("IdCode")
         ) {
