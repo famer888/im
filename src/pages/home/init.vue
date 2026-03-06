@@ -654,7 +654,7 @@ export default {
             }
 
             // 如果只有一页
-            if (friendListPageCount === 1) {
+            if (friendListPageCount <= 1) {
               await this.handleDataFinish("friend");
               if (resolve) resolve();
               return;
