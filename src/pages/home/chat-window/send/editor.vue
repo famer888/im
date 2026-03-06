@@ -893,8 +893,18 @@ export default {
           // 去掉a标签
           msgText = msgText.replace(/<a[^>]*>([\s\S]*?)<\/a>/, '$1');
 
-      // 发送的内容为空
-      if (msgText === "") {
+      // 判断文本是否为空或仅含空白字符（去除HTML标签后只剩空白，且不含表情图片）
+      const isBlank = msgText === '' || (
+        !/<img\s/.test(msgText) &&
+        msgText.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim() === ''
+      );
+
+      // 发送的内容为空或仅有空白字符
+      if (isBlank) {
+        // 清空输入框中的空白内容
+        this.$refs["input"].innerHTML = "";
+        this.handlePlaceholderVisibleSet();
+
         // 如果是文件对话框，直接触发文件的发送
         if (this.isDialog) {
           // 消息发送
