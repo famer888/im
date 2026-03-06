@@ -402,7 +402,9 @@ export default {
             }
           }, 2000);
         }
-      ).then((res) => {
+      ).catch((err) => {
+        console.error('handleGroups 获取群列表失败:', err);
+      }).then((res) => {
         // 响应回来后检查ID是否有效
         if (fetchId !== this.groupFetchId) {
           return;
@@ -578,7 +580,9 @@ export default {
               this.handleUpdateFirendsForApi(pageNum);
           }, 2000)
         }
-      ).then(async (res) => {
+      ).catch((err) => {
+        console.error('handleUpdateFirendsForApi 获取好友列表失败:', err);
+      }).then(async (res) => {
         if (res) {
           // 列表格式化
           const list = eventFriend.fnApiDataFormat(res.contactsList);
