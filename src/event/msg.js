@@ -34,6 +34,7 @@ import eventCommon from "./common";
 import eventChannel from "./channel";
 import { benchmark } from "@/debuggers";
 import progress from "@/utils/progress";
+import { CReqChannelMessageReceipt } from "@/socket/api/message";
 
 /**
  * 消息去重检查
@@ -142,6 +143,7 @@ export const fnMsgAdd = async ({ msg, contentStr, fileKey, type }) => {
 
     // 移除属性
     delete msgNew.appContent;
+    delete msgNew.myselfAppContent;
     delete msgNew.myselfWebContent;
     delete msgNew.webContent;
 
@@ -358,8 +360,29 @@ const fnFriendMsgAdd = async (msg) => {
         attachmentKey = msg.myselfWebContent.attachmentKey;
     } else if (msg.msgType == enumMsgType.dice || (!msg.version && !msg.text)) {
         content = msg.appContent?.content || msg.content;
+    } else if (isSelf) {
+        // myselfWebContent不存在或version为空，尝试用myselfAppContent降级（同账号双端ECDH共享密钥相同）
+        if (msg.myselfAppContent && msg.myselfAppContent.version) {
+            content = msg.myselfAppContent.content;
+            version = msg.myselfAppContent.version;
+            attachmentKey = msg.myselfAppContent.attachmentKey;
+        } else {
+            console.error(
+                "isSelf消息缺少可用的自身消息副本",
+                Number(msg.msgId),
+                "source:", msg.source,
+                "version:", msg.version,
+                "myselfWebContent:", !!msg.myselfWebContent,
+                "myselfAppContent:", !!msg.myselfAppContent,
+            );
+            return;
+        }
     } else {
         // 好友发送
+        if (!msg.webContent) {
+            console.error("好友消息缺少webContent", Number(msg.msgId), msg.source, msg.version);
+            return;
+        }
         version = msg.version;
         content = msg.webContent.content;
         attachmentKey = msg.webContent.attachmentKey;
@@ -1577,6 +1600,11 @@ const fnMsgSendSuccess = (msg, type) => {
                 sendingInfoList = sendingInfoList.filter(
                     (item) => item.customMsgId !== customMsgId
                 );
+
+                // 频道消息发送成功后，用真实 msgId 补发该条已读
+                if (type === "channel" && msgId != null) {
+                    CReqChannelMessageReceipt(id, [Number(msgId)]);
+                }
 
                 // 通讯
                 eventBase.fnCommunicationSendMsg({
