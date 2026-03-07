@@ -791,6 +791,12 @@ const fnGroupMsgEvent = async (data, loginId) => {
         msgId: [Number(commonMsgDto.msgId)],
     });
 
+    // 兜底：确保群成员缓存不为空（防止旧群清理等异常场景导致后续事件在空数据上操作）
+    const _cachedMembers = await Cache(`${loginId}_${info.groupId}_groupMemberList`);
+    if (!_cachedMembers || _cachedMembers.length === 0) {
+        await fnRefreshGroupMemberList(info.groupId);
+    }
+
     switch (groupReqType) {
         case 1: {
             if (groupReqStatus === 1) {
@@ -2933,6 +2939,68 @@ async function fnCheckGroupMemberList(groupId) {
 }
 
 /**
+ * 兜底刷新群成员列表：当本地缓存为空时，从服务端分页拉取完整群成员列表并写入缓存
+ * 保持一致：先获取群详情得到 memberCount，再按 pageCount 分页拉取
+ * 仅负责缓存层恢复，不发送 memberListUpdate 通知（由调用方在更新 UI 变量后自行通知）
+ * @param {number} groupId - 群ID
+ * @returns {Promise<Array>} 群成员列表
+ */
+const fnRefreshGroupMemberList = async (groupId) => {
+    const loginId = eventCommon.fnCommonInfoRU({
+        getId: "loginId",
+    });
+    if (!loginId || !groupId) return [];
+
+    const cacheName = `${loginId}_${groupId}_groupMemberList`;
+
+    const cached = await Cache(cacheName);
+    if (cached && cached.length > 0) {
+        return cached;
+    }
+
+    const PAGE_SIZE = 1000;
+    const allMembers = [];
+
+    try {
+        // 先通过群详情获取 memberCount 来计算分页数
+        const detailRes = await getGroupDetail(
+            { groupId },
+            () => {
+                console.warn("[fnRefreshGroupMemberList] getGroupDetail failed, groupId:", groupId);
+            }
+        );
+
+        let pageCount = 1;
+        if (detailRes && detailRes.group && detailRes.group.memberCount) {
+            pageCount = Math.ceil(longToNum(detailRes.group.memberCount) / PAGE_SIZE);
+        }
+
+        for (let pageNum = 1; pageNum <= pageCount; pageNum++) {
+            const res = await getGroupMemberListV2(
+                { groupId, pageSize: PAGE_SIZE, pageNum },
+                () => {
+                    console.warn("[fnRefreshGroupMemberList] getGroupMemberListV2 failed, groupId:", groupId, "pageNum:", pageNum);
+                }
+            );
+
+            if (res && res.members && res.members.length > 0) {
+                allMembers.push(...fnGroupMemberDataFormat(res.members));
+            } else {
+                break;
+            }
+        }
+
+        if (allMembers.length > 0) {
+            await Cache(cacheName, allMembers);
+        }
+    } catch (err) {
+        console.error("fnRefreshGroupMemberList error:", err);
+    }
+
+    return allMembers;
+};
+
+/**
  * 串型更新群成员
  */
 const fnGroupMembersUpdateInSequence = async ({ groupIdList, id, name }) => {
@@ -3055,4 +3123,5 @@ export default {
     fnNoticeSet,
     groupEventHandleMsg,
     fnIntoGroup,
+    fnRefreshGroupMemberList,
 };
