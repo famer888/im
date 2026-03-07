@@ -172,6 +172,8 @@
   "添加文件": "Add Files",
   "图片文件已过期或已被清理": "The image file has expired or been cleaned up",
   "无法加载图片": "Unable to load image",
+  "视频文件已过期或已被清理": "The video file has expired or been cleaned up",
+  "无法加载视频": "Unable to load video",
   "复制错误信息": "Copy error message",
   "类型": "type",
   "大小": "size",

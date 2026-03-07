@@ -92,11 +92,16 @@ export default {
       return this.status && this.status.includes('downloadError');
     },
     statusText() {
-      // 将 status 转换为用户友好的文本
-      const statusMap = {
-        downloadError: this.$t('图片文件已过期或已被清理'),
-        decryptionError: this.$t('无法加载图片')
-      };
+      // 将 status 转换为用户友好的文本，根据 isVideo 显示不同文案
+      const statusMap = this.isVideo
+        ? {
+            downloadError: this.$t('视频文件已过期或已被清理'),
+            decryptionError: this.$t('无法加载视频')
+          }
+        : {
+            downloadError: this.$t('图片文件已过期或已被清理'),
+            decryptionError: this.$t('无法加载图片')
+          };
       return statusMap[this.status] || this.status;
     },
     hasPercent() {
@@ -141,7 +146,7 @@ export default {
   top: 0;
   left: 0;
   padding: 2px 8px;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.27);
   color: #fff;
   font-size: 11px;
   font-weight: 600;
@@ -261,7 +266,7 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.05);
+  background: #b8babf;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -287,7 +292,7 @@ export default {
 
 .status-text {
   color: #818181;
-  font-size: 14px;
+  font-size: 12px;
   text-align: center;
   line-height: 1.4;
   max-width: 168px;
