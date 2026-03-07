@@ -841,7 +841,7 @@ export default {
             if (hasNonMemberUpdate) {
               this.keyComRightMenu++;
             }
-            if (info.values.memberCount && info.values.memberCount !== this.memberCount) {
+            if (info.values.memberCount && (info.values.memberCount !== this.memberCount || memberInfoList.length === 0)) {
               this.handleMemberListGet();
             }
           } else {

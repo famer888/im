@@ -2939,7 +2939,8 @@ async function fnCheckGroupMemberList(groupId) {
 }
 
 /**
- * 兜底刷新群成员列表：当本地缓存为空时，从服务端拉取完整群成员列表并写入缓存
+ * 兜底刷新群成员列表：当本地缓存为空时，从服务端分页拉取完整群成员列表并写入缓存
+ * 保持一致：先获取群详情得到 memberCount，再按 pageCount 分页拉取
  * 仅负责缓存层恢复，不发送 memberListUpdate 通知（由调用方在更新 UI 变量后自行通知）
  * @param {number} groupId - 群ID
  * @returns {Promise<Array>} 群成员列表
@@ -2957,24 +2958,46 @@ const fnRefreshGroupMemberList = async (groupId) => {
         return cached;
     }
 
+    const PAGE_SIZE = 1000;
+    const allMembers = [];
+
     try {
-        const res = await getGroupMemberListV2(
-            { groupId, pageSize: 1000, pageNum: 1 },
+        // 先通过群详情获取 memberCount 来计算分页数
+        const detailRes = await getGroupDetail(
+            { groupId },
             () => {
-                console.warn("[fnRefreshGroupMemberList] request failed, groupId:", groupId);
+                console.warn("[fnRefreshGroupMemberList] getGroupDetail failed, groupId:", groupId);
             }
         );
 
-        if (res && res.members && res.members.length > 0) {
-            const memberList = fnGroupMemberDataFormat(res.members);
-            await Cache(cacheName, memberList);
-            return memberList;
+        let pageCount = 1;
+        if (detailRes && detailRes.group && detailRes.group.memberCount) {
+            pageCount = Math.ceil(longToNum(detailRes.group.memberCount) / PAGE_SIZE);
+        }
+
+        for (let pageNum = 1; pageNum <= pageCount; pageNum++) {
+            const res = await getGroupMemberListV2(
+                { groupId, pageSize: PAGE_SIZE, pageNum },
+                () => {
+                    console.warn("[fnRefreshGroupMemberList] getGroupMemberListV2 failed, groupId:", groupId, "pageNum:", pageNum);
+                }
+            );
+
+            if (res && res.members && res.members.length > 0) {
+                allMembers.push(...fnGroupMemberDataFormat(res.members));
+            } else {
+                break;
+            }
+        }
+
+        if (allMembers.length > 0) {
+            await Cache(cacheName, allMembers);
         }
     } catch (err) {
         console.error("fnRefreshGroupMemberList error:", err);
     }
 
-    return [];
+    return allMembers;
 };
 
 /**
