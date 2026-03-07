@@ -1,5 +1,5 @@
 <template>
-  <div class="comTop">
+  <div class="comTop" @contextmenu="clearUnexpectedResizeStyle">
     <template v-if="chatContent && Number(chatContent.id) !== 10002">
       <picture @click.stop="handleChatRightMenuVisibleChange">
         <ComTextAvatar
@@ -94,6 +94,7 @@
 <script>
 import { setMaxLengthStr } from "@/utils/base";
 import { copyText } from "@/utils/clipboard";
+import { clearUnexpectedResizeStyle } from "@/utils/widget/lockDomBeforeResize";
 
 // 事件
 import eventBase from "@/event/base";
@@ -146,6 +147,7 @@ export default {
   },
   methods: {
     setMaxLengthStr,
+    clearUnexpectedResizeStyle,
     serachChat() {
       const { id, type, pic } = this.chatContent;
       console.log('chatContent--',this.chatContent)
