@@ -294,13 +294,14 @@ const fnSocketMessage = (arrayBuffer) => {
 
   // 推送敏感词更新事件及内容消息
   if (code == 30001) {
+    console.log('敏感词更新30001',code)
     // 敏感词初始化
     eventCommon.fnSensitiveWordsInit();
     return;
   }
-
   // 归档发生变化
   if (code === 20603) {
+    console.log('归档变化20603',code)
     eventBase.fnCommunicationSendMsg({
       operator: "archiveUpdate",
     });
@@ -329,7 +330,6 @@ const fnSocketMessage = (arrayBuffer) => {
   }
 
   FairGuard.consume(code, data);
-
   // 确认接收
   if (code !== 20701) {
     ReceiveServerToClient(data.id);

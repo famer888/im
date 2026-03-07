@@ -791,6 +791,12 @@ const fnGroupMsgEvent = async (data, loginId) => {
         msgId: [Number(commonMsgDto.msgId)],
     });
 
+    // 兜底：确保群成员缓存不为空（防止旧群清理等异常场景导致后续事件在空数据上操作）
+    const _cachedMembers = await Cache(`${loginId}_${info.groupId}_groupMemberList`);
+    if (!_cachedMembers || _cachedMembers.length === 0) {
+        await fnRefreshGroupMemberList(info.groupId);
+    }
+
     switch (groupReqType) {
         case 1: {
             if (groupReqStatus === 1) {
@@ -2933,6 +2939,45 @@ async function fnCheckGroupMemberList(groupId) {
 }
 
 /**
+ * 兜底刷新群成员列表：当本地缓存为空时，从服务端拉取完整群成员列表并写入缓存
+ * 仅负责缓存层恢复，不发送 memberListUpdate 通知（由调用方在更新 UI 变量后自行通知）
+ * @param {number} groupId - 群ID
+ * @returns {Promise<Array>} 群成员列表
+ */
+const fnRefreshGroupMemberList = async (groupId) => {
+    const loginId = eventCommon.fnCommonInfoRU({
+        getId: "loginId",
+    });
+    if (!loginId || !groupId) return [];
+
+    const cacheName = `${loginId}_${groupId}_groupMemberList`;
+
+    const cached = await Cache(cacheName);
+    if (cached && cached.length > 0) {
+        return cached;
+    }
+
+    try {
+        const res = await getGroupMemberListV2(
+            { groupId, pageSize: 1000, pageNum: 1 },
+            () => {
+                console.warn("[fnRefreshGroupMemberList] request failed, groupId:", groupId);
+            }
+        );
+
+        if (res && res.members && res.members.length > 0) {
+            const memberList = fnGroupMemberDataFormat(res.members);
+            await Cache(cacheName, memberList);
+            return memberList;
+        }
+    } catch (err) {
+        console.error("fnRefreshGroupMemberList error:", err);
+    }
+
+    return [];
+};
+
+/**
  * 串型更新群成员
  */
 const fnGroupMembersUpdateInSequence = async ({ groupIdList, id, name }) => {
@@ -3055,4 +3100,5 @@ export default {
     fnNoticeSet,
     groupEventHandleMsg,
     fnIntoGroup,
+    fnRefreshGroupMemberList,
 };

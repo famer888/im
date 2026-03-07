@@ -528,6 +528,7 @@ export default {
     );
   },
   beforeDestroy() {
+    this._isBeforeDestroyed = true;
     eventBase.fnCommunicationMonitoring("chatWindow", null);
     if (this.runTime < 180000) {
       clearInterval(this.isRun)
@@ -1336,7 +1337,32 @@ export default {
               groupId: this.chatContent.id
             }
           });
+        } else {
+          // 兜底：缓存为空时从服务端重新拉取群成员列表
+          this._fallbackFetchGroupMember();
         }
+      });
+    },
+    _fallbackFetchGroupMember() {
+      const groupId = this.chatContent.id;
+      if (!groupId || this.chatContent.type !== "group") return;
+      if (this._isFallbackFetching) return;
+      this._isFallbackFetching = true;
+      eventGroup.fnRefreshGroupMemberList(groupId).then((list) => {
+        this._isFallbackFetching = false;
+        if (this._isBeforeDestroyed || this.chatContent.id !== groupId) return;
+        if (list && list.length > 0) {
+          memberInfoList = _.orderBy(list, ["type"], ["asc"]);
+          this.groupOwner = memberInfoList.find((item) => item.type === 0);
+          this.syncFriendAndGroupMemberInfo();
+          this.updateMemberInfos();
+          eventBase.fnCommunicationSendMsg({
+            operator: "memberListUpdate",
+            data: { groupId }
+          });
+        }
+      }).catch(() => {
+        this._isFallbackFetching = false;
       });
     },
     /**
