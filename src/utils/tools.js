@@ -38,7 +38,7 @@ const getCachDirectory = ({ GroupID, UserID }) => {
         const nodePath = require("path");
         path = nodePath.join(
             path,
-            `/68LocalStorage/${
+            `/97LocalStorage/${
                 GroupID ? "group-" + GroupID : "user-" + UserID
             }/`
         );
@@ -71,7 +71,7 @@ const getUserDataDirectory = ({ GroupID, UserID, ChannelID }) => {
 const getPublicCacheDirSync = () => {
     let path = require("os").tmpdir();
     const nodePath = require("path");
-    path = nodePath.join(path, `/68LocalStorage/pbc/`);
+    path = nodePath.join(path, `/97LocalStorage/pbc/`);
     return path;
 };
 
@@ -79,7 +79,7 @@ const getPublicCacheDir = () => {
     return new Promise((resolve) => {
         let path = require("os").tmpdir();
         const nodePath = require("path");
-        path = nodePath.join(path, `/68LocalStorage/pbc/`);
+        path = nodePath.join(path, `/97LocalStorage/pbc/`);
         resolve(path);
     });
 };
