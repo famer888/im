@@ -313,7 +313,10 @@ export const fnFriendRelKeyGet = async ({
                 },
             };
         } catch (error) {
-            console.error("解密-生成秘钥异常-1-", optsStr, accountConfig)
+            console.error("解密-生成秘钥异常-1-", optsStr,
+                'privateKey:', !!privateKey,
+                'appKeyPairOwn.publicKey:', !!appKeyPairOwn?.publicKey,
+                error.message)
             return null;
         }
     }
@@ -499,15 +502,70 @@ export const fnFriendRelKeyGet = async ({
 
             return data;
         } catch (error) {
-            console.error('解密-生成秘钥异常-3-',optsStr, privateKey, appKeyPairOwn, webKeyPair, appKeyPair)
+            console.error('解密-生成秘钥异常-3-', optsStr,
+                'privateKey:', !!privateKey,
+                'appKeyPairOwn:', !!appKeyPairOwn?.publicKey,
+                'webKeyPair:', !!webKeyPair?.publicKey,
+                'appKeyPair:', !!appKeyPair?.publicKey,
+                error.message)
             return null;
         }
     } else {
         try {
              // 收到消息解密用
             if (isSelf) {
-                // 同账户的 app 密钥
-                return secret(privateKey, appKeyPairOwn.publicKey).toUpperCase();
+                if (!privateKey || !appKeyPairOwn || !appKeyPairOwn.publicKey) {
+                    const now = Date.now();
+                    const lastRepair = window._isSelfKeyRepairTime || 0;
+                    if (now - lastRepair > 10000) {
+                        window._isSelfKeyRepairTime = now;
+                        console.error('isSelf解密-自身密钥缺失，尝试自动修复',
+                            optsStr,
+                            'privateKey:', !!privateKey,
+                            'appKeyPairOwn.publicKey:', !!appKeyPairOwn?.publicKey);
+                        try {
+                            // 第一步：从本地缓存恢复（等同于重新登录的 fnConfigInit）
+                            // 避免直接调 fnUpdateOwnKey 导致 getNewKey 生成新密钥覆盖原有好密钥
+                            await eventCommon.fnConfigInit(true);
+                            const { accountConfig: cachedConfig } = eventCommon.fnConfigRU();
+                            if (cachedConfig.privateKey && cachedConfig.appKeyPair?.publicKey) {
+                                try {
+                                    return secret(cachedConfig.privateKey, cachedConfig.appKeyPair.publicKey).toUpperCase();
+                                } catch (secretErr) {
+                                    console.error('isSelf解密-缓存密钥数据异常，尝试服务端恢复', optsStr, secretErr.message);
+                                }
+                            }
+                        } catch (e) {
+                            console.error('isSelf解密-缓存恢复失败', optsStr, e);
+                        }
+                        try {
+                            // 第二步：缓存无效或密钥数据损坏，从服务端刷新
+                            await fnUpdateOwnKey();
+                            const { accountConfig: freshConfig } = eventCommon.fnConfigRU();
+                            if (freshConfig.privateKey && freshConfig.appKeyPair?.publicKey) {
+                                return secret(freshConfig.privateKey, freshConfig.appKeyPair.publicKey).toUpperCase();
+                            }
+                        } catch (e) {
+                            console.error('isSelf解密-服务端恢复失败', optsStr, e);
+                        }
+                    }
+                    console.error('isSelf解密失败-自身密钥无效',
+                        optsStr,
+                        'privateKey:', !!privateKey,
+                        'appKeyPairOwn.publicKey:', !!appKeyPairOwn?.publicKey,
+                        '[PC端] 密钥恢复失败');
+                    return null;
+                }
+                try {
+                    return secret(privateKey, appKeyPairOwn.publicKey).toUpperCase();
+                } catch (e) {
+                    console.error('isSelf解密-secret计算异常',
+                        optsStr,
+                        'appKeyPairOwn.keyVersion:', appKeyPairOwn.keyVersion,
+                        '[PC端] 密钥数据可能损坏，需要重新登录',
+                        e.message);
+                    return null;
+                }
             }
 
             if (source === 1) {
@@ -525,7 +583,12 @@ export const fnFriendRelKeyGet = async ({
             console.error('解密-密钥publicKey为空-4-', optsStr, source, webKeyPair, appKeyPair)
             return null;
         } catch (error) {
-            console.error('解密-生成秘钥异常-4-',optsStr, privateKey, appKeyPairOwn, webKeyPair, appKeyPair)
+            console.error('解密-生成秘钥异常-4-', optsStr,
+                'privateKey:', !!privateKey,
+                'appKeyPairOwn:', !!appKeyPairOwn?.publicKey,
+                'webKeyPair:', !!webKeyPair?.publicKey,
+                'appKeyPair:', !!appKeyPair?.publicKey,
+                error.message)
             return null;
         }
 
@@ -641,11 +704,12 @@ export const fnMsgDecryption = async ({
                         contentNew = _decrypt(content, newRelKey);
                         relKey = newRelKey;
                     } else {
-                        console.error("消息 解密失败(密钥未变更)", optsStr, relKey);
+                        console.error("消息 解密失败(密钥未变更)", optsStr, relKey,
+                            "msgEncryptionVersion:", msgEncryptionVersion);
                         return {};
                     }
                 } catch (retryErr) {
-                    console.error("消息 解密失败", optsStr, relKey);
+                    console.error("消息 解密重试失败", optsStr, relKey, retryErr);
                     return {};
                 }
             }
@@ -1218,10 +1282,11 @@ const getNewKey = async () => {
     return {}
 }
 
+let _pendingUpdateOwnKey = null;
 export const fnUpdateOwnKey = () => {
-    // 登录的id
+    if (_pendingUpdateOwnKey) return _pendingUpdateOwnKey;
     const loginId = eventCommon.fnCommonInfoRU({ getId: "loginId" });
-   return GetKeyPair({
+    _pendingUpdateOwnKey = GetKeyPair({
         targetId: Number(loginId),
       }).then( async res => {
         const { appKeyPair = null, webKeyPair = null } = res || {}
@@ -1229,7 +1294,6 @@ export const fnUpdateOwnKey = () => {
         const { accountConfig } = eventCommon.fnConfigRU();
         let { publicKey, privateKey, keyVersion } = accountConfig;
 
-        // 本地无秘钥则重新生成
         if( publicKey !== webKeyPair.publicKey || keyVersion !== webKeyPair.keyVersion || !privateKey ) {
             const newKey =  await getNewKey()
             publicKey = newKey.publicKey;
@@ -1238,25 +1302,25 @@ export const fnUpdateOwnKey = () => {
         }
         if(!publicKey || !privateKey || !keyVersion || !appKeyPair) return { code: 501 };
 
-        // 保存秘钥
         const keyInfos = {
             publicKey,
             privateKey,
             keyVersion,
             appKeyPair,
         };
-        // 同步信息
         eventCommon.fnCommonInfoRU({
             infoMerge: keyInfos,
         });
 
-        // 保存到本地配置
         eventCommon.fnConfigRU({
             isAccount: true,
             infoMerge: keyInfos,
         });
         return { code: 200, data: keyInfos }
-      })
+      }).finally(() => {
+        _pendingUpdateOwnKey = null;
+      });
+    return _pendingUpdateOwnKey;
 }
 
 /**

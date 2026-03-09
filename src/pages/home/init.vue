@@ -595,7 +595,7 @@ export default {
           this.handleKeyFinish();
         } else {
           // 重新登录
-            this.$toast(this.$t("密钥异常，重新登录"));
+            window.$toast(this.$t("密钥异常，重新登录"));
 
             setTimeout(() => {
               // 登出
