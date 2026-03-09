@@ -4,7 +4,7 @@ import packet from "@/api/base/imweb-web";
 import channelEvents from "@/api/base/channel_event";
 import { decrypt } from "@/socket/api/request";
 import { ReceiveServerToClient } from "@/socket/api/message";
-import { fnUpdateKeyFriend } from "@/utils/encryption-decryption";
+import { fnUpdateKeyFriend, fnUpdateOwnKey } from "@/utils/encryption-decryption";
 import { Cache } from "@/cache";
 
 // 事件
@@ -22,7 +22,15 @@ let timeBefore = new Date().getTime();
 const dispatch = (code, data) => {
   switch (code) {
     case 20001: {
-      // 登录成功 接口已对应处理，所以这个推送不需要处理
+      // WebSocket 登录/重连成功，刷新自身密钥确保 appKeyPairOwn 同步
+      // 仅在 accountConfig 已初始化（有 privateKey）时执行，
+      // 避免初次登录时 fnConfigInit 尚未完成导致误触发 getNewKey 覆盖密钥
+      const { accountConfig: ac } = eventCommon.fnConfigRU() || {};
+      if (ac?.privateKey) {
+        fnUpdateOwnKey().catch(err => {
+          console.error('WebSocket登录-密钥刷新失败', err);
+        });
+      }
       break;
     }
     // 频道消息接收
@@ -174,7 +182,12 @@ const dispatch = (code, data) => {
       break;
     }
     case 20501: {
-      // 更新好友密钥
+      const loginId = eventCommon.fnCommonInfoRU({ getId: "loginId" });
+      if (Number(data.uid) === loginId) {
+        fnUpdateOwnKey().catch(err => {
+          console.error('同账号密钥同步失败', err);
+        });
+      }
       fnUpdateKeyFriend(data);
       break;
     }

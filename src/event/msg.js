@@ -361,22 +361,18 @@ const fnFriendMsgAdd = async (msg) => {
     } else if (msg.msgType == enumMsgType.dice || (!msg.version && !msg.text)) {
         content = msg.appContent?.content || msg.content;
     } else if (isSelf) {
-        // myselfWebContent不存在或version为空，尝试用myselfAppContent降级（同账号双端ECDH共享密钥相同）
-        if (msg.myselfAppContent && msg.myselfAppContent.version) {
-            content = msg.myselfAppContent.content;
-            version = msg.myselfAppContent.version;
-            attachmentKey = msg.myselfAppContent.attachmentKey;
-        } else {
-            console.error(
-                "isSelf消息缺少可用的自身消息副本",
-                Number(msg.msgId),
-                "source:", msg.source,
-                "version:", msg.version,
-                "myselfWebContent:", !!msg.myselfWebContent,
-                "myselfAppContent:", !!msg.myselfAppContent,
-            );
-            return;
-        }
+        // myselfWebContent不存在或version为空，无法解密
+        // myselfAppContent由发送端用secret(发送端私钥, App公钥)加密，
+        // 需要发送端在发送时生成myselfWebContent
+        console.error(
+            "isSelf消息缺少myselfWebContent，无法解密",
+            Number(msg.msgId),
+            "source:", msg.source,
+            "version:", msg.version,
+            "myselfWebContent:", msg.myselfWebContent,
+            "myselfAppContent:", !!msg.myselfAppContent,
+        );
+        return;
     } else {
         // 好友发送
         if (!msg.webContent) {
