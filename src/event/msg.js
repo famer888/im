@@ -397,6 +397,7 @@ const fnFriendMsgAdd = async (msg) => {
         attachmentKey,
         source: msg.source || 0,
         isSelf,
+        senderKeyVersion: isSelf ? msg.version : undefined,
     });
 
     // 如果解密失败，则终止执行

@@ -282,6 +282,7 @@ export const fnFriendRelKeyGet = async ({
     msgEncryptionVersion,
     source,
     isSelf,
+    senderKeyVersion,
 }) => {
     // 登录的id
     const loginId = eventCommon.fnCommonInfoRU({ getId: "loginId" });
@@ -556,13 +557,67 @@ export const fnFriendRelKeyGet = async ({
                         '[PC端] 密钥恢复失败');
                     return null;
                 }
+
+                // 优先用 appKeyPairOwn（版本匹配或无版本信息时）
+                if (!senderKeyVersion || appKeyPairOwn.keyVersion == senderKeyVersion) {
+                    try {
+                        return secret(privateKey, appKeyPairOwn.publicKey).toUpperCase();
+                    } catch (e) {
+                        console.error('isSelf解密-secret计算异常',
+                            optsStr,
+                            'appKeyPairOwn.keyVersion:', appKeyPairOwn.keyVersion,
+                            e.message);
+                        return null;
+                    }
+                }
+
+                // 版本不匹配：发送端 APP 的 keyVersion 与 PC 缓存的 appKeyPairOwn 不一致
+                // 多设备切换场景：尝试从 friendKeyObjs 按版本查找发送端的公钥
+                console.warn('isSelf解密-版本不匹配，尝试按版本查找',
+                    'appKeyPairOwn.keyVersion:', appKeyPairOwn.keyVersion,
+                    'senderKeyVersion:', senderKeyVersion);
+
+                const selfKeyInfos = friendKeyObjs[loginId];
+                if (selfKeyInfos) {
+                    const cachedPubKey = selfKeyInfos["app-" + senderKeyVersion];
+                    if (cachedPubKey) {
+                        try {
+                            return secret(privateKey, cachedPubKey).toUpperCase();
+                        } catch (e) {
+                            console.error('isSelf解密-缓存版本密钥计算异常', optsStr, e.message);
+                        }
+                    }
+                }
+
+                // 缓存中无对应版本，从 API 获取
+                try {
+                    const keyPair = await GetKeyPair({
+                        targetId: Number(loginId),
+                        appKeyVersion: senderKeyVersion,
+                    });
+                    if (keyPair?.appKeyPair?.publicKey) {
+                        if (!friendKeyObjs[loginId]) friendKeyObjs[loginId] = {};
+                        friendKeyObjs[loginId]["app-" + keyPair.appKeyPair.keyVersion] = keyPair.appKeyPair.publicKey;
+                        Cache(`${loginId}-friend-key-objs`, friendKeyObjs);
+                        try {
+                            return secret(privateKey, keyPair.appKeyPair.publicKey).toUpperCase();
+                        } catch (e) {
+                            console.error('isSelf解密-API版本密钥计算异常', optsStr, e.message);
+                        }
+                    }
+                } catch (e) {
+                    console.error('isSelf解密-API获取版本密钥失败', optsStr, e);
+                }
+
+                // 所有尝试失败，降级返回 appKeyPairOwn 密钥（可能不正确）
+                // 不返回 null，是为了让上层 fnMsgDecryption 的 _decrypt 失败后进入 isSelf 重试流程
+                // 重试会调用 fnUpdateOwnKey 刷新密钥，有可能在第二次调用时恢复正确
                 try {
                     return secret(privateKey, appKeyPairOwn.publicKey).toUpperCase();
                 } catch (e) {
-                    console.error('isSelf解密-secret计算异常',
+                    console.error('isSelf解密-降级secret计算异常',
                         optsStr,
                         'appKeyPairOwn.keyVersion:', appKeyPairOwn.keyVersion,
-                        '[PC端] 密钥数据可能损坏，需要重新登录',
                         e.message);
                     return null;
                 }
@@ -607,6 +662,7 @@ export const fnMsgDecryption = async ({
     attachmentKey,
     source,
     isSelf,
+    senderKeyVersion,
 }) => {
     const optsStr = JSON.stringify({
         id,
@@ -668,6 +724,7 @@ export const fnMsgDecryption = async ({
                 msgEncryptionVersion,
                 source,
                 isSelf,
+                senderKeyVersion,
             });
 
             // 如果好友密钥没获取到，则直接结束
@@ -699,6 +756,7 @@ export const fnMsgDecryption = async ({
                         msgEncryptionVersion,
                         source,
                         isSelf,
+                        senderKeyVersion,
                     });
                     if (newRelKey && newRelKey !== relKey) {
                         contentNew = _decrypt(content, newRelKey);

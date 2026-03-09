@@ -184,6 +184,7 @@ const dispatch = (code, data) => {
     case 20501: {
       const loginId = eventCommon.fnCommonInfoRU({ getId: "loginId" });
       if (Number(data.uid) === loginId) {
+        console.log('同账号密钥更新')
         fnUpdateOwnKey().catch(err => {
           console.error('同账号密钥同步失败', err);
         });
