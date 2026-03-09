@@ -127,7 +127,7 @@ const fnDownloadFileInfoUpdate = (data, errorType) => {
 
     // 如果是视频
     if (chatType === 3) {
-        if ([".mp4", "webm", ".ogg"].includes(fileLocalPath.slice(-4).toLowerCase())) {
+        if ([".mp4", "webm", ".ogg"].includes((fileLocalPath || '').slice(-4).toLowerCase())) {
             updated = { local: fileLocalPath, ...percent };
         } else {
             updated = { localThumbUrl: errorType || localThumbUrl || local || fileLocalPath, ...percent };

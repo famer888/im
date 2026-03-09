@@ -43,7 +43,8 @@ export default {
         this.toggleMaxRestoreButtons();
       });
     },
-    close() {
+    async close() {
+      await lockDomBeforeResize(false);
       const win = remote.getCurrentWindow();
       win.minimize();
       return ipcRenderer.send("hide-window");

@@ -66,3 +66,5 @@ const viewportWidthSizeObserver = (cb) => {
     resizeObserver.disconnect();
   };
 }
+
+export { removeAttribute as clearUnexpectedResizeStyle };
