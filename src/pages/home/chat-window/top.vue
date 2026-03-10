@@ -47,7 +47,7 @@
           <img
             v-if="chatContent.type === 'friend' && !nameEdit"
             src="@/assets/images/message/edit-icon.png"
-            @click="handleNameEdit"
+            @click.stop="handleNameEdit"
           />
         </div>
       </div>
