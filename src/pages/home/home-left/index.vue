@@ -1422,7 +1422,7 @@ export default {
                           if (info.isDisturb !== undefined) {
                               const state = Boolean(info.isDisturb);
                               updateData.isDisturb = state;
-                              // updateData.bfDisturb = state;
+                              updateData.bfDisturb = state;
                           }
 
                           if (updateChat(chat.id, 'channel', updateData)) {
@@ -1635,9 +1635,20 @@ export default {
     async eventChannelDetailCache(info) {
       if(!info?.channelId) return;
       const cloneInfo = _.cloneDeep(info);
+      if (cloneInfo.isDisturb !== undefined) {
+        cloneInfo.bfDisturb = Boolean(cloneInfo.isDisturb);
+      }
       const index = this.chats.findIndex(item => item.channelId === info.channelId)
       if(index >= 0) {
         Object.assign(this.chats[index], cloneInfo);
+        if (cloneInfo.isDisturb !== undefined) {
+          eventCommon.fnDisturbInfoSync({
+            id: this.chats[index].id,
+            type: 'channel',
+            bfDisturb: Boolean(cloneInfo.isDisturb),
+            isDisturb: Boolean(cloneInfo.isDisturb),
+          });
+        }
       }
       let cacheList = await Cache(`${loginId}MessageChannelList`) || [];
       const cacheIndex = cacheList.findIndex(item => item.channelId === info.channelId)

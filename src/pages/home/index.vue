@@ -321,6 +321,9 @@ export default {
               ...channelDetail,
               isDisable: channelDetail.status === 3,
               channelDetailDone: +new Date(),
+              ...(channelDetail.isDisturb !== undefined
+                ? { bfDisturb: Boolean(channelDetail.isDisturb) }
+                : {}),
             };
             this.getChannelDetailTimes[channelId] = Date.now();
           }
@@ -416,12 +419,14 @@ export default {
                   operator: "channelDetailCache",
                   data: channelDetail,
             });
-            // 这里直接展开...channelDetail就不需要设置那么多属性了
             this.infoActive = {
               ...this.infoActive,
               adminPrivacy: channelDetail.adminPrivacy,
               memberType: channelDetail.memberType,
               channelDetailDone: +new Date(),
+              ...(channelDetail.isDisturb !== undefined
+                ? { isDisturb: Boolean(channelDetail.isDisturb), bfDisturb: Boolean(channelDetail.isDisturb) }
+                : {}),
             };
           });
       } else if (operator === "closeOperator") {
@@ -462,20 +467,30 @@ export default {
             this.infoActive = {
               ...this.infoActive,
               isDisturb: info.isDisturb,
+              bfDisturb: info.isDisturb,
             };
             break;
           }
           case "bfDisturbSet": {
-            this.infoActive = {
-              ...this.infoActive,
-              bfDisturb: info.bfDisturb,
-              isDisturb: info.isDisturb,
-            };
+            if (info.type === 'channel') {
+              const state = info.isDisturb !== undefined ? info.isDisturb : info.bfDisturb;
+              this.infoActive = {
+                ...this.infoActive,
+                bfDisturb: state,
+                isDisturb: state,
+              };
+            } else {
+              this.infoActive = {
+                ...this.infoActive,
+                bfDisturb: info.bfDisturb,
+              };
+            }
             break;
           }
           case "friendUpdate": {
-            // 好友更新
-            this.infoActive = { ...this.infoActive, ...info };
+            if (info.type !== 'channel') {
+              this.infoActive = { ...this.infoActive, ...info };
+            }
             break;
           }
           case "groupUpdate": {

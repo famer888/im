@@ -153,7 +153,19 @@ const fnChatWindowUpdate = async (info) => {
         }
 
         // 添加新窗口
-        chatList.push({ ...chatInfo, ...updateInfo });
+        const newChat = { ...chatInfo, ...updateInfo };
+        chatList.push(newChat);
+
+        if (newChat.bfDisturb || newChat.isDisturb) {
+            eventCommon.fnDisturbInfoSync({
+                id: newChat.id,
+                type: newChat.type,
+                bfDisturb: Boolean(newChat.bfDisturb),
+                ...(newChat.type === 'channel' && newChat.isDisturb !== undefined
+                    ? { isDisturb: Boolean(newChat.isDisturb) }
+                    : {}),
+            });
+        }
 
         // 聊天窗口列表有变更
         returnInfo.chatList = chatList;
