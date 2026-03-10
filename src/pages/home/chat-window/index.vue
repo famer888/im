@@ -523,6 +523,7 @@ export default {
         "friendRemarkUpdate", // 更新好友备注名
         "openChannelDialog", // 打开 频道对话框
         "friendUpdate", // 好友数据更新
+        "loginUserInfoUpdate", // 当前用户头像/昵称变更
       ],
       this.eventHandling
     );
@@ -805,6 +806,82 @@ export default {
               friendList[index] = {...friendList[index], ...info}
               Cache(`${loginId}-ContactList`, friendList)
             }
+            // 同步更新当前群的成员列表（好友可能也是群成员）
+            if (this.chatContent && this.chatContent.type === "group") {
+              const mIdx = memberInfoList.findIndex(item => item.id === info.id);
+              if (mIdx >= 0) {
+                let changed = false;
+                if (info.pic && memberInfoList[mIdx].icon !== info.pic) {
+                  memberInfoList[mIdx].icon = info.pic;
+                  changed = true;
+                }
+                if (info.nickName && memberInfoList[mIdx].nickName !== info.nickName) {
+                  memberInfoList[mIdx].nickName = info.nickName;
+                  changed = true;
+                }
+                if (info.name !== undefined && memberInfoList[mIdx].name !== info.name) {
+                  memberInfoList[mIdx].name = info.name;
+                  changed = true;
+                }
+                if (changed) {
+                  this.updateMemberInfos();
+                  Cache(`${loginId}_${this.chatContent.id}_groupMemberList`, memberInfoList);
+                  eventBase.fnCommunicationSendMsg({
+                    operator: "memberListUpdate",
+                    data: { groupId: this.chatContent.id }
+                  });
+                }
+              }
+            } else if (this.chatContent && this.chatContent.type === "channel") {
+              // 同步更新当前频道的成员列表（好友可能也是频道成员）
+              const chIdx = channelUserList.findIndex(
+                item => item.userInfoDTO && item.userInfoDTO.uid == info.id
+              );
+              if (chIdx >= 0) {
+                let changed = false;
+                if (info.pic && channelUserList[chIdx].userInfoDTO.icon !== info.pic) {
+                  channelUserList[chIdx].userInfoDTO.icon = info.pic;
+                  changed = true;
+                }
+                if (info.nickName && channelUserList[chIdx].userInfoDTO.nickName !== info.nickName) {
+                  channelUserList[chIdx].userInfoDTO.nickName = info.nickName;
+                  changed = true;
+                }
+                if (changed) {
+                  this.keyComRightMenu++;
+                }
+              }
+            }
+          }
+          break;
+        }
+
+        case "loginUserInfoUpdate": {
+          // 当前用户头像/昵称变更
+          const loginId = eventCommon.fnCommonInfoRU({ getId: "loginId" });
+          if (!loginId || !this.chatContent) break;
+          if (this.chatContent.type === "group") {
+            const idx = memberInfoList.findIndex(item => item.id === loginId);
+            if (idx >= 0) {
+              if (info.icon !== undefined) memberInfoList[idx].icon = info.icon;
+              if (info.nickName !== undefined) memberInfoList[idx].nickName = info.nickName;
+              this.updateMemberInfos();
+              const cacheName = `${loginId}_${this.chatContent.id}_groupMemberList`;
+              Cache(cacheName, memberInfoList);
+              eventBase.fnCommunicationSendMsg({
+                operator: "memberListUpdate",
+                data: { groupId: this.chatContent.id }
+              });
+            }
+          } else if (this.chatContent.type === "channel") {
+            const chIdx = channelUserList.findIndex(
+              item => item.userInfoDTO && item.userInfoDTO.uid == loginId
+            );
+            if (chIdx >= 0) {
+              if (info.icon !== undefined) channelUserList[chIdx].userInfoDTO.icon = info.icon;
+              if (info.nickName !== undefined) channelUserList[chIdx].userInfoDTO.nickName = info.nickName;
+              this.keyComRightMenu++;
+            }
           }
           break;
         }
@@ -813,7 +890,7 @@ export default {
       }
 
       // 需要指定当前窗口才执行的
-      if (info.id + info.type !== this.chatContent.id + this.chatContent.type) {
+      if (!this.chatContent || info.id + info.type !== this.chatContent.id + this.chatContent.type) {
         return;
       }
 
@@ -1277,6 +1354,16 @@ export default {
           }
         })
       }
+      // 当前用户不在自己的好友列表中，需要从 loginInfo 单独同步
+      const loginInfo = eventCommon.fnCommonInfoRU({ getId: "loginInfo" });
+      const loginId = eventCommon.fnCommonInfoRU({ getId: "loginId" });
+      if (loginInfo && loginId) {
+        const self = groupMember.find(i => i.id === loginId);
+        if (self) {
+          if (loginInfo.icon) self.icon = loginInfo.icon;
+          if (loginInfo.name) self.nickName = loginInfo.name;
+        }
+      }
       memberInfoList = groupMember;
     },
     handleChannelMemberGet() {
@@ -1290,13 +1377,34 @@ export default {
       if(adminPrivacy) {
         getChannelUsers(prams).then(res => {
             channelUserList = channelMemberSort(res.data?.rowList || []);
+            this.syncChannelMembersWithFriends();
             this.keyComRightMenu++;
         })
       } else {
         getChannelManages(prams).then(res => {
             channelUserList = formatChannelManages(channelMemberSort(res.data?.rowList || []))
+            this.syncChannelMembersWithFriends();
             this.keyComRightMenu++;
         })
+      }
+    },
+    // 用好友列表和当前用户的最新数据校正频道成员（防止频道 API 返回的用户资料滞后）
+    syncChannelMembersWithFriends() {
+      const loginId = eventCommon.fnCommonInfoRU({ getId: "loginId" });
+      const loginInfo = eventCommon.fnCommonInfoRU({ getId: "loginInfo" });
+      for (let i = 0; i < channelUserList.length; i++) {
+        const dto = channelUserList[i].userInfoDTO;
+        if (!dto) continue;
+        if (loginInfo && dto.uid == loginId) {
+          if (loginInfo.icon) dto.icon = loginInfo.icon;
+          if (loginInfo.name) dto.nickName = loginInfo.name;
+          continue;
+        }
+        const friend = friendList.find(f => f.id == dto.uid);
+        if (friend) {
+          if (friend.pic) dto.icon = friend.pic;
+          if (friend.nickName) dto.nickName = friend.nickName;
+        }
       }
     },
     /**

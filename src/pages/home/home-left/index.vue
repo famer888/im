@@ -1304,7 +1304,10 @@ export default {
                               if (info.userInfo.icon) {
                                   updateData.pic = info.userInfo.icon;
                               }
-                              // 优先使用备注名
+                              if (info.userInfo.nickName) {
+                                  updateData.nickName = info.userInfo.nickName;
+                              }
+                              // 优先使用备注名，没有备注名采用用户的昵称
                               const name = _.get(info.userInfo, "friendRelation.remarkName") || info.userInfo.nickName;
                               if (name) {
                                   updateData.name = name;
@@ -1422,7 +1425,7 @@ export default {
                           if (info.isDisturb !== undefined) {
                               const state = Boolean(info.isDisturb);
                               updateData.isDisturb = state;
-                              // updateData.bfDisturb = state;
+                              updateData.bfDisturb = state;
                           }
 
                           if (updateChat(chat.id, 'channel', updateData)) {
@@ -1635,9 +1638,20 @@ export default {
     async eventChannelDetailCache(info) {
       if(!info?.channelId) return;
       const cloneInfo = _.cloneDeep(info);
+      if (cloneInfo.isDisturb !== undefined) {
+        cloneInfo.bfDisturb = Boolean(cloneInfo.isDisturb);
+      }
       const index = this.chats.findIndex(item => item.channelId === info.channelId)
       if(index >= 0) {
         Object.assign(this.chats[index], cloneInfo);
+        if (cloneInfo.isDisturb !== undefined) {
+          eventCommon.fnDisturbInfoSync({
+            id: this.chats[index].id,
+            type: 'channel',
+            bfDisturb: Boolean(cloneInfo.isDisturb),
+            isDisturb: Boolean(cloneInfo.isDisturb),
+          });
+        }
       }
       let cacheList = await Cache(`${loginId}MessageChannelList`) || [];
       const cacheIndex = cacheList.findIndex(item => item.channelId === info.channelId)

@@ -479,7 +479,13 @@ export default {
         }
       },
       immediate: true,
-    }
+    },
+    'chatContent.bfDisturb'(val) {
+      if (val !== undefined) this.bfDisturb = val;
+    },
+    'chatContent.isDisturb'(val) {
+      if (val !== undefined && this.isChannel) this.bfChannelReceive = !val;
+    },
   }
 };
 </script>

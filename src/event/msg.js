@@ -1848,16 +1848,18 @@ const fnAlertNotification = async (data, chatList) => {
     const loginId = eventCommon.fnCommonInfoRU({getId: "loginId"});
     const showReplyIcon = await shouldShowReplyIcon(type, id, loginId);
     const isSelf = Number(sendUid) === loginId || !sendUid;
-    // console.log("fnAlertNotification--", deviceConfig.isMessageReminderWhenMinimized, !isSelf, !eventCommon.fnDisturbIdStrListRU({ idStrIsExist: id + type }), ![51].includes(msgType))
-    // 群简介 showNotify=false 时不弹系统通知
+    const info = (chatList || []).find(item => item.id === id && item.type === type);
+    
+    const isDisturbByList = eventCommon.fnDisturbIdStrListRU({ idStrIsExist: id + type });
+    const isDisturbByChat = info && (info.bfDisturb || info.isDisturb);
     if (
         deviceConfig.isMessageReminderWhenMinimized &&
         !isSelf &&
-        !eventCommon.fnDisturbIdStrListRU({ idStrIsExist: id + type }) &&
+        !isDisturbByList &&
+        !isDisturbByChat &&
         ![51, 6, 10, 13, 14, 99].includes(msgType) &&
         !(msgType === 8 && data.isHide)
     ) {
-        const info = (chatList || []).find(item => item.id === id && item.type === type);
         if (info) {
             const params = {
                 id,
@@ -1870,9 +1872,7 @@ const fnAlertNotification = async (data, chatList) => {
                 name: info.name || info.nickName || info.channelName,
                 loginId,
             };
-            // console.log("alertNotification--", params)
             ipcRenderer.send("alertNotification", {
-                // windowId: remote.getCurrentWindow().getMediaSourceId(),
                 ...params,
             });
         }

@@ -5,7 +5,7 @@
         <img src="@/assets/images/common/close-icon.png" />
       </picture>
       <div class="top">
-        <ComImage :src="memberInfo.icon" type="friend" />
+        <ComImage :src="icon" type="friend" />
         <h2 class="name-h2">{{ nameUpdate }}</h2>
       </div>
       <dl>
@@ -88,6 +88,7 @@ export default {
       searchText: "",
       nameUpdate: "",
       nickName: "",
+      icon: "",
       nameEdit: false,
       name: "",
       oldName: "",
@@ -122,8 +123,9 @@ export default {
       getId: "loginInfo",
     });
 
-    const { id, name, nickName, depict, bfFriend, channelId, notShowAddButton } = this.memberInfo;
+    const { id, name, nickName, depict, bfFriend, channelId, notShowAddButton, icon } = this.memberInfo;
 
+    this.icon = icon || "";
     this.name = name || "";
     this.nickName = nickName;
     this.nameUpdate = name || nickName;
@@ -170,14 +172,28 @@ export default {
           if (info.id === this.memberInfo.id) {
             if (info.bfFriend !== undefined) {
               this.bfFriend = info.bfFriend;
-              // 状态不一致，更新
               if (this.memberInfo.bfFriend !== this.bfFriend) {
                 this.provideUpdateGroupMember({ ...this.memberInfo, bfFriend: this.bfFriend })
               }
             }
+            // 同步头像
+            if (info.pic) {
+              this.icon = info.pic;
+            }
+            // 同步昵称
+            if (info.nickName) {
+              this.nickName = info.nickName;
+            }
+            // 同步备注名：有备注名用备注名，没有则清空（用户正在编辑时不覆盖）
+            if (!this.nameEdit) {
+              this.name = info.name || "";
+              this.oldName = this.name;
+            }
+            // 备注名优先，没有备注名采用用户的昵称
+            this.nameUpdate = this.name || this.nickName;
             this.memberDetail = { ...info, addToken: info.addToken || this.memberInfo.addToken || '' };
           }
-          console.log("friendUpdate--", info, this.memberDetail, 'this.memberInfo', this.memberInfo)
+          break;
         }
       }
     },
@@ -234,7 +250,20 @@ export default {
         if (res) {
           const info = res.find((item) => String(item.id) === String(id));
           if (info) {
-            this.name = info.name || info.nickName;
+            // name 仅存放备注名，不回退到昵称，避免无备注时把昵称当作备注名
+            this.name = info.name || "";
+            this.oldName = this.name;
+            if (info.nickName) {
+              this.nickName = info.nickName;
+            }
+            if (info.pic) {
+              this.icon = info.pic;
+            }
+            if (info.depict !== undefined) {
+              this.depict = info.depict || "";
+              this.oldDepict = this.depict;
+            }
+            this.nameUpdate = this.name || this.nickName;
 
             // 缓存中存在该用户
             if (info.bfFriend === false) {

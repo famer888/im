@@ -2907,6 +2907,9 @@ const fuGroupUpdate = ({ info, groups, chats }) => {
     if (chatIndex !== -1) {
         const updateInfo = objectComparisonUpdate(chats[chatIndex], info);
         if (updateInfo) {
+            if (info.bfDisturb !== undefined) {
+                eventCommon.fnDisturbInfoSync({ id: info.id, type: "group", bfDisturb: Boolean(info.bfDisturb) });
+            }
             chats[chatIndex] = updateInfo;
             dataNew.chats = chats;
             Cache(
