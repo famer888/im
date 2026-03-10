@@ -15,6 +15,7 @@ class InviteLink {
   }
   async getInviteLinkType() {
     const { data, code } = await sharePromise({ tag: 'getInviteLink', ttl: 86400000, method: getHistoryDomain, args: {}});
+    console.log('getInviteLinkType--', data, code)
     if (code === 200) {
       const target = data.find(x => {
         return [x.currentDomain, ...x.historyDomainList].some(cx => {
