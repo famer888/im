@@ -124,7 +124,7 @@ export default {
     let loginAccountList = await Cache("login-account-list");
 
     // 登录信息
-    const loginInfo = loginAccountList
+    let loginInfo = loginAccountList
       ? loginAccountList.find((item) => item.id === loginId)
       : null;
 
@@ -176,6 +176,8 @@ export default {
 
         // 如果名称，头像有更新，则进行同步
         if (loginInfo.name !== nickName || loginInfo.icon !== icon) {
+          loginInfo = { ...loginInfo, name: nickName, icon };
+
           // 更新到账户列表
           loginAccountList = loginAccountList.map((item) => {
             return item.id === loginInfo.id

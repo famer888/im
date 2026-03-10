@@ -5,13 +5,11 @@
         <img src="@/assets/images/common/close-icon.png" />
       </picture>
       <div class="top">
-        <ComImage :src="(editUser && editUser.icon) || (hostInfo && hostInfo.icon)" type="friend" />
+        <ComImage :src="displayUser && displayUser.icon" type="friend" />
         <h2>
-          {{
-            (editUser && editUser.nickName) || (hostInfo && hostInfo.nickName)
-          }}
+          {{ displayUser && displayUser.nickName }}
         </h2>
-        <span v-if="loginIsHost || showBadge" :class="{
+        <span v-if="(loginIsHost || showBadge) && displayUserLabel" :class="{
           groupOwner: displayUserType == 0,
           isAdmin: displayUserType == 1,
         }">
@@ -74,6 +72,12 @@ export default {
   },
   inject: ["provideMemberList", "provideSetTopNotice"],
   computed: {
+    displayUser() {
+      return {
+        icon: this.editUser?.icon || this.hostInfo?.icon,
+        nickName: this.editUser?.nickName || this.hostInfo?.nickName,
+      };
+    },
     displayUserType() {
       if (this.editUser && this.editUser.type !== undefined) {
         return this.editUser.type;

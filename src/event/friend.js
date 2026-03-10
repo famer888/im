@@ -593,7 +593,12 @@ const fnFriendUpdate = ({ info, friends, chats }) => {
     (item) => item.id === info.id && item.type === "friend"
   );
   if (chatIndex !== -1) {
-    const updateInfo = objectComparisonUpdate(chats[chatIndex], info);
+    // 备注名优先，没有备注名采用用户最新昵称，确保聊天列表显示名始终最新
+    const chatInfo = { ...info };
+    if (!chatInfo.name && chatInfo.nickName) {
+      chatInfo.name = chatInfo.nickName;
+    }
+    const updateInfo = objectComparisonUpdate(chats[chatIndex], chatInfo);
     if (updateInfo) {
       chats[chatIndex] = updateInfo;
       dataNew.chats = chats;

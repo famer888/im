@@ -1304,7 +1304,10 @@ export default {
                               if (info.userInfo.icon) {
                                   updateData.pic = info.userInfo.icon;
                               }
-                              // 优先使用备注名
+                              if (info.userInfo.nickName) {
+                                  updateData.nickName = info.userInfo.nickName;
+                              }
+                              // 优先使用备注名，没有备注名采用用户的昵称
                               const name = _.get(info.userInfo, "friendRelation.remarkName") || info.userInfo.nickName;
                               if (name) {
                                   updateData.name = name;

@@ -489,7 +489,8 @@ export default {
           }
           case "friendUpdate": {
             if (info.type !== 'channel') {
-              this.infoActive = { ...this.infoActive, ...info };
+              // 备注名优先，没有备注名采用用户最新昵称，确保 name 字段始终是最新的显示名
+              this.infoActive = { ...this.infoActive, ...info, name: info.name || info.nickName || this.infoActive.name };
             }
             break;
           }

@@ -105,10 +105,10 @@ export default {
   },
   mounted() {
     // 优先使用传入的 memberInfoList，否则使用 inject 的方法
-    this.memberList = (this.memberInfoList && this.memberInfoList.length > 0) 
-      ? this.memberInfoList 
+    this.memberList = (this.memberInfoList && this.memberInfoList.length > 0)
+      ? this.memberInfoList
       : this.provideChannelUserList();
-    
+
     // 初始化时判断是否已经加载完（如果初始数据小于 pageSize，说明没有更多数据了）
     if (this.memberList.length < this.pageSize) {
       this.isEnd = true;
@@ -172,6 +172,27 @@ export default {
       this.loading = false;
       if(newList?.length < this.pageSize) {
         this.isEnd = true;
+      }
+      // 用好友列表和当前用户信息校正新加载的成员数据（防止 API 返回的用户资料滞后）
+      if (newList.length > 0) {
+        const loginId = eventCommon.fnCommonInfoRU({ getId: "loginId" });
+        const loginInfo = eventCommon.fnCommonInfoRU({ getId: "loginInfo" });
+        for (const member of newList) {
+          const dto = member.userInfoDTO;
+          if (!dto) continue;
+          if (loginInfo && dto.uid == loginId) {
+            if (loginInfo.icon) dto.icon = loginInfo.icon;
+            if (loginInfo.name) dto.nickName = loginInfo.name;
+            continue;
+          }
+          if (this.friendList) {
+            const friend = this.friendList.find(f => f.id == dto.uid);
+            if (friend) {
+              if (friend.pic) dto.icon = friend.pic;
+              if (friend.nickName) dto.nickName = friend.nickName;
+            }
+          }
+        }
       }
       this.memberList = channelMemberSort([...this.memberList, ...newList]);
     },

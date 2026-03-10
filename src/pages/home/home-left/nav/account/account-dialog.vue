@@ -65,6 +65,7 @@ import { outFile } from "@/platformHelper";
 
 // 事件
 import eventCommon from "@/event/common";
+import eventBase from "@/event/base";
 
 export default {
   data() {
@@ -102,8 +103,9 @@ export default {
         });
 
         if (loginInfo.name !== nickName || loginInfo.icon !== icon) {
+          const iconChanged = loginInfo.icon !== icon;
           // 如果头像变更则同步到导航
-          if (loginInfo.icon !== icon) {
+          if (iconChanged) {
             this.$emit("changeIcon", icon);
           }
 
@@ -123,6 +125,12 @@ export default {
           });
 
           this.handleAccountUpdate();
+
+          // 通知群成员列表等组件同步更新当前用户的头像/昵称
+          eventBase.fnCommunicationSendMsg({
+            operator: "loginUserInfoUpdate",
+            data: { icon, nickName },
+          }, true);
         }
       }
     },
@@ -157,6 +165,12 @@ export default {
                 loginInfo: this.loginInfo,
               },
             });
+
+            // 通知群成员列表等组件同步更新当前用户的昵称
+            eventBase.fnCommunicationSendMsg({
+              operator: "loginUserInfoUpdate",
+              data: { nickName: this.nickName },
+            }, true);
 
             // 成功提示
             window.$toast(this.$t("修改成功"));
@@ -244,7 +258,7 @@ export default {
       height: 55px;
       white-space: nowrap;
       overflow: hidden;
-      text-overflow: ellipsis; 
+      text-overflow: ellipsis;
       line-height: 55px;
       font-size: 16px;
       color: #333;
@@ -267,7 +281,7 @@ export default {
     font-size: 14px;
     display: flex;
     align-items: center;
-    
+
     > span {
       width: 37px;
       font-size: 14px;
