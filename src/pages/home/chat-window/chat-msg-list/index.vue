@@ -770,6 +770,13 @@ export default {
 
         this.blockListShowPageNum = 1;
         this.containerOpacity = 1;
+
+        // 将所有新建页码标记为已存在，防止 chatMsgListToBottom 触发异步数据库查询覆盖 blockList
+        for (const block of this.blockList) {
+          if (!pageNumListOld.includes(block.pageNum)) {
+            pageNumListOld.push(block.pageNum);
+          }
+        }
       }
 
       // 滚动处理（只执行一次）
@@ -1119,6 +1126,11 @@ export default {
 
         // 容器显示
         this.containerOpacity = 1;
+
+        // 将页码标记为已存在，防止 chatMsgListToBottom 触发异步数据库查询覆盖 blockList
+        if (!pageNumListOld.includes(1)) {
+          pageNumListOld.push(1);
+        }
       }
 
       // 如果收到消息时在底部，则自动下滑
@@ -1713,39 +1725,49 @@ export default {
         })
         .then((res) => {
           if (res) {
-            this.blockList = res?.msgBlockList || [];
-            this.blockListShowPageNum = res.pageNumCurrent;
-            this.pageCount = res.pageCount;
-            this.pageLastMsgCount = res.pageLastMsgCount;
-            // 设置已存在
-            pageNumListOld = this.blockList.map((item) => item.pageNum);
+            // 如果在异步查询期间已有新消息被添加到 blockList（如用户在数据库查询完成前发送了消息），
+            // 不覆盖 blockList，避免丢失用户刚发送的消息，只更新辅助状态
+            if (this.blockList.length > 0) {
+              const dbPages = (res?.msgBlockList || []).map((item) => item.pageNum);
+              const currentPages = this.blockList.map((item) => item.pageNum);
+              pageNumListOld = [...new Set([...dbPages, ...currentPages])];
+              this.pageCount = Math.max(this.pageCount, res.pageCount || 0);
+              this.pageLastMsgCount = Math.max(this.pageLastMsgCount, res.pageLastMsgCount || 0);
+            } else {
+              this.blockList = res?.msgBlockList || [];
+              this.blockListShowPageNum = res.pageNumCurrent;
+              this.pageCount = res.pageCount;
+              this.pageLastMsgCount = res.pageLastMsgCount;
+              // 设置已存在
+              pageNumListOld = this.blockList.map((item) => item.pageNum);
 
-            // console.log('chat-msg-list: ----------->blockList 1335', this.blockList)
+              // console.log('chat-msg-list: ----------->blockList 1335', this.blockList)
 
-            setTimeout(() => {
-              if (customMsgId || this.unreadSeparationId) {
-                // 搜索/未读 移动至
-                this.handleMoveToId({
-                  customMsgId: customMsgId || this.unreadSeparationId,
-                  isImmediately: true,
-                });
-              } else {
-                // 置底
-                this.handleScrollTo(-1, 1);
-              }
+              setTimeout(() => {
+                if (customMsgId || this.unreadSeparationId) {
+                  // 搜索/未读 移动至
+                  this.handleMoveToId({
+                    customMsgId: customMsgId || this.unreadSeparationId,
+                    isImmediately: true,
+                  });
+                } else {
+                  // 置底
+                  this.handleScrollTo(-1, 1);
+                }
 
-              // 容器显示
-              this.containerOpacity = 1;
+                // 容器显示
+                this.containerOpacity = 1;
 
-              // 如果不需要滚动，则设置一次已读
-              const dom = this.$refs["container"];
-              if (dom && dom.clientHeight === dom.scrollHeight) {
-                this.handleMsgEnterVisualRange();
-              }
+                // 如果不需要滚动，则设置一次已读
+                const dom = this.$refs["container"];
+                if (dom && dom.clientHeight === dom.scrollHeight) {
+                  this.handleMsgEnterVisualRange();
+                }
 
-              // 显示置低按钮
-              this.handleToBottomBtnVisibleSet();
-            }, 100);
+                // 显示置低按钮
+                this.handleToBottomBtnVisibleSet();
+              }, 100);
+            }
           }
 
           if (this.chatContent.type === 'channel') {
