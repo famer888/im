@@ -117,6 +117,9 @@
                 })
               }}
             </div>
+            <div class="tip-msg" v-else-if="isUnsupportedMsgType(item)">
+              {{ $t("暂不支持该消息类型") }}
+            </div>
             <div
               class="chats-82"
               v-else-if="item.content && item.content !== ''"
@@ -492,6 +495,22 @@ export default {
     handleMsgTypeToText(value) {
       let text = eventMsg.fnMsgTypeToText(value);
       return text ? "[" + text + "]" : "";
+    },
+    /**
+     * 是否为聊天窗口内“暂不支持该消息类型”的同一类消息（与 chat-msg-list 的 v-else 分支一致）
+     * 无最后一条消息(chatType 为 undefined/-1) 不判为不支持；chatType/msgType 统一转数字避免接口返回字符串误判。
+     */
+    isUnsupportedMsgType(item) {
+      const chatType = item.chatType;
+      if (chatType === undefined || chatType === null || chatType === -1) return false;
+      const ct = Number(chatType);
+      const mt = Number(item.msgType);
+      if (Number.isNaN(ct)) return false;
+      if ([50, 51, 52].includes(ct)) return false;
+      if (item.type === "channel" && ct === 6) return false;
+      if (ct === 0 || [1, 2, 3, 5, 7, 8, 9, 12, 18].includes(ct)) return false;
+      if (mt === 16) return false;
+      return true;
     },
     /**
      * 转换富文本消息为文本
