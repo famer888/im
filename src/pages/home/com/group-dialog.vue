@@ -367,9 +367,11 @@ export default {
      */
     handleJoinGroup() {
       const { id, name, pic } = this.groupInfo;
+      // 从别名进入的群聊，使用 GROUP_ALIAS 15 请求类型；从链接进入的群聊，使用 GROUP_LINK 2请求类型
+      const reqType = this.groupInfo.joinSource === 'alias' ? 15 : 2;
       groupJoin({
         groupId: Number(id),
-        reqType: 15,
+        reqType,
         addToken: this.groupInfo.addToken,
         msg: "申请入群",
       }).then(async (res) => {

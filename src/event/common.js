@@ -466,6 +466,7 @@ const fnNewFriendOrGroup = (text) => {
               bfJoinCheck: groupAlias.groupBaseResp.bfJoinCheck,
               remark: groupAlias.groupBaseResp.remark,
               bfBanned: groupAlias.groupBaseResp.bfBanned, // 群禁用
+              joinSource: 'alias',
             },
           },
         });

@@ -72,6 +72,7 @@ class InviteLink {
       addToken: groupInfo.addToken,
       bfMember: groupInfo.bfMember,
       remark: groupBase.notice,
+      joinSource: 'link',
     };
 
     if (groupInfo?.bfMember) {

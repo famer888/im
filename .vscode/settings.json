@@ -1,0 +1,7 @@
+{
+    "i18n-ally.localesPaths": [
+        "public/locales",
+        "dist_electron/public/locales",
+        "src/assets/lang"
+    ]
+}
