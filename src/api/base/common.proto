@@ -12,6 +12,8 @@ message ClientInfo {
     int32      language       = 5; // 系统语言
     string     sysMac         = 6; // 设备号
     string     sysModel       = 7; // 设备名称
+    string     token          = 8; // accessToken
+    string     version        = 9; // 真实包版本号 如：6.2.3 20251105-1643
 }
 
 // 公共的返回结果
@@ -202,7 +204,7 @@ enum GroupHandleType {
     GROUP_NAME      = 1; // 群名称
     GROUP_PIC       = 2; // 群图标
     GROUP_MEMBER_NICKNAME = 3; // 群成员名称
-    GROUP_NOTICE    = 4; // 群简介
+    GROUP_NOTICE    = 4; // 群公告
     GROUP_SHUTUP    = 5; // 群禁言
     GROUP_READ_CANCEL    = 6; // 群阅后即焚 v1.3.0
 }
@@ -235,8 +237,9 @@ enum AdminRightType {
     ALL_RIGHT   = 0; // 所有
     UPDATE_DATA = 1; // 修改群资料
     CHECK_APPLY = 2; // 审核入群申请
-    PUSH_NOTICE = 3; // 发布群简介
+    PUSH_NOTICE = 3; // 发布群公告
     SET_ADMIN   = 4; // 设置管理员
+    SET_JOIN_NOTICE = 5; // 设置入群通知权限
 }
 
 // 搜索使用地图类型
@@ -282,6 +285,20 @@ enum SafeSwitchType {
     TRADE_PASSWORD_TYPE     = 3;
 }
 
+// 操作类型
+enum operateType {
+    UPDATE    = 0; // 更新
+    DELETE    = 1; // 删除
+}
+
+// 用户已经绑定类型
+enum CheckTradePassword {
+    OLD_ERROR              = 0;
+    NEW_THE_SAME              = 1;
+    PASS        = 2;
+    OVER_TIME     = 3;
+}
+
 // message content v1.2.0
 message GroupAssistantMessageContent {
     bytes		content = 1;//消息内容
@@ -319,12 +336,13 @@ message UserSwitch {
 message FriendRelation {
     bool    bfFriend        = 1; // 是否好友[此用户是否是当前登录用户的好友]
     string  remarkName      = 2; // 好友备注名OR群昵称
+    int32   status          = 3; // 0:不是好友，1:已是好友，2:申请中
 }
 
 // 用户归档信息
 message ArchiveInfo {
     int64  target   = 1; // 目标id[群id/用户uid]
-    int64  type     = 2; // 类型，1用户，2群
+    int64  type     = 2; // 类型，1用户，2群 ,3 频道
     int64  status   = 3; // 状态，1正常，2不在群/不是好友
 }
 
@@ -396,17 +414,18 @@ message KeyPairBase {
 message AdminRightBase {
     bool bfUpdateData = 1; // 修改群资料
     bool bfJoinCheck  = 2; // 审核入群申请
-    bool bfPushNotice = 3; // 发布群简介
+    bool bfPushNotice = 3; // 发布群公告
     bool bfSetAdmin   = 4; // 设置其他管理员
     bool bfResetQrcode   = 5; // 设置其他管理员
+    bool bfSetJoinNotice   = 6; // 设置其他管理员  v6.5.0
 }
 
-//群简介base
+//群公告base
 message GroupNoticeBase {
     GroupMemberBase  editUser  = 1; //编辑用户
-    string notice  = 2 ; // 群简介内容
+    string notice  = 2 ; // 群公告内容
     int64  releaseTime = 3; //发布时间
-    int64  noticeId = 4;//群简介id
+    int64  noticeId = 4;//群公告id
     bool   bfRemind = 5;//是否通知所有人
 }
 
@@ -554,4 +573,5 @@ message CoinFeeConfig {
     string fixedFee = 6; // 固定服务费
     int32 mathType = 7; // 配置计算手续费规则类型 默认0：服务费=fee_rate*币种数量 1：服务费=min(max(币种数量*fee_rate,min_fee),max_fee)+base_fee
     int32 feeScale = 8; // 手续费小数位
+    int32 roundingModeType = 9; // 1、UP有值进位 2、DOWN截断 3、HALF_UP四舍五入 4、HALF_DOWN四舍六入
 }
