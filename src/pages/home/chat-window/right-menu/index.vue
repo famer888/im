@@ -282,8 +282,8 @@ export default {
                   this.$t("清空本地和所有成员设备的聊天记录"),
                 ];
         } else {
-          // 10002是传输助手
-          this.clearMsgTypeList = this.chatContent.id == 10002 ? [this.$t("仅清空本地聊天记录")] : [
+          // 9901是传输助手
+          this.clearMsgTypeList = this.chatContent.id == 9901 ? [this.$t("仅清空本地聊天记录")] : [
             this.$t("仅清空本地聊天记录"),
             this.$t("清空本地和对方设备的聊天记录"),
           ];

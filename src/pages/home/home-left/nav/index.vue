@@ -56,7 +56,7 @@ export default {
         data:
           val === 2
             ? {
-                id: 10002,
+                id: 9901,
                 type: "friend",
                 comType: "chat",
               }

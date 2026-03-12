@@ -301,7 +301,7 @@ export const fnFriendRelKeyGet = async ({
     const { privateKey, appKeyPair: appKeyPairOwn } = accountConfig;
 
     // 如果是助手
-    if (msgEncryptionVersion === -1 && id === 10002) {
+    if (msgEncryptionVersion === -1 && id === 9901) {
         // 同账户的 app 密钥
         try {
             return {
@@ -1162,7 +1162,7 @@ export const fnFormartMsgParams = async ({ data, customMsgId, id, type }) => {
         receiveUid &&
         receiveUid >= 10000 &&
         receiveUid <= 100000 &&
-        receiveUid != 10002;
+        receiveUid != 9901;
 
     const contentCode = fnEncode(text, msgType, {
         width,
@@ -1269,7 +1269,7 @@ export const fnFormartMsgParams = async ({ data, customMsgId, id, type }) => {
             const { app, pc, appOwn } = data;
 
             // 如果群密钥没获取到，则直接结束
-            if (!app && !pc && id !== 10002) {
+            if (!app && !pc && id !== 9901) {
                 window.$toast(i18n.t("密钥异常，发送消息失败"));
                 // benchmark: app和pc密钥都为空
                 benchmark.markFailed(customMsgId, 'noAppAndPcKey');
