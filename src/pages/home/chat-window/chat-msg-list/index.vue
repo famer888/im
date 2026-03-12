@@ -313,7 +313,7 @@ import eventMsg from "@/event/msg";
 import eventFriend from "@/event/friend";
 
 // api
-import { getChannelLastMsgInfo } from "@/api/imChannel";
+import { getChannelLastMsgInfo, getMsgReadCount } from "@/api/imChannel";
 import { isBatchMode } from "@/utils/batchRenderer";
 
 // 模块消息数量
@@ -336,6 +336,8 @@ let timerScrollTo = null;
 let timerHighlighted = null;
 
 let isToBottom = false;
+
+const READ_COUNT_COOLDOWN_MS = 60 * 1000;
 
 export default {
   components: {
@@ -372,7 +374,7 @@ export default {
       return this.blockList.reduce((acc, item) => acc + item.list.length, 0);
     }
   },
-  inject: ["handleFriendList"],
+  inject: ["handleFriendList", "readCountCooldownTimes"],
   mounted() {
     this.updateKey()
     // 添加监听 设置通信事件的监听机制
@@ -1594,6 +1596,60 @@ export default {
         });
       }
     },
+    // 离线已读数同步：拉取频道消息已读数并更新本地
+    async fetchChannelMsgReadCount() {
+      const { channelId, id: chatId } = this.chatContent;
+      if (!channelId) return;
+
+      const cid = String(chatId);
+      if (Date.now() - (this.readCountCooldownTimes[cid] || 0) < READ_COUNT_COOLDOWN_MS) return;
+
+      const validMsgIds = [];
+      (this.blockList || []).forEach(block => {
+        (block.list || []).forEach(msg => {
+          if ([50, 51, 52, 6].includes(msg.chatType)) return;
+          if ((msg.isHide && !msg.isSelf) || ((msg.msgType === 8 || msg.chatType === 8) && msg.isHide)) return;
+          const msgId = Number(msg.MsgID);
+          if (msgId) validMsgIds.push(msgId);
+        });
+      });
+      if (!validMsgIds.length) return;
+
+      let res;
+      try {
+        res = await getMsgReadCount({ bizId: Number(channelId), msgIdList: validMsgIds });
+        console.log('getMsgReadCount--', res)
+      } catch (e) {
+        return;
+      }
+
+      // 组件已销毁或频道已切换，丢弃结果、不设冷却，下次进入可重试
+      if (this._isDestroyed || String(this.chatContent.id) !== cid) return;
+      if (res?.code !== 200 || !res?.data) return;
+
+      // 重新读取 blockList 最新状态，防止覆盖期间 WS 推送的更高值
+      const currentMsgMap = new Map();
+      (this.blockList || []).forEach(block => {
+        (block.list || []).forEach(msg => {
+          if (msg.MsgID) currentMsgMap.set(String(msg.MsgID), msg);
+        });
+      });
+
+      const updateList = [];
+      for (const [msgIdStr, apiReadTotal] of Object.entries(res.data)) {
+        const msg = currentMsgMap.get(msgIdStr);
+        if (msg && Number(apiReadTotal) > (msg.readTotal || 0)) {
+          updateList.push({ customMsgId: msg.customMsgId, updated: { readTotal: Number(apiReadTotal) } });
+        }
+      }
+
+      this.readCountCooldownTimes[cid] = Date.now();
+      if (!updateList.length) return;
+
+      const params = { id: Number(chatId), type: "channel", list: updateList };
+      window.$db.updateMsgProperty(params);
+      eventBase.fnCommunicationSendMsg({ operator: "msgListPropertyUpdate", data: params });
+    },
     // 检查群最后一条消息更新
     checkGroupLastMsgUpdate(recentMsgs) {
       try {
@@ -1776,6 +1832,7 @@ export default {
             const recentMsgList = msgList.at(-1)?.list || [];
             // console.log('recentMsgList-2-', recentMsgList)
             this.getChannelHistoryMsg(recentMsgList.slice(-10));
+            this.fetchChannelMsgReadCount();
           } else if (this.chatContent.type === 'group') {
             const msgList = this.blockList || [];
             const recentMsgList = msgList.at(-1)?.list || [];

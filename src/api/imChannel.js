@@ -31,6 +31,16 @@ export const channelCheckJoin = (data) => {
     useBigIntResponseBody: true,
   });
 }
+// 获取离线频道消息已读数
+export const getMsgReadCount = (data) => {
+    return requestAxios(`/message/channelMessage/getMsgReadCount`, data, {
+        headers: {
+          "Content-Type": "application/json",
+            ...getSignHeader(),
+        },
+    });
+};
+
 // 获取频道最后的一条消息信息
 export const getChannelLastMsgInfo = (data) => {
     return requestAxios(`/message/channelMessage/latestId`, data, {

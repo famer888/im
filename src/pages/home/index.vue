@@ -131,11 +131,13 @@ export default {
       loginId: null,
       getChannelDetailTimes: {}, // 记录频道详情获取的时间
       getGroupDetailTimes: {}, // 记录群详情获取的时间
+      readCountCooldownTimes: {}, // 频道已读数同步冷却（id -> 上次成功时间戳）
     };
   },
   provide() {
     return {
       handleFriendList: this.handleFriendList,
+      readCountCooldownTimes: this.readCountCooldownTimes,
     };
   },
   created() {
