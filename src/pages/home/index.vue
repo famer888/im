@@ -253,10 +253,13 @@ export default {
      * app的dom被点击
      */
     handleAppDomClick(e) {
+      // 判断点击的元素是否在 .comList .comSearch 内
+      const shouldPreventAutoFocus = !!e.target?.closest('.comList .comSearch');
       // 关闭 右键点击菜单， 聊天右菜单，表情会话框
       const shouldCloseRightMenu = this.shouldCloseRightMenu(e) ? ['chatRightMenu'] : [];
       eventCommon.fnCloseListRU({
         removeIds: [...shouldCloseRightMenu, "rightClickMenu", "emojiDialog"],
+        shouldPreventAutoFocus,
       });
     },
     /**

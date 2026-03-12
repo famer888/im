@@ -398,7 +398,7 @@ export default {
           // 关闭表情
           this.emojiVisible = false;
 
-          if (info.ids[0] !== "rightClickMenu") {
+          if (info.ids[0] !== "rightClickMenu" && !info.shouldPreventAutoFocus) {
             // 设置回复信息 焦点到输入
             this.handleInputFocus();
 

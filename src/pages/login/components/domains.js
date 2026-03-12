@@ -141,7 +141,7 @@ const getClientInfo = () => {
         clientType: 3,
         packageName: "ocs-im",
         versionCode: 1,
-        versionName: "1.6.6",
+        versionName: "1.6.7",
     };
 };
 
