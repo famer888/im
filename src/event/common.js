@@ -314,7 +314,7 @@ let closeIds = [];
 /**
  * 关闭列表 读写
  */
-const fnCloseListRU = ({ addId, removeIds, isCloseLast, isCloseAll }) => {
+const fnCloseListRU = ({ addId, removeIds, isCloseLast, isCloseAll, shouldPreventAutoFocus }) => {
   let ids = [];
 
   // 如果关闭最后一个
@@ -345,6 +345,7 @@ const fnCloseListRU = ({ addId, removeIds, isCloseLast, isCloseAll }) => {
       operator: "closeOperator",
       data: {
         ids,
+        shouldPreventAutoFocus,
       },
     });
   } else {
@@ -355,6 +356,7 @@ const fnCloseListRU = ({ addId, removeIds, isCloseLast, isCloseAll }) => {
         operator: "closeOperator",
         data: {
           ids: ['chatRightMenu'],
+          shouldPreventAutoFocus,
         },
       });
     }
