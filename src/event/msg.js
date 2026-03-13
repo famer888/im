@@ -1165,6 +1165,12 @@ const fnMsgSend = async (info) => {
                     const {groupAttachmentKey} = await getKeys({fileKey: item.fileKey, groupId: id})
                     item.groupAttachmentKey = groupAttachmentKey;
                 }
+            } else if (type == 'channel') {
+                //  获取频道文件加密key
+                if (item.fileKey) {
+                    const {channelAttachmentKey} = await getKeys({fileKey: item.fileKey, channelId: id})
+                    item.channelAttachmentKey = channelAttachmentKey;
+                }
             } else {
                 //  获取好友文件加密key
                 if (item.fileKey) {
@@ -1849,7 +1855,7 @@ const fnAlertNotification = async (data, chatList) => {
     const showReplyIcon = await shouldShowReplyIcon(type, id, loginId);
     const isSelf = Number(sendUid) === loginId || !sendUid;
     const info = (chatList || []).find(item => item.id === id && item.type === type);
-    
+
     const isDisturbByList = eventCommon.fnDisturbIdStrListRU({ idStrIsExist: id + type });
     const isDisturbByChat = info && (info.bfDisturb || info.isDisturb);
     if (

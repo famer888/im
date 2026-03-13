@@ -136,7 +136,12 @@ export default {
         const key = `${type}_${item.channelId || item.groupId || item.id}`;
 
         if (!uniqueMap.has(key)) {
-          uniqueMap.set(key, { ...item, type });
+          const normalized = { ...item, type };
+          if (type === 'channel' && normalized.channelId) {
+            if (!normalized.id) normalized.id = Number(normalized.channelId);
+            if (!normalized.name) normalized.name = normalized.channelName || '';
+          }
+          uniqueMap.set(key, normalized);
         }
       };
 
