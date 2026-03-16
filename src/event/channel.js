@@ -119,6 +119,15 @@ const eventUpdateChannelInfo = (operateType, {channelId, channelName, icon}) => 
  * 频道启用/禁用事件处理
  */
 const eventToggleChannelDisabled = async ({ channelId, isDisable }) => {
+    const loginId = eventCommon.fnCommonInfoRU({ getId: "loginId" });
+
+    // 同步更新 ChannelList 缓存的 isDisable
+    const channelList = (await Cache(`${loginId}-ChannelList`)) || [];
+    const idx = channelList.findIndex(i => Number(i.channelId) === Number(channelId));
+    if (idx !== -1) {
+        channelList[idx].isDisable = isDisable;
+        Cache(`${loginId}-ChannelList`, channelList);
+    }
 
     // 通过eventBase发送消息给其他订阅者
     eventBase.fnCommunicationSendMsg({
@@ -128,6 +137,15 @@ const eventToggleChannelDisabled = async ({ channelId, isDisable }) => {
             type: "channel",
             channelId,
             isDisable,
+        },
+    });
+
+    // 通知 home-left 同步 channels 数组，防止后续 channelUpdate 事件覆盖缓存时丢失 isDisable
+    eventBase.fnCommunicationSendMsg({
+        operator: "channelUpdate",
+        data: {
+            channelId,
+            values: { isDisable },
         },
     });
 }
