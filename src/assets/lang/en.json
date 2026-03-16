@@ -245,7 +245,6 @@
   "没有更多了": "No more",
   "所有者": "Owner",
   "发布新简介": "release new profile",
-  "确认发布": "confirm release",
   "暂无域名": "No domains",
   "有": "",
   "个可用域名": " available domains",
@@ -257,6 +256,7 @@
   "进群审核中": "Pending approval",
   "已向群主发送申请，等待群主审核": "Application sent to the group owner, waiting for approval",
   "加入群聊成功": "Joined group chat successfully",
-  "您已加入群聊": "You have joined the group chat"
+  "您已加入群聊": "You have joined the group chat",
+  "动画表情": "Animated emoji"
 }
   
