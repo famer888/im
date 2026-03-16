@@ -8,6 +8,7 @@ import * as $root_channel_api from "./channel_api.js";
 import * as $root_imweb_web from "./imweb-web.js";
 import { _decrypt, _encrypt, encrypt } from "./index";
 import { getUint32Bytes, stringToAscii } from "../../socket/unit";
+import pako from "pako"; // gzip 解压库
 require("./protobuf");
 import config from "@/config.js";
 import {
@@ -263,9 +264,65 @@ export const handleEncode = ({ protoType, type, params, aesKey }) => {
     return array;
 };
 
+/**
+ * 解压decode后内容
+ * 数据格式说明：
+ * - 第1字节：固定头（如 0xC0）
+ * - 第2字节：压缩标志
+ *   - 0xC0：已压缩，需要 gzip 解压
+ *   - 0x80：未压缩，直接使用
+ * - 第3-6字节：内容长度
+ * - 第7字节之后：实际内容
+ *
+ * @param {ArrayBuffer} data - 原始数据
+ * @returns {ArrayBuffer} - 解压后的数据（保留原有头部格式）
+ */
+export const handleDecompress = (data) => {
+    const uint8Data = new Uint8Array(data);
+    const compressFlag = uint8Data[1]; // 第2字节是压缩标志
+
+    // 0xC0 表示已压缩，需要解压
+    if (compressFlag === 0xC0) {
+        try {
+            // 第7字节之后是压缩内容（索引从0开始，所以是 slice(6)）
+            const compressedContent = uint8Data.slice(6);
+
+            // 使用 pako 进行 gzip 解压
+            const decompressedContent = pako.ungzip(compressedContent);
+
+            // 重建数据：头部(6字节) + 解压后的内容
+            // 更新长度字段（第3-6字节）为解压后的长度
+            const newLength = decompressedContent.length;
+            const header = new Uint8Array(6);
+            header[0] = uint8Data[0]; // 保留原固定头
+            header[1] = 0x80; // 标记为未压缩
+            // 设置新长度（大端序，4字节）
+            header[2] = (newLength >> 24) & 0xFF;
+            header[3] = (newLength >> 16) & 0xFF;
+            header[4] = (newLength >> 8) & 0xFF;
+            header[5] = newLength & 0xFF;
+
+            // 合并头部和解压后的内容
+            const result = new Uint8Array(6 + newLength);
+            result.set(header, 0);
+            result.set(decompressedContent, 6);
+
+            return result.buffer;
+        } catch (err) {
+            // 解压失败，打印错误日志并返回原数据
+            console.error('[handleDecompress] gzip解压失败:', err.message || err);
+            return data;
+        }
+    }
+
+    // 0x80 表示未压缩，直接返回原数据
+    return data;
+};
+
 export const handleDecode = ({ data, protoType, type, aesKey, noResp }) => {
     let root = getRoot(protoType);
-    let data2 = _decrypt(new Int8Array(data.slice(6)), aesKey);
+    let decompressedData = handleDecompress(data);
+    let data2 = _decrypt(new Int8Array(decompressedData.slice(6)), aesKey);
     let respMethod = noResp ? root[type] : root[`${type}Resp`];
     let message = respMethod.decode(new Uint8Array(data2));
     return message;
