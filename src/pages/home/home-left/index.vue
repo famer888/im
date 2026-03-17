@@ -1242,7 +1242,8 @@ export default {
                       // bfStar: 星标
                       // bfTop: 置顶
                       // bfPushNotice: 推送通知
-                      if (['bfDisturb', 'isDisturb', 'bfReadCancel', 'bfGroupReadCancel', 'bfJoinCheck', 'bfJoinFriend', 'bfShutup', 'bfAddress', 'bfStar', 'bfTop', 'bfPushNotice'].includes(key)) {
+                      // isDisable: 禁用状态
+                      if (['bfDisturb', 'isDisturb', 'bfReadCancel', 'bfGroupReadCancel', 'bfJoinCheck', 'bfJoinFriend', 'bfShutup', 'bfAddress', 'bfStar', 'bfTop', 'bfPushNotice', 'isDisable'].includes(key)) {
                            if (data[key] !== undefined && chat[key] !== Boolean(data[key])) {
                                chat[key] = Boolean(data[key]);
                                isChanged = true;
@@ -1387,6 +1388,9 @@ export default {
                                 }
                             });
 
+                            // 详情成功时显式回写禁用状态，清理之前异常残留的 isDisable=true
+                            updateData.isDisable = Boolean(info.isDisable);
+
                             if (updateChat(chat.id, 'group', updateData)) {
                                 hasUpdate = true;
                             }
@@ -1428,6 +1432,9 @@ export default {
                               updateData.bfDisturb = state;
                           }
 
+                          // 详情成功时显式回写禁用状态，避免历史 isDisable=true 残留
+                          updateData.isDisable = Boolean(channelData.isDisable);
+
                           if (updateChat(chat.id, 'channel', updateData)) {
                               hasUpdate = true;
                           }
@@ -1453,6 +1460,32 @@ export default {
           Cache(`${loginId}MessageUserList`, friendChats);
           Cache(`${loginId}MessageGroupList`, groupChats);
           Cache(`${loginId}MessageChannelList`, channelChats);
+
+          // 同步 isDisable 到 ChannelList 缓存（发消息查找依赖此缓存）
+          let channelListDirty = false;
+          channelChats.forEach(chat => {
+              const idx = this.channels.findIndex(c => Number(c.channelId) === Number(chat.id));
+              if (idx !== -1 && this.channels[idx].isDisable !== chat.isDisable) {
+                  this.channels[idx].isDisable = chat.isDisable;
+                  channelListDirty = true;
+              }
+          });
+          if (channelListDirty) {
+              Cache(`${loginId}-ChannelList`, this.channels);
+          }
+
+          // 同步 isDisable 到 GroupList 缓存（发消息查找依赖此缓存）
+          let groupListDirty = false;
+          groupChats.forEach(chat => {
+              const idx = this.groups.findIndex(g => Number(g.id) === Number(chat.id));
+              if (idx !== -1 && this.groups[idx].isDisable !== chat.isDisable) {
+                  this.groups[idx].isDisable = chat.isDisable;
+                  groupListDirty = true;
+              }
+          });
+          if (groupListDirty) {
+              Cache(`${loginId}-GroupList`, this.groups);
+          }
 
           // 刷新未读数
           this.updateUnreadCount();

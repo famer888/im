@@ -2746,6 +2746,12 @@ const fnGroupMemberDataFormat = (list) => {
  */
 const fnGroupDataFormat = (arr) => {
     return arr.map((item) => {
+        const isDisable =
+            item.isDisable !== undefined
+                ? Boolean(item.isDisable)
+                : item.bfBanned !== undefined
+                    ? Boolean(item.bfBanned)
+                    : false;
         return {
             id: longToNum(item.groupId),
             hostId: longToNum(item.hostId),
@@ -2771,6 +2777,7 @@ const fnGroupDataFormat = (arr) => {
             bfResetQrcode: item.bfResetQrcode,
             bfUpdateData: item.bfUpdateData,
             bfDisturb: item.bfDisturb, //免打扰状态
+            isDisable,
         };
     });
 };

@@ -322,6 +322,16 @@ const fnChannelAdd = async (info) => {
     }
 }
 
+const getChannelDisabledState = (info = {}) => {
+    if (info.isDisable !== undefined) {
+        return Boolean(info.isDisable);
+    }
+    if (info.status !== undefined) {
+        return Number(info.status) === 3;
+    }
+    return false;
+};
+
 export const fnChannelFormat = (info) => {
     return {
         adminPrivacy: info.adminPrivacy || 0,
@@ -331,6 +341,7 @@ export const fnChannelFormat = (info) => {
         icon: info.icon || "",
         logoColor: info.logoColor || "#E11EFF",
         updateTime: info.updateTime || info.createTime || 0,
+        isDisable: getChannelDisabledState(info),
     }
 }
 
@@ -345,7 +356,7 @@ const fnGetAllChannel = () => {
         async function getChannelPolling() {
             try {
                 const res = await getChannelList({pageSize, pageNum})
-                const list = res.data?.rowList || []
+                const list = (res.data?.rowList || []).map(item => fnChannelFormat(item))
                 resultList = [...resultList, ...list];
                 if(list.length >= 10) {
                     pageNum += 1;
@@ -432,6 +443,11 @@ const fnChannelUpdate = ({ info, channels, chats }) => {
         // 更新聊天类型
         if (info.chatType !== undefined && updateInfo.chatType !== info.chatType) {
             updateInfo.chatType = info.chatType;
+            isUpdated = true;
+        }
+
+        if (info.isDisable !== undefined && updateInfo.isDisable !== Boolean(info.isDisable)) {
+            updateInfo.isDisable = Boolean(info.isDisable);
             isUpdated = true;
         }
 
