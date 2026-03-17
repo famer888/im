@@ -245,7 +245,6 @@
   "没有更多了": "Não há mais",
   "所有者": "Proprietário",
   "发布新简介": "Publicar nova descrição",
-  "确认发布": "Confirmar publicação",
   "暂无域名": "Nenhum domínio",
   "有": "",
   "个可用域名": " domínios disponíveis",
@@ -257,6 +256,7 @@
   "进群审核中": "Aguardando aprovação",
   "已向群主发送申请，等待群主审核": "A solicitação foi enviada ao proprietário do grupo, aguardando aprovação",
   "加入群聊成功": "Entrada no grupo bem-sucedida",
-  "您已加入群聊": "Você entrou no grupo"
+  "您已加入群聊": "Você entrou no grupo",
+  "动画表情": "Emoji animado"
 }
   

@@ -1781,14 +1781,95 @@ export default {
         })
         .then((res) => {
           if (res) {
-            // 如果在异步查询期间已有新消息被添加到 blockList（如用户在数据库查询完成前发送了消息），
-            // 不覆盖 blockList，避免丢失用户刚发送的消息，只更新辅助状态
             if (this.blockList.length > 0) {
-              const dbPages = (res?.msgBlockList || []).map((item) => item.pageNum);
-              const currentPages = this.blockList.map((item) => item.pageNum);
-              pageNumListOld = [...new Set([...dbPages, ...currentPages])];
-              this.pageCount = Math.max(this.pageCount, res.pageCount || 0);
-              this.pageLastMsgCount = Math.max(this.pageLastMsgCount, res.pageLastMsgCount || 0);
+              // 异步查询期间收到了新消息，将 DB 历史数据与新消息合并，避免丢失历史消息
+              const pendingNewMsgs = [];
+              for (const block of this.blockList) {
+                pendingNewMsgs.push(...block.list);
+              }
+
+              // 使用 DB 结果作为基础数据
+              this.blockList = res?.msgBlockList || [];
+              this.pageCount = res.pageCount || 0;
+              this.pageLastMsgCount = res.pageLastMsgCount || 0;
+              pageNumListOld = this.blockList.map((item) => item.pageNum);
+
+              // 修正第一条新消息的 showTime（空列表时无条件设置，合并后需根据上下文判断）
+              if (pendingNewMsgs.length > 0 && this.blockList.length > 0) {
+                const dbLastBlock = this.blockList[this.blockList.length - 1];
+                const dbLastMsg = dbLastBlock.list.length > 0
+                  ? dbLastBlock.list[dbLastBlock.list.length - 1]
+                  : null;
+                if (dbLastMsg && pendingNewMsgs[0].showTime) {
+                  const sameDay = dayjs(Number(dbLastMsg.sendTime)).format("YYYY-MM-DD") ===
+                    dayjs(Number(pendingNewMsgs[0].sendTime)).format("YYYY-MM-DD");
+                  if (sameDay) {
+                    delete pendingNewMsgs[0].showTime;
+                  }
+                }
+              }
+
+              // 构建全量去重索引（检查所有 block，不仅是最后一个）
+              const existingMsgIds = new Set();
+              for (const block of this.blockList) {
+                for (const item of block.list) {
+                  existingMsgIds.add(`${item.customMsgId}-${item.MsgID}`);
+                }
+              }
+
+              // 将异步期间收到的新消息追加到末尾（去重）
+              for (const msg of pendingNewMsgs) {
+                const lastBlock = this.blockList.length > 0
+                  ? this.blockList[this.blockList.length - 1]
+                  : null;
+                const msgKey = `${msg.customMsgId}-${msg.MsgID}`;
+                const isDuplicate = existingMsgIds.has(msgKey);
+
+                if (!isDuplicate) {
+                  existingMsgIds.add(msgKey);
+                  if (lastBlock && lastBlock.pageNum === this.pageCount && lastBlock.list.length < blockMsgSize) {
+                    lastBlock.list.push(msg);
+                    this.pageLastMsgCount++;
+                  } else if (this.blockList.length > 0) {
+                    this.pageCount++;
+                    this.pageLastMsgCount = 1;
+                    this.blockList.push({ pageNum: this.pageCount, list: [msg] });
+                    pageNumListOld.push(this.pageCount);
+                  } else {
+                    this.pageCount = 1;
+                    this.pageLastMsgCount = 1;
+                    this.blockList = [{ pageNum: 1, list: [msg] }];
+                    pageNumListOld = [1];
+                  }
+                }
+              }
+
+              // 有搜索/未读位置时用 DB 的当前页，否则显示最后一页
+              if (customMsgId || this.unreadSeparationId) {
+                this.blockListShowPageNum = res.pageNumCurrent || this.pageCount;
+              } else {
+                this.blockListShowPageNum = this.pageCount;
+              }
+
+              setTimeout(() => {
+                if (customMsgId || this.unreadSeparationId) {
+                  this.handleMoveToId({
+                    customMsgId: customMsgId || this.unreadSeparationId,
+                    isImmediately: true,
+                  });
+                } else {
+                  this.handleScrollTo(-1, 1);
+                }
+
+                this.containerOpacity = 1;
+
+                const dom = this.$refs["container"];
+                if (dom && dom.clientHeight === dom.scrollHeight) {
+                  this.handleMsgEnterVisualRange();
+                }
+
+                this.handleToBottomBtnVisibleSet();
+              }, 100);
             } else {
               this.blockList = res?.msgBlockList || [];
               this.blockListShowPageNum = res.pageNumCurrent;
@@ -1824,6 +1905,8 @@ export default {
                 this.handleToBottomBtnVisibleSet();
               }, 100);
             }
+          } else if (this.containerOpacity === 0) {
+            this.containerOpacity = 1;
           }
 
           if (this.chatContent.type === 'channel') {
@@ -1837,6 +1920,11 @@ export default {
             const msgList = this.blockList || [];
             const recentMsgList = msgList.at(-1)?.list || [];
             this.checkGroupLastMsgUpdate(recentMsgList.slice(-10));
+          }
+        }).catch((err) => {
+          console.error('getMsgList failed:', err);
+          if (this.containerOpacity === 0) {
+            this.containerOpacity = 1;
           }
         });
 

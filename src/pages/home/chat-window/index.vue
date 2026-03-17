@@ -1003,6 +1003,12 @@ export default {
     handleForwardSelectDialog(info) {
       // 如果有选中
       if (info) {
+        // 频道数据
+        if (info.type === 'channel' && info.channelId) {
+          if (!info.id) info.id = Number(info.channelId);
+          if (!info.name) info.name = info.channelName || '';
+        }
+
         // 添加转发信息
         const forwardMessageList = [];
 
