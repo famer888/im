@@ -305,34 +305,32 @@ export default {
         },
       });
     },
-     handleGetChannelDetail(info, channelId) {
-        getChannelDetail({ channelId }).then( res => {
-          // 这个写法导致频道列表不触发了 暂时注释
-          // let channelDetail = res || {};
-          // eventBase.fnCommunicationSendMsg({
-          //       operator: "channelDetailCache",
-          //       data: {...channelDetail, data: channelDetail.data || {}},
-          // });
-
-          let channelDetail = res?.data || {};
-          eventBase.fnCommunicationSendMsg({
-                operator: "channelDetailCache",
-                data: channelDetail,
-          });
-          // 快速切换时接口未返回，就别赋值了，否则会覆盖掉当前的值
-          if ((this.infoActive?.channelId || this.infoActive?.id) === channelDetail?.channelId) {
-            this.infoActive = {
-              ...info,
-              ...channelDetail,
-              isDisable: channelDetail.status === 3,
-              channelDetailDone: +new Date(),
-              ...(channelDetail.isDisturb !== undefined
-                ? { bfDisturb: Boolean(channelDetail.isDisturb) }
-                : {}),
-            };
-            this.getChannelDetailTimes[channelId] = Date.now();
-          }
+    handleGetChannelDetail(info, channelId) {
+      if (channelId == null) return;
+      getChannelDetail({ channelId }).then((res) => {
+        const channelDetail = res?.data || {};
+        eventBase.fnCommunicationSendMsg({
+          operator: "channelDetailCache",
+          data: channelDetail,
         });
+        // 快速切换时接口未返回就别赋值，避免覆盖当前窗口
+        const isStillChannel = this.infoActive?.type === "channel" || this.infoActive?.comType === "detailsChannel";
+        const currentChannelId = this.infoActive?.channelId ?? this.infoActive?.id;
+        const detailChannelId = channelDetail?.channelId ?? channelDetail?.id;
+        if (!isStillChannel || currentChannelId == null || Number(currentChannelId) !== Number(detailChannelId)) {
+          return;
+        }
+        this.infoActive = {
+          ...info,
+          ...channelDetail,
+          isDisable: channelDetail.status === 3,
+          channelDetailDone: +new Date(),
+          ...(channelDetail.isDisturb !== undefined
+            ? { bfDisturb: Boolean(channelDetail.isDisturb) }
+            : {}),
+        };
+        this.getChannelDetailTimes[channelId] = Date.now();
+      });
     },
     /**
      * 事件的处理
@@ -418,24 +416,33 @@ export default {
           }
           return;
         }
-         getChannelDetail({ channelId: Number(info.channelId) }).then( res => {
-            const channelDetail = res.data;
-            eventBase.fnCommunicationSendMsg({
-                  operator: "channelDetailCache",
-                  data: channelDetail,
-            });
-            this.infoActive = {
-              ...this.infoActive,
-              adminPrivacy: channelDetail.adminPrivacy,
-              memberType: channelDetail.memberType,
-              channelDetailDone: +new Date(),
-              ...(channelDetail.isDisturb !== undefined
-                ? { isDisturb: Boolean(channelDetail.isDisturb), bfDisturb: Boolean(channelDetail.isDisturb) }
-                : {}),
-            };
+        const targetChannelId = Number(info.channelId);
+        getChannelDetail({ channelId: targetChannelId }).then((res) => {
+          const channelDetail = res?.data;
+          if (!channelDetail) return;
+          eventBase.fnCommunicationSendMsg({
+            operator: "channelDetailCache",
+            data: channelDetail,
           });
+          // 仅当当前窗口仍是该频道时才更新
+          const isStillChannel = this.infoActive?.type === "channel" || this.infoActive?.comType === "detailsChannel";
+          const currentId = this.infoActive?.channelId ?? this.infoActive?.id;
+          if (!isStillChannel || currentId == null || Number(currentId) !== Number(channelDetail.channelId ?? channelDetail.id)) {
+            return;
+          }
+          this.infoActive = {
+            ...this.infoActive,
+            adminPrivacy: channelDetail.adminPrivacy,
+            memberType: channelDetail.memberType,
+            channelDetailDone: +new Date(),
+            ...(channelDetail.isDisturb !== undefined
+              ? { isDisturb: Boolean(channelDetail.isDisturb), bfDisturb: Boolean(channelDetail.isDisturb) }
+              : {}),
+          };
+        });
       } else if (operator === "closeOperator") {
-        for (const id of info.ids) {
+        const ids = info?.ids ?? [];
+        for (const id of ids) {
           switch (id) {
             case "rcheduleDeletionConfigDialog": {
               // 关闭设置阅后即焚时间
@@ -444,7 +451,7 @@ export default {
           }
         }
         // 关闭 转发选中对话框
-        if (info.ids.includes("forwardInfoDialog")) {
+        if (ids.includes("forwardInfoDialog")) {
           this.infoActive = {
             ...this.infoActive,
             forwardMessageList: null,
@@ -607,27 +614,29 @@ export default {
           }
           case "channelUpdate": {
             // 频道信息更新
-            if(info.channelId && this.infoActive.type === "channel" && this.infoActive.id === info.channelId) {
-                // 如果当前聊天窗口是该频道，则更新chatContent
-                if(info.values) {
-                  this.infoActive = {...this.infoActive, ...info.values };
-                }
+            const channelId = info?.channelId ?? info?.id;
+            if (channelId != null && this.infoActive.type === "channel" && Number(this.infoActive.id) === Number(channelId)) {
+              if (info.values) {
+                this.infoActive = { ...this.infoActive, ...info.values };
+              }
             }
             break;
-        }
-        case "channelToggleDisabled": {
-          // 频道启用/禁用
-          this.infoActive = {
-            ...this.infoActive,
-            isDisable: info.isDisable,
-          };
-          break;
-        }
-        case "triggerChannelDetailUpdate": {
-          const channelId =  info?.channelId;
-           this.handleGetChannelDetail(info, channelId);
-          break;
-        }
+          }
+          case "channelToggleDisabled": {
+            // 频道启用/禁用
+            this.infoActive = {
+              ...this.infoActive,
+              isDisable: info.isDisable,
+            };
+            break;
+          }
+          case "triggerChannelDetailUpdate": {
+            const channelId = info?.channelId ?? info?.id;
+            if (channelId != null) {
+              this.handleGetChannelDetail(info, channelId);
+            }
+            break;
+          }
           default:
         }
       }

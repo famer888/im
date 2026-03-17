@@ -1546,7 +1546,20 @@ const fnMsgSend = async (info) => {
         // benchmark: 初始化消息发送日志
         benchmark.initSendLog(item.customMsgId);
 
-        const isHide = isSilentDisabled || shouldPreventSendingMessage(item.params?.text);
+        const preventByText = shouldPreventSendingMessage(item.params?.text);
+        const isHide = isSilentDisabled || preventByText;
+
+        // 调试: 误发 isHide 为 true 时排查 isSilentDisabled / shouldPreventSendingMessage
+        // 测试反馈偶现群发消息时，另一个设备pc没展示，app展示的空气泡弹窗，这儿排查下是什么导致的isHide为true
+        if (isHide) {
+            console.log("[msg] isHide=true 原因:", {
+                isHide,
+                isSilentDisabled,
+                preventByText,
+                id,
+                type,
+            });
+        }
 
         // 发送
         sendMessage(
