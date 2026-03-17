@@ -399,7 +399,8 @@ export default {
     top: 0;
     left: 0;
     width: 100%;
-    height: calc(100vh - 28px);
+    min-height: calc(100vh - 28px);
+    height: 100%;
     background-color: rgba(0, 0, 0, 0.3);
     z-index: 10;
   }
