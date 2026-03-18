@@ -29,6 +29,8 @@ import { openFile } from "@/utils/server";
 import { showNotification, closeNotification } from  "@/notification";
 import { runMacStartupCleanup, watchUserDataRemoval, stopWatchUserData } from "@/utils/mac/uninstall-errors";
 import { initToggleSideBar } from "@/utils/toggleSideBar";
+import MediaProcess from "@/utils/media/MediaProcess";
+
 const log = require('electron-log');
 initElectronLog();
 
@@ -801,6 +803,8 @@ const setMainWin = async () => {
     };
 
     registerLocalResourceProtocol();
+
+    MediaProcess.create();
 
     mainWindow = new BrowserWindow({
         x: mainWindowState.x,
