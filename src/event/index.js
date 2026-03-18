@@ -140,6 +140,10 @@ const dispatch = (code, data) => {
       if (Number(_.get(data, "receipts[0].targetId")) === loginId) {
         eventMsg.fnMsgFriendRead(data);
       }
+      // 同设备已读清除小红点
+      if (Number(_.get(data, "receipts[0].sendUid")) === loginId) {
+        eventMsg.fnMsgFriendReadSync(data);
+      }
       break;
     }
     case 20301: {

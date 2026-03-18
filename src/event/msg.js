@@ -982,6 +982,57 @@ const fnMsgReadByMe = async (info) => {
     );
 };
 
+/**
+ * 消息同步已读（远程其它端操作已读，本地同步已读状态及未读数）
+ */
+const fnMsgFriendReadSync = async (data) => {
+    const receipt = _.get(data, "receipts[0]");
+    if (!receipt) return;
+    const msgId = Number(receipt.msgId);
+    const status = Number(_.get(receipt, "receiptStatus.status"));
+    if (msgId && status === 1) {
+        // 显式指定类型或自动识别聊天类型
+        const type = 'friend'
+        let id = Number(receipt.targetId);
+        // 获取消息详情以获取 sendTime
+        const msgInfo = await window.$db.getMsgInfoForMsgId({ id, type, msgId });
+        if (msgInfo && msgInfo.sendTime) {
+            // 获取在当前消息时间之后的未读信息
+            const unreadInfoNew = await window.$db.getMsgUnreadForTimeAfter({
+                id,
+                type,
+                values: {
+                    sendTime: msgInfo.sendTime
+                }
+            });
+            // 同步 UI 未读数和小红点
+            eventBase.fnCommunicationSendMsg(
+                {
+                    operator: "msgReadByMe",
+                    data: {
+                        id,
+                        type,
+                        unreadInfo: unreadInfoNew,
+                    },
+                },
+                true
+            );
+        } else {
+            // 如果没找到消息详情，保守处理：尝试直接清除该会话的未读数
+            eventBase.fnCommunicationSendMsg(
+                {
+                    operator: "msgReadByMe",
+                    data: {
+                        id,
+                        type,
+                        unreadInfo: null,
+                    },
+                },
+                true
+            );
+        }
+    }
+};
 //////////////////////// 消息发送
 
 /**
@@ -1959,6 +2010,7 @@ export default {
     fnMsgSendSuccess,
     fnMsgDelete,
     fnMsgFriendRead,
+    fnMsgFriendReadSync,
     fnMsgTypeToText,
     fnMsgReadByMe,
     fnMsgSend,
