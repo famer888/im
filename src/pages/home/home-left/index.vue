@@ -1671,6 +1671,9 @@ export default {
     async eventChannelDetailCache(info) {
       if(!info?.channelId) return;
       const cloneInfo = _.cloneDeep(info);
+      if (cloneInfo.status !== undefined) {
+        cloneInfo.isDisable = Number(cloneInfo.status) === 3;
+      }
       if (cloneInfo.isDisturb !== undefined) {
         cloneInfo.bfDisturb = Boolean(cloneInfo.isDisturb);
       }
@@ -1691,6 +1694,13 @@ export default {
       if(cacheIndex >= 0) {
         Object.assign(cacheList[cacheIndex], cloneInfo);
         Cache(`${loginId}MessageChannelList`, cacheList);
+      }
+
+      const channelIdx = this.channels.findIndex(c => Number(c.channelId) === Number(info.channelId));
+      if (channelIdx >= 0) {
+        const formatted = eventChannel.fnChannelFormat({ ...this.channels[channelIdx], ...cloneInfo });
+        this.channels[channelIdx] = formatted;
+        Cache(`${loginId}-ChannelList`, this.channels);
       }
     },
     /**

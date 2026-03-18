@@ -374,8 +374,9 @@ export default {
             this.handleGetChannelDetail(info, channelId);
           } else {
             current = { channelDetailDone: +new Date() };
-            // 冷却期内，如果 info 中包含 status，也需要确保 isDisable 正确（频道禁用状态）
-            if (info.status !== undefined) {
+            if (info.isDisable !== undefined) {
+              current.isDisable = Boolean(info.isDisable);
+            } else if (info.status !== undefined) {
               current.isDisable = info.status === 3;
             }
           }
@@ -624,10 +625,15 @@ export default {
           }
           case "channelToggleDisabled": {
             // 频道启用/禁用
-            this.infoActive = {
-              ...this.infoActive,
-              isDisable: info.isDisable,
-            };
+            const toggleChannelId = info?.channelId ?? info?.id;
+            if (
+              toggleChannelId != null && this.infoActive?.type === "channel" && Number(this.infoActive.id) === Number(toggleChannelId)
+            ) {
+              this.infoActive = {
+                ...this.infoActive,
+                isDisable: info.isDisable,
+              };
+            }
             break;
           }
           case "triggerChannelDetailUpdate": {
