@@ -505,6 +505,9 @@ const fnNewFriendOrGroup = (text) => {
     } else {
       window.$toast(res?.msg || i18n.t("抱歉，该用户/群似乎不存在"));
     }
+  }).catch((err) => {
+    console.error("fnNewFriendOrGroup error", err);
+    window.$toast(i18n.t("抱歉，识别失败或网络异常，请稍后再试"));
   });
 };
 
