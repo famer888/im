@@ -1,5 +1,6 @@
-const { BrowserWindow } = require('electron');
+const { BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
+const fs = require('fs');
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
 const WINDOW_ID = 'media-player-window';
@@ -25,23 +26,30 @@ class MediaPlayerProcess {
       show: true,
       frame: false,
       transparent: true,
-      backgroundColor: '#000000',
+      backgroundColor: '#00000000',
       hasShadow: false,
       skipTaskbar: false,
       fullscreenable: true,
       webPreferences: {
-        nodeIntegration: true,
-        contextIsolation: false,
+        nodeIntegration: false,
+        contextIsolation: true,
+        preload: path.join(__dirname, isDevelopment ? './public/media/media-preload.js' : './media/media-preload.js'),
         webSecurity: false,
         backgroundThrottling: false,
         additionalArguments: [`--window-id=${WINDOW_ID}`],
       },
     });
 
+    this._registerIpcHandlers();
     this.window.maximize();
-    this.window.loadFile(path.join(__dirname, isDevelopment ? './public/media.html' : './media.html'));
+    if (process.env.WEBPACK_DEV_SERVER_URL) {
+      this.window.loadURL(process.env.WEBPACK_DEV_SERVER_URL + '/media/media.html');
+    } else {
+      this.window.loadURL('app://./media/media.html');
+    }
 
     this.window.on('closed', () => {
+      this._removeIpcHandlers();
       this.window = null;
     });
 
@@ -94,6 +102,27 @@ class MediaPlayerProcess {
     if (this.window && !this.window.isDestroyed()) {
       this.window.hide();
     }
+  }
+
+  _registerIpcHandlers() {
+    ipcMain.on('media-window:minimize', () => { if (this.window && !this.window.isDestroyed()) this.window.minimize(); });
+    ipcMain.on('media-window:maximize', () => { if (this.window && !this.window.isDestroyed()) { this.window.isMaximized() ? this.window.unmaximize() : this.window.maximize(); } });
+    ipcMain.on('media-window:close', () => { if (this.window && !this.window.isDestroyed()) this.window.close(); });
+    ipcMain.handle('media-window:saveAs', async (event, filePath) => {
+      if (!this.window || this.window.isDestroyed()) return { success: false };
+      const defaultName = path.basename(filePath);
+      const { canceled, filePath: savePath } = await dialog.showSaveDialog(this.window, { defaultPath: defaultName });
+      if (canceled || !savePath) return { success: false };
+      fs.copyFileSync(filePath, savePath);
+      return { success: true };
+    });
+  }
+
+  _removeIpcHandlers() {
+    ipcMain.removeAllListeners('media-window:minimize');
+    ipcMain.removeAllListeners('media-window:maximize');
+    ipcMain.removeAllListeners('media-window:close');
+    ipcMain.removeHandler('media-window:saveAs');
   }
 
   /**

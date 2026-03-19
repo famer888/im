@@ -804,6 +804,10 @@ const setMainWin = async () => {
 
     registerLocalResourceProtocol();
 
+    if (!process.env.WEBPACK_DEV_SERVER_URL) {
+        createProtocol("app");
+    }
+
     MediaProcess.create();
 
     mainWindow = new BrowserWindow({
@@ -832,8 +836,7 @@ const setMainWin = async () => {
         await mainWindow.loadURL(process.env.WEBPACK_DEV_SERVER_URL);
         // mainWindow.openDevTools({ mode: 'detach' });
     } else {
-        createProtocol("app");
-        mainWindow.loadURL("app:// ./index.html", {
+        mainWindow.loadURL("app://./index.html", {
             extraHeaders: "Access-Control-Allow-Origin: *",
         });
     }
