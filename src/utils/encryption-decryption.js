@@ -1382,6 +1382,37 @@ export const fnUpdateOwnKey = () => {
 }
 
 /**
+ * 同账号密钥轻量更新（20501 推送 uid === loginId 时使用）
+ * 推送数据字段完整时直接更新 accountConfig.appKeyPair；
+ * 缺少 publicKey 或 keyVersion 时降级调用 fnUpdateOwnKey 走接口拉取
+ */
+export const fnUpdateKeyOwn = ({ appKeyPair }) => {
+    const appVer = Number(appKeyPair?.keyVersion) || 0;
+    const appValid = appKeyPair && appKeyPair.publicKey && appVer > 0;
+
+    if (!appValid) {
+        console.warn('同账号密钥推送数据不完整，降级调用接口',
+            'appPubKey:', !!appKeyPair?.publicKey,
+            'appVer:', appKeyPair?.keyVersion);
+        return fnUpdateOwnKey().catch(err => {
+            console.error('同账号密钥同步失败(API)', err);
+        });
+    }
+
+    const { accountConfig } = eventCommon.fnConfigRU();
+    const localAppVer = Number(accountConfig.appKeyPair?.keyVersion) || 0;
+
+    if (localAppVer > 0 && appVer < localAppVer) {
+        return;
+    }
+
+    const updates = { appKeyPair };
+
+    eventCommon.fnConfigRU({ isAccount: true, infoMerge: updates });
+    eventCommon.fnCommonInfoRU({ infoMerge: updates });
+};
+
+/**
  * 更新好友的密钥
  */
 export const fnUpdateKeyFriend = async ({ appKeyPair, webKeyPair, uid, noSendReceive = false }) => {
