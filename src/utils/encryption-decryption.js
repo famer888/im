@@ -153,11 +153,16 @@ export const fnChannelRelKeyGet = async (id) => {
     // 自己的私key，同账户app的公key
     const { privateKey } = accountConfig;
 
-    if (!privateKey || !keyInfos.publicKey || !keyInfos.msgKey) {
-        console.error('频道解密-密钥数据不完整-', privateKey, keyInfos);
+    if (!privateKey) {
+        console.error('频道解密-自身私钥缺失');
+        fnTryRepairOwnKey();
+        return null;
+    }
+
+    if (!keyInfos.publicKey || !keyInfos.msgKey) {
+        console.error('频道解密-频道密钥数据不完整-', 'publicKey:', !!keyInfos.publicKey, 'msgKey:', !!keyInfos.msgKey);
         delete channelKeyObjs[id];
         Cache(`${loginId}-channel-key-objs`, channelKeyObjs);
-        fnTryRepairOwnKey();
         return null;
     }
 
@@ -166,10 +171,9 @@ export const fnChannelRelKeyGet = async (id) => {
     try {
          key = secret(privateKey, keyInfos.publicKey).toUpperCase();
     } catch (error) {
-        console.error('频道解密-生成秘钥异常-2-',privateKey, keyInfos)
+        console.error('频道解密-生成秘钥异常-2-', 'publicKey:', !!keyInfos.publicKey, error.message)
         delete channelKeyObjs[id];
         Cache(`${loginId}-channel-key-objs`, channelKeyObjs);
-        fnTryRepairOwnKey();
         return null;
     }
 
@@ -178,10 +182,9 @@ export const fnChannelRelKeyGet = async (id) => {
     try {
       msgkey = _decrypt(msgKeyBuffer, key);
     } catch (error) {
-        console.error('频道解密异常-msgkey-', privateKey, keyInfos)
+        console.error('频道解密异常-msgkey-', !!keyInfos.msgKey, error.message)
         delete channelKeyObjs[id];
         Cache(`${loginId}-channel-key-objs`, channelKeyObjs);
-        fnTryRepairOwnKey();
         return null;
     }
     const buffer = ConcatInt8([
@@ -233,11 +236,16 @@ export const fnGroupRelKeyGet = async (id) => {
     // 自己的私key，同账户app的公key
     const { privateKey } = accountConfig;
 
-    if (!privateKey || !keyInfos.publicKey || !keyInfos.msgKey) {
-        console.error('群解密-密钥数据不完整-', privateKey, keyInfos);
+    if (!privateKey) {
+        console.error('群解密-自身私钥缺失');
+        fnTryRepairOwnKey();
+        return null;
+    }
+
+    if (!keyInfos.publicKey || !keyInfos.msgKey) {
+        console.error('群解密-群密钥数据不完整-', 'publicKey:', !!keyInfos.publicKey, 'msgKey:', !!keyInfos.msgKey);
         delete groupKeyObjs[id];
         Cache(`${loginId}-group-key-objs`, groupKeyObjs);
-        fnTryRepairOwnKey();
         return null;
     }
 
@@ -246,10 +254,9 @@ export const fnGroupRelKeyGet = async (id) => {
     try {
          key = secret(privateKey, keyInfos.publicKey).toUpperCase();
     } catch (error) {
-        console.error('群解密-生成秘钥异常-2-',privateKey, keyInfos)
+        console.error('群解密-生成秘钥异常-2-', 'publicKey:', !!keyInfos.publicKey, error.message)
         delete groupKeyObjs[id];
         Cache(`${loginId}-group-key-objs`, groupKeyObjs);
-        fnTryRepairOwnKey();
         return null;
     }
 
@@ -258,10 +265,9 @@ export const fnGroupRelKeyGet = async (id) => {
     try {
       msgkey = _decrypt(msgKeyBuffer, key);
     } catch (error) {
-        console.error('群解密异常-msgkey-', privateKey, keyInfos)
+        console.error('群解密异常-msgkey-', 'msgKey:', !!keyInfos.msgKey, error.message)
         delete groupKeyObjs[id];
         Cache(`${loginId}-group-key-objs`, groupKeyObjs);
-        fnTryRepairOwnKey();
         return null;
     }
     const buffer = ConcatInt8([
