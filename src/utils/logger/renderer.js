@@ -7,8 +7,9 @@ const isPlainObject = (val) => {
 }
 
 // 从 Error 对象中提取尽可能多的信息
-const extractErrorInfo = (err) => {
+const extractErrorInfo = (err, depth = 0) => {
     try {
+        if (depth > MAX_DEPTH) return '[MaxDepth]'
         if (err == null) return String(err)
         if (err instanceof Error) {
             const info = {
@@ -16,53 +17,54 @@ const extractErrorInfo = (err) => {
                 message: err.message,
                 stack: err.stack,
             }
-            if (err.cause) info.cause = extractErrorInfo(err.cause)
+            if (err.cause) info.cause = extractErrorInfo(err.cause, depth + 1)
             if (err.code) info.code = err.code
             if (err.fileName) info.fileName = err.fileName
             if (err.lineNumber) info.lineNumber = err.lineNumber
             if (err.columnNumber) info.columnNumber = err.columnNumber
             return info
         }
-        return safeSerialize(err)
+        return safeSerialize(err, depth)
     } catch {
         return '[Error: extractErrorInfo failed]'
     }
 }
 
+const MAX_DEPTH = 6;
+
 // 安全序列化，处理非 plainObject 数据
-const safeSerialize = (data) => {
+const safeSerialize = (data, depth = 0) => {
     try {
+        if (depth > MAX_DEPTH) return '[MaxDepth]'
         if (data === undefined) return 'undefined'
         if (data === null) return null
         if (typeof data === 'function') return `[Function: ${data.name || 'anonymous'}]`
         if (typeof data === 'symbol') return data.toString()
         if (typeof data === 'bigint') return data.toString() + 'n'
-        if (data instanceof Error) return extractErrorInfo(data)
+        if (data instanceof Error) return extractErrorInfo(data, depth)
         if (data instanceof Date) return data.toISOString()
         if (data instanceof RegExp) return data.toString()
-        if (data instanceof Map) return { __type: 'Map', entries: Array.from(data.entries()).map(([k, v]) => [safeSerialize(k), safeSerialize(v)]) }
-        if (data instanceof Set) return { __type: 'Set', values: Array.from(data.values()).map(safeSerialize) }
+        if (data instanceof Map) return { __type: 'Map', entries: Array.from(data.entries()).map(([k, v]) => [safeSerialize(k, depth + 1), safeSerialize(v, depth + 1)]) }
+        if (data instanceof Set) return { __type: 'Set', values: Array.from(data.values()).map(v => safeSerialize(v, depth + 1)) }
         if (data instanceof ArrayBuffer) return { __type: 'ArrayBuffer', byteLength: data.byteLength }
         if (ArrayBuffer.isView(data)) return { __type: data.constructor.name, length: data.length }
         if (typeof data === 'object' && data !== null && typeof data.nodeType === 'number') {
-            // DOM 元素
             return `[DOM: ${data.nodeName || 'Node'}]`
         }
-        if (Array.isArray(data)) return data.map(safeSerialize)
+        if (Array.isArray(data)) return data.map(item => safeSerialize(item, depth + 1))
         if (isPlainObject(data)) {
             const result = {}
             for (const key of Object.keys(data)) {
-                result[key] = safeSerialize(data[key])
+                result[key] = safeSerialize(data[key], depth + 1)
             }
             return result
         }
-        // 其他对象尝试转换
         if (typeof data === 'object') {
             const ctorName = data.constructor?.name || 'Object'
             try {
                 const props = {}
                 for (const key of Object.keys(data)) {
-                    props[key] = safeSerialize(data[key])
+                    props[key] = safeSerialize(data[key], depth + 1)
                 }
                 return { __type: ctorName, ...props }
             } catch {
@@ -75,21 +77,35 @@ const safeSerialize = (data) => {
     }
 }
 
-// 安全发送日志
-const safeSend = (level, message, meta) => {
+// 安全发送日志，logType: 'app' | 'crash-report' | 'e2ee'
+const safeSend = (logType, level, message, meta) => {
     try {
-        ipcRenderer.send('renderer-log', level, safeSerialize(message), safeSerialize(meta))
+        ipcRenderer.send('write-log', logType, level, safeSerialize(message), safeSerialize(meta))
     } catch {
         // collect 系统本身不可出错，静默失败
     }
 }
 
+let initialized = false;
+
 export const initLogCollectSystem = () => {
+    if (initialized) return;
+    initialized = true;
+
     console.$collect = function (message, meta) {
-        safeSend('info', message, meta)
+        safeSend('app', 'info', message, meta)
     };
     console.$collectError = function (message, meta) {
-        safeSend('error', message, meta)
+        safeSend('app', 'error', message, meta)
+    };
+    console.$collectCrash = function (message, meta) {
+        safeSend('crash-report', 'error', message, meta)
+    };
+    console.$collectE2ee = function (message, meta) {
+        safeSend('e2ee', 'info', message, meta)
+    };
+    console.$collectE2eeError = function (message, meta) {
+        safeSend('e2ee', 'error', message, meta)
     };
 
     watchAllJsError()
