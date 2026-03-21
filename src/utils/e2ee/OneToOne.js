@@ -1,4 +1,5 @@
 import sharePromise from "../sharePromise";
+import { GetKeyPairOfVer } from "@/api/imBase";
 
 class KeyPairMap {
   // [key: uid]: OneToOneKeyPair[]
@@ -11,8 +12,9 @@ class KeyPairMap {
   fetchKeyPairByUid(uid) {
 
   }
-  fetchKeyPairByVersion(version) {
-
+  async fetchKeyPairByVersion(uid, { appVer, webVer } = {}) {
+    const resp = await GetKeyPairOfVer({ uid, appVer, webVer });
+    return resp;
   }
   getCurrentUserKeyPair() {
     const loginId = eventCommon.fnCommonInfoRU({ getId: "loginId" });

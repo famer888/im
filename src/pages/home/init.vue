@@ -61,6 +61,7 @@ import { getContactsList } from "@/api/imContacation";
 import { getGroupContactList } from "@/api/imGroup";
 import { chatGroupDataFormat, chatFriendDataFormat } from "@/utils/base";
 import { fnKeyObjsInit, fnUpdateOwnKey } from "@/utils/e2ee";
+import { OneToOneKeyPairMap } from "@/utils/e2ee/OneToOne";
 
 // api
 import { getUserInfo } from "@/api/imBase";
@@ -165,6 +166,11 @@ export default {
     // 全部密钥的对象初始化
     console.$collect('初始化-密钥')
     fnKeyObjsInit();
+
+    // TODO: 测试 getKeyPairOfVer 接口，后续移除
+    OneToOneKeyPairMap.fetchKeyPairByVersion(572083, { appVer: 6, webVer: 101 })
+      .then(res => console.log('[getKeyPairOfVer] 返回:', res))
+      .catch(err => console.error('[getKeyPairOfVer] 错误:', err));
 
     if (navigator.onLine) {
       this.text = this.$t("加密检测");

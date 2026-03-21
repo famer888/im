@@ -33,6 +33,8 @@ export const UpdateKeyPair = (data) =>
     });
 export const GetKeyPair = (data) =>
     getUrl({ type: "GetKeyPair", url: `${baseUrl()}/sys/getKeyPair`, data });
+export const GetKeyPairOfVer = (data) =>
+    getUrl({ type: "GetKeyPairOfVer", url: `${baseUrl()}/sys/getKeyPairOfVer`, data });
 export const UpdateContacts = (data) =>
     getUrl({
         type: "UpdateContacts",
