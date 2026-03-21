@@ -11759,6 +11759,7 @@ export const OneToOneMessage = $root.OneToOneMessage = (() => {
      * @property {Array.<ILinkObj>|null} [links] OneToOneMessage links
      * @property {number|Long|null} [sentOverTime] OneToOneMessage sentOverTime
      * @property {number|null} [channel] OneToOneMessage channel
+     * @property {boolean|null} [isHide] OneToOneMessage isHide
      */
 
     /**
@@ -11962,6 +11963,14 @@ export const OneToOneMessage = $root.OneToOneMessage = (() => {
     OneToOneMessage.prototype.channel = 0;
 
     /**
+     * OneToOneMessage isHide.
+     * @member {boolean} isHide
+     * @memberof OneToOneMessage
+     * @instance
+     */
+    OneToOneMessage.prototype.isHide = false;
+
+    /**
      * Creates a new OneToOneMessage instance using the specified properties.
      * @function create
      * @memberof OneToOneMessage
@@ -12032,6 +12041,8 @@ export const OneToOneMessage = $root.OneToOneMessage = (() => {
             writer.uint32(/* id 22, wireType 0 =*/176).int64(message.sentOverTime);
         if (message.channel != null && Object.hasOwnProperty.call(message, "channel"))
             writer.uint32(/* id 23, wireType 0 =*/184).int32(message.channel);
+        if (message.isHide != null && Object.hasOwnProperty.call(message, "isHide"))
+            writer.uint32(/* id 24, wireType 0 =*/192).bool(message.isHide);
         return writer;
     };
 
@@ -12160,6 +12171,10 @@ export const OneToOneMessage = $root.OneToOneMessage = (() => {
                 }
             case 23: {
                     message.channel = reader.int32();
+                    break;
+                }
+            case 24: {
+                    message.isHide = reader.bool();
                     break;
                 }
             default:
@@ -12315,6 +12330,9 @@ export const OneToOneMessage = $root.OneToOneMessage = (() => {
         if (message.channel != null && message.hasOwnProperty("channel"))
             if (!$util.isInteger(message.channel))
                 return "channel: integer expected";
+        if (message.isHide != null && message.hasOwnProperty("isHide"))
+            if (typeof message.isHide !== "boolean")
+                return "isHide: boolean expected";
         return null;
     };
 
@@ -12551,6 +12569,8 @@ export const OneToOneMessage = $root.OneToOneMessage = (() => {
                 message.sentOverTime = new $util.LongBits(object.sentOverTime.low >>> 0, object.sentOverTime.high >>> 0).toNumber();
         if (object.channel != null)
             message.channel = object.channel | 0;
+        if (object.isHide != null)
+            message.isHide = Boolean(object.isHide);
         return message;
     };
 
@@ -12618,6 +12638,7 @@ export const OneToOneMessage = $root.OneToOneMessage = (() => {
             } else
                 object.sentOverTime = options.longs === String ? "0" : 0;
             object.channel = 0;
+            object.isHide = false;
         }
         if (message.msgId != null && message.hasOwnProperty("msgId"))
             if (typeof message.msgId === "number")
@@ -12683,6 +12704,8 @@ export const OneToOneMessage = $root.OneToOneMessage = (() => {
                 object.sentOverTime = options.longs === String ? $util.Long.prototype.toString.call(message.sentOverTime) : options.longs === Number ? new $util.LongBits(message.sentOverTime.low >>> 0, message.sentOverTime.high >>> 0).toNumber() : message.sentOverTime;
         if (message.channel != null && message.hasOwnProperty("channel"))
             object.channel = message.channel;
+        if (message.isHide != null && message.hasOwnProperty("isHide"))
+            object.isHide = message.isHide;
         return object;
     };
 
@@ -13001,6 +13024,7 @@ export const GroupMessage = $root.GroupMessage = (() => {
      * @property {number|null} [edit] GroupMessage edit
      * @property {Array.<ILinkObj>|null} [links] GroupMessage links
      * @property {number|Long|null} [sentOverTime] GroupMessage sentOverTime
+     * @property {boolean|null} [isHide] GroupMessage isHide
      */
 
     /**
@@ -13174,6 +13198,14 @@ export const GroupMessage = $root.GroupMessage = (() => {
     GroupMessage.prototype.sentOverTime = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
 
     /**
+     * GroupMessage isHide.
+     * @member {boolean} isHide
+     * @memberof GroupMessage
+     * @instance
+     */
+    GroupMessage.prototype.isHide = false;
+
+    /**
      * Creates a new GroupMessage instance using the specified properties.
      * @function create
      * @memberof GroupMessage
@@ -13241,6 +13273,8 @@ export const GroupMessage = $root.GroupMessage = (() => {
                 $root.LinkObj.encode(message.links[i], writer.uint32(/* id 19, wireType 2 =*/154).fork()).ldelim();
         if (message.sentOverTime != null && Object.hasOwnProperty.call(message, "sentOverTime"))
             writer.uint32(/* id 20, wireType 0 =*/160).int64(message.sentOverTime);
+        if (message.isHide != null && Object.hasOwnProperty.call(message, "isHide"))
+            writer.uint32(/* id 21, wireType 0 =*/168).bool(message.isHide);
         return writer;
     };
 
@@ -13362,6 +13396,10 @@ export const GroupMessage = $root.GroupMessage = (() => {
                 }
             case 20: {
                     message.sentOverTime = reader.int64();
+                    break;
+                }
+            case 21: {
+                    message.isHide = reader.bool();
                     break;
                 }
             default:
@@ -13502,6 +13540,9 @@ export const GroupMessage = $root.GroupMessage = (() => {
         if (message.sentOverTime != null && message.hasOwnProperty("sentOverTime"))
             if (!$util.isInteger(message.sentOverTime) && !(message.sentOverTime && $util.isInteger(message.sentOverTime.low) && $util.isInteger(message.sentOverTime.high)))
                 return "sentOverTime: integer|Long expected";
+        if (message.isHide != null && message.hasOwnProperty("isHide"))
+            if (typeof message.isHide !== "boolean")
+                return "isHide: boolean expected";
         return null;
     };
 
@@ -13724,6 +13765,8 @@ export const GroupMessage = $root.GroupMessage = (() => {
                 message.sentOverTime = object.sentOverTime;
             else if (typeof object.sentOverTime === "object")
                 message.sentOverTime = new $util.LongBits(object.sentOverTime.low >>> 0, object.sentOverTime.high >>> 0).toNumber();
+        if (object.isHide != null)
+            message.isHide = Boolean(object.isHide);
         return message;
     };
 
@@ -13788,6 +13831,7 @@ export const GroupMessage = $root.GroupMessage = (() => {
                 object.sentOverTime = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
             } else
                 object.sentOverTime = options.longs === String ? "0" : 0;
+            object.isHide = false;
         }
         if (message.sendUid != null && message.hasOwnProperty("sendUid"))
             if (typeof message.sendUid === "number")
@@ -13854,6 +13898,8 @@ export const GroupMessage = $root.GroupMessage = (() => {
                 object.sentOverTime = options.longs === String ? String(message.sentOverTime) : message.sentOverTime;
             else
                 object.sentOverTime = options.longs === String ? $util.Long.prototype.toString.call(message.sentOverTime) : options.longs === Number ? new $util.LongBits(message.sentOverTime.low >>> 0, message.sentOverTime.high >>> 0).toNumber() : message.sentOverTime;
+        if (message.isHide != null && message.hasOwnProperty("isHide"))
+            object.isHide = message.isHide;
         return object;
     };
 
@@ -45677,6 +45723,7 @@ export const GroupReqEventMsgDto = $root.GroupReqEventMsgDto = (() => {
      * @property {GroupReqType|null} [groupReqType] GroupReqEventMsgDto groupReqType
      * @property {GroupReqStatus|null} [groupReqStatus] GroupReqEventMsgDto groupReqStatus
      * @property {Array.<IGroupMemberBase>|null} [groupMember] GroupReqEventMsgDto groupMember
+     * @property {boolean|null} [isHide] GroupReqEventMsgDto isHide
      */
 
     /**
@@ -45760,6 +45807,14 @@ export const GroupReqEventMsgDto = $root.GroupReqEventMsgDto = (() => {
     GroupReqEventMsgDto.prototype.groupMember = $util.emptyArray;
 
     /**
+     * GroupReqEventMsgDto isHide.
+     * @member {boolean} isHide
+     * @memberof GroupReqEventMsgDto
+     * @instance
+     */
+    GroupReqEventMsgDto.prototype.isHide = false;
+
+    /**
      * Creates a new GroupReqEventMsgDto instance using the specified properties.
      * @function create
      * @memberof GroupReqEventMsgDto
@@ -45800,6 +45855,8 @@ export const GroupReqEventMsgDto = $root.GroupReqEventMsgDto = (() => {
         if (message.groupMember != null && message.groupMember.length)
             for (let i = 0; i < message.groupMember.length; ++i)
                 $root.GroupMemberBase.encode(message.groupMember[i], writer.uint32(/* id 8, wireType 2 =*/66).fork()).ldelim();
+        if (message.isHide != null && Object.hasOwnProperty.call(message, "isHide"))
+            writer.uint32(/* id 9, wireType 0 =*/72).bool(message.isHide);
         return writer;
     };
 
@@ -45868,6 +45925,10 @@ export const GroupReqEventMsgDto = $root.GroupReqEventMsgDto = (() => {
                     if (!(message.groupMember && message.groupMember.length))
                         message.groupMember = [];
                     message.groupMember.push($root.GroupMemberBase.decode(reader, reader.uint32()));
+                    break;
+                }
+            case 9: {
+                    message.isHide = reader.bool();
                     break;
                 }
             default:
@@ -45968,6 +46029,9 @@ export const GroupReqEventMsgDto = $root.GroupReqEventMsgDto = (() => {
                     return "groupMember." + error;
             }
         }
+        if (message.isHide != null && message.hasOwnProperty("isHide"))
+            if (typeof message.isHide !== "boolean")
+                return "isHide: boolean expected";
         return null;
     };
 
@@ -46138,6 +46202,8 @@ export const GroupReqEventMsgDto = $root.GroupReqEventMsgDto = (() => {
                 message.groupMember[i] = $root.GroupMemberBase.fromObject(object.groupMember[i]);
             }
         }
+        if (object.isHide != null)
+            message.isHide = Boolean(object.isHide);
         return message;
     };
 
@@ -46176,6 +46242,7 @@ export const GroupReqEventMsgDto = $root.GroupReqEventMsgDto = (() => {
             object.groupNoticeMsgDto = null;
             object.groupReqType = options.enums === String ? "GROUP_TRANSFER" : 0;
             object.groupReqStatus = options.enums === String ? "CHECKING" : 0;
+            object.isHide = false;
         }
         if (message.commonMsgDto != null && message.hasOwnProperty("commonMsgDto"))
             object.commonMsgDto = $root.CommonMsgDto.toObject(message.commonMsgDto, options);
@@ -46205,6 +46272,8 @@ export const GroupReqEventMsgDto = $root.GroupReqEventMsgDto = (() => {
             for (let j = 0; j < message.groupMember.length; ++j)
                 object.groupMember[j] = $root.GroupMemberBase.toObject(message.groupMember[j], options);
         }
+        if (message.isHide != null && message.hasOwnProperty("isHide"))
+            object.isHide = message.isHide;
         return object;
     };
 
