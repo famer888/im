@@ -983,18 +983,51 @@ const fnMsgReadByMe = async (info) => {
 };
 
 /**
- * 消息同步已读（远程其它端操作已读，本地同步已读状态及未读数）
+ * 同账号已读同步（远程其它端操作已读，本地同步已读状态及未读数）
+ * @param {string} type - 消息类型
+ * @param {Object|Array} data - 推送原始数据（friend: data对象, group: receiptMessage数组）
  */
-const fnMsgFriendReadSync = async (data) => {
-    const receipt = _.get(data, "receipts[0]");
-    if (!receipt) return;
-    const msgId = Number(receipt.msgId);
-    const status = Number(_.get(receipt, "receiptStatus.status"));
-    if (msgId && status === 1) {
-        // 显式指定类型或自动识别聊天类型
-        const type = 'friend'
-        let id = Number(receipt.targetId);
-        // 获取消息详情以获取 sendTime
+const fnMsgReadSync = async (type, data) => {
+    const loginId = eventCommon.fnCommonInfoRU({ getId: "loginId" });
+
+    const readItems = [];
+
+    if (type === 'friend') {
+        const receipt = _.get(data, "receipts[0]");
+        if (!receipt) return;
+        const sendUid = Number(receipt.sendUid);
+        if (sendUid !== loginId) return;
+        const msgId = Number(receipt.msgId);
+        const status = Number(_.get(receipt, "receiptStatus.status"));
+        if (msgId && status === 1) {
+            readItems.push({ id: Number(receipt.targetId), msgId });
+        }
+    } else if (type === 'group') {
+        (data || []).forEach(item => {
+            const sendUid = Number(item.sendUid);
+            const readState = item.receiptStatus?.status || 0;
+            if (sendUid !== loginId || readState <= 0) return;
+            const groupId = Number(item.groupId);
+            const msgId = Number(item.msgId);
+            if (groupId && msgId) {
+                readItems.push({ id: groupId, msgId });
+            }
+        });
+    }
+
+    if (!readItems.length) return;
+
+    const latest = {};
+    readItems.forEach(({ id, msgId }) => {
+        if (!latest[id] || msgId > latest[id]) {
+            latest[id] = msgId;
+        }
+    });
+
+    for (const key in latest) {
+        const id = Number(key);
+        const msgId = latest[key];
+
         const msgInfo = await window.$db.getMsgInfoForMsgId({ id, type, msgId });
         if (msgInfo && msgInfo.sendTime) {
             // 获取在当前消息时间之后的未读信息
@@ -2010,7 +2043,7 @@ export default {
     fnMsgSendSuccess,
     fnMsgDelete,
     fnMsgFriendRead,
-    fnMsgFriendReadSync,
+    fnMsgReadSync,
     fnMsgTypeToText,
     fnMsgReadByMe,
     fnMsgSend,

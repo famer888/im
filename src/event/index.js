@@ -126,6 +126,7 @@ const dispatch = (code, data) => {
       break;
     }
     case 20104: {
+      console.log('20104--消息已读',data)
       const loginId = eventCommon.fnCommonInfoRU({
         getId: "loginId",
       });
@@ -133,10 +134,8 @@ const dispatch = (code, data) => {
       if (Number(_.get(data, "receipts[0].targetId")) === loginId) {
         eventMsg.fnMsgFriendRead(data);
       }
-      // 同设备已读清除小红点
-      if (Number(_.get(data, "receipts[0].sendUid")) === loginId) {
-        eventMsg.fnMsgFriendReadSync(data);
-      }
+      // 同账号已读清除小红点
+      eventMsg.fnMsgReadSync('friend', data);
       break;
     }
     case 20301: {
@@ -219,6 +218,8 @@ const dispatch = (code, data) => {
       // 群消息已读用户
       const { receiptMessage = [] } = data || {};
       eventMsg.fnGroupMsgReadRecord(receiptMessage);
+      // 同账号已读清除小红点
+      eventMsg.fnMsgReadSync('group', receiptMessage);
       break;
     }
     case 4204: {
