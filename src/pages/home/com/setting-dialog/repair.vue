@@ -31,7 +31,7 @@ import {
   fnInitAllGroupKey,
   fnInitAllFriendKey,
   fnInitAllChannelKey
-} from "@/utils/encryption-decryption";
+} from "@/utils/e2ee";
 import { Cache } from "@/cache";
 
 export default {

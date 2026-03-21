@@ -4,7 +4,7 @@ import packet from "@/api/base/imweb-web";
 import channelEvents from "@/api/base/channel_event";
 import { decrypt } from "@/socket/api/request";
 import { ReceiveServerToClient } from "@/socket/api/message";
-import { fnUpdateKeyFriend, fnUpdateKeyOwn } from "@/utils/encryption-decryption";
+import { fnUpdateKeyFriend, fnUpdateKeyOwn } from "@/utils/e2ee";
 import { Cache } from "@/cache";
 
 // 事件

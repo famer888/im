@@ -20,7 +20,7 @@ import {
     checkDirectory,
 } from "@/utils/fileTools";
 import { getUserDataDirectory, getWorkingDir, filterSensitiveWords } from "@/utils/tools";
-import { fnMsgDecryption } from "@/utils/encryption-decryption";
+import { fnMsgDecryption } from "@/utils/e2ee";
 import { getKeys } from "@/utils/upload";
 import { fnEmojiToText, fnTextSendInfoGet } from "@/utils/widget/editor";
 import { shouldPreventSendingMessage } from "@/utils/tools";

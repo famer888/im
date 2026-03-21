@@ -60,7 +60,7 @@ import { importDB } from "@/utils/cacheDB.js";
 import { getContactsList } from "@/api/imContacation";
 import { getGroupContactList } from "@/api/imGroup";
 import { chatGroupDataFormat, chatFriendDataFormat } from "@/utils/base";
-import { fnKeyObjsInit, fnUpdateOwnKey } from "@/utils/encryption-decryption";
+import { fnKeyObjsInit, fnUpdateOwnKey } from "@/utils/e2ee";
 
 // api
 import { getUserInfo } from "@/api/imBase";
