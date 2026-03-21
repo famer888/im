@@ -738,10 +738,10 @@ const setMainWin = async () => {
         }
     });
     mainWindow.webContents.on("did-fail-load", (e) => {
-        writeLog('crash-report', 'error', '[did-fail-load] 页面加载失败', {
-            errorCode: e?.errorCode, errorDescription: e?.errorDescription,
-            validatedURL: e?.validatedURL, isMainFrame: e?.isMainFrame,
-        });
+        writeLog('crash-report', 'error', '[did-fail-load] 页面加载失败', e ? {
+            errorCode: e.errorCode, errorDescription: e.errorDescription,
+            validatedURL: e.validatedURL, isMainFrame: e.isMainFrame,
+        } : {});
         if (process.env.NODE_ENV === "production") {
             e &&
                 setCollapseDoc({
@@ -758,7 +758,7 @@ const setMainWin = async () => {
         }, 2000);
     });
     mainWindow.webContents.on("crashed", (e) => {
-        writeLog('crash-report', 'error', '[crashed] 渲染器进程崩溃', { killed: e?.killed, reason: e?.reason });
+        writeLog('crash-report', 'error', '[crashed] 渲染器进程崩溃', e ? { killed: e.killed, reason: e.reason } : {});
         e &&
             setCollapseDoc({
                 errorInfo: e,
