@@ -61,7 +61,8 @@ import { getContactsList } from "@/api/imContacation";
 import { getGroupContactList } from "@/api/imGroup";
 import { chatGroupDataFormat, chatFriendDataFormat } from "@/utils/base";
 import { fnKeyObjsInit, fnUpdateOwnKey } from "@/utils/e2ee";
-import { OneToOneKeyPairMap } from "@/utils/e2ee/OneToOne";
+import { setUpdateKeyPairSource } from "@/utils/e2ee/keypairTracer";
+import benchmark from "@/debuggers/benchmark";
 
 // api
 import { getUserInfo } from "@/api/imBase";
@@ -106,6 +107,7 @@ export default {
   },
   props: ["hide"],
   async mounted() {
+    benchmark._printReport()
     console.$collect('初始化开始')
     // 登录id
     const urlParams = new URLSearchParams(window.location.hash.split('?')[1]);
@@ -151,6 +153,16 @@ export default {
     console.$collect('初始化-账户配置')
     await eventCommon.fnConfigInit(true);
 
+    {
+      const { accountConfig } = eventCommon.fnConfigRU();
+      console.$collectE2ee('初始化-账户密钥状态', {
+        hasPrivateKey: !!accountConfig?.privateKey,
+        ownWebKeyVersion: accountConfig?.keyVersion,
+        ownAppKeyVersion: accountConfig?.appKeyPair?.keyVersion,
+        hasOwnAppPublicKey: !!accountConfig?.appKeyPair?.publicKey,
+      });
+    }
+
     // 初始化 全局配置(群/频道)
     console.$collect('初始化-全局配置')
     await eventCommon.fnGlobalConfigInit();
@@ -166,11 +178,6 @@ export default {
     // 全部密钥的对象初始化
     console.$collect('初始化-密钥')
     fnKeyObjsInit();
-
-    // TODO: 测试 getKeyPairOfVer 接口，后续移除
-    OneToOneKeyPairMap.fetchKeyPairByVersion(572083, { appVer: 6, webVer: 101 })
-      .then(res => console.log('[getKeyPairOfVer] 返回:', res))
-      .catch(err => console.error('[getKeyPairOfVer] 错误:', err));
 
     if (navigator.onLine) {
       this.text = this.$t("加密检测");
@@ -596,19 +603,24 @@ export default {
      * 获取密钥
      */
     handleKeyPair() {
+      setUpdateKeyPairSource('handleKeyPair', '登录初始化获取密钥');
       fnUpdateOwnKey().then(res => {
-        const { code } = res || {};
-         console.log('handleKeyPair--',res)
+        const { code, data } = res || {};
         if(code === 200) {
+          const { accountConfig } = eventCommon.fnConfigRU();
+          console.$collectE2ee('初始化-密钥更新成功', {
+            ownWebKeyVersion: accountConfig?.keyVersion,
+            hasPrivateKey: !!accountConfig?.privateKey,
+            ownAppKeyVersion: accountConfig?.appKeyPair?.keyVersion,
+            hasOwnAppPublicKey: !!accountConfig?.appKeyPair?.publicKey,
+          });
           this.handleKeyFinish();
         } else {
-          // 重新登录
-            window.$toast(this.$t("密钥异常，重新登录"));
-
-            setTimeout(() => {
-              // 登出
-              eventCommon.fnLoginout();
-            }, 2000);
+          console.$collectE2ee('初始化-密钥更新失败', { code });
+          window.$toast(this.$t("密钥异常，重新登录"));
+          setTimeout(() => {
+            eventCommon.fnLoginout();
+          }, 2000);
         }
       })
     },

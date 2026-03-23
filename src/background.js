@@ -721,7 +721,7 @@ const setMainWin = async () => {
         // mainWindow.openDevTools({ mode: 'detach' });
     } else {
         createProtocol("app");
-        mainWindow.loadURL("app://./index.html", {
+        mainWindow.loadURL("app:// ./index.html", {
             extraHeaders: "Access-Control-Allow-Origin: *",
         });
     }
@@ -939,6 +939,7 @@ const preValidateLoalFile = (dataPath, data) => {
 }
 
 const getLocalFile = async (args) => {
+    
     try {
         let { key, value } = args;
         const dataPath = nodePath.join(userData, `/Code Cache/${key}.json`);
@@ -966,13 +967,16 @@ const getLocalFile = async (args) => {
             }
         }
     } catch (error) {
+        const key = (args && args.key) || '';
+        const hasValue = args ? args.value !== undefined : false;
+        writeLog('app', 'error', `[getLocalFile] 读取文件失败key:${key} hasValue:${hasValue}` + (error ? (error.message || '') : ''));
         // 发送错误到渲染进程 console
         // 只发送可序列化的数据，args.value 可能包含不可序列化的内容
         sendMain("main-error-log", {
             type: "getLocalFile",
             message: (error && error.message) || String(error),
             stack: (error && error.stack) || "",
-            key: (args && args.key) || ""
+            key
         }, mainWindow);
     }
 };

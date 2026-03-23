@@ -33,7 +33,7 @@ function formatLine({ data, date, level }) {
             logType = rest[0].slice(1, -1);
             rest = rest.slice(1);
         }
-        const content = rest.map(stringify).join(' ').replace(/[\r\n]+/g, ' ');
+        const content = rest.filter(v => v != null && v !== 'undefined').map(stringify).join(' ').replace(/[\r\n]+/g, ' ');
         return `[${formatDate(date)}][${logType}][${level}] ${content}`;
     } catch {
         return `[${level}] [format error] ${String(data)}`;
@@ -62,9 +62,12 @@ logger.transports.file.archiveLog = function (file) {
 
 const VALID_LEVELS = new Set(['info', 'warn', 'error', 'debug', 'verbose', 'silly']);
 
+const LOG_MUTE_RE = /收到推送--(?:4204|4203|20701|20202|20102)|获取频道详情失败/;
+
 export function writeLog(logType, level, message, meta) {
     try {
         if (!VALID_LEVELS.has(level)) return;
+        if (typeof message === 'string' && LOG_MUTE_RE.test(message)) return;
         const tag = `[${logType}]`;
         if (meta !== undefined) {
             logger[level](tag, message, meta);
