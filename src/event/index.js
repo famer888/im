@@ -29,6 +29,7 @@ const dispatch = (code, data) => {
     // 频道消息接收
     case 4203: {
       if (data.latestChannelMessage) {
+        console.log('[4203] latestChannelMessage:', data.latestChannelMessage);
         eventMsg.fnChannelMsgAdd(data.latestChannelMessage);
       }
       break;
@@ -61,6 +62,7 @@ const dispatch = (code, data) => {
     // 好友消息接收
     case 20102: {
       if (data.oneToOneMessage) {
+        console.log('[20102] OneToOneMessage:', JSON.stringify(data.oneToOneMessage, null, 2));
         eventMsg.fnFriendMsgAdd(data.oneToOneMessage, data.id);
       }
       break;

@@ -526,6 +526,7 @@ export const enumMsgType = {
     error: 99, //解密失败
     transfer: 13, // 转账
     payments: 14, // 转账收款
+    mediasCaption: 17, // 多视频图片和文字描述
     animatedGame: 18, // 扑克游戏
 };
 

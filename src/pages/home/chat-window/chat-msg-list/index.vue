@@ -86,6 +86,31 @@
                     " />
                   <ComTimeStatusLabel :msgInfo="n" :chatContent="chatContent" />
                 </ComMsgText>
+                <ComMsgMediasCaption v-else-if="n.chatType === 17" :msgInfo="n" :chatContent="chatContent"
+                  @rightClick="
+                    (value) => handleEmitInfo(value, 'rightClickMenuDisplay')
+                  ">
+                  <ComSelectItem v-if="selectedIdList.length > 0" :selectedIdList="selectedIdList" :id="n.customMsgId"
+                    @onClick="
+                      handleEmitInfo(
+                        {
+                          id: n.customMsgId,
+                          msgId: n.MsgID,
+                          ...n
+                        },
+                        'msgSelectedChange'
+                      )
+                      " />
+                  <ComMsgQuote v-if="n.quoteMessage !== undefined" :msgInfo="n.quoteMessage" :memberInfos="memberInfos"
+                    :chatContent="chatContent" @onClick="
+                      () =>
+                        handleMoveToId({
+                          customMsgId: n.quoteMessage.customMsgId,
+                          isHighlighted: true,
+                        })
+                    " />
+                  <ComTimeStatusLabel :msgInfo="n" :chatContent="chatContent" />
+                </ComMsgMediasCaption>
                 <ComMsgImage v-else-if="[1, 3, 9].includes(n.chatType)" :msgInfo="n" :chatContent="chatContent"
                   @rightClick="
                     (value) => handleEmitInfo(value, 'rightClickMenuDisplay')
@@ -352,6 +377,7 @@ export default {
     ComMsgAudio: () => import("./msg/audio.vue"), // 音频
     ComMsgFile: () => import("./msg/file.vue"), // 文件
     ComMsgImage: () => import("./msg/image.vue"), // 显示图片
+    ComMsgMediasCaption: () => import("./msg/medias-caption.vue"), // 多媒体图文
     ComAvatarName: () => import("./avatar-name.vue"), // 头像和名字
     ComMsgSystemNotification: () => import("./msg/system-notification.vue"), // 系统通知
     ComMsgNotice: () => import("./msg/notice.vue"), // 公告

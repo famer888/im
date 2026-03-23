@@ -34,6 +34,8 @@ import {
     NameCardObj,
     GroupNoticeObj,
     HtmlObj,
+    MediaTextListObj,
+    CaptionMediaType,
 } from "@/api/base/imweb-web";
 
 // 好友 密钥对象集
@@ -938,6 +940,41 @@ const fnUtf8ArrayToStr = (buffer, type) => {
             }
             return data.currentImage;
         }
+        case enumMsgType.mediasCaption: {
+            const mediaList = MediaTextListObj.decode(UnitBuffer);
+            console.log('[mediasCaption] decoded MediaTextListObj:', 'caption:', mediaList.caption, 'objs count:', mediaList.objs?.length);
+            const parts = [];
+            if (mediaList.objs && mediaList.objs.length) {
+                for (let i = 0; i < mediaList.objs.length; i++) {
+                    const obj = mediaList.objs[i];
+                    const mediaBuffer = Uint8Array.from(obj.content);
+                    const typeName = CaptionMediaType[obj.type] || obj.type;
+                    if (obj.type === CaptionMediaType.Image) {
+                        const img = ImageObj.decode(mediaBuffer);
+                        console.log(`[mediasCaption] objs[${i}] type=${typeName}:`, JSON.stringify(img, null, 2));
+                        parts.push(`image:${img.url}||${img.thumbUrl}||${Number(img.fileSize)}||${img.sizeType}`);
+                    } else if (obj.type === CaptionMediaType.Video) {
+                        const vid = VideoObj.decode(mediaBuffer);
+                        console.log(`[mediasCaption] objs[${i}] type=${typeName}:`, JSON.stringify(vid, null, 2));
+                        parts.push(`video:${vid.url}*P${vid.thumbUrl}||${vid.duration || 0}||${Number(vid.fileSize) || 0}||${vid.width || 0}||${vid.height || 0}`);
+                    } else if (obj.type === CaptionMediaType.DynamicImage) {
+                        const gif = DynamicImageObj.decode(mediaBuffer);
+                        console.log(`[mediasCaption] objs[${i}] type=${typeName}:`, JSON.stringify(gif, null, 2));
+                        parts.push(`gif:${gif.url}||${gif.url}`);
+                    } else {
+                        console.log(`[mediasCaption] objs[${i}] unknown type=${typeName}`);
+                    }
+                }
+            }
+            let txt = parts.join("|||");
+            if (mediaList.caption) {
+                txt += "##caption##" + mediaList.caption;
+            }
+            if (mediaList.ref) {
+                txt = fnFormartMsgToStr(mediaList.ref, txt);
+            }
+            return txt;
+        }
         default: {
             // 文本
             const { content, ref } = TextObj.decode(UnitBuffer);
@@ -983,6 +1020,7 @@ const fnFormartMsgToStr = (ref, str) => {
         8: "[群简介]",
         9: "[动图]",
         12: "[骰子]",
+        17: "[多媒体]",
         18: "[扑克牌]",
     };
 
