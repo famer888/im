@@ -43,13 +43,13 @@
   <div id="video-layer" class="media-layer">
     <video id="video-player" preload="metadata"></video>
   </div>
-  <div style="position:fixed;top:36px;left:12px;z-index:100;display:flex;gap:6px;">
+  <!-- <div style="position:fixed;top:36px;left:12px;z-index:100;display:flex;gap:6px;">
     <button onclick="mediaView.init('test.jpg',window.MediaType.IMAGE)" style="padding:4px 10px;border:none;border-radius:6px;background:rgba(255,255,255,0.15);color:#fff;cursor:pointer;font-size:12px;">Test Image</button>
     <button onclick="mediaView.init('test.mp4',window.MediaType.VIDEO)" style="padding:4px 10px;border:none;border-radius:6px;background:rgba(255,255,255,0.15);color:#fff;cursor:pointer;font-size:12px;">Test Video</button>
-  </div>
+  </div> -->
   <div class="bottom-actions">
-    <button class="action-btn" title="Rotate" onclick="mediaView.rotate()"><svg viewBox="0 0 24 24" fill="none"><path d="M11.5 20.5C6.80558 20.5 3 16.6944 3 12C3 7.30558 6.80558 3.5 11.5 3.5C16.1944 3.5 20 7.30558 20 12C20 13.5433 19.5887 14.9905 18.8698 16.238M22.5 15L18.8698 16.238M17.1747 12.3832L18.5289 16.3542L18.8698 16.238" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-    <button class="action-btn" title="Save As" onclick="mediaView.saveAs()"><svg viewBox="0 0 24 24" fill="none"><path d="M3,12.3v7a2,2,0,0,0,2,2H19a2,2,0,0,0,2-2v-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><polyline points="7.9 12.3 12 16.3 16.1 12.3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><line x1="12" x2="12" y1="2.7" y2="14.2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <button id="rotate-btn" class="action-btn" title="Rotate" onclick="mediaView.rotate()"><svg viewBox="0 0 24 24" fill="none"><path d="M11.5 20.5C6.80558 20.5 3 16.6944 3 12C3 7.30558 6.80558 3.5 11.5 3.5C16.1944 3.5 20 7.30558 20 12C20 13.5433 19.5887 14.9905 18.8698 16.238M22.5 15L18.8698 16.238M17.1747 12.3832L18.5289 16.3542L18.8698 16.238" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <!-- <button class="action-btn" title="Save As" onclick="mediaView.saveAs()"><svg viewBox="0 0 24 24" fill="none"><path d="M3,12.3v7a2,2,0,0,0,2,2H19a2,2,0,0,0,2-2v-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><polyline points="7.9 12.3 12 16.3 16.1 12.3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><line x1="12" x2="12" y1="2.7" y2="14.2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button> -->
   </div>
   <script src="js/plyr.min.js"></script>
   <script src="js/wheel-zoom.min.js"></script>
@@ -64,7 +64,8 @@
     const videoPlayer = new Plyr('#video-player', {
       controls: ['play-large', 'play', 'progress', 'current-time', 'duration', 'mute', 'volume', 'fullscreen'],
       tooltips: { controls: false, seek: true },
-      invertTime: false
+      invertTime: false,
+      autoplay: true
     });
 
     const mediaView = {
@@ -75,15 +76,18 @@
       _naturalWidth: 0,
       _naturalHeight: 0,
 
-      init(src, mediaType, width, height) {
+      init(src, mediaType, width, height, cover) {
         this._src = src;
         this._mediaType = mediaType;
         this._naturalWidth = width || 0;
         this._naturalHeight = height || 0;
+        this._cover = cover || '';
         this._rotation = 0;
 
         const imageLayer = document.getElementById('image-layer');
         const videoLayer = document.getElementById('video-layer');
+
+        document.getElementById('rotate-btn').style.display = mediaType === window.MediaType.IMAGE ? '' : 'none';
 
         if (mediaType === window.MediaType.IMAGE) {
           imageLayer.classList.add('active');
@@ -100,7 +104,10 @@
           imageLayer.classList.remove('active');
           if (this._wz) { this._wz.destroy(); this._wz = null; }
           imageLayer.innerHTML = '';
+          const videoEl = document.getElementById('video-player');
+          if (cover) videoEl.poster = cover;
           videoPlayer.source = { type: 'video', sources: [{ src: src }] };
+          videoPlayer.once('ready', () => videoPlayer.play());
         }
       },
 
@@ -121,11 +128,14 @@
       }
     };
 
-    (function initFromState() {
-      const state = window.mediaState?.get();
+    function handleMediaState(state) {
       if (!state || !state.url) return;
-      mediaView.init(state.url, state.mediaType, state.width, state.height);
-    })();
+      const mediaType = state.mediaType === 3 ? window.MediaType.VIDEO : window.MediaType.IMAGE;
+      mediaView.init(state.url, mediaType, state.width, state.height, state.cover);
+    }
+
+    handleMediaState(window.mediaState?.get());
+    window.mediaState?.subscribe(handleMediaState);
   </script>
 </body>
 

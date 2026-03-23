@@ -159,7 +159,21 @@ const fnDownloadFileInfoUpdate = (data, errorType) => {
 
     // 打开文件
     if (isOpen) {
-        openFile(fileLocalPath, isDir);
+        if (!isDir && [1, 3, 9].includes(chatType)) {
+            window.mediaState && window.mediaState.send({
+                url: fileLocalPath,
+                mediaType: chatType,
+                width: data.width || 0,
+                height: data.height || 0,
+                cover: localThumbUrl || data.thumbUrl || '',
+                duration: data.duration || 0,
+                fileName: data.fileName || '',
+                size: data.size || 0,
+            });
+            ipcRenderer.send("fileFoldersOpen", { local: fileLocalPath, chatType });
+        } else {
+            openFile(fileLocalPath, isDir);
+        }
     }
 };
 
@@ -467,6 +481,11 @@ const fnOperatorFile = async ({ id, type, info, openDialog, isDir, taskId }, kee
         openDialog,
         isDir,
         taskId,
+        width: info.width || 0,
+        height: info.height || 0,
+        duration: info.duration || 0,
+        thumbUrl: info.thumbUrl || '',
+        size: info.size || info.fileSize || 0,
     };
 
 
@@ -475,6 +494,21 @@ const fnOperatorFile = async ({ id, type, info, openDialog, isDir, taskId }, kee
         // 优先使用动态域名
         params.trendsFileUrl = await getOssFirstNormalUrl(fileUrl, 0, 0);
     }
+
+    // 图片/视频：通过 localStorage 传递媒体信息给播放器
+    if (info.local && !isDir && [1, 3, 9].includes(info.chatType)) {
+        window.mediaState && window.mediaState.send({
+            url: info.local,
+            mediaType: info.chatType,
+            width: info.width || 0,
+            height: info.height || 0,
+            cover: info.localThumbUrl || info.thumbUrl || '',
+            duration: info.duration || 0,
+            fileName: info.fileName || '',
+            size: info.size || info.fileSize || 0,
+        });
+    }
+
     if (openDialog) {
         console.log('openFileDialog')
         ipcRenderer.invoke("openFileDialog", params);

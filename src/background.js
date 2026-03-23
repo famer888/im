@@ -808,7 +808,7 @@ const setMainWin = async () => {
         createProtocol("app");
     }
 
-    MediaProcess.create();
+    // MediaProcess.create();
 
     mainWindow = new BrowserWindow({
         x: mainWindowState.x,
@@ -1190,7 +1190,7 @@ const createMainWindow = async () => {
 
     // 监听 文件/文件夹 打开
     ipcMain.on("fileFoldersOpen", (event, args) => {
-        const { local, isDir, fileUrl } = args;
+        const { local, isDir, fileUrl, chatType } = args;
 
         if (local) {
             fs.stat(local, (err) => {
@@ -1204,8 +1204,13 @@ const createMainWindow = async () => {
                   taskId: args.taskId,
                   percent: 100 + Math.random().toFixed(6),
                 });
-                // 文件存在，并且是要打开文件
-                openFile(local, isDir);
+                // 图片/视频用媒体播放器打开（数据已通过 localStorage 传递）
+                if (!isDir && [1, 3, 9].includes(chatType)) {
+                    MediaProcess.create();
+                    MediaProcess.show();
+                } else {
+                    openFile(local, isDir);
+                }
             });
         } else if (fileUrl) {
             // 下载文件
