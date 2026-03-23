@@ -984,8 +984,8 @@ const fnMsgReadByMe = async (info) => {
 
 /**
  * 同账号已读同步（远程其它端操作已读，本地同步已读状态及未读数）
- * @param {string} type - 消息类型
- * @param {Object|Array} data - 推送原始数据（friend: data对象, group: receiptMessage数组）
+ * @param {string} type - 消息类型 'friend' | 'group' | 'channel'
+ * @param {Object|Array} data - 推送原始数据（friend: PushReceiptMessageResp 对象, group: receiptMessage 数组）
  */
 const fnMsgReadSync = async (type, data) => {
     const loginId = eventCommon.fnCommonInfoRU({ getId: "loginId" });
@@ -993,19 +993,24 @@ const fnMsgReadSync = async (type, data) => {
     const readItems = [];
 
     if (type === 'friend') {
-        const receipt = _.get(data, "receipts[0]");
-        if (!receipt) return;
-        const sendUid = Number(receipt.sendUid);
-        if (sendUid !== loginId) return;
-        const msgId = Number(receipt.msgId);
-        const status = Number(_.get(receipt, "receiptStatus.status"));
-        if (msgId && status === 1) {
-            readItems.push({ id: Number(receipt.targetId), msgId });
+        const receipts = _.get(data, "receipts") || [];
+        for (const receipt of receipts) {
+            const sendUid = Number(receipt.sendUid);
+            // 非本人发出的已读回执不处理（只同步自己在其他端的已读操作）
+            if (sendUid !== loginId) continue;
+            const msgId = Number(receipt.msgId);
+            const status = Number(_.get(receipt, "receiptStatus.status"));
+            // status === 1 表示已读
+            if (msgId && status === 1) {
+                readItems.push({ id: Number(receipt.targetId), msgId });
+            }
         }
     } else if (type === 'group') {
+        // 遍历每条群已读回执
         (data || []).forEach(item => {
             const sendUid = Number(item.sendUid);
             const readState = item.receiptStatus?.status || 0;
+            // 非本人发出的、或未读状态的回执跳过
             if (sendUid !== loginId || readState <= 0) return;
             const groupId = Number(item.groupId);
             const msgId = Number(item.msgId);
@@ -1013,45 +1018,56 @@ const fnMsgReadSync = async (type, data) => {
                 readItems.push({ id: groupId, msgId });
             }
         });
+    } else if (type === 'channel') {
+      
     }
 
     if (!readItems.length) return;
 
-    const latest = {};
+    const readItemsByConv = {};
     readItems.forEach(({ id, msgId }) => {
-        if (!latest[id] || msgId > latest[id]) {
-            latest[id] = msgId;
-        }
+        if (!readItemsByConv[id]) readItemsByConv[id] = [];
+        readItemsByConv[id].push(msgId);
     });
 
-    for (const key in latest) {
+    // 逐个会话处理已读同步
+    for (const key in readItemsByConv) {
         const id = Number(key);
-        const msgId = latest[key];
+        // 按 msgId 从大到小排序，优先用最新的已读消息去计算剩余未读
+        const msgIds = readItemsByConv[key].sort((a, b) => b - a);
 
-        const msgInfo = await window.$db.getMsgInfoForMsgId({ id, type, msgId });
-        if (msgInfo && msgInfo.sendTime) {
-            // 获取在当前消息时间之后的未读信息
-            const unreadInfoNew = await window.$db.getMsgUnreadForTimeAfter({
-                id,
-                type,
-                values: {
-                    sendTime: msgInfo.sendTime
-                }
-            });
-            // 同步 UI 未读数和小红点
-            eventBase.fnCommunicationSendMsg(
-                {
-                    operator: "msgReadByMe",
-                    data: {
-                        id,
-                        type,
-                        unreadInfo: unreadInfoNew,
+        let handled = false;
+        for (const msgId of msgIds) {
+            // 尝试从本地 DB 查找该消息，获取其 sendTime 以计算剩余未读
+            const msgInfo = await window.$db.getMsgInfoForMsgId({ id, type, msgId });
+            if (msgInfo && msgInfo.sendTime) {
+                // 基于该消息的 sendTime，查询之后仍未读的消息信息
+                const unreadInfoNew = await window.$db.getMsgUnreadForTimeAfter({
+                    id,
+                    type,
+                    values: {
+                        sendTime: msgInfo.sendTime
+                    }
+                });
+                // 通知 UI 更新未读数和小红点（noProcessing=true 跳过 base 层处理，直接广播到 UI）
+                eventBase.fnCommunicationSendMsg(
+                    {
+                        operator: "msgReadByMe",
+                        data: {
+                            id,
+                            type,
+                            unreadInfo: unreadInfoNew,
+                        },
                     },
-                },
-                true
-            );
-        } else {
-            // 如果没找到消息详情，保守处理：尝试直接清除该会话的未读数
+                    true
+                );
+                handled = true;
+                break;
+            }
+        }
+
+        // 所有 msgId 在本地均未找到，直接清除该会话的未读数
+        if (!handled) {
             eventBase.fnCommunicationSendMsg(
                 {
                     operator: "msgReadByMe",
