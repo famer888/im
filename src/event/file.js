@@ -438,21 +438,26 @@ const fnOperatorFile = async ({ id, type, info, openDialog, isDir, taskId }, kee
     });
 
     if (info.content) {
-        if (!info.content.includes("||") && !info.content.includes("*P")) {
+        const hasSplit = info.content.includes("||");
+        const hasThumbSep = info.content.includes("*P");
+        // 图片 / 视频 / GIF 统一走媒体窗 + fileFoldersOpen；转发时 content 常被收成纯 URL，不能走 openFile
+        const isMediaType = [1, 3, 9].includes(info.chatType);
+        if (!isMediaType && !hasSplit && !hasThumbSep) {
             openFile(info.local, isDir);
             return;
         }
 
-        // 文件路径
-        fileUrl = info.content.split("||")[1];
+        fileUrl = hasSplit ? info.content.split("||")[1] : info.content;
         if (info.chatType === 3) {
-            if(info.content.includes('*P')){
+            if (hasThumbSep) {
                 fileUrl = info.content.split("*P")[0];
-            } else if(info.content.includes('||')){
+            } else if (hasSplit) {
                 fileUrl = info.content.split("||")[0];
+            } else {
+                fileUrl = info.content;
             }
-        } else if (info.chatType === 1 || info.chatType === 7) {
-            fileUrl = info.content.split("||")[0];
+        } else if (info.chatType === 1 || info.chatType === 7 || info.chatType === 9) {
+            fileUrl = hasSplit ? info.content.split("||")[0] : info.content;
         }
     }
 
@@ -510,10 +515,8 @@ const fnOperatorFile = async ({ id, type, info, openDialog, isDir, taskId }, kee
     }
 
     if (openDialog) {
-        console.log('openFileDialog')
         ipcRenderer.invoke("openFileDialog", params);
     } else {
-        console.log('fileFoldersOpen')
         ipcRenderer.send("fileFoldersOpen", params);
     }
 };

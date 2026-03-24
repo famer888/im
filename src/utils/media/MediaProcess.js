@@ -1,9 +1,15 @@
-const { BrowserWindow, ipcMain, dialog } = require('electron');
+const { BrowserWindow, ipcMain, dialog, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
 const WINDOW_ID = 'media-player-window';
+/** 主进程挂载在 BrowserWindow 上，用于从 getAllWindows() 中排除媒体窗口 */
+export const OCS_MEDIA_WINDOW_ROLE = 'ocs-media-window';
+
+export function isMediaPlayerWindow(win) {
+  return !!(win && !win.isDestroyed() && win.ocsWindowRole === OCS_MEDIA_WINDOW_ROLE);
+}
 const icon = path.join(__dirname, isDevelopment ? './public/images/dock.png' : './images/dock.png');
 
 class MediaPlayerProcess {
@@ -16,7 +22,6 @@ class MediaPlayerProcess {
    * @param {Electron.BrowserWindow} [mainWindow] 主窗口，用于获取 x,y 定位
    */
   create(mainWindow) {
-    console.log('create Media Player Window');
     if (this.window && !this.window.isDestroyed()) {
       return this.window;
     }
@@ -44,14 +49,17 @@ class MediaPlayerProcess {
         additionalArguments: [`--window-id=${WINDOW_ID}`],
       },
     });
+    this.window.ocsWindowRole = OCS_MEDIA_WINDOW_ROLE;
 
     this._registerIpcHandlers();
     try {
       if (mainWindow && !mainWindow.isDestroyed()) {
         const { x, y } = mainWindow.getBounds();
+        // this.window.maximize();
         this.window.setPosition(x, y);
       } else {
         this.window.center();
+        // this.window.maximize();
       }
     } catch (e) {
       this.window.center();
@@ -130,6 +138,19 @@ class MediaPlayerProcess {
       fs.copyFileSync(filePath, savePath);
       return { success: true };
     });
+    ipcMain.handle('media-window:openPath', async (event, filePathOrUrl) => {
+      if (!filePathOrUrl || typeof filePathOrUrl !== 'string') return { success: false, error: 'invalid path' };
+      try {
+        if (/^https?:\/\//i.test(filePathOrUrl)) {
+          await shell.openExternal(filePathOrUrl);
+          return { success: true };
+        }
+        const err = await shell.openPath(path.normalize(filePathOrUrl));
+        return { success: !err, error: err || undefined };
+      } catch (e) {
+        return { success: false, error: (e && e.message) || String(e) };
+      }
+    });
   }
 
   _removeIpcHandlers() {
@@ -137,6 +158,7 @@ class MediaPlayerProcess {
     ipcMain.removeAllListeners('media-window:maximize');
     ipcMain.removeAllListeners('media-window:close');
     ipcMain.removeHandler('media-window:saveAs');
+    ipcMain.removeHandler('media-window:openPath');
   }
 
   /**

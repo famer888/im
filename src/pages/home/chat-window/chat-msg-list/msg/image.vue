@@ -202,6 +202,7 @@ export default {
          * 打开文件
          */
         handleOpenFile() {
+          if (this.loading) return;
           const { chatType } = this.msgInfo || {};
           chatType === 3 && this.initProgressBar();
           const taskId = chatType === 3 ? progress.getTask(this.msgInfo)?.taskId : null;

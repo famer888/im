@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Media</title>
+  <title>图片和视频</title>
   <link rel="stylesheet" href="css/plyr.min.css">
   <style>
     body { margin: 0; background: rgba(0,0,0,0.65); color: #fff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; overflow: hidden; }
@@ -73,6 +73,16 @@
       autoplay: true
     });
 
+    const IMAGE_WZOOM_OPTIONS = { minScale: 1, maxScale: 3, speed: 2, zoomOnClick: false, zoomOnDblClick: false };
+
+    function debounce(fn, wait) {
+      let t;
+      return function debounced() {
+        clearTimeout(t);
+        t = setTimeout(fn, wait);
+      };
+    }
+
     const mediaView = {
       _rotation: 0,
       _wz: null,
@@ -80,6 +90,17 @@
       _mediaType: '',
       _naturalWidth: 0,
       _naturalHeight: 0,
+
+      /** WZoom 在首次 init 时缓存了 viewport 尺寸，窗口拉伸/最大化后需重建，否则缩放的坐标焦点会偏移 */
+      _rebuildImageWheelZoom() {
+        if (this._mediaType !== window.MediaType.IMAGE) return;
+        if (!document.querySelector('#img-wrap img')) return;
+        if (this._wz) {
+          this._wz.destroy();
+          this._wz = null;
+        }
+        this._wz = WZoom.create('#img-wrap img', IMAGE_WZOOM_OPTIONS);
+      },
 
       init(src, mediaType, width, height, cover) {
         this._src = src;
@@ -103,7 +124,7 @@
           img.src = src;
           if (width) img.setAttribute('data-width', width);
           if (height) img.setAttribute('data-height', height);
-          this._wz = WZoom.create('#img-wrap img', { minScale: 1, maxScale: 3, speed: 2, zoomOnClick: false, zoomOnDblClick: false });
+          this._rebuildImageWheelZoom();
         } else if (mediaType === window.MediaType.VIDEO) {
           videoLayer.classList.add('active');
           imageLayer.classList.remove('active');
@@ -132,8 +153,14 @@
         this._naturalHeight = height;
       },
 
-      openWithDefaultApp() {
-        // TODO
+      async openWithDefaultApp() {
+        const src = this._src;
+        if (!src) return;
+        const filePath = src.startsWith('file://')
+          ? decodeURIComponent(src.replace(/^file:\/\/\/?/, ''))
+          : src;
+        const res = await window.electronAPI?.openPath?.(filePath);
+        if (res && !res.success && res.error) console.error('openPath:', res.error);
       }
     };
 
@@ -145,6 +172,29 @@
 
     handleMediaState(window.mediaState?.get());
     window.mediaState?.subscribe(handleMediaState);
+
+    /** 媒体窗口「在前台、展示中」：可见且当前接收键盘焦点（主窗口在前台时本窗口不会收到 keydown） */
+    function isMediaPresentationActive() {
+      return (
+        !document.hidden &&
+        document.visibilityState === 'visible' &&
+        document.hasFocus()
+      );
+    }
+
+    window.addEventListener(
+      'keydown',
+      (e) => {
+        if (e.key !== 'Escape') return;
+        if (!isMediaPresentationActive()) return;
+        if (document.fullscreenElement) return;
+        e.preventDefault();
+        window.electronAPI?.close?.();
+      },
+      true
+    );
+
+    window.addEventListener('resize', debounce(() => mediaView._rebuildImageWheelZoom(), 120));
   </script>
 </body>
 

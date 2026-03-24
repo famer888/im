@@ -29,7 +29,7 @@ import { openFile } from "@/utils/server";
 import { showNotification, closeNotification } from  "@/notification";
 import { runMacStartupCleanup, watchUserDataRemoval, stopWatchUserData } from "@/utils/mac/uninstall-errors";
 import { initToggleSideBar } from "@/utils/toggleSideBar";
-import MediaProcess from "@/utils/media/MediaProcess";
+import MediaProcess, { isMediaPlayerWindow } from "@/utils/media/MediaProcess";
 
 const log = require('electron-log');
 initElectronLog();
@@ -760,7 +760,7 @@ const sendMain = (channel, data, targetWindow = null) => {
   // 最后，尝试获取第一个可用的窗口
   else {
     const allWindows = BrowserWindow.getAllWindows();
-    win = allWindows.find(w => !w.isDestroyed());
+    win = allWindows.find((w) => !w.isDestroyed() && !isMediaPlayerWindow(w));
   }
 
   // 检查窗口是否有效
@@ -843,7 +843,11 @@ const setMainWin = async () => {
     require("@electron/remote/main").enable(mainWindow.webContents);
     mainWindow.webContents.on("did-finish-load", async (e) => {
         try {
-            const win = mainWindow || (BrowserWindow.getAllWindows() || [])[0];
+            const win =
+                mainWindow ||
+                (BrowserWindow.getAllWindows() || []).find(
+                    (w) => !w.isDestroyed() && !isMediaPlayerWindow(w)
+                );
             win && win.show();
             win && win.focus();
             await new Promise(resolve => setTimeout(resolve, 1000 / 60));
@@ -1027,8 +1031,15 @@ const handleFileDownload = (args) => {
         isOpen,
     });
 
-    const windows = BrowserWindow.getAllWindows();
-    windows[0].webContents.downloadURL(url);
+    const downloadWin =
+        mainWindow && !mainWindow.isDestroyed()
+            ? mainWindow
+            : BrowserWindow.getAllWindows().find(
+                  (w) => !w.isDestroyed() && !isMediaPlayerWindow(w)
+              );
+    if (downloadWin?.webContents) {
+        downloadWin.webContents.downloadURL(url);
+    }
 
     // console.log(fileUrl)
 };
@@ -1444,13 +1455,20 @@ app.on("window-all-closed", () => {
 app.on("before-quit", async (event) => {
     const data = await getLocalFile({ key: "source-id-list" });
     if (data) {
-        const windows = BrowserWindow.getAllWindows();
-        await getLocalFile({
-            key: "source-id-list",
-            value: JSON.parse(data).filter(
-                (id) => id !== windows[0].getMediaSourceId()
-            ),
-        });
+        const primaryWin =
+            mainWindow && !mainWindow.isDestroyed()
+                ? mainWindow
+                : BrowserWindow.getAllWindows().find(
+                      (w) => !w.isDestroyed() && !isMediaPlayerWindow(w)
+                  );
+        if (primaryWin) {
+            await getLocalFile({
+                key: "source-id-list",
+                value: JSON.parse(data).filter(
+                    (id) => id !== primaryWin.getMediaSourceId()
+                ),
+            });
+        }
     }
 
     // 停止电源阻止器
