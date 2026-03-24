@@ -1037,7 +1037,7 @@ const handleFileDownload = (args) => {
             : BrowserWindow.getAllWindows().find(
                   (w) => !w.isDestroyed() && !isMediaPlayerWindow(w)
               );
-    if (downloadWin?.webContents) {
+    if (downloadWin && downloadWin.webContents) {
         downloadWin.webContents.downloadURL(url);
     }
 
