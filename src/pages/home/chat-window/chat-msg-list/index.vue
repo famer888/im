@@ -2056,20 +2056,9 @@ export default {
         }
         // console.log('[debug] timeUnread2', msgLastEnterVisual.readStatus, msgLastEnterVisual.sendTime, timeUnread);
 
-        // 频道特殊逻辑：如果没找到 timeUnread，但消息未读，也视为需要处理（用于自己发送消息后的回执）
-        const isChannelUnread =
-          this.chatContent.type === "channel" &&
-          !timeUnread &&
-          msgLastEnterVisual.readStatus !== 2;
-
-        if (timeUnread || isChannelUnread) {
-          if (timeUnread) timeUnread = Number(timeUnread);
-          const shouldTrigger =
-            isChannelUnread ||
-            (msgLastEnterVisual.readStatus !== 2 &&
-              Number(msgLastEnterVisual.sendTime) >= timeUnread);
-
-          if (shouldTrigger) {
+        if (timeUnread) {
+          timeUnread = Number(timeUnread);
+          if (msgLastEnterVisual.readStatus !== 2 && Number(msgLastEnterVisual.sendTime) >= timeUnread) {
             eventBase.fnCommunicationSendMsg({
               operator: "msgReadByMe",
               data: {
@@ -2077,7 +2066,7 @@ export default {
                 type: this.chatContent.type,
                 values: {
                   sendTime: Number(msgLastEnterVisual.sendTime),
-                  timeUnread: timeUnread || undefined,
+                  timeUnread,
                 },
               },
             });

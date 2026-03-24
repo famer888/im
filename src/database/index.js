@@ -548,8 +548,7 @@ export default class dbBase {
             .toArray();
 
           if (arr) {
-            msgReadList =
-              type === "channel" ? arr : arr.filter((item) => !item.isSelf);
+            msgReadList = arr.filter((item) => !item.isSelf);
           }
         } else {
           // 获取第一个
@@ -558,7 +557,7 @@ export default class dbBase {
             .equals(String(timeUnread))
             .first();
 
-          if (infoFirst && (type === "channel" || !infoFirst.isSelf)) {
+          if (infoFirst && !infoFirst.isSelf) {
             msgReadList.push(infoFirst);
           }
 
@@ -571,7 +570,7 @@ export default class dbBase {
           if (arr) {
             msgReadList = [
               ...msgReadList,
-              ...arr.filter((item) => type === "channel" || !item.isSelf),
+              ...arr.filter((item) => !item.isSelf),
             ];
           }
         }
@@ -584,7 +583,7 @@ export default class dbBase {
             .equals(sendTime)
             .first()) || lastMessage;
 
-        if (infoLast && (type === "channel" || !infoLast.isSelf)) {
+        if (infoLast && !infoLast.isSelf) {
           msgReadList.push(infoLast);
         }
       }
