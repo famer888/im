@@ -19,11 +19,16 @@
     .action-btn svg { stroke: #aaa; width: 20px; height: 20px; }
     .action-btn:hover { background: rgba(255,255,255,0.2); }
     .action-btn:hover svg { stroke: #fff; }
+    .action-btn-text { padding: 8px 12px; border: none; background: rgba(255,255,255,0.1); border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; color: #aaa; font-size: 12px; }
+    .action-btn-text svg { width: 16px; height: 16px; fill: #aaa; flex-shrink: 0; }
+    .action-btn-text:hover { background: rgba(255,255,255,0.2); color: #fff; }
+    .action-btn-text:hover svg { fill: #fff; }
     .media-layer { position: fixed; top: 0; left: 0; right: 0; bottom: 0; display: none; align-items: center; justify-content: center; }
     .media-layer.active { display: flex; }
+    /* 以最长边（宽或高）占满容器，另一边按比例缩放。如：容器高1024，图片1800x3600 → 以1024高显示，宽=1800*(1024/3600) */
     #image-layer { overflow: hidden; }
-    #img-wrap { display: inline-flex; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-    #image-layer img { max-width: 100%; max-height: 100%; object-fit: contain; user-select: none; -webkit-user-drag: none; }
+    #img-wrap { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    #image-layer img { width: 100%; height: 100%; object-fit: contain; user-select: none; -webkit-user-drag: none; }
     #video-layer { background: transparent; }
     #video-layer .plyr { width: 100%; height: 100%; }
     #video-layer video { width: 100%; height: 100%; object-fit: contain; }
@@ -35,7 +40,7 @@
 <body>
   <div class="titlebar">
     <button class="titlebar-btn minimize" onclick="window.electronAPI?.minimize?.()"><svg viewBox="0 0 16 16"><line x1="3" y1="8" x2="13" y2="8"/></svg></button>
-    <button class="titlebar-btn maximize" onclick="toggleMaximize()"><svg id="max-icon" viewBox="0 0 16 16"><path d="M5 3h8v8M3 5h8v8H3z" fill="none" stroke-width="1.5"/></svg></button>
+    <button class="titlebar-btn maximize" onclick="toggleMaximize()"><svg id="max-icon" viewBox="0 0 16 16"><rect x="3" y="3" width="10" height="10" rx="1.5" fill="none" stroke-width="1.5"/></svg></button>
     <button class="titlebar-btn close" onclick="window.electronAPI?.close?.()"><svg viewBox="0 0 16 16"><line x1="4" y1="4" x2="12" y2="12"/><line x1="12" y1="4" x2="4" y2="12"/></svg></button>
   </div>
   <div id="image-layer" class="media-layer">
@@ -49,13 +54,13 @@
   </div> -->
   <div class="bottom-actions">
     <button id="rotate-btn" class="action-btn" title="Rotate" onclick="mediaView.rotate()"><svg viewBox="0 0 24 24" fill="none"><path d="M11.5 20.5C6.80558 20.5 3 16.6944 3 12C3 7.30558 6.80558 3.5 11.5 3.5C16.1944 3.5 20 7.30558 20 12C20 13.5433 19.5887 14.9905 18.8698 16.238M22.5 15L18.8698 16.238M17.1747 12.3832L18.5289 16.3542L18.8698 16.238" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-    <!-- <button class="action-btn" title="Save As" onclick="mediaView.saveAs()"><svg viewBox="0 0 24 24" fill="none"><path d="M3,12.3v7a2,2,0,0,0,2,2H19a2,2,0,0,0,2-2v-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><polyline points="7.9 12.3 12 16.3 16.1 12.3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><line x1="12" x2="12" y1="2.7" y2="14.2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button> -->
+    <button class="action-btn-text" title="使用默认应用打开" onclick="mediaView.openWithDefaultApp()"><svg viewBox="0 0 20 20"><path d="M10 3.778a6.222 6.222 0 1 0 3.726 11.205l-4.869-4.869v2.208a.889.889 0 0 1-1.778 0V7.968c0-.49.398-.889.89-.889h4.353a.889.889 0 0 1 0 1.778h-2.208l4.87 4.87A6.193 6.193 0 0 0 16.221 10 6.222 6.222 0 0 0 10 3.778ZM2 10a8 8 0 1 1 16 0 8 8 0 0 1-16 0Z"/></svg>使用默认应用打开</button>
   </div>
   <script src="js/plyr.min.js"></script>
   <script src="js/wheel-zoom.min.js"></script>
   <script src="media-state.js"></script>
   <script>
-    let isMaximized = true;
+    let isMaximized = false;
     const maxIcon = document.getElementById('max-icon');
     const svgRestore = '<path d="M5 3h8v8M3 5h8v8H3z" fill="none" stroke-width="1.5"/>';
     const svgMaximize = '<rect x="3" y="3" width="10" height="10" rx="1.5" fill="none" stroke-width="1.5"/>';
@@ -125,6 +130,10 @@
       setSize(width, height) {
         this._naturalWidth = width;
         this._naturalHeight = height;
+      },
+
+      openWithDefaultApp() {
+        // TODO
       }
     };
 

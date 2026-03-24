@@ -1206,7 +1206,7 @@ const createMainWindow = async () => {
                 });
                 // 图片/视频用媒体播放器打开（数据已通过 localStorage 传递）
                 if (!isDir && [1, 3, 9].includes(chatType)) {
-                    MediaProcess.create();
+                    MediaProcess.create(mainWindow);
                     MediaProcess.show();
                 } else {
                     openFile(local, isDir);

@@ -13,8 +13,9 @@ class MediaPlayerProcess {
 
   /**
    * 获取或创建媒体播放器窗口（单例）
+   * @param {Electron.BrowserWindow} [mainWindow] 主窗口，用于获取 x,y 定位
    */
-  create() {
+  create(mainWindow) {
     console.log('create Media Player Window');
     if (this.window && !this.window.isDestroyed()) {
       return this.window;
@@ -23,6 +24,10 @@ class MediaPlayerProcess {
     this.window = new BrowserWindow({
       title: 'Media Player',
       icon,
+      width: 900,
+      height: 600,
+      minWidth: 600,
+      minHeight: 500,
       show: true,
       frame: false,
       transparent: true,
@@ -41,7 +46,16 @@ class MediaPlayerProcess {
     });
 
     this._registerIpcHandlers();
-    this.window.maximize();
+    try {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        const { x, y } = mainWindow.getBounds();
+        this.window.setPosition(x, y);
+      } else {
+        this.window.center();
+      }
+    } catch (e) {
+      this.window.center();
+    }
     if (process.env.WEBPACK_DEV_SERVER_URL) {
       this.window.loadURL(process.env.WEBPACK_DEV_SERVER_URL + '/media/media.html');
     } else {
