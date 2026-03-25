@@ -4,11 +4,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>图片和视频</title>
+  <title>媒体</title>
   <link rel="stylesheet" href="css/plyr.min.css">
   <style>
     body { margin: 0; background: rgba(0,0,0,0.65); color: #fff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; overflow: hidden; }
-    .titlebar { position: fixed; top: 0; left: 0; right: 0; display: flex; justify-content: flex-end; -webkit-app-region: drag; height: 32px; align-items: center; z-index: 100; }
+    .titlebar { position: fixed; top: 0; left: 0; right: 0; display: flex; justify-content: space-between; align-items: center; -webkit-app-region: drag; height: 32px; z-index: 100; padding: 0 4px 0 0; box-sizing: border-box; }
+    .titlebar-label { margin-left: 12px; font-size: 13px; color: rgba(255,255,255,0.75); -webkit-app-region: drag; user-select: none; pointer-events: none; }
+    .titlebar-actions { display: flex; align-items: center; -webkit-app-region: no-drag; }
     .titlebar-btn { -webkit-app-region: no-drag; width: 46px; height: 32px; border: none; background: transparent; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
     .titlebar-btn svg { fill: none; stroke: #aaa; stroke-width: 1.5; width: 16px; height: 16px; }
     .titlebar-btn:hover svg { stroke: #fff; }
@@ -39,9 +41,12 @@
 
 <body>
   <div class="titlebar">
-    <button class="titlebar-btn minimize" onclick="window.electronAPI?.minimize?.()"><svg viewBox="0 0 16 16"><line x1="3" y1="8" x2="13" y2="8"/></svg></button>
-    <button class="titlebar-btn maximize" onclick="toggleMaximize()"><svg id="max-icon" viewBox="0 0 16 16"><rect x="3" y="3" width="10" height="10" rx="1.5" fill="none" stroke-width="1.5"/></svg></button>
-    <button class="titlebar-btn close" onclick="window.electronAPI?.close?.()"><svg viewBox="0 0 16 16"><line x1="4" y1="4" x2="12" y2="12"/><line x1="12" y1="4" x2="4" y2="12"/></svg></button>
+    <span id="media-type-label" class="titlebar-label" aria-live="polite"></span>
+    <div class="titlebar-actions">
+      <button class="titlebar-btn minimize" onclick="window.electronAPI?.minimize?.()"><svg viewBox="0 0 16 16"><line x1="3" y1="8" x2="13" y2="8"/></svg></button>
+      <button class="titlebar-btn maximize" onclick="toggleMaximize()"><svg id="max-icon" viewBox="0 0 16 16"><rect x="3" y="3" width="10" height="10" rx="1.5" fill="none" stroke-width="1.5"/></svg></button>
+      <button class="titlebar-btn close" onclick="window.electronAPI?.close?.()"><svg viewBox="0 0 16 16"><line x1="4" y1="4" x2="12" y2="12"/><line x1="12" y1="4" x2="4" y2="12"/></svg></button>
+    </div>
   </div>
   <div id="image-layer" class="media-layer">
   </div>
@@ -109,6 +114,11 @@
         this._naturalHeight = height || 0;
         this._cover = cover || '';
         this._rotation = 0;
+
+        const typeLabel = mediaType === window.MediaType.VIDEO ? '视频' : '图片';
+        document.title = typeLabel;
+        const labelEl = document.getElementById('media-type-label');
+        if (labelEl) labelEl.textContent = typeLabel;
 
         const imageLayer = document.getElementById('image-layer');
         const videoLayer = document.getElementById('video-layer');
