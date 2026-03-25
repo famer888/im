@@ -1019,7 +1019,7 @@ const fnMsgReadSync = async (type, data) => {
             }
         });
     } else if (type === 'channel') {
-      
+
     }
 
     if (!readItems.length) return;
@@ -1041,14 +1041,28 @@ const fnMsgReadSync = async (type, data) => {
             // 尝试从本地 DB 查找该消息，获取其 sendTime 以计算剩余未读
             const msgInfo = await window.$db.getMsgInfoForMsgId({ id, type, msgId });
             if (msgInfo && msgInfo.sendTime) {
+                // 获取本地未读信息的起始时间
+                let timeUnread = undefined;
+                try {
+                    const unReadObj = await Cache(`${loginId}-unread`);
+                    if (unReadObj && unReadObj.unread && unReadObj.unread[id + type]) {
+                        timeUnread = unReadObj.unread[id + type].time;
+                    }
+                } catch (e) {
+                    console.warn('[fnMsgReadSync] parse unread cache error:', e);
+                }
+
                 // 基于该消息的 sendTime，查询之后仍未读的消息信息
                 const unreadInfoNew = await window.$db.getMsgUnreadForTimeAfter({
                     id,
                     type,
                     values: {
-                        sendTime: msgInfo.sendTime
+                        sendTime: msgInfo.sendTime,
+                        timeUnread: timeUnread,
+                        isSync: true // 标记为多端同步，避免底层向服务器重复发送已读回执(CReqMessageReceipt)
                     }
                 });
+                // console.log('unreadInfoNew----',unreadInfoNew)
                 // 通知 UI 更新未读数和小红点（noProcessing=true 跳过 base 层处理，直接广播到 UI）
                 eventBase.fnCommunicationSendMsg(
                     {

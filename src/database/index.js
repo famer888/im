@@ -532,7 +532,7 @@ export default class dbBase {
     let unreadInfo = null;
 
     try {
-      const { timeUnread, sendTime } = values;
+      const { timeUnread, sendTime, isSync } = values;
 
       const tableName = handleTableNameGet(id, type);
 
@@ -580,11 +580,50 @@ export default class dbBase {
         const infoLast =
           (await this.db[tableName]
             .where("sendTime")
-            .equals(sendTime)
+            .equals(String(sendTime))
             .first()) || lastMessage;
 
         if (infoLast && !infoLast.isSelf) {
           msgReadList.push(infoLast);
+        }
+      }
+
+      // 计算新的未读信息：
+      // 如果有多端已读同步或本地已读，我们需要计算该截断时间（checkTime）之后，还有多少条真实的未读消息，
+      // 并把最新的未读数和第一条未读的时间反馈给组件用于更新左侧会话列表的小红点。
+      let checkTime = null;
+      if (sendTime) {
+        // 如果传了 sendTime，以此时间点作为截断点
+        checkTime = sendTime;
+      } else if (timeUnread && !sendTime) {
+        // 如果只有 timeUnread 但没有 sendTime，说明从最早的未读到最新消息被一次性全部标为已读，此时已无剩余未读
+        checkTime = null;
+      }
+
+      if (checkTime) {
+        const remainArr = await this.db[tableName]
+          .where("sendTime")
+          .above(String(checkTime))
+          .toArray();
+
+        // 过滤规则：
+        // 1. 过滤掉自己发出的消息（不计入未读）
+        // 2. 兼容老数据：如果没有 chatType 字段（undefined 或 null），为了安全起见默认算作普通聊天消息
+        // 3. 过滤系统消息：只有 chatType < 50 的才是真实的用户聊天消息，避免系统提示
+        const unreadRemainList = remainArr.filter((item) => {
+          if (item.isSelf) return false;
+          if (item.chatType === undefined || item.chatType === null) return true;
+          return item.chatType < 50;
+        });
+
+        if (unreadRemainList.length > 0) {
+          // 确保按发送时间升序排列，取第一条未读作为下一次红点计算的起始游标
+          unreadRemainList.sort((a, b) => Number(a.sendTime) - Number(b.sendTime));
+          unreadInfo = {
+            count: unreadRemainList.length,
+            time: unreadRemainList[0].sendTime,
+            unreadID: unreadRemainList[0].customMsgId,
+          };
         }
       }
 
@@ -609,10 +648,13 @@ export default class dbBase {
         const msgIds = msgReadList
           .filter((item) => item.readStatus !== -1)
           .map((item) => Number(item.MsgID));
-        if (msgIds.length) {
+
+        // isSync: 如果为 true 表示这是由其它端（如手机端）操作已读推送过来的同步信令
+        // 此时我们只负责更新本地数据库红点状态，不需要再向服务器回传已读
+        if (msgIds.length && !isSync) {
           CReqChannelMessageReceipt(channelId, msgIds);
         }
-        return;
+        return unreadInfo;
       }
 
       // 确认消息收到
@@ -641,7 +683,10 @@ export default class dbBase {
         return info;
       });
 
-      CReqMessageReceipt(arr);
+      // 多端同步引发的本地计算，拦截二次已读回执的网络请求
+      if (arr.length > 0 && !isSync) {
+        CReqMessageReceipt(arr);
+      }
     } catch (e) {
       console.log(e);
     }
