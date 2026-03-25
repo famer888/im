@@ -655,12 +655,14 @@ export default class dbBase {
    */
   async updateMsgProperty({ id, type, list }) {
     try {
+      console.log('...update', id, type);
       const tableName = handleTableNameGet(id, type);
       const msgIdList = [];
 
       // 找到对应的信息
       for (const item of list) {
         const { customMsgId, updated } = item;
+        console.log('>>> item', item);
 
         const info = await this.db[tableName].get(customMsgId);
         msgIdList.push(info.MsgID);
@@ -674,6 +676,7 @@ export default class dbBase {
       return msgIdList;
     } catch (e) {
       //
+      console.log('>>>> 报错了？', e)
     }
 
     return null;
@@ -943,6 +946,7 @@ export default class dbBase {
    * 新增替换
    */
   async addDB(tableName, data, type) {
+    console.log('你入库了吗');
     // 等待数据库初始化完成
     await this._dbReady;
     let addData = this.setDataList(data, type, tableName);
@@ -952,6 +956,7 @@ export default class dbBase {
         //
       })
       .catch((err) => {
+        console.log('入库失败：', err);
         // 单条重复数据写入错误
         if (err.name === "ConstraintError") {
           console.warn("addDB: 重复数据已忽略");

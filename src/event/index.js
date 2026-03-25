@@ -29,7 +29,7 @@ const dispatch = (code, data) => {
     // 频道消息接收
     case 4203: {
       if (data.latestChannelMessage) {
-        console.log('[4203] latestChannelMessage:', data.latestChannelMessage);
+        // console.log('[4203] latestChannelMessage:', data.latestChannelMessage);
         eventMsg.fnChannelMsgAdd(data.latestChannelMessage);
       }
       break;
@@ -42,7 +42,7 @@ const dispatch = (code, data) => {
       //  console.log('4205-2-', JSON.stringify(data))
       const state = eventChannel.isValidSocketMsg(Number(clearTime));
       if (!state) {
-        console.log("阻止了条重复推送[4205]", JSON.stringify(data));
+        // console.log("阻止了条重复推送[4205]", JSON.stringify(data));
         return;
       }
       if (!msgTargetId) return;
@@ -348,7 +348,7 @@ const fnSocketMessage = (arrayBuffer) => {
     ReceiveServerToClient(data.id);
   }
   if (![29901, 20001].includes(code)) {
-    console.log("收到推送", code);
+    // console.log("收到推送", code);
     console.$collect('收到推送--' + code);
   }
   if (expired.check(code, data)) {

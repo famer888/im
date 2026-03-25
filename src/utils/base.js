@@ -578,25 +578,33 @@ export const setTimeD = (value) => {
     timeD = value;
 }
 
+/**
+ * 图片/动图/视频片段 content 常见 url||thumb||fileSize||w||h，下载与转域名只取首段纯 URL
+ */
+export const stripChatContentMetaSuffix = (s) => {
+    if (s == null || s === "") return "";
+    return String(s).split("||")[0].trim();
+};
 
 // 获取url域名后的字符
 export const getRemainingUrl = (url) => {
     try {
         if(!url) return url;
-        var parsedUrl = new URL(url);
+        const clean = stripChatContentMetaSuffix(String(url));
+        var parsedUrl = new URL(clean);
         var protocol = parsedUrl.protocol + "//";
         var hostname = parsedUrl.hostname;
         var port = parsedUrl.port;
-        var remainingUrl = url.replace(
+        var remainingUrl = clean.replace(
             protocol + hostname + (port ? ":" + port : ""),
             ""
         );
-        return remainingUrl; 
+        return remainingUrl;
     } catch (error) {
         console.error(error, url)
         return ""
     }
-   
+
 }
 
 // 补全url的协议

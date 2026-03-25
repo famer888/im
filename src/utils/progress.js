@@ -14,17 +14,27 @@ class ProgressManager {
     ipcRenderer.removeListener("downloadProgress", this.update);
     eventBase.fnCommunicationMonitoring("upload-progress", null);
   }
-  init(message) {
-    const { chatType, MsgID, customMsgId } = message;
-    // MsgID 和 customMsgId 都没有则不初始化
+  taskIdFromMessage(message) {
+    const { chatType, MsgID, customMsgId, mediaSlotIndex } = message;
     if (!MsgID && !customMsgId) {
+      return null;
+    }
+    const slotSuffix =
+      mediaSlotIndex !== undefined && mediaSlotIndex !== null && mediaSlotIndex !== ""
+        ? `-${mediaSlotIndex}`
+        : "";
+    return `${chatType}-${MsgID || customMsgId}${slotSuffix}`;
+  }
+  init(message) {
+    const { MsgID } = message;
+    const taskId = this.taskIdFromMessage(message);
+    if (!taskId) {
       return null;
     }
     const old = this.getTask(message);
     if (old) {
       return old;
     }
-    const taskId = `${chatType}-${MsgID || customMsgId}`;
     const type = MsgID ? 'download' : 'upload';
     const newTask = { percent: 0, loading: true, taskId, type };
     this.map.set(taskId, newTask);
@@ -77,12 +87,9 @@ class ProgressManager {
     taskId && this.map.delete(taskId);
   }
   getTask(message) {
-    const { customMsgId, chatType, MsgID } = message;
-    if (this.map.has(`${chatType}-${MsgID}`)) {
-      return this.map.get(`${chatType}-${MsgID}`);
-    } else if (this.map.has(`${chatType}-${customMsgId}`)) {
-      return this.map.get(`${chatType}-${customMsgId}`);
-    }
+    const taskId = this.taskIdFromMessage(message);
+    if (!taskId) return;
+    return this.map.get(taskId);
   }
   getProgress(message) {
     const task = this.getTask(message);

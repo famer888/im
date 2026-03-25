@@ -970,6 +970,17 @@ const handleFileDownload = (args) => {
         msgId,
         timeout, // 超时时长毫秒
     } = args;
+    // [dl-trace] 主进程仅见 userId/groupId/channelId，无 session.type 字段
+    console.log("[dl-trace] bg.handleFileDownload", {
+        uid,
+        userId,
+        groupId,
+        channelId,
+        msgId,
+        chatType,
+        isOpen,
+        hasLocal: !!local,
+    });
     const url = trendsFileUrl || fileUrl;
 
 
