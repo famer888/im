@@ -217,6 +217,7 @@ const dispatch = (code, data) => {
       break;
     }
     case 20403: {
+      console.log('20403--群消息已读',data)
       // 群消息已读用户
       const { receiptMessage = [] } = data || {};
       eventMsg.fnGroupMsgReadRecord(receiptMessage);
@@ -230,6 +231,7 @@ const dispatch = (code, data) => {
       break;
     }
     case 4206: {
+      console.log('4206--频道已读',data)
       const { msgTime } = data.latestChannelEventMessage || {};
       const state = eventChannel.isValidSocketMsg(Number(msgTime));
       if (!state) {
