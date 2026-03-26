@@ -22,18 +22,12 @@
 <script>
 const CAPTION_SEP = "##caption##";
 
-/**
- * 与 encryption-decryption.js mediasCaption 分支写入格式一致：
- * image:url||thumb||fileSize||sizeType ||| video:url*Pthumb||duration||fileSize||w||h ||| gif:url||url
- * 末尾可选 ##caption## 文字
- */
 function stripMediasCaptionRefSuffix(tail) {
   if (!tail) return "";
   const idx = tail.indexOf("-||-type:");
   return (idx < 0 ? tail : tail.slice(0, idx)).trim();
 }
 
-/** 无 ##caption## 时，引用信息会拼在整个 content 末尾，需从媒体段之前去掉 */
 function stripTrailingRefFromMediasBody(body) {
   if (!body) return "";
   const idx = body.indexOf("-||-type:");
@@ -54,7 +48,6 @@ function splitMediasCaptionBody(content) {
   };
 }
 
-/** 父消息体顶层 local_i / thumb_i / percent_i（percent 与 image.vue 中 watch msgInfo.percent 一致） */
 function applySlotLocalFromParent(common, msgInfo, i) {
   const lk = `local_${i}`;
   const tk = `thumb_${i}`;
@@ -103,7 +96,6 @@ function buildMediaItemsFromContent(msgInfo) {
       const meta = contentStr.split("||");
       const head = meta[0] || "";
       const p = head.split("*P");
-      const mainUrl = p[0] || "";
       const thumbUrl = p[1] || "";
       items.push({
         ...common,
@@ -119,7 +111,6 @@ function buildMediaItemsFromContent(msgInfo) {
       chatType = 1;
       contentStr = seg.slice(6);
       const meta = contentStr.split("||");
-      const url = meta[0] || "";
       const thumbUrl = meta[1] || "";
       items.push({
         ...common,
@@ -144,7 +135,6 @@ function buildMediaItemsFromContent(msgInfo) {
   return { items, tailCaption };
 }
 
-/** 视频/媒体传输 FIFO 队列：最多 concurrency 个并发，完成一个再补一个 */
 function createMediaTransferQueue(concurrency = 3) {
   let active = 0;
   const waiting = [];

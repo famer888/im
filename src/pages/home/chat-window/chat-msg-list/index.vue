@@ -377,7 +377,7 @@ export default {
     ComMsgAudio: () => import("./msg/audio.vue"), // 音频
     ComMsgFile: () => import("./msg/file.vue"), // 文件
     ComMsgImage: () => import("./msg/image.vue"), // 显示图片
-    ComMsgMediasCaption: () => import("./msg/medias-caption.vue"), // 多媒体图文
+    ComMsgMediasCaption: () => import("./meida-caption/medias-caption.vue"), // 多媒体图文
     ComAvatarName: () => import("./avatar-name.vue"), // 头像和名字
     ComMsgSystemNotification: () => import("./msg/system-notification.vue"), // 系统通知
     ComMsgNotice: () => import("./msg/notice.vue"), // 公告

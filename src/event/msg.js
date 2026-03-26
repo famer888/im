@@ -12,7 +12,6 @@ import {
     enumMsgType,
     getNow,
     strIsSafe,
-    createHash,
 } from "@/utils/base";
 import { sendMessage } from "@/utils/messageBuild";
 import {
@@ -36,6 +35,7 @@ import eventChannel from "./channel";
 import { benchmark } from "@/debuggers";
 import progress from "@/utils/progress";
 import { CReqChannelMessageReceipt } from "@/socket/api/message";
+import { handleMsgType17Send } from "@/pages/home/chat-window/chat-msg-list/meida-caption/msg-type-17";
 
 /**
  * 消息去重检查
@@ -1217,103 +1217,6 @@ const fnMsgContentAddQuote = async (data) => {
 // 发送中消息列表 id和时间
 let sendingInfoList = [];
 
-/** 与九宫格消息下载队列一致：最多 concurrency 路并发，FIFO */
-function createFifoConcurrencyQueue(concurrency = 3) {
-    let active = 0;
-    const waiting = [];
-    return {
-        acquire() {
-            return new Promise((resolve) => {
-                const grant = () => {
-                    active++;
-                    resolve(() => {
-                        active--;
-                        const next = waiting.shift();
-                        if (next) next();
-                    });
-                };
-                if (active < concurrency) {
-                    grant();
-                } else {
-                    waiting.push(grant);
-                }
-            });
-        },
-    };
-}
-
-function mediasCaptionSegmentLocalPath(chatType, info) {
-    const fsPath = (info.local || "").replace(/\\/g, "/");
-    const thumb = (info.localThumbUrl || "").replace(/\\/g, "/");
-    const fs = info.fileSize != null ? info.fileSize : 0;
-    if (chatType === enumMsgType.image) {
-        return `image:${fsPath}||${thumb}||${fs}||0`;
-    }
-    if (chatType === enumMsgType.video) {
-        return `video:${fsPath}*P${thumb}||0||${fs}||${info.width || 0}||${info.height || 0}`;
-    }
-    if (chatType === enumMsgType.gif) {
-        return `gif:${fsPath}||${fsPath}`;
-    }
-    return "";
-}
-
-function mediasCaptionSegmentRemotePath(chatType, up, info) {
-    const url = up.url || up.text || "";
-    const thumb = up.thumbUrl || url;
-    const fs = up.fileSize != null ? up.fileSize : up.size || 0;
-    console.log('path join::', chatType, url, thumb, up?.duration, fs, info?.width, info?.height);
-    if (chatType === enumMsgType.image) {
-        return `image:${url}||${thumb}||${fs}||0`;
-    }
-    if (chatType === enumMsgType.video) {
-        return `video:${url}*P${thumb}||${up.duration || 0}||${fs}||${info.width || 0}||${info.height || 0}`;
-    }
-    if (chatType === enumMsgType.gif) {
-        return `gif:${url}||${url}`;
-    }
-    return "";
-}
-
-function mediasCaptionEncodeSlot(chatType, up, info) {
-    const url = up.url || up.text || "";
-    const thumb = up.thumbUrl || url;
-    const fs = up.fileSize != null ? up.fileSize : up.size || 0;
-    if (chatType === enumMsgType.image) {
-        return {
-            kind: "image",
-            url,
-            thumbUrl: thumb,
-            fileSize: fs,
-            width: info.width || 0,
-            height: info.height || 0,
-            sizeType: 0,
-        };
-    }
-    if (chatType === enumMsgType.video) {
-        return {
-            kind: "video",
-            url,
-            thumbUrl: up.thumbUrl || "",
-            fileSize: fs,
-            width: info.width || 0,
-            height: info.height || 0,
-            duration: up.duration || 0,
-        };
-    }
-    if (chatType === enumMsgType.gif) {
-        return {
-            kind: "gif",
-            url,
-            thumbUrl: thumb,
-            fileSize: fs,
-            width: info.width || 0,
-            height: info.height || 0,
-        };
-    }
-    return null;
-}
-
 /**
  * 消息发送，此方法是pc端操作，发送信息才会进入
  */
@@ -1494,246 +1397,31 @@ const fnMsgSend = async (info) => {
         // 文件缩略图
         let fileThumb = null;
 
-        if (item.type === "mediasCaption") {
-            if (editInfo) {
-                sendTime++;
+        const msgType17Result = await handleMsgType17Send({
+            item,
+            editInfo,
+            type,
+            id,
+            values,
+            customMsgId,
+            sendTime,
+            deleteSeconds,
+            loginInfo,
+            links,
+            info,
+            sendMsgList,
+            eventFile,
+            eventBase,
+            progress,
+        });
+        if (msgType17Result.handled) {
+            sendTime = msgType17Result.sendTime;
+            if (msgType17Result.shouldBreak) {
+                break;
+            }
+            if (msgType17Result.shouldContinue) {
                 continue;
             }
-            if (type !== "channel") {
-                break;
-            }
-            const files = item.files || [];
-            const caption = (values && values.caption) || "";
-            if (files.length < 2) {
-                break;
-            }
-
-            const preparedSlots = [];
-            for (const f of files) {
-                const got = await eventFile.fnFileInfosGet({
-                    file: f,
-                    id,
-                    type,
-                });
-                if (!got) {
-                    break;
-                }
-                preparedSlots.push({
-                    file: f,
-                    fileThumb: got.fileThumb,
-                    info: got.info,
-                });
-            }
-            if (preparedSlots.length !== files.length) {
-                break;
-            }
-
-            const localSegments = preparedSlots
-                .map((p) => mediasCaptionSegmentLocalPath(p.info.chatType, p.info))
-                .filter(Boolean);
-            let previewContent = localSegments.join("|||");
-            if (caption) {
-                previewContent += "##caption##" + caption;
-            }
-
-            const slotLocalFields = {};
-            preparedSlots.forEach((p, i) => {
-                slotLocalFields[`local_${i}`] = p.info.local;
-                if (p.info.localThumbUrl) {
-                    slotLocalFields[`thumb_${i}`] = p.info.localThumbUrl;
-                }
-            });
-
-            let dataDbMedias = {
-                ...values,
-                MsgID: customMsgId,
-                sendTime: sendTime.toString(),
-                readStatus: -1,
-                ToUserID: null,
-                UserID: loginInfo.id,
-                groupId: null,
-                sendUid: loginInfo.id,
-                customMsgId,
-                deleteSeconds,
-                atUsers: values.atUsers,
-                mute: info.mute,
-                channelId: id,
-                links,
-                chatType: enumMsgType.mediasCaption,
-                msgType: enumMsgType.mediasCaption,
-                content: previewContent,
-                caption,
-                ...slotLocalFields,
-            };
-
-            if (!editInfo) {
-                eventBase.fnCommunicationSendMsg({
-                    operator: "msgNew",
-                    data: {
-                        ...values,
-                        id,
-                        type,
-                        time: sendTime,
-                        sendTime,
-                        isSelf: true,
-                        readStatus: -1,
-                        customMsgId,
-                        deleteSeconds,
-                        mute: info.mute,
-                        links,
-                        chatType: enumMsgType.mediasCaption,
-                        msgType: enumMsgType.mediasCaption,
-                        content: previewContent,
-                        caption,
-                        ...slotLocalFields,
-                    },
-                });
-            }
-
-            eventBase.fnCommunicationSendMsg({
-                operator: "chatMsgListToBottom",
-                data: { id, type },
-            });
-
-            const uploadQueue = createFifoConcurrencyQueue(3);
-            const uploadResults = new Array(preparedSlots.length);
-            const sharedMediasCaptionFileKey = createHash(16, 10);
-
-            await Promise.all(
-                preparedSlots.map((slot, idx) =>
-                    (async () => {
-                        const release = await uploadQueue.acquire();
-                        try {
-                            const ct = slot.info.chatType;
-                            progress.init({
-                                chatType: ct,
-                                customMsgId,
-                                mediaSlotIndex: idx,
-                            });
-                            const up = await eventFile.fnFileUploadInfoGet({
-                                id,
-                                type,
-                                file: slot.file,
-                                fileThumb: slot.fileThumb,
-                                sharedFileKey: sharedMediasCaptionFileKey,
-                                params: {
-                                    chatType: ct,
-                                    width: slot.info.width,
-                                    height: slot.info.height,
-                                    taskId: `${ct}-${customMsgId}-${idx}`,
-                                },
-                            });
-                            uploadResults[idx] = up;
-                            if (up) {
-                                console.log("[mediasCaption] 上传成功", {
-                                    slot: idx,
-                                    chatType: ct,
-                                    customMsgId,
-                                    channelId: id,
-                                    url: up.url || up.text,
-                                    thumbUrl: up.thumbUrl || "",
-                                });
-                            }
-                            progress.complete({
-                                chatType: ct,
-                                customMsgId,
-                                mediaSlotIndex: idx,
-                            });
-                        } finally {
-                            release();
-                        }
-                    })()
-                )
-            );
-
-            if (uploadResults.some((u) => !u)) {
-                break;
-            }
-
-            console.log("[mediasCaption] 全部槽位上传完成", {
-                customMsgId,
-                channelId: id,
-                count: uploadResults.length,
-            });
-
-            const remoteSegments = preparedSlots.map((p, i) =>
-                mediasCaptionSegmentRemotePath(p.info.chatType, uploadResults[i], p.info)
-            );
-            let finalContent = remoteSegments.join("|||");
-            if (caption) {
-                finalContent += "##caption##" + caption;
-            }
-
-            const mediasCaptionSlots = preparedSlots
-                .map((p, i) => mediasCaptionEncodeSlot(p.info.chatType, uploadResults[i], p.info))
-                .filter(Boolean);
-
-            const firstUp = uploadResults[0];
-            const saveFileInfo = {
-                content: finalContent,
-                caption,
-                channelAttachmentKey: firstUp.channelAttachmentKey,
-                text: caption || firstUp.url || firstUp.text,
-                url: firstUp.url || firstUp.text,
-                fileKey: firstUp.fileKey,
-                percent: 100 + Number(Math.random().toFixed(6)),
-            };
-
-            eventBase.fnCommunicationSendMsg({
-                operator: "msgListPropertyUpdate",
-                data: {
-                    id,
-                    type,
-                    list: [
-                        {
-                            customMsgId,
-                            updated: saveFileInfo,
-                        },
-                    ],
-                },
-            });
-
-            if (!editInfo) {
-                eventBase.fnMsgAddToDB(
-                    { ...dataDbMedias, ...saveFileInfo },
-                    type === "friend" ? id : null
-                );
-            }
-
-            const curInfoMedias = {
-                params: {
-                    ...values,
-                    sendTime,
-                    sendUser: {
-                        nickName: loginInfo.name,
-                        pic: loginInfo.icon,
-                        uid: loginInfo.id,
-                    },
-                    links,
-                    chatType: enumMsgType.mediasCaption,
-                    msgType: enumMsgType.mediasCaption,
-                    text: caption || firstUp.url || firstUp.text || " ",
-                    mediasCaptionCaption: caption,
-                    mediasCaptionSlots,
-                    channelId: id,
-                    atUids: values.atUids,
-                    atUsers: values.atUsers || [],
-                },
-                isFile: false,
-                customMsgId,
-                fileInfos: {
-                    channelAttachmentKey: firstUp.channelAttachmentKey,
-                    text: caption || firstUp.url || firstUp.text,
-                    url: firstUp.url || firstUp.text,
-                    fileKey: firstUp.fileKey,
-                },
-                sendTime,
-            };
-
-            sendMsgList.push(curInfoMedias);
-
-            sendTime++;
-            continue;
         }
 
         // 文件信息, 文件处理并返回文件信息，异步上传
