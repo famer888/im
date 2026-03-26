@@ -120,18 +120,6 @@ const fnDownloadFileInfoUpdate = (data, errorType) => {
     const id = data.groupId || data.channelId || data.userId;
     const type = data.groupId ? "group"
                               : data.channelId ? "channel" : "friend";
-    // [dl-trace] 写入 DB 的 type 在此推断；无 groupId/channelId 时即为 friend
-    console.log("[dl-trace] file.fnDownloadFileInfoUpdate", {
-        inferredId: id,
-        inferredType: type,
-        groupId: data.groupId,
-        channelId: data.channelId,
-        userId: data.userId,
-        customMsgId: data.customMsgId,
-        mediaSlotIndex: data.mediaSlotIndex,
-        chatType: data.chatType,
-        errorType: errorType || null,
-    });
     const { customMsgId, fileLocalPath, isOpen, isDir, chatType, local, localThumbUrl, taskId, mediaSlotIndex } = data;
     const percentVal = 100 + Number(Math.random().toFixed(6));
     const percent = taskId && !errorType ? { percent: percentVal } : {};
@@ -266,13 +254,13 @@ const fnFilePathToType = (path) => {
  * 发送文件消息
  */
 const fnFileUploadInfoGet = async (values) => {
-    const { file, fileThumb, params, type, id } = values;
+    const { file, fileThumb, params, type, id, sharedFileKey } = values;
     const { chatType, width, height, taskId } = params;
 
     let fileInfos = null;
 
-    // 文件的相关信息
-    const fileKey = createHash(16, 10);
+    // 文件的相关信息（msgType 多图/多视频等可传入 sharedFileKey，使整条消息共用一个 key）
+    const fileKey = sharedFileKey || createHash(16, 10);
 
     // 文件后缀
     const suffix = file.path.slice(file.path.lastIndexOf("."));

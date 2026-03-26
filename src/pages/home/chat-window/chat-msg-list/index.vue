@@ -1586,11 +1586,10 @@ export default {
       }
       if (idsDelete?.length) {
         msgs = msgs.filter(item => {
-          console.log('idsDelete--', idsDelete)
           const deleteItem = idsDelete.find(i => Number(i.msgId) === Number(item.latestChannelMessage.msgId))
           return !deleteItem || Number(item.latestChannelMessage.msgTime) > deleteItem.clearTime
         })
-        console.log('deleteHistoryS-4-', msgs)
+        // console.log('deleteHistoryS-4-', msgs)
       }
 
       // 排序

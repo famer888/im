@@ -1148,6 +1148,56 @@ const fnEncode = (str, type, picData) => {
                 gameId: 1,
             }).finish();
         }
+        case enumMsgType.mediasCaption: {
+            const { mediasCaptionCaption = "", mediasCaptionSlots = [] } = picData || {};
+            const objs = [];
+            for (const slot of mediasCaptionSlots) {
+                if (!slot || !slot.kind) continue;
+                if (slot.kind === "image") {
+                    objs.push({
+                        type: CaptionMediaType.Image,
+                        content: ImageObj.encode({
+                            width: slot.width || 0,
+                            height: slot.height || 0,
+                            fileSize: Number(slot.fileSize) || 0,
+                            url: slot.url,
+                            thumbUrl: slot.thumbUrl || slot.url,
+                            sizeType: slot.sizeType != null ? slot.sizeType : 0,
+                        }).finish(),
+                    });
+                } else if (slot.kind === "video") {
+                    objs.push({
+                        type: CaptionMediaType.Video,
+                        content: VideoObj.encode({
+                            width: slot.width || 0,
+                            height: slot.height || 0,
+                            fileSize: Number(slot.fileSize) || 0,
+                            url: slot.url,
+                            thumbUrl: slot.thumbUrl || "",
+                            duration: slot.duration || 0,
+                        }).finish(),
+                    });
+                } else if (slot.kind === "gif") {
+                    objs.push({
+                        type: CaptionMediaType.DynamicImage,
+                        content: DynamicImageObj.encode({
+                            width: slot.width || 0,
+                            height: slot.height || 0,
+                            fileSize: Number(slot.fileSize) || 0,
+                            url: slot.url,
+                            thumbUrl: slot.thumbUrl || slot.url,
+                        }).finish(),
+                    });
+                }
+            }
+            const encoded = MediaTextListObj.encode({
+                objs,
+                caption: mediasCaptionCaption || "",
+            }).finish();
+            const decoded = MediaTextListObj.decode(encoded);
+            console.log('>>> encode caption decoded', decoded);
+            return encoded;
+        }
         default: {
             // 文本
             const params = {};
@@ -1199,6 +1249,8 @@ export const fnFormartMsgParams = async ({ data, customMsgId, id, type }) => {
         webAttachmentKey,
         noticeId,
         showNotify,
+        mediasCaptionCaption,
+        mediasCaptionSlots,
     } = data;
 
     // 是否是官方
@@ -1218,6 +1270,8 @@ export const fnFormartMsgParams = async ({ data, customMsgId, id, type }) => {
         duration,
         noticeId,
         showNotify,
+        mediasCaptionCaption,
+        mediasCaptionSlots,
     });
 
     const params = {

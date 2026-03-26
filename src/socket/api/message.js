@@ -106,7 +106,6 @@ export function CReqSendChatChannel(data, flag) {
     if (data.atUids && data.atUids.length && data.atUids[0] == undefined) {
         data.atUids = [];
     }
-    //    console.log('CReqSendChatChannel-1-',data, flag)
     const message = SendChannelMessage.create({ channelMessage: data, flag });
     // console.log('CReqSendChatChannel-2-',message)
     const buffer = SendChannelMessage.encode(message).finish();

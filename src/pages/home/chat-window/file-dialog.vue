@@ -3,18 +3,20 @@
     <div>
       <ul
         :class="{
-          multiple: list.length > 1,
-          only: list.length === 1 && list[0].type.includes('image'),
+          multiple: list.length > 1 && !channelGridMediasSend,
+          only:
+            (list.length === 1 && list[0].type.includes('image')) ||
+            channelGridMediasSend,
         }"
       >
-        <li v-for="(item, index) in list" :key="index">
-          <p v-if="item.isError" @click="handleRemoveFileInfo(index)">
+        <li v-for="(item, index) in displayFileList" :key="index">
+          <p v-if="item.isError" @click="handleRemoveFileInfo(displayIndex(index))">
             {{ $t("上传/文件视频大小超过50M!") }}
           </p>
           <picture>
             <img :src="item.path" />
           </picture>
-          <span @click="handleRemoveFileInfo(index)">
+          <span @click="handleRemoveFileInfo(displayIndex(index))">
             <img src="@/assets/images/file/close-icon.png" />
           </span>
           <div v-if="list.length > 1 || !list[0].type.includes('image')">
@@ -53,7 +55,7 @@
 </template>
 <script>
 import ComEditor from "./send/editor";
-import { getFileIcon, fileSizeFormat } from "@/utils/base";
+import { getFileIcon, fileSizeFormat, textToEmojiText, enumMsgType } from "@/utils/base";
 
 // 事件
 import eventBase from "@/event/base";
@@ -66,6 +68,18 @@ export default {
   },
   data() {
     return { list: [], loading: false };
+  },
+  computed: {
+    channelGridMediasSend() {
+      if (this.chatContent.type !== "channel") return false;
+      if (this.list.length < 2) return false;
+      if (this.list.some((x) => x.isError)) return false;
+      return this.list.every((x) => this.isGridMediaFileItem(x));
+    },
+    displayFileList() {
+      if (this.channelGridMediasSend) return this.list.slice(0, 1);
+      return this.list;
+    },
   },
   mounted() {
     // 文件列表
@@ -85,6 +99,18 @@ export default {
     }
   },
   methods: {
+    isGridMediaFileItem(row) {
+      const t = (row.type || "").toLowerCase();
+      if (t.startsWith("image/")) return true;
+      if (t.startsWith("video/")) return true;
+      const ext = (row.file?.name || "").split(".").pop()?.toLowerCase() || "";
+      return ["gif", "jpg", "jpeg", "png", "webp", "bmp", "mp4", "webm", "ogg"].includes(
+        ext
+      );
+    },
+    displayIndex(displayIdx) {
+      return this.channelGridMediasSend ? 0 : displayIdx;
+    },
     handleClose() {
       // 关闭 文件对话框
       eventCommon.fnCloseListRU({
@@ -104,27 +130,55 @@ export default {
 
       if (this.list.some((item) => item.isError)) {
         window.$toast(this.$t("上传/文件视频大小超过50M!"));
+        this.loading = false;
         return;
       }
 
-      eventBase.fnCommunicationSendMsg({
-        operator: "msgSend",
-        data: {
-          id,
-          type,
-          list: [
-            ...this.list.map((info) => {
-              return {
-                type: "file",
-                values: {},
-                file: info.file,
-              };
-            }),
-            ...list,
-          ],
-          quoteInfo: this.quoteInfo,
-        },
-      });
+      if (this.channelGridMediasSend) {
+        const caption = list
+          .filter((t) => t.type === "text")
+          .map((t) => textToEmojiText(t.values.content))
+          .join("\n")
+          .trim();
+        eventBase.fnCommunicationSendMsg({
+          operator: "msgSend",
+          data: {
+            id,
+            type,
+            list: [
+              {
+                type: "mediasCaption",
+                files: this.list.map((r) => r.file),
+                values: {
+                  chatType: enumMsgType.mediasCaption,
+                  msgType: enumMsgType.mediasCaption,
+                  caption,
+                },
+              },
+            ],
+            quoteInfo: this.quoteInfo,
+          },
+        });
+      } else {
+        eventBase.fnCommunicationSendMsg({
+          operator: "msgSend",
+          data: {
+            id,
+            type,
+            list: [
+              ...this.list.map((info) => {
+                return {
+                  type: "file",
+                  values: {},
+                  file: info.file,
+                };
+              }),
+              ...list,
+            ],
+            quoteInfo: this.quoteInfo,
+          },
+        });
+      }
 
       // 如果是弹窗内，则清空非弹窗输入框
       const dom = document.getElementById("sendMessageInput");

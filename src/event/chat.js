@@ -49,7 +49,6 @@ const fnChatListSort = (list) => {
 const fnChatWindowUpdate = async (info) => {
     // console.log("fnChatWindowUpdate--", info)
     const { updateInfo, chats, friendList, groups, channels, unreadObj } = info;
-    console.log('>>????', info);
 
     const loginId = eventCommon.fnCommonInfoRU({
         getId: "loginId",
