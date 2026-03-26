@@ -88,8 +88,20 @@ export const fnDbMsgListFormat = (list, isGroup) => {
                 pic: arr.length === 3 ? arr[1] : null,
             };
         }
+        const medias = {};
+        if (item.chatType === 17) {
+            Object.keys(item).forEach((key) => {
+                if (typeof key !== "string") return;
+                if (/^(local_|thumb_)/.test(key) && item[key]) {
+                    medias[key] = item[key];
+                } else if (/^percent_/.test(key) && item[key] != null) {
+                    medias[key] = item[key];
+                }
+            });
+        }
 
         return {
+            ...medias,
             id: item.customMsgId,
             customMsgId: item.customMsgId,
             MsgID: item.MsgID,

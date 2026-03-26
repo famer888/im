@@ -1,7 +1,7 @@
 <template>
   <div class="comMsgMediasCaption" @click.right="(e) => $emit('rightClick', { e, info: msgInfo })">
     <slot></slot>
-    <div class="media-grid">
+    <div class="media-grid" :style="{ '--media-grid-cols': mediaGridColumnCount }">
       <div
         v-for="item in mediaItems"
         :key="`${(msgInfo && msgInfo.customMsgId) || 'media'}-${item.mediaSlotIndex}`"
@@ -179,6 +179,12 @@ export default {
     mediaItems() {
       return this._parsedMediasCaption.items;
     },
+    /** 每行最多 3 格；总宽度随实际格子列数收缩（1～3 列） */
+    mediaGridColumnCount() {
+      const n = this.mediaItems.length;
+      if (n <= 0) return 1;
+      return Math.min(3, n);
+    },
   },
   methods: {
     waitMediaSlot() {
@@ -196,7 +202,7 @@ export default {
 
   .media-grid {
     display: grid;
-    grid-template-columns: repeat(3, 100px);
+    grid-template-columns: repeat(var(--media-grid-cols, 3), 100px);
     grid-auto-rows: 100px;
     gap: 4px;
     width: fit-content;

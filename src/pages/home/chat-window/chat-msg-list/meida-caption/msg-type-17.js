@@ -267,6 +267,7 @@ export async function handleMsgType17Send(ctx) {
     .filter(Boolean);
 
   const firstUp = uploadResults[0];
+  const donePercent = 100 + Number(Math.random().toFixed(6));
   const saveFileInfo = {
     content: finalContent,
     caption,
@@ -274,8 +275,11 @@ export async function handleMsgType17Send(ctx) {
     text: caption || firstUp.url || firstUp.text,
     url: firstUp.url || firstUp.text,
     fileKey: firstUp.fileKey,
-    percent: 100 + Number(Math.random().toFixed(6)),
+    percent: donePercent,
   };
+  preparedSlots.forEach((_, i) => {
+    saveFileInfo[`percent_${i}`] = donePercent;
+  });
 
   eventBase.fnCommunicationSendMsg({
     operator: "msgListPropertyUpdate",
