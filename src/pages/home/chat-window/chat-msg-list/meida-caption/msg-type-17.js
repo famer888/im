@@ -182,6 +182,14 @@ export async function handleMsgType17Send(ctx) {
     ...slotLocalFields,
   };
 
+  preparedSlots.forEach((slot, idx) => {
+    progress.init({
+      chatType: slot.info.chatType,
+      customMsgId,
+      mediaSlotIndex: idx,
+    });
+  });
+
   eventBase.fnCommunicationSendMsg({
     operator: "msgNew",
     data: {
@@ -219,11 +227,6 @@ export async function handleMsgType17Send(ctx) {
         const release = await uploadQueue.acquire();
         try {
           const ct = slot.info.chatType;
-          progress.init({
-            chatType: ct,
-            customMsgId,
-            mediaSlotIndex: idx,
-          });
           const up = await eventFile.fnFileUploadInfoGet({
             id,
             type,

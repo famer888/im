@@ -363,7 +363,7 @@ const fnFileInfosGet = async (info) => {
     // 文件夹地址
     const dirPath = await getUserDataDirectory({
         GroupID: type === "group" ? id : null,
-        UserID: type === "user" ? id : null,
+        UserID: type === "user" || type === "friend" ? id : null,
         ChannelID: type === "channel" ? id : null,
     });
 
@@ -497,16 +497,16 @@ const fnOperatorFile = async ({ id, type, info, openDialog, isDir, taskId }, kee
     }
 
     // [dl-trace] IPC 不带 session.type；好友单聊时 params.userId=id、groupId=null，后续 fnDownloadFileInfoUpdate 会推断 type=friend
-    console.log("[dl-trace] file.fnOperatorFile", {
-        sessionId: id,
-        sessionType: type,
-        userId: params.userId,
-        groupId: params.groupId,
-        channelId: params.channelId,
-        customMsgId: params.customMsgId,
-        msgChatType: info.chatType,
-        mediaSlotIndex: info.mediaSlotIndex,
-    });
+    // console.log("[dl-trace] file.fnOperatorFile", {
+    //     sessionId: id,
+    //     sessionType: type,
+    //     userId: params.userId,
+    //     groupId: params.groupId,
+    //     channelId: params.channelId,
+    //     customMsgId: params.customMsgId,
+    //     msgChatType: info.chatType,
+    //     mediaSlotIndex: info.mediaSlotIndex,
+    // });
 
     if(!info.local) {
         // 优先使用动态域名
@@ -514,10 +514,8 @@ const fnOperatorFile = async ({ id, type, info, openDialog, isDir, taskId }, kee
         params.trendsFileUrl = await getOssFirstNormalUrl(fileUrl, 0, 0);
     }
     if (openDialog) {
-        console.log('openFileDialog')
         ipcRenderer.invoke("openFileDialog", params);
     } else {
-        console.log('fileFoldersOpen')
         ipcRenderer.send("fileFoldersOpen", params);
     }
 };

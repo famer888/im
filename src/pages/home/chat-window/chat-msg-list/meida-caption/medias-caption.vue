@@ -20,6 +20,8 @@
 </template>
 
 <script>
+import { createFifoConcurrencyQueue } from "./msg-type-17.js";
+
 const CAPTION_SEP = "##caption##";
 
 function stripMediasCaptionRefSuffix(tail) {
@@ -135,37 +137,13 @@ function buildMediaItemsFromContent(msgInfo) {
   return { items, tailCaption };
 }
 
-function createMediaTransferQueue(concurrency = 3) {
-  let active = 0;
-  const waiting = [];
-  return {
-    acquire() {
-      return new Promise((resolve) => {
-        const grant = () => {
-          active++;
-          resolve(() => {
-            active--;
-            const next = waiting.shift();
-            if (next) next();
-          });
-        };
-        if (active < concurrency) {
-          grant();
-        } else {
-          waiting.push(grant);
-        }
-      });
-    },
-  };
-}
-
 export default {
   props: ["msgInfo", "chatContent"],
   components: {
     MediasCaptionCell: () => import("./medias-caption-cell.vue"),
   },
   created() {
-    this._mediaQueue = createMediaTransferQueue(3);
+    this._mediaQueue = createFifoConcurrencyQueue(3);
   },
   computed: {
     _parsedMediasCaption() {
