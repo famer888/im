@@ -3,20 +3,18 @@
     <div>
       <ul
         :class="{
-          multiple: list.length > 1 && !channelGridMediasSend,
-          only:
-            (list.length === 1 && list[0].type.includes('image')) ||
-            channelGridMediasSend,
+          multiple: list.length > 1,
+          only: list.length === 1 && list[0].type.includes('image'),
         }"
       >
-        <li v-for="(item, index) in displayFileList" :key="index">
-          <p v-if="item.isError" @click="handleRemoveFileInfo(displayIndex(index))">
+        <li v-for="(item, index) in list" :key="index">
+          <p v-if="item.isError" @click="handleRemoveFileInfo(index)">
             {{ $t("上传/文件视频大小超过50M!") }}
           </p>
           <picture>
             <img :src="item.path" />
           </picture>
-          <span @click="handleRemoveFileInfo(displayIndex(index))">
+          <span @click="handleRemoveFileInfo(index)">
             <img src="@/assets/images/file/close-icon.png" />
           </span>
           <div v-if="list.length > 1 || !list[0].type.includes('image')">
@@ -76,10 +74,6 @@ export default {
       if (this.list.some((x) => x.isError)) return false;
       return this.list.every((x) => this.isGridMediaFileItem(x));
     },
-    displayFileList() {
-      if (this.channelGridMediasSend) return this.list.slice(0, 1);
-      return this.list;
-    },
   },
   mounted() {
     // 文件列表
@@ -107,9 +101,6 @@ export default {
       return ["gif", "jpg", "jpeg", "png", "webp", "bmp", "mp4", "webm", "ogg"].includes(
         ext
       );
-    },
-    displayIndex(displayIdx) {
-      return this.channelGridMediasSend ? 0 : displayIdx;
     },
     handleClose() {
       // 关闭 文件对话框

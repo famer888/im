@@ -95,9 +95,9 @@
             <div
               class="tip-msg"
               v-else-if="
-                [1, 2, 3, 5, 7, 9, 12, 18].includes(item.chatType) ||
-                item.chatType === 12 ||
-                item.msgType === 13
+                [1, 2, 3, 5, 7, 9, 12, 17, 18].includes(Number(item.chatType)) ||
+                Number(item.msgType) === 13 ||
+                Number(item.msgType) === 17
               "
             >
               <h4
@@ -508,7 +508,7 @@ export default {
       if (Number.isNaN(ct)) return false;
       if ([50, 51, 52].includes(ct)) return false;
       if (item.type === "channel" && ct === 6) return false;
-      if (ct === 0 || [1, 2, 3, 5, 7, 8, 9, 12, 18].includes(ct)) return false;
+      if (ct === 0 || [1, 2, 3, 5, 7, 8, 9, 12, 17, 18].includes(ct)) return false;
       if (mt === 16) return false;
       return true;
     },
