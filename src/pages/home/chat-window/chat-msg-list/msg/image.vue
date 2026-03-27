@@ -210,17 +210,11 @@ export default {
          * 打开文件
          */
         handleOpenFile() {
+          if (this.loading) return;
           const { chatType } = this.msgInfo || {};
           chatType === 3 && this.initProgressBar();
           const taskId = chatType === 3 ? progress.getTask(this.msgInfo)?.taskId : null;
-          // [dl-trace] 点击打开/下载：会话类型由此带入 fnOperatorFile（好友单聊即为 friend）
-          console.log("[dl-trace] image.handleOpenFile", {
-            chatContentId: this.chatContent.id,
-            chatContentType: this.chatContent.type,
-            msgChatType: chatType,
-            mediaSlotIndex: this.msgInfo.mediaSlotIndex,
-            taskId,
-          });
+          this._onProgress && this._onProgress(0);
           eventFile.fnOperatorFile({
               taskId,
               id: this.chatContent.id,
@@ -243,7 +237,9 @@ export default {
 
             const { content, chatType, MsgID, fileKey, customMsgId } = this.msgInfo;
             // 本地文件不存在了，重新触发下载
-            this.retriggerDownloadWhenFailed();
+            if (this.msgInfo?.msgType !== 17) {
+                this.retriggerDownloadWhenFailed();
+            }
             // 文件路径（剥离 || 后 thumb、size、宽高 等元数据，与历史单图逻辑一致）
             let fileUrl = content ? stripChatContentMetaSuffix(content) : "";
             if (chatType === 3) {

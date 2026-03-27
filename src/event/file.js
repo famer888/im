@@ -120,18 +120,6 @@ const fnDownloadFileInfoUpdate = (data, errorType) => {
     const id = data.groupId || data.channelId || data.userId;
     const type = data.groupId ? "group"
                               : data.channelId ? "channel" : "friend";
-    // [dl-trace] 写入 DB 的 type 在此推断；无 groupId/channelId 时即为 friend
-    console.log("[dl-trace] file.fnDownloadFileInfoUpdate", {
-        inferredId: id,
-        inferredType: type,
-        groupId: data.groupId,
-        channelId: data.channelId,
-        userId: data.userId,
-        customMsgId: data.customMsgId,
-        mediaSlotIndex: data.mediaSlotIndex,
-        chatType: data.chatType,
-        errorType: errorType || null,
-    });
     const { customMsgId, fileLocalPath, isOpen, isDir, chatType, local, localThumbUrl, taskId, mediaSlotIndex } = data;
     const percentVal = 100 + Number(Math.random().toFixed(6));
     const percent = taskId && !errorType ? { percent: percentVal } : {};
@@ -193,7 +181,21 @@ const fnDownloadFileInfoUpdate = (data, errorType) => {
 
     // 打开文件
     if (isOpen) {
-        openFile(fileLocalPath, isDir);
+        if (!isDir && [1, 3, 9].includes(chatType)) {
+            window.mediaState && window.mediaState.send({
+                url: fileLocalPath,
+                mediaType: chatType,
+                width: data.width || 0,
+                height: data.height || 0,
+                cover: localThumbUrl || data.thumbUrl || '',
+                duration: data.duration || 0,
+                fileName: data.fileName || '',
+                size: data.size || 0,
+            });
+            ipcRenderer.send("fileFoldersOpen", { local: fileLocalPath, chatType });
+        } else {
+            openFile(fileLocalPath, isDir);
+        }
     }
 };
 
@@ -266,13 +268,13 @@ const fnFilePathToType = (path) => {
  * 发送文件消息
  */
 const fnFileUploadInfoGet = async (values) => {
-    const { file, fileThumb, params, type, id } = values;
+    const { file, fileThumb, params, type, id, sharedFileKey } = values;
     const { chatType, width, height, taskId } = params;
 
     let fileInfos = null;
 
-    // 文件的相关信息
-    const fileKey = createHash(16, 10);
+    // 文件的相关信息（msgType 多图/多视频等可传入 sharedFileKey，使整条消息共用一个 key）
+    const fileKey = sharedFileKey || createHash(16, 10);
 
     // 文件后缀
     const suffix = file.path.slice(file.path.lastIndexOf("."));
@@ -375,7 +377,7 @@ const fnFileInfosGet = async (info) => {
     // 文件夹地址
     const dirPath = await getUserDataDirectory({
         GroupID: type === "group" ? id : null,
-        UserID: type === "user" ? id : null,
+        UserID: type === "user" || type === "friend" ? id : null,
         ChannelID: type === "channel" ? id : null,
     });
 
@@ -458,21 +460,26 @@ const fnOperatorFile = async ({ id, type, info, openDialog, isDir, taskId }, kee
     });
 
     if (info.content) {
-        if (!info.content.includes("||") && !info.content.includes("*P")) {
+        const hasSplit = info.content.includes("||");
+        const hasThumbSep = info.content.includes("*P");
+        // 图片 / 视频 / GIF 统一走媒体窗 + fileFoldersOpen；转发时 content 常被收成纯 URL，不能走 openFile
+        const isMediaType = [1, 3, 9].includes(info.chatType);
+        if (!isMediaType && !hasSplit && !hasThumbSep) {
             openFile(info.local, isDir);
             return;
         }
 
-        // 文件路径
-        fileUrl = info.content.split("||")[1];
+        fileUrl = hasSplit ? info.content.split("||")[1] : info.content;
         if (info.chatType === 3) {
-            if(info.content.includes('*P')){
+            if (hasThumbSep) {
                 fileUrl = info.content.split("*P")[0];
-            } else if(info.content.includes('||')){
+            } else if (hasSplit) {
                 fileUrl = info.content.split("||")[0];
+            } else {
+                fileUrl = info.content;
             }
-        } else if (info.chatType === 1 || info.chatType === 7) {
-            fileUrl = info.content.split("||")[0];
+        } else if (info.chatType === 1 || info.chatType === 7 || info.chatType === 9) {
+            fileUrl = hasSplit ? info.content.split("||")[0] : info.content;
         }
     }
 
@@ -503,33 +510,51 @@ const fnOperatorFile = async ({ id, type, info, openDialog, isDir, taskId }, kee
         openDialog,
         isDir,
         taskId,
+        width: info.width || 0,
+        height: info.height || 0,
+        duration: info.duration || 0,
+        thumbUrl: info.thumbUrl || '',
+        size: info.size || info.fileSize || 0,
     };
     if (info.mediaSlotIndex !== undefined && info.mediaSlotIndex !== null) {
         params.mediaSlotIndex = info.mediaSlotIndex;
     }
 
     // [dl-trace] IPC 不带 session.type；好友单聊时 params.userId=id、groupId=null，后续 fnDownloadFileInfoUpdate 会推断 type=friend
-    console.log("[dl-trace] file.fnOperatorFile", {
-        sessionId: id,
-        sessionType: type,
-        userId: params.userId,
-        groupId: params.groupId,
-        channelId: params.channelId,
-        customMsgId: params.customMsgId,
-        msgChatType: info.chatType,
-        mediaSlotIndex: info.mediaSlotIndex,
-    });
+    // console.log("[dl-trace] file.fnOperatorFile", {
+    //     sessionId: id,
+    //     sessionType: type,
+    //     userId: params.userId,
+    //     groupId: params.groupId,
+    //     channelId: params.channelId,
+    //     customMsgId: params.customMsgId,
+    //     msgChatType: info.chatType,
+    //     mediaSlotIndex: info.mediaSlotIndex,
+    // });
 
     if(!info.local) {
         // 优先使用动态域名
         // 优先使用动态域名
         params.trendsFileUrl = await getOssFirstNormalUrl(fileUrl, 0, 0);
     }
+
+    // 图片/视频：通过 localStorage 传递媒体信息给播放器
+    if (info.local && !isDir && [1, 3, 9].includes(info.chatType)) {
+        window.mediaState && window.mediaState.send({
+            url: info.local,
+            mediaType: info.chatType,
+            width: info.width || 0,
+            height: info.height || 0,
+            cover: info.localThumbUrl || info.thumbUrl || '',
+            duration: info.duration || 0,
+            fileName: info.fileName || '',
+            size: info.size || info.fileSize || 0,
+        });
+    }
+
     if (openDialog) {
-        console.log('openFileDialog')
         ipcRenderer.invoke("openFileDialog", params);
     } else {
-        console.log('fileFoldersOpen')
         ipcRenderer.send("fileFoldersOpen", params);
     }
 };

@@ -699,20 +699,18 @@ export default class dbBase {
    */
   async updateMsgProperty({ id, type, list }) {
     try {
-      console.log('...update', id, type);
       const tableName = handleTableNameGet(id, type);
       const msgIdList = [];
 
       // 找到对应的信息
       for (const item of list) {
         const { customMsgId, updated } = item;
-        console.log('>>> item', item);
 
         const info = await this.db[tableName].get(customMsgId);
-        msgIdList.push(info.MsgID);
 
         // 信息存在则对应去修改
         if (info) {
+          msgIdList.push(info.MsgID);
           await this.db[tableName].update(info.customMsgId, updated);
         }
       }
@@ -990,7 +988,6 @@ export default class dbBase {
    * 新增替换
    */
   async addDB(tableName, data, type) {
-    console.log('你入库了吗');
     // 等待数据库初始化完成
     await this._dbReady;
     let addData = this.setDataList(data, type, tableName);

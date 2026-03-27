@@ -1,7 +1,7 @@
 <template>
   <div class="comMsgMediasCaption" @click.right="(e) => $emit('rightClick', { e, info: msgInfo })">
     <slot></slot>
-    <div class="media-grid">
+    <div class="media-grid" :style="{ '--media-grid-cols': mediaGridColumnCount }">
       <div
         v-for="item in mediaItems"
         :key="`${(msgInfo && msgInfo.customMsgId) || 'media'}-${item.mediaSlotIndex}`"
@@ -20,20 +20,16 @@
 </template>
 
 <script>
+import { createFifoConcurrencyQueue } from "./msg-type-17.js";
+
 const CAPTION_SEP = "##caption##";
 
-/**
- * 与 encryption-decryption.js mediasCaption 分支写入格式一致：
- * image:url||thumb||fileSize||sizeType ||| video:url*Pthumb||duration||fileSize||w||h ||| gif:url||url
- * 末尾可选 ##caption## 文字
- */
 function stripMediasCaptionRefSuffix(tail) {
   if (!tail) return "";
   const idx = tail.indexOf("-||-type:");
   return (idx < 0 ? tail : tail.slice(0, idx)).trim();
 }
 
-/** 无 ##caption## 时，引用信息会拼在整个 content 末尾，需从媒体段之前去掉 */
 function stripTrailingRefFromMediasBody(body) {
   if (!body) return "";
   const idx = body.indexOf("-||-type:");
@@ -54,7 +50,6 @@ function splitMediasCaptionBody(content) {
   };
 }
 
-/** 父消息体顶层 local_i / thumb_i / percent_i（percent 与 image.vue 中 watch msgInfo.percent 一致） */
 function applySlotLocalFromParent(common, msgInfo, i) {
   const lk = `local_${i}`;
   const tk = `thumb_${i}`;
@@ -103,7 +98,6 @@ function buildMediaItemsFromContent(msgInfo) {
       const meta = contentStr.split("||");
       const head = meta[0] || "";
       const p = head.split("*P");
-      const mainUrl = p[0] || "";
       const thumbUrl = p[1] || "";
       items.push({
         ...common,
@@ -119,7 +113,6 @@ function buildMediaItemsFromContent(msgInfo) {
       chatType = 1;
       contentStr = seg.slice(6);
       const meta = contentStr.split("||");
-      const url = meta[0] || "";
       const thumbUrl = meta[1] || "";
       items.push({
         ...common,
@@ -144,38 +137,13 @@ function buildMediaItemsFromContent(msgInfo) {
   return { items, tailCaption };
 }
 
-/** 视频/媒体传输 FIFO 队列：最多 concurrency 个并发，完成一个再补一个 */
-function createMediaTransferQueue(concurrency = 3) {
-  let active = 0;
-  const waiting = [];
-  return {
-    acquire() {
-      return new Promise((resolve) => {
-        const grant = () => {
-          active++;
-          resolve(() => {
-            active--;
-            const next = waiting.shift();
-            if (next) next();
-          });
-        };
-        if (active < concurrency) {
-          grant();
-        } else {
-          waiting.push(grant);
-        }
-      });
-    },
-  };
-}
-
 export default {
   props: ["msgInfo", "chatContent"],
   components: {
     MediasCaptionCell: () => import("./medias-caption-cell.vue"),
   },
   created() {
-    this._mediaQueue = createMediaTransferQueue(3);
+    this._mediaQueue = createFifoConcurrencyQueue(3);
   },
   computed: {
     _parsedMediasCaption() {
@@ -188,6 +156,12 @@ export default {
     },
     mediaItems() {
       return this._parsedMediasCaption.items;
+    },
+    /** 每行最多 3 格；总宽度随实际格子列数收缩（1～3 列） */
+    mediaGridColumnCount() {
+      const n = this.mediaItems.length;
+      if (n <= 0) return 1;
+      return Math.min(3, n);
     },
   },
   methods: {
@@ -206,7 +180,7 @@ export default {
 
   .media-grid {
     display: grid;
-    grid-template-columns: repeat(3, 100px);
+    grid-template-columns: repeat(var(--media-grid-cols, 3), 100px);
     grid-auto-rows: 100px;
     gap: 4px;
     width: fit-content;

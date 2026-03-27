@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>媒体</title>
+  <link rel="stylesheet" href="css/plyr.min.css">
+  <style>
+    body { margin: 0; background: rgba(0,0,0,0.65); color: #fff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; overflow: hidden; }
+    .titlebar { position: fixed; top: 0; left: 0; right: 0; display: flex; justify-content: space-between; align-items: center; -webkit-app-region: drag; height: 32px; z-index: 100; padding: 0 4px 0 0; box-sizing: border-box; }
+    .titlebar-label { margin-left: 12px; font-size: 13px; color: rgba(255,255,255,0.75); -webkit-app-region: drag; user-select: none; pointer-events: none; }
+    .titlebar-actions { display: flex; align-items: center; -webkit-app-region: no-drag; }
+    .titlebar-btn { -webkit-app-region: no-drag; width: 46px; height: 32px; border: none; background: transparent; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+    .titlebar-btn svg { fill: none; stroke: #aaa; stroke-width: 1.5; width: 16px; height: 16px; }
+    .titlebar-btn:hover svg { stroke: #fff; }
+    .titlebar-btn.close:hover { background: #e81123; }
+    .titlebar-btn.close:hover svg { stroke: #fff; }
+    .bottom-actions { position: fixed; right: 16px; bottom: 16px; display: flex; gap: 8px; z-index: 100; }
+    .action-btn { width: 40px; height: 40px; border: none; background: rgba(255,255,255,0.1); border-radius: 50%; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+    .action-btn svg { stroke: #aaa; width: 20px; height: 20px; }
+    .action-btn:hover { background: rgba(255,255,255,0.2); }
+    .action-btn:hover svg { stroke: #fff; }
+    .action-btn-text { padding: 8px 12px; border: none; background: rgba(255,255,255,0.1); border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; color: #aaa; font-size: 12px; }
+    .action-btn-text svg { width: 16px; height: 16px; fill: #aaa; flex-shrink: 0; }
+    .action-btn-text:hover { background: rgba(255,255,255,0.2); color: #fff; }
+    .action-btn-text:hover svg { fill: #fff; }
+    .media-layer { position: fixed; top: 0; left: 0; right: 0; bottom: 0; display: none; align-items: center; justify-content: center; }
+    .media-layer.active { display: flex; }
+    /* 以最长边（宽或高）占满容器，另一边按比例缩放。如：容器高1024，图片1800x3600 → 以1024高显示，宽=1800*(1024/3600) */
+    #image-layer { overflow: hidden; }
+    #img-wrap { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    #image-layer img { width: 100%; height: 100%; object-fit: contain; user-select: none; -webkit-user-drag: none; }
+    #video-layer { background: transparent; }
+    #video-layer .plyr { width: 100%; height: 100%; }
+    #video-layer video { width: 100%; height: 100%; object-fit: contain; }
+    .plyr--video { --plyr-color-main: #7b8aff; --plyr-video-background: transparent; background: transparent; }
+    .plyr__controls { position: absolute !important; bottom: 24px !important; left: 50% !important; transform: translateX(-50%) !important; width: 70% !important; max-width: 600px !important; border-radius: 12px !important; background: rgba(0,0,0,0.55) !important; backdrop-filter: blur(8px) !important; padding: 6px 12px !important; }
+  </style>
+</head>
+
+<body>
+  <div class="titlebar">
+    <span id="media-type-label" class="titlebar-label" aria-live="polite"></span>
+    <div class="titlebar-actions">
+      <button class="titlebar-btn minimize" onclick="window.electronAPI?.minimize?.()"><svg viewBox="0 0 16 16"><line x1="3" y1="8" x2="13" y2="8"/></svg></button>
+      <button class="titlebar-btn maximize" onclick="toggleMaximize()"><svg id="max-icon" viewBox="0 0 16 16"><rect x="3" y="3" width="10" height="10" rx="1.5" fill="none" stroke-width="1.5"/></svg></button>
+      <button class="titlebar-btn close" onclick="window.electronAPI?.close?.()"><svg viewBox="0 0 16 16"><line x1="4" y1="4" x2="12" y2="12"/><line x1="12" y1="4" x2="4" y2="12"/></svg></button>
+    </div>
+  </div>
+  <div id="image-layer" class="media-layer">
+  </div>
+  <div id="video-layer" class="media-layer">
+    <video id="video-player" preload="metadata"></video>
+  </div>
+  <!-- <div style="position:fixed;top:36px;left:12px;z-index:100;display:flex;gap:6px;">
+    <button onclick="mediaView.init('test.jpg',window.MediaType.IMAGE)" style="padding:4px 10px;border:none;border-radius:6px;background:rgba(255,255,255,0.15);color:#fff;cursor:pointer;font-size:12px;">Test Image</button>
+    <button onclick="mediaView.init('test.mp4',window.MediaType.VIDEO)" style="padding:4px 10px;border:none;border-radius:6px;background:rgba(255,255,255,0.15);color:#fff;cursor:pointer;font-size:12px;">Test Video</button>
+  </div> -->
+  <div class="bottom-actions">
+    <button id="rotate-btn" class="action-btn" title="Rotate" onclick="mediaView.rotate()"><svg viewBox="0 0 24 24" fill="none"><path d="M11.5 20.5C6.80558 20.5 3 16.6944 3 12C3 7.30558 6.80558 3.5 11.5 3.5C16.1944 3.5 20 7.30558 20 12C20 13.5433 19.5887 14.9905 18.8698 16.238M22.5 15L18.8698 16.238M17.1747 12.3832L18.5289 16.3542L18.8698 16.238" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <button class="action-btn-text" title="使用默认应用打开" onclick="mediaView.openWithDefaultApp()"><svg viewBox="0 0 20 20"><path d="M10 3.778a6.222 6.222 0 1 0 3.726 11.205l-4.869-4.869v2.208a.889.889 0 0 1-1.778 0V7.968c0-.49.398-.889.89-.889h4.353a.889.889 0 0 1 0 1.778h-2.208l4.87 4.87A6.193 6.193 0 0 0 16.221 10 6.222 6.222 0 0 0 10 3.778ZM2 10a8 8 0 1 1 16 0 8 8 0 0 1-16 0Z"/></svg>使用默认应用打开</button>
+  </div>
+  <script src="js/plyr.min.js"></script>
+  <script src="js/wheel-zoom.min.js"></script>
+  <script src="media-state.js"></script>
+  <script>
+    let isMaximized = false;
+    const maxIcon = document.getElementById('max-icon');
+    const svgRestore = '<path d="M5 3h8v8M3 5h8v8H3z" fill="none" stroke-width="1.5"/>';
+    const svgMaximize = '<rect x="3" y="3" width="10" height="10" rx="1.5" fill="none" stroke-width="1.5"/>';
+    function toggleMaximize() { window.electronAPI?.maximize?.(); isMaximized = !isMaximized; maxIcon.innerHTML = isMaximized ? svgRestore : svgMaximize; }
+
+    const videoPlayer = new Plyr('#video-player', {
+      controls: ['play-large', 'play', 'progress', 'current-time', 'duration', 'mute', 'volume', 'fullscreen'],
+      tooltips: { controls: false, seek: true },
+      invertTime: false,
+      autoplay: true
+    });
+
+    const IMAGE_WZOOM_OPTIONS = { minScale: 1, maxScale: 3, speed: 2, zoomOnClick: false, zoomOnDblClick: false };
+
+    function debounce(fn, wait) {
+      let t;
+      return function debounced() {
+        clearTimeout(t);
+        t = setTimeout(fn, wait);
+      };
+    }
+
+    const mediaView = {
+      _rotation: 0,
+      _wz: null,
+      _src: '',
+      _mediaType: '',
+      _naturalWidth: 0,
+      _naturalHeight: 0,
+
+      /** WZoom 在首次 init 时缓存了 viewport 尺寸，窗口拉伸/最大化后需重建，否则缩放的坐标焦点会偏移 */
+      _rebuildImageWheelZoom() {
+        if (this._mediaType !== window.MediaType.IMAGE) return;
+        if (!document.querySelector('#img-wrap img')) return;
+        if (this._wz) {
+          this._wz.destroy();
+          this._wz = null;
+        }
+        this._wz = WZoom.create('#img-wrap img', IMAGE_WZOOM_OPTIONS);
+      },
+
+      init(src, mediaType, width, height, cover) {
+        this._src = src;
+        this._mediaType = mediaType;
+        this._naturalWidth = width || 0;
+        this._naturalHeight = height || 0;
+        this._cover = cover || '';
+        this._rotation = 0;
+
+        const typeLabel = mediaType === window.MediaType.VIDEO ? '视频' : '图片';
+        document.title = typeLabel;
+        const labelEl = document.getElementById('media-type-label');
+        if (labelEl) labelEl.textContent = typeLabel;
+
+        const imageLayer = document.getElementById('image-layer');
+        const videoLayer = document.getElementById('video-layer');
+
+        document.getElementById('rotate-btn').style.display = mediaType === window.MediaType.IMAGE ? '' : 'none';
+
+        if (mediaType === window.MediaType.IMAGE) {
+          imageLayer.classList.add('active');
+          videoLayer.classList.remove('active');
+          if (this._wz) { this._wz.destroy(); this._wz = null; }
+          imageLayer.innerHTML = '<div id="img-wrap"><img /></div>';
+          const img = imageLayer.querySelector('img');
+          img.src = src;
+          if (width) img.setAttribute('data-width', width);
+          if (height) img.setAttribute('data-height', height);
+          this._rebuildImageWheelZoom();
+        } else if (mediaType === window.MediaType.VIDEO) {
+          videoLayer.classList.add('active');
+          imageLayer.classList.remove('active');
+          if (this._wz) { this._wz.destroy(); this._wz = null; }
+          imageLayer.innerHTML = '';
+          const videoEl = document.getElementById('video-player');
+          if (cover) videoEl.poster = cover;
+          videoPlayer.source = { type: 'video', sources: [{ src: src }] };
+          videoPlayer.once('ready', () => videoPlayer.play());
+        }
+      },
+
+      _getImg() { return document.querySelector('#image-layer img'); },
+
+      rotate() { const wrap = document.getElementById('img-wrap'); if (!wrap) return; this._rotation += 90; wrap.style.transform = `rotate(${this._rotation}deg)`; },
+
+      async saveAs() {
+        const src = this._src;
+        if (!src) return;
+        const filePath = src.startsWith('file://') ? decodeURIComponent(src.replace(/^file:\/\/\/?/, '')) : src;
+        window.electronAPI?.saveAs(filePath);
+      },
+
+      setSize(width, height) {
+        this._naturalWidth = width;
+        this._naturalHeight = height;
+      },
+
+      async openWithDefaultApp() {
+        const src = this._src;
+        if (!src) return;
+        const filePath = src.startsWith('file://')
+          ? decodeURIComponent(src.replace(/^file:\/\/\/?/, ''))
+          : src;
+        const res = await window.electronAPI?.openPath?.(filePath);
+        if (res && !res.success && res.error) console.error('openPath:', res.error);
+      }
+    };
+
+    function handleMediaState(state) {
+      if (!state || !state.url) return;
+      const mediaType = state.mediaType === 3 ? window.MediaType.VIDEO : window.MediaType.IMAGE;
+      mediaView.init(state.url, mediaType, state.width, state.height, state.cover);
+    }
+
+    handleMediaState(window.mediaState?.get());
+    window.mediaState?.subscribe(handleMediaState);
+
+    /** 媒体窗口「在前台、展示中」：可见且当前接收键盘焦点（主窗口在前台时本窗口不会收到 keydown） */
+    function isMediaPresentationActive() {
+      return (
+        !document.hidden &&
+        document.visibilityState === 'visible' &&
+        document.hasFocus()
+      );
+    }
+
+    window.addEventListener(
+      'keydown',
+      (e) => {
+        if (e.key !== 'Escape') return;
+        if (!isMediaPresentationActive()) return;
+        if (document.fullscreenElement) return;
+        e.preventDefault();
+        window.electronAPI?.close?.();
+      },
+      true
+    );
+
+    window.addEventListener('resize', debounce(() => mediaView._rebuildImageWheelZoom(), 120));
+  </script>
+</body>
+
+</html>

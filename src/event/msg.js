@@ -35,6 +35,7 @@ import eventChannel from "./channel";
 import { benchmark } from "@/debuggers";
 import progress from "@/utils/progress";
 import { CReqChannelMessageReceipt } from "@/socket/api/message";
+import { handleMsgType17Send } from "@/pages/home/chat-window/chat-msg-list/meida-caption/msg-type-17";
 
 /**
  * 消息去重检查
@@ -1116,6 +1117,8 @@ const fnMsgTypeToText = ({ chatType, msgType, haveBrackets }) => {
     let text = "";
     if (msgType === 13) {
         text = i18n.t("暂不支持该消息类型");
+    } else if (Number(msgType) === 17 || Number(chatType) === 17) {
+        text = i18n.t("多图");
     } else {
         switch (chatType) {
             case 1: {
@@ -1226,6 +1229,11 @@ const fnMsgContentAddQuote = async (data) => {
 
 // 发送中消息列表 id和时间
 let sendingInfoList = [];
+
+/** 普通消息发送等待服务端回执的超时（毫秒） */
+const MSG_SEND_TIMEOUT_MS = 15000;
+/** msgType 17 多媒体+配文，多文件上传耗时长，单独放宽超时 */
+const MSG_SEND_TIMEOUT_MEDIAS_CAPTION_MS = 5 * 60 * 1000;
 
 /**
  * 消息发送，此方法是pc端操作，发送信息才会进入
@@ -1406,6 +1414,33 @@ const fnMsgSend = async (info) => {
 
         // 文件缩略图
         let fileThumb = null;
+
+        const msgType17Result = await handleMsgType17Send({
+            item,
+            editInfo,
+            type,
+            id,
+            values,
+            customMsgId,
+            sendTime,
+            deleteSeconds,
+            loginInfo,
+            links,
+            info,
+            sendMsgList,
+            eventFile,
+            eventBase,
+            progress,
+        });
+        if (msgType17Result.handled) {
+            sendTime = msgType17Result.sendTime;
+            if (msgType17Result.shouldBreak) {
+                break;
+            }
+            if (msgType17Result.shouldContinue) {
+                continue;
+            }
+        }
 
         // 文件信息, 文件处理并返回文件信息，异步上传
         if (item.type === "file") {
@@ -1662,6 +1697,7 @@ const fnMsgSend = async (info) => {
             type,
             customMsgId: item.customMsgId,
             sendTime: Number(item.sendTime),
+            msgType: item.params?.msgType ?? item.params?.chatType,
         });
 
         // 清除多余的字段
@@ -1773,9 +1809,13 @@ const fnMsgSendTimeout = () => {
     const now = Date.now();
 
     // 超时信息列表
-    const infoTimeoutList = _.cloneDeep(sendingInfoList.filter(
-        (item) => now - item.sendTime > 15000
-    ));
+    const infoTimeoutList = _.cloneDeep(sendingInfoList.filter((item) => {
+        const limit =
+            item.msgType === enumMsgType.mediasCaption
+                ? MSG_SEND_TIMEOUT_MEDIAS_CAPTION_MS
+                : MSG_SEND_TIMEOUT_MS;
+        return now - item.sendTime > limit;
+    }));
     // console.log('infoTimeoutList --------> 1045', infoTimeoutList)
     //  超时id列表
     const idTimeoutList = infoTimeoutList.map((item) => item.customMsgId);

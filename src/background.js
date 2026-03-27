@@ -29,6 +29,8 @@ import { openFile } from "@/utils/server";
 import { showNotification, closeNotification } from  "@/notification";
 import { runMacStartupCleanup, watchUserDataRemoval, stopWatchUserData } from "@/utils/mac/uninstall-errors";
 import { initToggleSideBar } from "@/utils/toggleSideBar";
+import MediaProcess, { isMediaPlayerWindow } from "@/utils/media/MediaProcess";
+
 const log = require('electron-log');
 initElectronLog();
 
@@ -758,7 +760,7 @@ const sendMain = (channel, data, targetWindow = null) => {
   // 最后，尝试获取第一个可用的窗口
   else {
     const allWindows = BrowserWindow.getAllWindows();
-    win = allWindows.find(w => !w.isDestroyed());
+    win = allWindows.find((w) => !w.isDestroyed() && !isMediaPlayerWindow(w));
   }
 
   // 检查窗口是否有效
@@ -802,6 +804,12 @@ const setMainWin = async () => {
 
     registerLocalResourceProtocol();
 
+    if (!process.env.WEBPACK_DEV_SERVER_URL) {
+        createProtocol("app");
+    }
+
+    // MediaProcess.create();
+
     mainWindow = new BrowserWindow({
         x: mainWindowState.x,
         y: mainWindowState.y,
@@ -828,15 +836,18 @@ const setMainWin = async () => {
         await mainWindow.loadURL(process.env.WEBPACK_DEV_SERVER_URL);
         // mainWindow.openDevTools({ mode: 'detach' });
     } else {
-        createProtocol("app");
-        mainWindow.loadURL("app:// ./index.html", {
+        mainWindow.loadURL("app://./index.html", {
             extraHeaders: "Access-Control-Allow-Origin: *",
         });
     }
     require("@electron/remote/main").enable(mainWindow.webContents);
     mainWindow.webContents.on("did-finish-load", async (e) => {
         try {
-            const win = mainWindow || (BrowserWindow.getAllWindows() || [])[0];
+            const win =
+                mainWindow ||
+                (BrowserWindow.getAllWindows() || []).find(
+                    (w) => !w.isDestroyed() && !isMediaPlayerWindow(w)
+                );
             win && win.show();
             win && win.focus();
             await new Promise(resolve => setTimeout(resolve, 1000 / 60));
@@ -971,16 +982,6 @@ const handleFileDownload = (args) => {
         timeout, // 超时时长毫秒
     } = args;
     // [dl-trace] 主进程仅见 userId/groupId/channelId，无 session.type 字段
-    console.log("[dl-trace] bg.handleFileDownload", {
-        uid,
-        userId,
-        groupId,
-        channelId,
-        msgId,
-        chatType,
-        isOpen,
-        hasLocal: !!local,
-    });
     const url = trendsFileUrl || fileUrl;
 
 
@@ -1031,8 +1032,15 @@ const handleFileDownload = (args) => {
         isOpen,
     });
 
-    const windows = BrowserWindow.getAllWindows();
-    windows[0].webContents.downloadURL(url);
+    const downloadWin =
+        mainWindow && !mainWindow.isDestroyed()
+            ? mainWindow
+            : BrowserWindow.getAllWindows().find(
+                  (w) => !w.isDestroyed() && !isMediaPlayerWindow(w)
+              );
+    if (downloadWin && downloadWin.webContents) {
+        downloadWin.webContents.downloadURL(url);
+    }
 
     // console.log(fileUrl)
 };
@@ -1194,7 +1202,7 @@ const createMainWindow = async () => {
 
     // 监听 文件/文件夹 打开
     ipcMain.on("fileFoldersOpen", (event, args) => {
-        const { local, isDir, fileUrl } = args;
+        const { local, isDir, fileUrl, chatType } = args;
 
         if (local) {
             fs.stat(local, (err) => {
@@ -1208,8 +1216,13 @@ const createMainWindow = async () => {
                   taskId: args.taskId,
                   percent: 100 + Math.random().toFixed(6),
                 });
-                // 文件存在，并且是要打开文件
-                openFile(local, isDir);
+                // 图片/视频用媒体播放器打开（数据已通过 localStorage 传递）
+                if (!isDir && [1, 3, 9].includes(chatType)) {
+                    MediaProcess.create(mainWindow);
+                    MediaProcess.show();
+                } else {
+                    openFile(local, isDir);
+                }
             });
         } else if (fileUrl) {
             // 下载文件
@@ -1443,13 +1456,20 @@ app.on("window-all-closed", () => {
 app.on("before-quit", async (event) => {
     const data = await getLocalFile({ key: "source-id-list" });
     if (data) {
-        const windows = BrowserWindow.getAllWindows();
-        await getLocalFile({
-            key: "source-id-list",
-            value: JSON.parse(data).filter(
-                (id) => id !== windows[0].getMediaSourceId()
-            ),
-        });
+        const primaryWin =
+            mainWindow && !mainWindow.isDestroyed()
+                ? mainWindow
+                : BrowserWindow.getAllWindows().find(
+                      (w) => !w.isDestroyed() && !isMediaPlayerWindow(w)
+                  );
+        if (primaryWin) {
+            await getLocalFile({
+                key: "source-id-list",
+                value: JSON.parse(data).filter(
+                    (id) => id !== primaryWin.getMediaSourceId()
+                ),
+            });
+        }
     }
 
     // 停止电源阻止器

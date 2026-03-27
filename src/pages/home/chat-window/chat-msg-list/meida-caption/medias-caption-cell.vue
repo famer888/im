@@ -9,7 +9,7 @@
 </template>
 
 <script>
-import ComMsgImage from "./image.vue";
+import ComMsgImage from "../msg/image.vue";
 
 export default {
   name: "MediasCaptionCell",
@@ -17,7 +17,6 @@ export default {
   props: {
     item: { type: Object, required: true },
     chatContent: { type: Object, required: true },
-    /** () => Promise<releaseFn>，与 medias-caption 中队列一致 */
     acquireSlot: { type: Function, required: true },
   },
   data() {
@@ -53,7 +52,6 @@ export default {
     },
   },
   methods: {
-    /** 多图父消息：以顶层是否存在 local_i / thumb_i 判断该槽是否已写入（与 medias-caption 约定一致） */
     hasLocalPath(msg) {
       if (!msg) return false;
       const i = msg.mediaSlotIndex;

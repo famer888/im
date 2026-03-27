@@ -49,7 +49,8 @@ export default {
         id: this.chatContent.id,
         type: this.chatContent.type,
         customMsgId: this.msgInfo.customMsgId,
-        sendTime: this.msgInfo.sendTime,
+        sendTime: Number(this.msgInfo.sendTime),
+        msgType: this.msgInfo.msgType ?? this.msgInfo.chatType,
       });
     }
   },

@@ -2082,6 +2082,12 @@ export default {
         );
       }
 
+      const ct = Number(msgLast.chatType);
+      const mt = Number(msgLast.msgType);
+      if (ct === 17 || mt === 17) {
+        return "[" + i18n.t("多图") + "]";
+      }
+
       if (msgLast.chatType === 51 && msgLast.content.includes("||")) {
         let arr = msgLast.content.split("||");
         let str = i18n.t("设置了消息已读XX后销毁");
