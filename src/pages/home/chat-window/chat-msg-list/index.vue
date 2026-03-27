@@ -29,7 +29,7 @@
               :data-show-time-day="n.showTimeDay"
             >
               <h3 v-if="unreadSeparationId == n.customMsgId">
-                <span @click="unreadSeparationId = -1">
+                <span @click="handleCloseUnreadSeparation">
                   {{ $t("未读消息") }}
                 </span>
               </h3>
@@ -308,8 +308,8 @@
         </div>
       </div>
     </section>
-    <ComFloatRightBtns :atMeIds="atMeIds" :btnToBottomVisible="btnToBottomVisible" :unreadCount="unreadCount"
-      @clickToAt="handleToAt" @clickToBottom="handleToBottom" />
+    <ComFloatRightBtns :atMeIds="atMeIds" :btnToBottomVisible="btnToBottomVisible" :unreadCount="unreadCount" :initialUnreadCount="initialUnreadCount"
+    @clickToAt="handleToAt" @clickToBottom="handleToBottom" @clickToUnread="handleToUnread" @clickToNewMsg="handleToNewMsg" />
   </div>
 </template>
 <script>
@@ -495,7 +495,10 @@ export default {
         floatDate: "", // 浮动日期
         atMeIds: [], // at我的id列表
         unreadCount: 0, // 当前聊天的未读总数
+        initialUnreadCount: 0, // 记录刚进入窗口时的未读总数，用于计算递减
         unreadSeparationId: "", // 未读消息分隔id
+        latestNewMsgId: "", // 不在底部时收到的最新一条消息的ID，用于点击提示跳转
+        seenUnreadMsgIds: new Set(), // 记录已看过的历史未读消息
       };
     },
     /**
@@ -507,6 +510,9 @@ export default {
 
       // 已有的页面
       pageNumListOld = [];
+
+      // 重置时间记录
+      msgReadByMeTime = 0;
 
       // 设置置底按钮是否显示
       this.handleToBottomBtnVisibleSet();
@@ -808,7 +814,10 @@ export default {
       }
 
       // 滚动处理（只执行一次）
-      if (!btnToBottomVisibleBefore || isToBottom) {
+      // 现在同步app逻辑在当前聊天窗口时新消息强制已读，所以不再累加未读气泡
+      // 同时因为已经已读了，所以不需要去累加 DB 的未读红点，只需处理纯 UI 的新消息提示气泡。
+      const hasSelfMsg = newItems.some(item => item.info.isSelf);
+      if (!btnToBottomVisibleBefore || isToBottom || hasSelfMsg) {
         // 使用 setTimeout 确保 DOM 已更新
         setTimeout(() => {
           const dom = this.$refs["container"];
@@ -818,12 +827,34 @@ export default {
             this.handleScrollTo(-1, 12);
           }
         }, 5);
+        // 如果在底部，意味着新消息直接看到了，未读提示气泡重置为0
+        this.unreadCount = 0;
+        this.initialUnreadCount = 0;
+        this.latestNewMsgId = ""; // 在底部直接看到，不需要记录
+        if (this.seenUnreadMsgIds) {
+          this.seenUnreadMsgIds.clear();
+        }
       } else {
-        setTimeout(() => {
-          this.unreadCount = this.chatContent.unreadObj
-            ? this.chatContent.unreadObj.count
-            : 0;
-        }, 200);
+        // 如果不在底部，为了提示用户有新消息，根据新增的消息数量累加
+        const visibleNewItems = newItems.filter(item => {
+          const info = item.info;
+          return !(info.isHide && !info.isSelf) && !((info.msgType === 8 || info.chatType === 8) && info.isHide);
+        });
+
+        if (visibleNewItems.length > 0) {
+          if (this.unreadCount === 0) {
+            this.initialUnreadCount = 0; // 重置初始基数，有新消息来时清空上箭头
+            if (this.seenUnreadMsgIds) {
+              this.seenUnreadMsgIds.clear();
+            }
+          }
+          this.unreadCount = this.unreadCount + visibleNewItems.length;
+          // 记录新消息的ID，便于右上角（上箭头提示信息）锚点跳转
+          // 只有在第一次累加时才记录第一条新消息位置，如果已经在看历史记录且有 latestNewMsgId，则不覆盖它
+          if (!this.latestNewMsgId) {
+            this.latestNewMsgId = visibleNewItems[0].info.customMsgId;
+          }
+        }
       }
     },
     /**
@@ -860,8 +891,159 @@ export default {
         return;
       }
 
-      // 同步未读数
-      this.unreadCount = unreadMsgCount;
+      // 现在的机制下，只要进入窗口就会把未读清空，unreadCount 变成纯 UI 展示气泡
+      // 所以删除消息时不应该直接用数据库的未读数覆盖，否则会导致 UI 气泡异常消失
+      // this.unreadCount = unreadMsgCount;
+
+      // 如果有新消息气泡（下箭头），需要检查删除的消息中是否包含这些新消息，或者是否删除了锚点消息
+      // 这是为了保证删除消息后，右下角的气泡数字能精准扣减，并且如果锚点被删能自动顺延，防止跳到一个空位置
+      if (this.unreadCount > 0 && idsDelete && idsDelete.length > 0) {
+        let deletedNewMsgCount = 0;
+        let isLatestMsgIdDeleted = false;
+
+        // 获取第一条新消息（下箭头锚点）的发送时间，用于判断被删除的消息是不是在它之后（即是不是新消息）
+        let timeUnread = 0;
+        if (this.latestNewMsgId) {
+          for (const block of this.blockList) {
+            const msg = block.list.find(m => m.customMsgId === this.latestNewMsgId);
+            if (msg) {
+              timeUnread = Number(msg.sendTime);
+              break;
+            }
+          }
+        }
+
+        const customMsgIdList = idsDelete.filter(item => item.customMsgId).map(item => item.customMsgId);
+        const msgIdList = idsDelete.filter(item => !item.customMsgId).map(item => Number(item.msgId));
+
+        // 检查被删除的消息
+        for (const block of this.blockList) {
+          for (const msg of block.list) {
+            const isDeleted = customMsgIdList.includes(msg.customMsgId) || msgIdList.includes(Number(msg.MsgID));
+            if (isDeleted) {
+              // 检查是否删除了下箭头的锚点消息
+              if (msg.customMsgId === this.latestNewMsgId) {
+                isLatestMsgIdDeleted = true;
+              }
+              // 检查是否删除了新消息（包括锚点本身），条件：时间在锚点之后且不是自己发的
+              if (timeUnread > 0 && !msg.isSelf && Number(msg.sendTime) >= timeUnread) {
+                deletedNewMsgCount++;
+              }
+            }
+          }
+        }
+
+        // 递减新消息数量，保证 UI 气泡数字实时准确
+        if (deletedNewMsgCount > 0) {
+          this.unreadCount = this.unreadCount - deletedNewMsgCount;
+          // 如果新消息被删光了，彻底清空下箭头气泡和锚点
+          if (this.unreadCount <= 0) {
+            this.unreadCount = 0;
+            this.latestNewMsgId = "";
+          }
+        }
+
+        // 如果下箭头的锚点消息被删除了，但还有其他新消息，我们需要重新寻找下一个新消息作为替补锚点
+        // 这样用户点击气泡时才不会发生错乱
+        if (isLatestMsgIdDeleted && this.unreadCount > 0) {
+          let nextNewMsgId = "";
+          let nextNewMsgTime = Infinity;
+
+          for (const block of this.blockList) {
+            for (const msg of block.list) {
+              const isDeleted = customMsgIdList.includes(msg.customMsgId) || msgIdList.includes(Number(msg.MsgID));
+              // 寻找条件：未被删、非自己发、时间大于原锚点，且时间最小（紧挨着原锚点）
+              if (!isDeleted && !msg.isSelf && Number(msg.sendTime) > timeUnread && Number(msg.sendTime) < nextNewMsgTime) {
+                nextNewMsgId = msg.customMsgId;
+                nextNewMsgTime = Number(msg.sendTime);
+              }
+            }
+          }
+
+          if (nextNewMsgId) {
+            this.latestNewMsgId = nextNewMsgId; // 成功找到顺延锚点
+          } else {
+            // 找不到下一个锚点（极端情况），为防止气泡卡死，强行清空
+            this.unreadCount = 0;
+            this.latestNewMsgId = "";
+          }
+        }
+      }
+
+      // 如果有历史未读气泡（上箭头），且删除了消息，也做精准扣减处理
+      // 防止未读数虚高，或者锚点丢失导致无法跳转
+      if (this.initialUnreadCount > 0 && idsDelete && idsDelete.length > 0) {
+        let deletedInitialUnreadCount = 0;
+        let isUnreadSeparationIdDeleted = false;
+        let timeUnread = 0;
+
+        if (this.chatContent.unreadObj && this.chatContent.unreadObj.time) {
+          timeUnread = Number(this.chatContent.unreadObj.time);
+        }
+
+        if (timeUnread > 0) {
+          const customMsgIdList = idsDelete.filter(item => item.customMsgId).map(item => item.customMsgId);
+          const msgIdList = idsDelete.filter(item => !item.customMsgId).map(item => Number(item.msgId));
+
+          for (const block of this.blockList) {
+            for (const msg of block.list) {
+              const isDeleted = customMsgIdList.includes(msg.customMsgId) || msgIdList.includes(Number(msg.MsgID));
+              if (isDeleted) {
+                // 检查是否删除了上箭头的锚点消息（即带有“以下为未读消息”分隔线的那条）
+                if (this.unreadSeparationId && msg.customMsgId === this.unreadSeparationId) {
+                  isUnreadSeparationIdDeleted = true;
+                }
+                // 找出被删除的消息中，哪些属于历史未读消息
+                if (!msg.isSelf && Number(msg.sendTime) >= timeUnread) {
+                  // 防重复扣减：如果这个消息之前已经被滚动看到过(存在于 Set 中，气泡数字已经被扣减过了)，就不再次扣减
+                  if (!this.seenUnreadMsgIds || !this.seenUnreadMsgIds.has(msg.customMsgId)) {
+                    deletedInitialUnreadCount++;
+                  }
+                }
+              }
+            }
+          }
+
+          if (deletedInitialUnreadCount > 0) {
+            this.initialUnreadCount = this.initialUnreadCount - deletedInitialUnreadCount;
+            if (this.initialUnreadCount <= 0) {
+              this.initialUnreadCount = 0;
+            }
+            // 同步修正底层记录的未读总数，以防下次计算时基数错乱
+            if (this.chatContent.unreadObj) {
+              this.chatContent.unreadObj.count = Math.max(0, this.chatContent.unreadObj.count - deletedInitialUnreadCount);
+            }
+          }
+
+          // 如果上箭头的锚点消息被删除了，但还有其他历史未读消息，需要重新寻找下一个历史未读消息作为替补锚点
+          if (isUnreadSeparationIdDeleted && this.initialUnreadCount > 0) {
+            let nextUnreadId = "";
+            let nextUnreadTime = Infinity;
+
+            for (const block of this.blockList) {
+              for (const msg of block.list) {
+                const isDeleted = customMsgIdList.includes(msg.customMsgId) || msgIdList.includes(Number(msg.MsgID));
+                // 寻找在 timeUnread 之后的第一条别人发的消息
+                if (!isDeleted && !msg.isSelf && Number(msg.sendTime) >= timeUnread && Number(msg.sendTime) < nextUnreadTime) {
+                  nextUnreadId = msg.customMsgId;
+                  nextUnreadTime = Number(msg.sendTime);
+                }
+              }
+            }
+
+            if (nextUnreadId) {
+              this.unreadSeparationId = nextUnreadId; // 成功找到顺延锚点，分隔线会自动渲染到这条消息上
+            } else {
+              // 找不到下一个锚点，清空气泡、锚点和阅读记录
+              this.initialUnreadCount = 0;
+              this.unreadSeparationId = -1;
+              if (this.seenUnreadMsgIds) {
+                this.seenUnreadMsgIds.clear();
+              }
+            }
+          }
+        }
+      }
 
       /////////////// 如果是需要页面重新计算直接走计算，否则进行现有数据处理
 
@@ -1009,9 +1191,16 @@ export default {
     eventHandlingChatMsgListToBottom() {
       // 清除未读总数
       this.unreadCount = 0;
+      this.latestNewMsgId = "";
 
-      // 清除未读分隔
-      this.unreadSeparationId = -1;
+      // 暂不清除
+      // this.unreadSeparationId = -1;
+
+      // 清除历史未读气泡和相关记录
+      this.initialUnreadCount = 0;
+      if (this.seenUnreadMsgIds) {
+        this.seenUnreadMsgIds.clear();
+      }
 
       // 渲染出最后一页 并移动到底部
       this.handleBlockListShowPageNumChange(this.pageCount, true);
@@ -1020,13 +1209,16 @@ export default {
      * 处理事件 消息已读
      */
     eventHandlingMsgRead(info) {
-      if (info.unreadInfo) {
-        // 同步数据库拿的未读
-        this.unreadCount = info.unreadInfo.count;
-      } else {
-        // 清除未读总数
-        this.unreadCount = 0;
-      }
+      // 目前机制下，未读气泡变为纯前端 UI 状态，不应被底层的已读同步事件清空，
+      // 所以忽略此事件。气泡的清理已统一由 handleToUnread 和 handleMsgEnterVisualRange 接管。
+
+      // if (info.unreadInfo) {
+      //   // 同步数据库拿的未读
+      //   this.unreadCount = info.unreadInfo.count;
+      // } else {
+      //   // 清除未读总数
+      //   this.unreadCount = 0;
+      // }
     },
     /**
      * 处理事件 新消息
@@ -1162,7 +1354,8 @@ export default {
       }
 
       // 如果收到消息时在底部，则自动下滑
-      if (!btnToBottomVisibleBefore || isToBottom) {
+      // 因为已经已读了，所以不需要去累加 DB 的未读红点，只需处理纯 UI 的新消息提示气泡。
+      if (!btnToBottomVisibleBefore || isToBottom || info.isSelf) {
         setTimeout(() => {
           const dom = this.$refs["container"];
           // 如果没有滚动
@@ -1172,15 +1365,27 @@ export default {
             this.handleScrollTo(-1, 12);
           }
         }, 5);
+        // 如果在底部或是自己发的消息，则清空气泡提示
+        this.unreadCount = 0;
+        this.initialUnreadCount = 0;
+        this.latestNewMsgId = "";
+        if (this.seenUnreadMsgIds) {
+          this.seenUnreadMsgIds.clear();
+        }
       } else if(isHiddenMessage) {
         this.handleMsgEnterVisualRange();
       } else {
-        // 添加未读
-        setTimeout(() => {
-          this.unreadCount = this.chatContent.unreadObj
-            ? this.chatContent.unreadObj.count
-            : 0;
-        }, 200);
+        // 如果不在底部，为了提示用户有新消息，累加未读数量
+        if (this.unreadCount === 0) {
+          this.initialUnreadCount = 0; // 重置初始基数，有新消息来时清空上箭头
+          if (this.seenUnreadMsgIds) {
+            this.seenUnreadMsgIds.clear();
+          }
+        }
+        if (!this.latestNewMsgId) {
+          this.latestNewMsgId = info.customMsgId; // 记录刚开始不在底部时收到的第一条消息的ID，便于跳转
+        }
+        this.unreadCount += 1;
       }
     },
     /**
@@ -1871,16 +2076,16 @@ export default {
               }
 
               // 有搜索/未读位置时用 DB 的当前页，否则显示最后一页
-              if (customMsgId || this.unreadSeparationId) {
+              if (customMsgId) {
                 this.blockListShowPageNum = res.pageNumCurrent || this.pageCount;
               } else {
                 this.blockListShowPageNum = this.pageCount;
               }
 
               setTimeout(() => {
-                if (customMsgId || this.unreadSeparationId) {
+                if (customMsgId) {
                   this.handleMoveToId({
-                    customMsgId: customMsgId || this.unreadSeparationId,
+                    customMsgId: customMsgId,
                     isImmediately: true,
                   });
                 } else {
@@ -1888,6 +2093,31 @@ export default {
                 }
 
                 this.containerOpacity = 1;
+
+                // 切换到窗口直接全部已读
+                if (time) {
+                  eventBase.fnCommunicationSendMsg({
+                    operator: "msgReadByMe",
+                    data: {
+                      id: this.chatContent.id,
+                      type: this.chatContent.type,
+                      values: {
+                        timeUnread: time
+                      }
+                    },
+                  });
+                }
+
+                // 只有没传入搜索 customMsgId 时，我们才重置数量以展示未读气泡
+                  if (!customMsgId && this.chatContent.unreadObj) {
+                    // 进入窗口时提示的还有多少条未读，减去可视区域的消息数量 (可视区域在 handleMsgEnterVisualRange 会计算)
+                    this.initialUnreadCount = this.chatContent.unreadObj.count;
+                    this.unreadCount = 0; // 上箭头模式下，数量由 initialUnreadCount 提供，这里清空下箭头的新消息数
+                    this.latestNewMsgId = ""; // 切换窗口重置下箭头锚点
+                    if (this.seenUnreadMsgIds) { // 清空已看消息的记录集合
+                     this.seenUnreadMsgIds.clear();
+                    }
+                  }
 
                 const dom = this.$refs["container"];
                 if (dom && dom.clientHeight === dom.scrollHeight) {
@@ -1898,7 +2128,7 @@ export default {
               }, 100);
             } else {
               this.blockList = res?.msgBlockList || [];
-              this.blockListShowPageNum = res.pageNumCurrent;
+              this.blockListShowPageNum = customMsgId ? res.pageNumCurrent : res.pageCount;
               this.pageCount = res.pageCount;
               this.pageLastMsgCount = res.pageLastMsgCount;
               // 设置已存在
@@ -1907,10 +2137,10 @@ export default {
               // console.log('chat-msg-list: ----------->blockList 1335', this.blockList)
 
               setTimeout(() => {
-                if (customMsgId || this.unreadSeparationId) {
-                  // 搜索/未读 移动至
+                if (customMsgId) {
+                  // 搜索 移动至
                   this.handleMoveToId({
-                    customMsgId: customMsgId || this.unreadSeparationId,
+                    customMsgId: customMsgId,
                     isImmediately: true,
                   });
                 } else {
@@ -1920,6 +2150,31 @@ export default {
 
                 // 容器显示
                 this.containerOpacity = 1;
+
+                // 切换到窗口直接全部已读
+                if (time) {
+                  eventBase.fnCommunicationSendMsg({
+                    operator: "msgReadByMe",
+                    data: {
+                      id: this.chatContent.id,
+                      type: this.chatContent.type,
+                      values: {
+                        timeUnread: time
+                      }
+                    },
+                  });
+                }
+
+                // 只有没传入搜索 customMsgId 时，我们才重置数量以展示未读气泡
+                if (!customMsgId && this.chatContent.unreadObj) {
+                  // 进入窗口时提示的还有多少条未读，减去可视区域的消息数量 (可视区域在 handleMsgEnterVisualRange 会计算)
+                  this.initialUnreadCount = this.chatContent.unreadObj.count;
+                  this.unreadCount = 0; // 上箭头模式下，数量由 initialUnreadCount 提供，这里清空下箭头的新消息数
+                  this.latestNewMsgId = ""; // 切换窗口重置下箭头锚点
+                  if (this.seenUnreadMsgIds) { // 清空已看消息的记录集合
+                     this.seenUnreadMsgIds.clear();
+                  }
+                }
 
                 // 如果不需要滚动，则设置一次已读
                 const dom = this.$refs["container"];
@@ -2009,6 +2264,68 @@ export default {
         data: { id, type },
       });
     },
+    handleCloseUnreadSeparation() {
+      this.unreadSeparationId = -1;
+      this.initialUnreadCount = 0;
+    },
+    /**
+     * 移动至未读第一条（从右上角提示气泡点击）
+     */
+     handleToUnread() {
+      // 1. 如果有未读消息的锚点 (这是切换窗口时的未读 上箭头)
+      if (this.unreadSeparationId && this.unreadSeparationId !== -1) {
+        let pageNumTarget = -1;
+        for (const block of this.blockList) {
+          if (block.list.some(msg => msg.customMsgId === this.unreadSeparationId)) {
+            pageNumTarget = block.pageNum;
+            break;
+          }
+        }
+
+        if (pageNumTarget !== -1) {
+          this.blockListShowPageNum = pageNumTarget;
+        }
+
+        this.$nextTick(() => {
+          this.handleMoveToId({
+            customMsgId: this.unreadSeparationId,
+            isImmediately: true,
+          });
+          this.initialUnreadCount = 0;
+          if (this.seenUnreadMsgIds) {
+            this.seenUnreadMsgIds.clear();
+          }
+        });
+      }
+    },
+    /**
+     * 移动至新消息第一条（从下箭头气泡点击）
+     */
+    handleToNewMsg() {
+      // 如果是当前窗口收到的新消息（没有 unreadSeparationId，但 unreadCount > 0）
+      if (this.unreadCount > 0 && this.latestNewMsgId) {
+        let pageNumTarget = -1;
+        for (const block of this.blockList) {
+          if (block.list.some(msg => msg.customMsgId === this.latestNewMsgId)) {
+            pageNumTarget = block.pageNum;
+            break;
+          }
+        }
+
+        if (pageNumTarget !== -1) {
+          this.blockListShowPageNum = pageNumTarget;
+        }
+
+        this.$nextTick(() => {
+          this.handleMoveToId({
+            customMsgId: this.latestNewMsgId,
+            isImmediately: true,
+          });
+          this.unreadCount = 0;
+          this.latestNewMsgId = ""; // 跳转后清除这个锚点记录，防止下一次收消息时还是跳到旧的位置
+        });
+      }
+    },
     /**
      * 移动至at信息
      */
@@ -2069,37 +2386,88 @@ export default {
           });
         }
 
-        // 进入可视区域的最后一条信息
-        const msgLastEnterVisual = msgListEnterVisual[msgListEnterVisual.length - 1];
-        // console.log('[debug] msgLastEnterVisual--', msgLastEnterVisual);
+        // 如果用户滚动看到了未读第一条的位置，或者看到了最新的一条消息，就把未读气泡清掉
+        if (this.unreadCount > 0 || this.initialUnreadCount > 0) {
+          // 初始未读分界线，只清空上箭头
+          if (this.initialUnreadCount > 0 && this.unreadSeparationId && msgListEnterVisual.some(msg => msg.customMsgId === this.unreadSeparationId)) {
+            this.initialUnreadCount = 0; // 清空初始未读记录
+            if (this.seenUnreadMsgIds) {
+              this.seenUnreadMsgIds.clear(); // 清空看过的历史消息记录
+            }
+          } else if (this.initialUnreadCount > 0 && this.chatContent.unreadObj && this.chatContent.unreadObj.time) {
+            // 这是针对刚进入窗口时，有很多历史未读，通过滚动来递减未读数
+            const timeUnread = Number(this.chatContent.unreadObj.time);
 
-        // 如果有未读，并有未读消息在可视区域内，则设置已读
-        let timeUnread = _.get(this.chatContent.unreadObj, "time");
-        // console.log('[debug] timeUnread1', timeUnread);
+            // 要累积计算用户已经看到过的历史未读消息 （上箭头信息）
+            // 所以将所有滚动过的历史未读消息ID记录在一个 Set 里
+            if (!this.seenUnreadMsgIds) {
+              this.$set(this, 'seenUnreadMsgIds', new Set());
+            }
 
-        if (msgReadByMeTime !== 0) {
-          timeUnread = msgReadByMeTime;
-        }
-        // console.log('[debug] timeUnread2', msgLastEnterVisual.readStatus, msgLastEnterVisual.sendTime, timeUnread);
-
-        if (timeUnread) {
-          timeUnread = Number(timeUnread);
-          if (msgLastEnterVisual.readStatus !== 2 && Number(msgLastEnterVisual.sendTime) >= timeUnread) {
-            eventBase.fnCommunicationSendMsg({
-              operator: "msgReadByMe",
-              data: {
-                id: this.chatContent.id,
-                type: this.chatContent.type,
-                values: {
-                  sendTime: Number(msgLastEnterVisual.sendTime),
-                  timeUnread,
-                },
-              },
+            msgListEnterVisual.forEach(msg => {
+              if (!msg.isSelf && Number(msg.sendTime) >= timeUnread) {
+                this.seenUnreadMsgIds.add(msg.customMsgId);
+              }
             });
-            // 更新最后消息事件
-            msgReadByMeTime = msgLastEnterVisual.sendTime + 1;
+
+            const newCount = this.chatContent.unreadObj.count - this.seenUnreadMsgIds.size;
+            // 动态更新 initialUnreadCount 用于右上角上箭头展示的数量
+            this.initialUnreadCount = newCount > 0 ? newCount : 0;
+          }
+          
+          // 看到了最新一条消息，清空下箭头新消息
+          if (this.unreadCount > 0 && this.latestNewMsgId && msgListEnterVisual.some(msg => msg.customMsgId === this.latestNewMsgId)) {
+            this.unreadCount = 0;
+            this.latestNewMsgId = ""; // 看到了新消息，清除锚点记录
+          } else if (this.unreadCount > 0 && this.latestNewMsgId) {
+             // 检查 latestNewMsgId 是否还存在列表中，如果被撤回或删除则清空新消息气泡
+             let isLatestMsgIdFound = false;
+             for (const block of this.blockList) {
+               if (block.list.some(m => m.customMsgId === this.latestNewMsgId)) {
+                 isLatestMsgIdFound = true;
+                 break;
+               }
+             }
+
+             if (!isLatestMsgIdFound) {
+               this.unreadCount = 0;
+               this.latestNewMsgId = "";
+             }
           }
         }
+
+        // 暂时注释，切换已改成全量已读，在窗口里收到消息直接已读
+        // // 进入可视区域的最后一条信息
+        // const msgLastEnterVisual = msgListEnterVisual[msgListEnterVisual.length - 1];
+        // // console.log('[debug] msgLastEnterVisual--', msgLastEnterVisual);
+
+        // // 如果有未读，并有未读消息在可视区域内，则设置已读
+        // let timeUnread = _.get(this.chatContent.unreadObj, "time");
+        // // console.log('[debug] timeUnread1', timeUnread);
+
+        // if (msgReadByMeTime !== 0) {
+        //   timeUnread = msgReadByMeTime;
+        // }
+        // // console.log('[debug] timeUnread2', msgLastEnterVisual.readStatus, msgLastEnterVisual.sendTime, timeUnread);
+
+        // if (timeUnread) {
+        //   timeUnread = Number(timeUnread);
+        //   if (msgLastEnterVisual.readStatus !== 2 && Number(msgLastEnterVisual.sendTime) >= timeUnread) {
+        //     eventBase.fnCommunicationSendMsg({
+        //       operator: "msgReadByMe",
+        //       data: {
+        //         id: this.chatContent.id,
+        //         type: this.chatContent.type,
+        //         values: {
+        //           sendTime: Number(msgLastEnterVisual.sendTime),
+        //           timeUnread,
+        //         },
+        //       },
+        //     });
+        //     // 更新最后消息事件
+        //     msgReadByMeTime = msgLastEnterVisual.sendTime + 1;
+        //   }
+        // }
       }
     }, 100),
   },

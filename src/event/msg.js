@@ -766,37 +766,43 @@ const channelRecordDeleteHistory = async (info) => {
  * 消息好友已读
  */
 const fnMsgFriendRead = (msg) => {
-    const MsgID = _.get(msg, "receipts[0].msgId");
-    const status = _.get(msg, "receipts[0].receiptStatus.status");
+    const loginId = eventCommon.fnCommonInfoRU({ getId: "loginId" });
+    const receipts = _.get(msg, "receipts") || [];
 
-    if (MsgID && status === 1) {
-        const id = Number(msg.receipts[0].sendUid);
-        const type = "friend";
+    receipts.forEach((receipt) => {
+        const MsgID = receipt.msgId;
+        const status = _.get(receipt, "receiptStatus.status");
+        const targetId = Number(receipt.targetId || 0);
 
-        window.$db
-            .sendMsgReadSet({
-                id,
-                type,
-                msgId: Number(MsgID),
-                readTime: Number(msg.receipts[0].receiptStatus.time),
-            })
-            .then((list) => {
-                // 同步已读
-                eventBase.fnCommunicationSendMsg({
-                    operator: "msgListPropertyUpdate",
-                    data: {
-                        id,
-                        type,
-                        list: list.map((item) => {
-                            return {
-                                customMsgId: item.customMsgId,
-                                updated: { readStatus: 2 },
-                            };
-                        }),
-                    },
+        if (MsgID && status === 1 && targetId === loginId) {
+            const id = Number(receipt.sendUid);
+            const type = "friend";
+
+            window.$db
+                .sendMsgReadSet({
+                    id,
+                    type,
+                    msgId: Number(MsgID),
+                    readTime: Number(receipt.receiptStatus.time),
+                })
+                .then((list) => {
+                    // 同步已读
+                    eventBase.fnCommunicationSendMsg({
+                        operator: "msgListPropertyUpdate",
+                        data: {
+                            id,
+                            type,
+                            list: list.map((item) => {
+                                return {
+                                    customMsgId: item.customMsgId,
+                                    updated: { readStatus: 2 },
+                                };
+                            }),
+                        },
+                    });
                 });
-            });
-    }
+        }
+    });
 };
 
 /**
@@ -837,75 +843,74 @@ const fnMsgNewAdd = (info) => {
  * 未读消息设置
  */
 const fnUnreadMsgSet = async (info) => {
-    const { id, type, customMsgId, sendTime, isSelf } = info;
+  const { id, type, customMsgId, sendTime, isSelf } = info;
 
-    const loginId = eventCommon.fnCommonInfoRU({ getId: "loginId" });
-    const infoActive = eventCommon.fnCommonInfoRU({ getId: "infoActive" });
+  const loginId = eventCommon.fnCommonInfoRU({ getId: "loginId" });
+  const infoActive = eventCommon.fnCommonInfoRU({ getId: "infoActive" });
 
-    // 如果当前是选中窗口，并且在底部直接已读，不添加未读
-    if (infoActive && id + type === infoActive.id + infoActive.type) {
-        const dom = document.getElementById("allMsgContainer");
+  // 如果当前是选中窗口，不管在不在底部直接已读，不添加未读
+  if (infoActive && id + type === infoActive.id + infoActive.type) {
+    // const dom = document.getElementById("allMsgContainer");
 
-        if (dom) {
-            const atBottom =
-                dom.scrollHeight - dom.clientHeight - 50 <= dom.scrollTop;
+    // if (dom) {
+    //     const atBottom =
+    //         dom.scrollHeight - dom.clientHeight - 50 <= dom.scrollT
+    //     // 如果在底部，直接已读
+    //     if (atBottom) {
+      eventBase.fnCommunicationSendMsg(
+          {
+              operator: "msgNew",
+              data: info,
+          },
+          true
+      );
 
-            // 如果在底部，直接已读
-            if (atBottom) {
-                eventBase.fnCommunicationSendMsg(
-                    {
-                        operator: "msgNew",
-                        data: info,
-                    },
-                    true
-                );
+      if (!isSelf) {
+          // 直接已读
+          setTimeout(() => {
+              eventBase.fnCommunicationSendMsg({
+                  operator: "msgReadByMe",
+                  data: {
+                      id,
+                      type,
+                      values: {
+                          sendTime: info.sendTime,
+                      },
+                      lastMessage: info,
+                  },
+              });
+          }, 100);
+      }
 
-                if (!isSelf) {
-                    // 直接已读
-                    setTimeout(() => {
-                        eventBase.fnCommunicationSendMsg({
-                            operator: "msgReadByMe",
-                            data: {
-                                id,
-                                type,
-                                values: {
-                                    sendTime: info.sendTime,
-                                },
-                                lastMessage: info,
-                            },
-                        });
-                    }, 100);
-                }
+      return;
+      //     }
+      // }
+  }
 
-                return;
-            }
-        }
-    }
+  // 设置未读
+  const res = await Cache(`${loginId}-unread`);
+  const resUread = (res && res.unread) || {};
 
-    // 设置未读
-    const res = await Cache(`${loginId}-unread`);
-    const resUread = (res && res.unread) || {};
+  if (resUread[id + type]) {
+      resUread[id + type].count++;
+  } else {
+      resUread[id + type] = {
+          count: 1,
+          time: sendTime,
+          unreadID: customMsgId,
+      };
+  }
 
-    if (resUread[id + type]) {
-        resUread[id + type].count++;
-    } else {
-        resUread[id + type] = {
-            count: 1,
-            time: sendTime,
-            unreadID: customMsgId,
-        };
-    }
+  // 保存到本地
+  await Cache(`${loginId}-unread`, { unread: resUread });
 
-    // 保存到本地
-    await Cache(`${loginId}-unread`, { unread: resUread });
-
-    eventBase.fnCommunicationSendMsg(
-        {
-            operator: "msgNew",
-            data: { ...info, unreadObj: resUread[id + type] },
-        },
-        true
-    );
+  eventBase.fnCommunicationSendMsg(
+      {
+          operator: "msgNew",
+          data: { ...info, unreadObj: resUread[id + type] },
+      },
+      true
+  );
 };
 
 const fnMsgEdit = (info) => {
@@ -997,11 +1002,14 @@ const fnMsgReadSync = async (type, data) => {
         for (const receipt of receipts) {
             const sendUid = Number(receipt.sendUid);
             // 非本人发出的已读回执不处理（只同步自己在其他端的已读操作）
+            // console.log('循环消息已读---》')
             if (sendUid !== loginId) continue;
+            // console.log('通过判断待处理----》','loginId',loginId)
             const msgId = Number(receipt.msgId);
             const status = Number(_.get(receipt, "receiptStatus.status"));
             // status === 1 表示已读
             if (msgId && status === 1) {
+              // console.log('已读回执', receipt)
                 readItems.push({ id: Number(receipt.targetId), msgId });
             }
         }
@@ -1010,11 +1018,14 @@ const fnMsgReadSync = async (type, data) => {
         (data || []).forEach(item => {
             const sendUid = Number(item.sendUid);
             const readState = item.receiptStatus?.status || 0;
+            // console.log('循环消息已读---》','loginId',loginId,'sendUid',sendUid,'readState',readState)
             // 非本人发出的、或未读状态的回执跳过
             if (sendUid !== loginId || readState <= 0) return;
+            // console.log('通过判断待处理----》','loginId',loginId)
             const groupId = Number(item.groupId);
             const msgId = Number(item.msgId);
             if (groupId && msgId) {
+              // console.log('已读回执', item)
                 readItems.push({ id: groupId, msgId });
             }
         });
@@ -1052,6 +1063,15 @@ const fnMsgReadSync = async (type, data) => {
                     console.warn('[fnMsgReadSync] parse unread cache error:', e);
                 }
 
+                // 如果当前没有任何未读，说明已经全部已读；
+                // 或者该已读回执对应的消息早于我们记录的第一条未读消息，
+                // 说明这是个历史/重复回执，不应该去重新计算，否则会把新消息重新标为未读（红点复现）
+                if (!timeUnread || Number(msgInfo.sendTime) < Number(timeUnread)) {
+                    console.log(`[fnMsgReadSync] msgInfo.sendTime(${msgInfo.sendTime}) < timeUnread(${timeUnread}), ignore stale receipt.`);
+                    handled = true;
+                    break;
+                }
+
                 // 基于该消息的 sendTime，查询之后仍未读的消息信息
                 const unreadInfoNew = await window.$db.getMsgUnreadForTimeAfter({
                     id,
@@ -1062,7 +1082,7 @@ const fnMsgReadSync = async (type, data) => {
                         isSync: true // 标记为多端同步，避免底层向服务器重复发送已读回执(CReqMessageReceipt)
                     }
                 });
-                // console.log('unreadInfoNew----',unreadInfoNew)
+                console.log('unreadInfoNew----',unreadInfoNew)
                 // 通知 UI 更新未读数和小红点（noProcessing=true 跳过 base 层处理，直接广播到 UI）
                 eventBase.fnCommunicationSendMsg(
                     {
@@ -1080,19 +1100,10 @@ const fnMsgReadSync = async (type, data) => {
             }
         }
 
-        // 所有 msgId 在本地均未找到，直接清除该会话的未读数
+        // 如果所有推送的已读 msgId 在本地均未找到
         if (!handled) {
-            eventBase.fnCommunicationSendMsg(
-                {
-                    operator: "msgReadByMe",
-                    data: {
-                        id,
-                        type,
-                        unreadInfo: null,
-                    },
-                },
-                true
-            );
+            // 收到已读回执但本地查不到对应消息
+            console.log(`[fnMsgReadSync] msgIds 未在本地找到, id:${id}, type:${type}`);
         }
     }
 };

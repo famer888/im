@@ -133,7 +133,10 @@ const dispatch = (code, data) => {
         getId: "loginId",
       });
 
-      if (Number(_.get(data, "receipts[0].targetId")) === loginId) {
+      const receipts = _.get(data, "receipts") || [];
+      const hasTargetId = receipts.some(receipt => Number(receipt.targetId || 0) === loginId);
+
+      if (hasTargetId) {
         eventMsg.fnMsgFriendRead(data);
       }
       // 同账号已读清除小红点
