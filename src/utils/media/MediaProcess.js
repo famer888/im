@@ -15,6 +15,8 @@ const icon = path.join(__dirname, isDevelopment ? './public/images/dock.png' : '
 class MediaPlayerProcess {
   constructor() {
     this.window = null;
+    /** Windows 上 transparent 窗口 isMaximized() 常为 false，不能用于切换；用用户操作状态驱动最大化/还原 */
+    this._mediaMaximizedByToggle = false;
   }
 
   /**
@@ -73,7 +75,11 @@ class MediaPlayerProcess {
     this.window.on('closed', () => {
       this._removeIpcHandlers();
       this.window = null;
+      this._mediaMaximizedByToggle = false;
     });
+
+    this.window.on('maximize', () => { this._mediaMaximizedByToggle = true; });
+    this.window.on('unmaximize', () => { this._mediaMaximizedByToggle = false; });
 
     return this.window;
   }
@@ -128,7 +134,20 @@ class MediaPlayerProcess {
 
   _registerIpcHandlers() {
     ipcMain.on('media-window:minimize', () => { if (this.window && !this.window.isDestroyed()) this.window.minimize(); });
-    ipcMain.on('media-window:maximize', () => { if (this.window && !this.window.isDestroyed()) { this.window.isMaximized() ? this.window.unmaximize() : this.window.maximize(); } });
+    ipcMain.on('media-window:maximize', () => {
+      try {
+        if (!this.window || this.window.isDestroyed()) return;
+        if (this._mediaMaximizedByToggle) {
+          this.window.unmaximize();
+          this._mediaMaximizedByToggle = false;
+        } else {
+          this.window.maximize();
+          this._mediaMaximizedByToggle = true;
+        }
+      } catch (e) {
+        /* ignore */
+      }
+    });
     ipcMain.on('media-window:close', () => { if (this.window && !this.window.isDestroyed()) this.window.close(); });
     ipcMain.handle('media-window:saveAs', async (event, filePath) => {
       if (!this.window || this.window.isDestroyed()) return { success: false };
