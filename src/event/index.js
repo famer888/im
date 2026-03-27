@@ -4,7 +4,7 @@ import packet from "@/api/base/imweb-web";
 import channelEvents from "@/api/base/channel_event";
 import { decrypt } from "@/socket/api/request";
 import { ReceiveServerToClient } from "@/socket/api/message";
-import { fnUpdateKeyFriend, fnUpdateOwnKey } from "@/utils/encryption-decryption";
+import { fnUpdateKeyFriend, fnUpdateKeyOwn } from "@/utils/encryption-decryption";
 import { Cache } from "@/cache";
 
 // 事件
@@ -22,20 +22,14 @@ let timeBefore = new Date().getTime();
 const dispatch = (code, data) => {
   switch (code) {
     case 20001: {
-      // WebSocket 登录/重连成功，刷新自身密钥确保 appKeyPairOwn 同步
-      // 仅在 accountConfig 已初始化（有 privateKey）时执行，
-      // 避免初次登录时 fnConfigInit 尚未完成导致误触发 getNewKey 覆盖密钥
-      const { accountConfig: ac } = eventCommon.fnConfigRU() || {};
-      if (ac?.privateKey) {
-        fnUpdateOwnKey().catch(err => {
-          console.error('WebSocket登录-密钥刷新失败', err);
-        });
-      }
+      // 登录成功 接口已对应处理，所以这个推送不需要处理
+
       break;
     }
     // 频道消息接收
     case 4203: {
       if (data.latestChannelMessage) {
+        // console.log('[4203] latestChannelMessage:', data.latestChannelMessage);
         eventMsg.fnChannelMsgAdd(data.latestChannelMessage);
       }
       break;
@@ -48,7 +42,7 @@ const dispatch = (code, data) => {
       //  console.log('4205-2-', JSON.stringify(data))
       const state = eventChannel.isValidSocketMsg(Number(clearTime));
       if (!state) {
-        console.log("阻止了条重复推送[4205]", JSON.stringify(data));
+        // console.log("阻止了条重复推送[4205]", JSON.stringify(data));
         return;
       }
       if (!msgTargetId) return;
@@ -68,6 +62,7 @@ const dispatch = (code, data) => {
     // 好友消息接收
     case 20102: {
       if (data.oneToOneMessage) {
+        console.log('[20102] OneToOneMessage:', JSON.stringify(data.oneToOneMessage, null, 2));
         eventMsg.fnFriendMsgAdd(data.oneToOneMessage, data.id);
       }
       break;
@@ -133,6 +128,7 @@ const dispatch = (code, data) => {
       break;
     }
     case 20104: {
+      console.log('20104--消息已读',data)
       const loginId = eventCommon.fnCommonInfoRU({
         getId: "loginId",
       });
@@ -140,6 +136,8 @@ const dispatch = (code, data) => {
       if (Number(_.get(data, "receipts[0].targetId")) === loginId) {
         eventMsg.fnMsgFriendRead(data);
       }
+      // 同账号已读清除小红点
+      eventMsg.fnMsgReadSync('friend', data);
       break;
     }
     case 20301: {
@@ -184,14 +182,13 @@ const dispatch = (code, data) => {
     case 20501: {
       const loginId = eventCommon.fnCommonInfoRU({ getId: "loginId" });
       if (Number(data.uid) === loginId) {
-        console.log('同账号密钥更新')
-        fnUpdateOwnKey().catch(err => {
-          console.error('同账号密钥同步失败', err);
-        });
+        console.log('同账号密钥更新');
+        fnUpdateKeyOwn(data);
       }
       fnUpdateKeyFriend(data);
       break;
     }
+
     case 20701: {
       // 群相关事件
       eventGroup.fnRnGroupEvent(data);
@@ -220,9 +217,12 @@ const dispatch = (code, data) => {
       break;
     }
     case 20403: {
+      console.log('20403--群消息已读',data)
       // 群消息已读用户
       const { receiptMessage = [] } = data || {};
       eventMsg.fnGroupMsgReadRecord(receiptMessage);
+      // 同账号已读清除小红点
+      eventMsg.fnMsgReadSync('group', receiptMessage);
       break;
     }
     case 4204: {
@@ -231,6 +231,7 @@ const dispatch = (code, data) => {
       break;
     }
     case 4206: {
+      console.log('4206--频道已读',data)
       const { msgTime } = data.latestChannelEventMessage || {};
       const state = eventChannel.isValidSocketMsg(Number(msgTime));
       if (!state) {
@@ -349,7 +350,7 @@ const fnSocketMessage = (arrayBuffer) => {
     ReceiveServerToClient(data.id);
   }
   if (![29901, 20001].includes(code)) {
-    console.log("收到推送", code);
+    // console.log("收到推送", code);
     console.$collect('收到推送--' + code);
   }
   if (expired.check(code, data)) {

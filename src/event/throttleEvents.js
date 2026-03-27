@@ -273,6 +273,7 @@ const fnSocketMessage = (arrayBuffer) => {
     // 好友消息接收
     case 20102: {
       if (data.oneToOneMessage) {
+        console.log('[20102] OneToOneMessage:', JSON.stringify(data.oneToOneMessage, null, 2));
         eventMsg.fnFriendMsgAdd(data.oneToOneMessage, data.id);
       }
       break;

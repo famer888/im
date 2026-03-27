@@ -34,6 +34,8 @@ import {
     NameCardObj,
     GroupNoticeObj,
     HtmlObj,
+    MediaTextListObj,
+    CaptionMediaType,
 } from "@/api/base/imweb-web";
 
 // 好友 密钥对象集
@@ -153,11 +155,16 @@ export const fnChannelRelKeyGet = async (id) => {
     // 自己的私key，同账户app的公key
     const { privateKey } = accountConfig;
 
-    if (!privateKey || !keyInfos.publicKey || !keyInfos.msgKey) {
-        console.error('频道解密-密钥数据不完整-', privateKey, keyInfos);
+    if (!privateKey) {
+        console.error('频道解密-自身私钥缺失');
+        fnTryRepairOwnKey();
+        return null;
+    }
+
+    if (!keyInfos.publicKey || !keyInfos.msgKey) {
+        console.error('频道解密-频道密钥数据不完整-', 'publicKey:', !!keyInfos.publicKey, 'msgKey:', !!keyInfos.msgKey);
         delete channelKeyObjs[id];
         Cache(`${loginId}-channel-key-objs`, channelKeyObjs);
-        fnTryRepairOwnKey();
         return null;
     }
 
@@ -166,10 +173,9 @@ export const fnChannelRelKeyGet = async (id) => {
     try {
          key = secret(privateKey, keyInfos.publicKey).toUpperCase();
     } catch (error) {
-        console.error('频道解密-生成秘钥异常-2-',privateKey, keyInfos)
+        console.error('频道解密-生成秘钥异常-2-', 'publicKey:', !!keyInfos.publicKey, error.message)
         delete channelKeyObjs[id];
         Cache(`${loginId}-channel-key-objs`, channelKeyObjs);
-        fnTryRepairOwnKey();
         return null;
     }
 
@@ -178,10 +184,9 @@ export const fnChannelRelKeyGet = async (id) => {
     try {
       msgkey = _decrypt(msgKeyBuffer, key);
     } catch (error) {
-        console.error('频道解密异常-msgkey-', privateKey, keyInfos)
+        console.error('频道解密异常-msgkey-', !!keyInfos.msgKey, error.message)
         delete channelKeyObjs[id];
         Cache(`${loginId}-channel-key-objs`, channelKeyObjs);
-        fnTryRepairOwnKey();
         return null;
     }
     const buffer = ConcatInt8([
@@ -233,11 +238,16 @@ export const fnGroupRelKeyGet = async (id) => {
     // 自己的私key，同账户app的公key
     const { privateKey } = accountConfig;
 
-    if (!privateKey || !keyInfos.publicKey || !keyInfos.msgKey) {
-        console.error('群解密-密钥数据不完整-', privateKey, keyInfos);
+    if (!privateKey) {
+        console.error('群解密-自身私钥缺失');
+        fnTryRepairOwnKey();
+        return null;
+    }
+
+    if (!keyInfos.publicKey || !keyInfos.msgKey) {
+        console.error('群解密-群密钥数据不完整-', 'publicKey:', !!keyInfos.publicKey, 'msgKey:', !!keyInfos.msgKey);
         delete groupKeyObjs[id];
         Cache(`${loginId}-group-key-objs`, groupKeyObjs);
-        fnTryRepairOwnKey();
         return null;
     }
 
@@ -246,10 +256,9 @@ export const fnGroupRelKeyGet = async (id) => {
     try {
          key = secret(privateKey, keyInfos.publicKey).toUpperCase();
     } catch (error) {
-        console.error('群解密-生成秘钥异常-2-',privateKey, keyInfos)
+        console.error('群解密-生成秘钥异常-2-', 'publicKey:', !!keyInfos.publicKey, error.message)
         delete groupKeyObjs[id];
         Cache(`${loginId}-group-key-objs`, groupKeyObjs);
-        fnTryRepairOwnKey();
         return null;
     }
 
@@ -258,10 +267,9 @@ export const fnGroupRelKeyGet = async (id) => {
     try {
       msgkey = _decrypt(msgKeyBuffer, key);
     } catch (error) {
-        console.error('群解密异常-msgkey-', privateKey, keyInfos)
+        console.error('群解密异常-msgkey-', 'msgKey:', !!keyInfos.msgKey, error.message)
         delete groupKeyObjs[id];
         Cache(`${loginId}-group-key-objs`, groupKeyObjs);
-        fnTryRepairOwnKey();
         return null;
     }
     const buffer = ConcatInt8([
@@ -932,6 +940,41 @@ const fnUtf8ArrayToStr = (buffer, type) => {
             }
             return data.currentImage;
         }
+        case enumMsgType.mediasCaption: {
+            const mediaList = MediaTextListObj.decode(UnitBuffer);
+            console.log('[mediasCaption] decoded MediaTextListObj:', 'caption:', mediaList.caption, 'objs count:', mediaList.objs?.length);
+            const parts = [];
+            if (mediaList.objs && mediaList.objs.length) {
+                for (let i = 0; i < mediaList.objs.length; i++) {
+                    const obj = mediaList.objs[i];
+                    const mediaBuffer = Uint8Array.from(obj.content);
+                    const typeName = CaptionMediaType[obj.type] || obj.type;
+                    if (obj.type === CaptionMediaType.Image) {
+                        const img = ImageObj.decode(mediaBuffer);
+                        console.log(`[mediasCaption] objs[${i}] type=${typeName}:`, JSON.stringify(img, null, 2));
+                        parts.push(`image:${img.url}||${img.thumbUrl}||${Number(img.fileSize)}||${img.sizeType}`);
+                    } else if (obj.type === CaptionMediaType.Video) {
+                        const vid = VideoObj.decode(mediaBuffer);
+                        console.log(`[mediasCaption] objs[${i}] type=${typeName}:`, JSON.stringify(vid, null, 2));
+                        parts.push(`video:${vid.url}*P${vid.thumbUrl}||${vid.duration || 0}||${Number(vid.fileSize) || 0}||${vid.width || 0}||${vid.height || 0}`);
+                    } else if (obj.type === CaptionMediaType.DynamicImage) {
+                        const gif = DynamicImageObj.decode(mediaBuffer);
+                        console.log(`[mediasCaption] objs[${i}] type=${typeName}:`, JSON.stringify(gif, null, 2));
+                        parts.push(`gif:${gif.url}||${gif.url}`);
+                    } else {
+                        console.log(`[mediasCaption] objs[${i}] unknown type=${typeName}`);
+                    }
+                }
+            }
+            let txt = parts.join("|||");
+            if (mediaList.caption) {
+                txt += "##caption##" + mediaList.caption;
+            }
+            if (mediaList.ref) {
+                txt = fnFormartMsgToStr(mediaList.ref, txt);
+            }
+            return txt;
+        }
         default: {
             // 文本
             const { content, ref } = TextObj.decode(UnitBuffer);
@@ -977,6 +1020,7 @@ const fnFormartMsgToStr = (ref, str) => {
         8: "[群简介]",
         9: "[动图]",
         12: "[骰子]",
+        17: "[多媒体]",
         18: "[扑克牌]",
     };
 
@@ -1104,6 +1148,56 @@ const fnEncode = (str, type, picData) => {
                 gameId: 1,
             }).finish();
         }
+        case enumMsgType.mediasCaption: {
+            const { mediasCaptionCaption = "", mediasCaptionSlots = [] } = picData || {};
+            const objs = [];
+            for (const slot of mediasCaptionSlots) {
+                if (!slot || !slot.kind) continue;
+                if (slot.kind === "image") {
+                    objs.push({
+                        type: CaptionMediaType.Image,
+                        content: ImageObj.encode({
+                            width: slot.width || 0,
+                            height: slot.height || 0,
+                            fileSize: Number(slot.fileSize) || 0,
+                            url: slot.url,
+                            thumbUrl: slot.thumbUrl || slot.url,
+                            sizeType: slot.sizeType != null ? slot.sizeType : 0,
+                        }).finish(),
+                    });
+                } else if (slot.kind === "video") {
+                    objs.push({
+                        type: CaptionMediaType.Video,
+                        content: VideoObj.encode({
+                            width: slot.width || 0,
+                            height: slot.height || 0,
+                            fileSize: Number(slot.fileSize) || 0,
+                            url: slot.url,
+                            thumbUrl: slot.thumbUrl || "",
+                            duration: slot.duration || 0,
+                        }).finish(),
+                    });
+                } else if (slot.kind === "gif") {
+                    objs.push({
+                        type: CaptionMediaType.DynamicImage,
+                        content: DynamicImageObj.encode({
+                            width: slot.width || 0,
+                            height: slot.height || 0,
+                            fileSize: Number(slot.fileSize) || 0,
+                            url: slot.url,
+                            thumbUrl: slot.thumbUrl || slot.url,
+                        }).finish(),
+                    });
+                }
+            }
+            const encoded = MediaTextListObj.encode({
+                objs,
+                caption: mediasCaptionCaption || "",
+            }).finish();
+            const decoded = MediaTextListObj.decode(encoded);
+            console.log('>>> encode caption decoded', decoded);
+            return encoded;
+        }
         default: {
             // 文本
             const params = {};
@@ -1155,6 +1249,8 @@ export const fnFormartMsgParams = async ({ data, customMsgId, id, type }) => {
         webAttachmentKey,
         noticeId,
         showNotify,
+        mediasCaptionCaption,
+        mediasCaptionSlots,
     } = data;
 
     // 是否是官方
@@ -1174,6 +1270,8 @@ export const fnFormartMsgParams = async ({ data, customMsgId, id, type }) => {
         duration,
         noticeId,
         showNotify,
+        mediasCaptionCaption,
+        mediasCaptionSlots,
     });
 
     const params = {
@@ -1380,6 +1478,37 @@ export const fnUpdateOwnKey = () => {
       });
     return _pendingUpdateOwnKey;
 }
+
+/**
+ * 同账号密钥轻量更新（20501 推送 uid === loginId 时使用）
+ * 推送数据字段完整时直接更新 accountConfig.appKeyPair；
+ * 缺少 publicKey 或 keyVersion 时降级调用 fnUpdateOwnKey 走接口拉取
+ */
+export const fnUpdateKeyOwn = ({ appKeyPair }) => {
+    const appVer = Number(appKeyPair?.keyVersion) || 0;
+    const appValid = appKeyPair && appKeyPair.publicKey && appVer > 0;
+
+    if (!appValid) {
+        console.warn('同账号密钥推送数据不完整，降级调用接口',
+            'appPubKey:', !!appKeyPair?.publicKey,
+            'appVer:', appKeyPair?.keyVersion);
+        return fnUpdateOwnKey().catch(err => {
+            console.error('同账号密钥同步失败(API)', err);
+        });
+    }
+
+    const { accountConfig } = eventCommon.fnConfigRU();
+    const localAppVer = Number(accountConfig.appKeyPair?.keyVersion) || 0;
+
+    if (localAppVer > 0 && appVer < localAppVer) {
+        return;
+    }
+
+    const updates = { appKeyPair };
+
+    eventCommon.fnConfigRU({ isAccount: true, infoMerge: updates });
+    eventCommon.fnCommonInfoRU({ infoMerge: updates });
+};
 
 /**
  * 更新好友的密钥

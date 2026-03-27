@@ -8,9 +8,7 @@
         />
       <span>{{ info.channelName }}</span>
       <p class="subscriber-count">{{ info.memberCount || 0 }}位订阅者</p>
-      <!-- 频道禁用状态 不展示简介 -->
-       <!-- globalConfig.channel.disableUnperceived &&  -->
-      <div class="remark-container" v-if="!(info.status == 3)">
+      <div class="remark-container" v-if="!isChannelDisabled">
         <div class="remark-content" ref="remarkContent" :class="{ 'expanded': isRemarkExpanded }">
           <ComLableEle
             v-for="(item, index) in remarkTagList"
@@ -61,6 +59,13 @@ export default {
       remarkTagList: [],
       globalConfig: eventCommon.fnGlobalConfigGet(), //禁用 是否静默
     };
+  },
+  computed: {
+    isChannelDisabled() {
+      if (this.info.isDisable !== undefined) return Boolean(this.info.isDisable);
+      if (this.info.status !== undefined) return Number(this.info.status) === 3;
+      return false;
+    },
   },
   mounted() {
     this.processRemark();

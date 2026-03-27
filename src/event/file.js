@@ -98,16 +98,16 @@ const handleDownloadFileFailed = (_$, data) => {
         let { channelType = 0 } = data || {};
         let moduleCode = {0: "ossDefaultUrl", 1: "ossChatUrl", 2: "ossLowRateUrl"}[channelType] || "ossDefaultUrl"
         let url = data.trendsFileUrl || data.fileUrl;
-        console.error('下载文件失败--', url)
+        // console.log('下载文件失败: ', url)
         reportErrorDomain(url, {errorDesc: "下载失败", moduleCode})
         let downFailNum = data.downFailNum || 0
         if(downFailNum <=3 ) {
             data.downFailNum = downFailNum + 1
             data.trendsFileUrl = await getNewFileDownUrl(url, channelType, data.downFailNum-1) || "";
-            console.error('下载文件失败-替换新域名进行下载-', data.trendsFileUrl)
+            // console.error('下载文件失败-替换新域名进行下载-', data.trendsFileUrl)
             ipcRenderer.send("fileDownload", data)
         }else {
-            console.error('下载文件失败-结束-', url)
+            // console.error('下载文件失败-结束-', url)
             fnDownloadFileInfoUpdate(data, "downloadError");
         }
     }, 100);
@@ -117,23 +117,45 @@ const handleDownloadFileFailed = (_$, data) => {
  * 下载文件信息更新
  */
 const fnDownloadFileInfoUpdate = (data, errorType) => {
-    // console.log('下载成功后更新', data)
     const id = data.groupId || data.channelId || data.userId;
     const type = data.groupId ? "group"
                               : data.channelId ? "channel" : "friend";
-    const { customMsgId, fileLocalPath, isOpen, isDir, chatType, local, localThumbUrl, taskId } = data;
-    const percent = taskId && !errorType ? { percent: 100 + Number(Math.random().toFixed(6)) }: {};
-    let updated = { local: errorType || fileLocalPath, ...percent };
+    const { customMsgId, fileLocalPath, isOpen, isDir, chatType, local, localThumbUrl, taskId, mediaSlotIndex } = data;
+    const percentVal = 100 + Number(Math.random().toFixed(6));
+    const percent = taskId && !errorType ? { percent: percentVal } : {};
 
-    // 如果是视频
-    if (chatType === 3) {
-        if ([".mp4", "webm", ".ogg"].includes((fileLocalPath || '').slice(-4).toLowerCase())) {
-            updated = { local: fileLocalPath, ...percent };
+    const useSlot =
+        mediaSlotIndex !== undefined &&
+        mediaSlotIndex !== null &&
+        mediaSlotIndex !== "" &&
+        !Number.isNaN(Number(mediaSlotIndex));
+    const slotIdx = useSlot ? Number(mediaSlotIndex) : null;
+    const slotPercent = taskId && !errorType ? { [`percent_${slotIdx}`]: percentVal } : {};
+
+    let updated;
+    if (useSlot) {
+        if (chatType === 3) {
+            if ([".mp4", "webm", ".ogg"].includes((fileLocalPath || "").slice(-4).toLowerCase())) {
+                updated = { [`local_${slotIdx}`]: errorType || fileLocalPath, ...slotPercent };
+            } else {
+                updated = {
+                    [`thumb_${slotIdx}`]: errorType || localThumbUrl || local || fileLocalPath,
+                    ...slotPercent,
+                };
+            }
         } else {
-            updated = { localThumbUrl: errorType || localThumbUrl || local || fileLocalPath, ...percent };
+            updated = { [`local_${slotIdx}`]: errorType || fileLocalPath, ...slotPercent };
+        }
+    } else {
+        updated = { local: errorType || fileLocalPath, ...percent };
+        if (chatType === 3) {
+            if ([".mp4", "webm", ".ogg"].includes((fileLocalPath || '').slice(-4).toLowerCase())) {
+                updated = { local: fileLocalPath, ...percent };
+            } else {
+                updated = { localThumbUrl: errorType || localThumbUrl || local || fileLocalPath, ...percent };
+            }
         }
     }
-
 
     const params = {
         id,
@@ -246,13 +268,13 @@ const fnFilePathToType = (path) => {
  * 发送文件消息
  */
 const fnFileUploadInfoGet = async (values) => {
-    const { file, fileThumb, params, type, id } = values;
+    const { file, fileThumb, params, type, id, sharedFileKey } = values;
     const { chatType, width, height, taskId } = params;
 
     let fileInfos = null;
 
-    // 文件的相关信息
-    const fileKey = createHash(16, 10);
+    // 文件的相关信息（msgType 多图/多视频等可传入 sharedFileKey，使整条消息共用一个 key）
+    const fileKey = sharedFileKey || createHash(16, 10);
 
     // 文件后缀
     const suffix = file.path.slice(file.path.lastIndexOf("."));
@@ -355,7 +377,7 @@ const fnFileInfosGet = async (info) => {
     // 文件夹地址
     const dirPath = await getUserDataDirectory({
         GroupID: type === "group" ? id : null,
-        UserID: type === "user" ? id : null,
+        UserID: type === "user" || type === "friend" ? id : null,
         ChannelID: type === "channel" ? id : null,
     });
 
@@ -474,7 +496,9 @@ const fnOperatorFile = async ({ id, type, info, openDialog, isDir, taskId }, kee
         fileUrl,
         fileName: baseFileName + suffix,
         uid: loginId,
-        userId: type === "group" ? null : id,
+        // 与 image.vue handleFileDownload 一致，避免频道被写成 userId 导致 inferredType=friend
+        channelId: type === "channel" ? id : null,
+        userId: type === "friend" ? id : null,
         groupId: type === "group" ? id : null,
         windowId: remote.getCurrentWindow().getMediaSourceId(),
         msgId: info.MsgID,
@@ -492,7 +516,21 @@ const fnOperatorFile = async ({ id, type, info, openDialog, isDir, taskId }, kee
         thumbUrl: info.thumbUrl || '',
         size: info.size || info.fileSize || 0,
     };
+    if (info.mediaSlotIndex !== undefined && info.mediaSlotIndex !== null) {
+        params.mediaSlotIndex = info.mediaSlotIndex;
+    }
 
+    // [dl-trace] IPC 不带 session.type；好友单聊时 params.userId=id、groupId=null，后续 fnDownloadFileInfoUpdate 会推断 type=friend
+    // console.log("[dl-trace] file.fnOperatorFile", {
+    //     sessionId: id,
+    //     sessionType: type,
+    //     userId: params.userId,
+    //     groupId: params.groupId,
+    //     channelId: params.channelId,
+    //     customMsgId: params.customMsgId,
+    //     msgChatType: info.chatType,
+    //     mediaSlotIndex: info.mediaSlotIndex,
+    // });
 
     if(!info.local) {
         // 优先使用动态域名

@@ -441,6 +441,23 @@ message  PushReadChannelMessage {
     repeated  ReadMessage  readChannelMessages  = 2;    // 已读频道消息
 }
 
+enum CaptionMediaType {
+    Image            = 0; // 图片
+    Video            = 1; // 视频
+    DynamicImage     = 3; // 动态图片如gif等
+}
+
+message MediaObj {
+    CaptionMediaType		type  			= 1;	//类型
+    bytes		content			= 2;	// 内容，放ImageObj/VideoObj/DynamicImageObj的字节
+}
+
+message MediaTextListObj {
+    repeated MediaObj		objs			= 1;	//内容
+    string      caption                    = 2; // 描述文字
+    ReferenceObj    ref         = 3;    // 引用消息
+}
+
 //clinet message content obj /// 客户端自行协商协议
 //文本消息
 message TextObj {

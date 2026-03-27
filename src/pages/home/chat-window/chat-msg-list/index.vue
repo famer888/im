@@ -86,6 +86,31 @@
                     " />
                   <ComTimeStatusLabel :msgInfo="n" :chatContent="chatContent" />
                 </ComMsgText>
+                <ComMsgMediasCaption v-else-if="n.chatType === 17" :msgInfo="n" :chatContent="chatContent"
+                  @rightClick="
+                    (value) => handleEmitInfo(value, 'rightClickMenuDisplay')
+                  ">
+                  <ComSelectItem v-if="selectedIdList.length > 0" :selectedIdList="selectedIdList" :id="n.customMsgId"
+                    @onClick="
+                      handleEmitInfo(
+                        {
+                          id: n.customMsgId,
+                          msgId: n.MsgID,
+                          ...n
+                        },
+                        'msgSelectedChange'
+                      )
+                      " />
+                  <ComMsgQuote v-if="n.quoteMessage !== undefined" :msgInfo="n.quoteMessage" :memberInfos="memberInfos"
+                    :chatContent="chatContent" @onClick="
+                      () =>
+                        handleMoveToId({
+                          customMsgId: n.quoteMessage.customMsgId,
+                          isHighlighted: true,
+                        })
+                    " />
+                  <ComTimeStatusLabel :msgInfo="n" :chatContent="chatContent" />
+                </ComMsgMediasCaption>
                 <ComMsgImage v-else-if="[1, 3, 9].includes(n.chatType)" :msgInfo="n" :chatContent="chatContent"
                   @rightClick="
                     (value) => handleEmitInfo(value, 'rightClickMenuDisplay')
@@ -352,6 +377,7 @@ export default {
     ComMsgAudio: () => import("./msg/audio.vue"), // 音频
     ComMsgFile: () => import("./msg/file.vue"), // 文件
     ComMsgImage: () => import("./msg/image.vue"), // 显示图片
+    ComMsgMediasCaption: () => import("./meida-caption/medias-caption.vue"), // 多媒体图文
     ComAvatarName: () => import("./avatar-name.vue"), // 头像和名字
     ComMsgSystemNotification: () => import("./msg/system-notification.vue"), // 系统通知
     ComMsgNotice: () => import("./msg/notice.vue"), // 公告
@@ -1560,11 +1586,10 @@ export default {
       }
       if (idsDelete?.length) {
         msgs = msgs.filter(item => {
-          console.log('idsDelete--', idsDelete)
           const deleteItem = idsDelete.find(i => Number(i.msgId) === Number(item.latestChannelMessage.msgId))
           return !deleteItem || Number(item.latestChannelMessage.msgTime) > deleteItem.clearTime
         })
-        console.log('deleteHistoryS-4-', msgs)
+        // console.log('deleteHistoryS-4-', msgs)
       }
 
       // 排序
@@ -2056,20 +2081,9 @@ export default {
         }
         // console.log('[debug] timeUnread2', msgLastEnterVisual.readStatus, msgLastEnterVisual.sendTime, timeUnread);
 
-        // 频道特殊逻辑：如果没找到 timeUnread，但消息未读，也视为需要处理（用于自己发送消息后的回执）
-        const isChannelUnread =
-          this.chatContent.type === "channel" &&
-          !timeUnread &&
-          msgLastEnterVisual.readStatus !== 2;
-
-        if (timeUnread || isChannelUnread) {
-          if (timeUnread) timeUnread = Number(timeUnread);
-          const shouldTrigger =
-            isChannelUnread ||
-            (msgLastEnterVisual.readStatus !== 2 &&
-              Number(msgLastEnterVisual.sendTime) >= timeUnread);
-
-          if (shouldTrigger) {
+        if (timeUnread) {
+          timeUnread = Number(timeUnread);
+          if (msgLastEnterVisual.readStatus !== 2 && Number(msgLastEnterVisual.sendTime) >= timeUnread) {
             eventBase.fnCommunicationSendMsg({
               operator: "msgReadByMe",
               data: {
@@ -2077,7 +2091,7 @@ export default {
                 type: this.chatContent.type,
                 values: {
                   sendTime: Number(msgLastEnterVisual.sendTime),
-                  timeUnread: timeUnread || undefined,
+                  timeUnread,
                 },
               },
             });

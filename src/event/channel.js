@@ -121,11 +121,16 @@ const eventUpdateChannelInfo = (operateType, {channelId, channelName, icon}) => 
 const eventToggleChannelDisabled = async ({ channelId, isDisable }) => {
     const loginId = eventCommon.fnCommonInfoRU({ getId: "loginId" });
 
-    // 同步更新 ChannelList 缓存的 isDisable
+    const updateValues = { isDisable };
+    if (isDisable) {
+        updateValues.status = 3;
+    }
+
+    // 同步更新 ChannelList 缓存
     const channelList = (await Cache(`${loginId}-ChannelList`)) || [];
     const idx = channelList.findIndex(i => Number(i.channelId) === Number(channelId));
     if (idx !== -1) {
-        channelList[idx].isDisable = isDisable;
+        Object.assign(channelList[idx], updateValues);
         Cache(`${loginId}-ChannelList`, channelList);
     }
 
@@ -140,12 +145,12 @@ const eventToggleChannelDisabled = async ({ channelId, isDisable }) => {
         },
     });
 
-    // 通知 home-left 同步 channels 数组，防止后续 channelUpdate 事件覆盖缓存时丢失 isDisable
+    // 通知 home-left 同步 channels 数组和 chats 数组
     eventBase.fnCommunicationSendMsg({
         operator: "channelUpdate",
         data: {
             channelId,
-            values: { isDisable },
+            values: updateValues,
         },
     });
 }
@@ -322,7 +327,18 @@ const fnChannelAdd = async (info) => {
     }
 }
 
+const getChannelDisabledState = (info = {}) => {
+    if (info.isDisable !== undefined) {
+        return Boolean(info.isDisable);
+    }
+    if (info.status !== undefined) {
+        return Number(info.status) === 3;
+    }
+    return false;
+};
+
 export const fnChannelFormat = (info) => {
+    const isDisable = getChannelDisabledState(info);
     return {
         adminPrivacy: info.adminPrivacy || 0,
         channelId: Number(info.channelId),
@@ -331,7 +347,9 @@ export const fnChannelFormat = (info) => {
         icon: info.icon || "",
         logoColor: info.logoColor || "#E11EFF",
         updateTime: info.updateTime || info.createTime || 0,
-    }
+        isDisable,
+        status: info.status,
+    };
 }
 
 /**
@@ -345,7 +363,7 @@ const fnGetAllChannel = () => {
         async function getChannelPolling() {
             try {
                 const res = await getChannelList({pageSize, pageNum})
-                const list = res.data?.rowList || []
+                const list = (res.data?.rowList || []).map(item => fnChannelFormat(item))
                 resultList = [...resultList, ...list];
                 if(list.length >= 10) {
                     pageNum += 1;
@@ -432,6 +450,16 @@ const fnChannelUpdate = ({ info, channels, chats }) => {
         // 更新聊天类型
         if (info.chatType !== undefined && updateInfo.chatType !== info.chatType) {
             updateInfo.chatType = info.chatType;
+            isUpdated = true;
+        }
+
+        if (info.isDisable !== undefined && updateInfo.isDisable !== Boolean(info.isDisable)) {
+            updateInfo.isDisable = Boolean(info.isDisable);
+            isUpdated = true;
+        }
+        if (info.status !== undefined && updateInfo.status !== info.status) {
+            updateInfo.status = info.status;
+            updateInfo.isDisable = Number(info.status) === 3;
             isUpdated = true;
         }
 

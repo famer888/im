@@ -59,7 +59,7 @@ import Overlay from './overlay.vue';
 import progress from "@/utils/progress";
 
 // 工具
-import { getFileSuffix, isMac } from "@/utils/base";
+import { getFileSuffix, isMac, stripChatContentMetaSuffix } from "@/utils/base";
 import { getFileOssUrls, getNewFileDownUrl } from "@/utils/trendsDomain/manageOssDownUpload";
 import { getOssFirstNormalUrl } from "@/utils/trendsDomain/manageOssDownUpload";
 
@@ -68,7 +68,7 @@ import eventFile from "@/event/file";
 import eventCommon from "@/event/common";
 
 export default {
-    props: ["msgInfo", "chatContent"],
+    props: ["msgInfo", "chatContent", "externalPendding"],
     components: {
         Overlay,
     },
@@ -116,20 +116,29 @@ export default {
             isSuccess: true,
             localSrc: "",
             percent: this.msgInfo?.percent ?? task?.percent ?? 0,
-            loading: this.msgInfo?.percent >= 100 ? false : task?.loading ?? false,
+            loading: (this.msgInfo?.percent ?? 0) >= 100 ? false : task?.loading ?? false,
         };
     },
-    created() {
-        // 图片文件下载
+    async created() {
         const { local, localThumbUrl } = this.msgInfo;
-        if (!(local || localThumbUrl)) {
-            // 下载文件
-            this.handleFileDownload("default");
+        const hadLocal = !!(local || localThumbUrl);
+        if (this.externalPendding) {
+            await this.externalPendding;
         }
-        // this.handleFileDownload("default");
-
-        // 如果正在进度更新，初始化上传进度监听
-        // console.log('>>> loading', this.loading);
+        let started = false;
+        if (!hadLocal) {
+            // 无 local 时视频仍有 isVideo 遮罩；图/动图需显式 loading，否则网格里空白
+            if (this.msgInfo.chatType !== 3) {
+                this.loading = true;
+            }
+            started = await this.handleFileDownload("default");
+            if (!started && this.msgInfo.chatType !== 3) {
+                this.loading = false;
+            }
+            if (this.externalPendding) {
+                this.$emit("transfer-attempt", { started });
+            }
+        }
         if (this.loading) {
             this.initProgressBar();
         }
@@ -155,7 +164,6 @@ export default {
         initProgressBar() {
             progress.init(this.msgInfo);
             this._onProgress = (percent) => {
-                // console.log('>>> onProgress', percent);
                 this.loading = true;
                 this.percent = percent;
                 if (this.percent >= 100) {
@@ -206,6 +214,7 @@ export default {
           const { chatType } = this.msgInfo || {};
           chatType === 3 && this.initProgressBar();
           const taskId = chatType === 3 ? progress.getTask(this.msgInfo)?.taskId : null;
+          this._onProgress && this._onProgress(0);
           eventFile.fnOperatorFile({
               taskId,
               id: this.chatContent.id,
@@ -220,7 +229,7 @@ export default {
             if (status == "error") {
                 this.isSuccess = false;
                 this.imgSrc = require("@/assets/images/file/icon_fail_picture_big.png");
-                return;
+                return false;
             }
             const loginId = eventCommon.fnCommonInfoRU({
                 getId: "loginId",
@@ -228,14 +237,17 @@ export default {
 
             const { content, chatType, MsgID, fileKey, customMsgId } = this.msgInfo;
             // 本地文件不存在了，重新触发下载
-            this.retriggerDownloadWhenFailed();
-            // 文件路径
-            let fileUrl = content ? content.split("||")[0] : "";
-            if (chatType === 3) {
-                fileUrl = content?.split("*P")[1];
+            if (this.msgInfo?.msgType !== 17) {
+                this.retriggerDownloadWhenFailed();
             }
-            if( !fileUrl && this.msgInfo.thumbUrl ){
-                fileUrl = this.msgInfo.thumbUrl
+            // 文件路径（剥离 || 后 thumb、size、宽高 等元数据，与历史单图逻辑一致）
+            let fileUrl = content ? stripChatContentMetaSuffix(content) : "";
+            if (chatType === 3) {
+                const tail = content?.split("*P")[1];
+                fileUrl = tail ? stripChatContentMetaSuffix(tail) : "";
+            }
+            if (!fileUrl && this.msgInfo.thumbUrl) {
+                fileUrl = stripChatContentMetaSuffix(this.msgInfo.thumbUrl);
             }
 
             // 如果是不需要解密的图片，直接用网图
@@ -268,10 +280,10 @@ export default {
             // 优先使用动态域名
             const trendsFileUrl = await getOssFirstNormalUrl(fileUrl)
 
-            // 初始化进度条
-            chatType === 1 && this.initProgressBar();
+            if ([1, 9].includes(chatType)) {
+                this.initProgressBar();
+            }
 
-            // 文件下载
             ipcRenderer.send("fileDownload", {
                 fileUrl,
                 trendsFileUrl,
@@ -293,11 +305,13 @@ export default {
                 fileKey,
                 chatType,
                 customMsgId,
+                mediaSlotIndex: this.msgInfo.mediaSlotIndex,
                 isOpen: false,
                 timeout: 5000,
                 fileSize: this.msgInfo.size || this.msgInfo.fileSize || 0,
-                taskId: chatType === 1 ? this.taskId : null,
+                taskId: [1, 9].includes(chatType) ? this.taskId : null,
             });
+            return true;
         },
         /**
          * 错误提示获取
@@ -331,8 +345,7 @@ export default {
         },
         //
         handleContent(content) {
-            let contents = content.split("||");
-            return contents[0];
+            return stripChatContentMetaSuffix(content);
         },
         handleSuffix(msgInfo) {
             if (msgInfo.chatType == 3) {

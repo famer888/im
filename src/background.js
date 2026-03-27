@@ -981,6 +981,7 @@ const handleFileDownload = (args) => {
         msgId,
         timeout, // 超时时长毫秒
     } = args;
+    // [dl-trace] 主进程仅见 userId/groupId/channelId，无 session.type 字段
     const url = trendsFileUrl || fileUrl;
 
 

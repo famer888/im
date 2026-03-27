@@ -21178,6 +21178,323 @@ export const RedPacketObj = $root.RedPacketObj = (() => {
     return RedPacketObj;
 })();
 
+/**
+ * CaptionMediaType enum.
+ * @exports CaptionMediaType
+ * @enum {number}
+ * @property {number} Image=0 Image value
+ * @property {number} Video=1 Video value
+ * @property {number} DynamicImage=3 DynamicImage value
+ */
+export const CaptionMediaType = $root.CaptionMediaType = (() => {
+    const valuesById = {}, values = Object.create(valuesById);
+    values[valuesById[0] = "Image"] = 0;
+    values[valuesById[1] = "Video"] = 1;
+    values[valuesById[3] = "DynamicImage"] = 3;
+    return values;
+})();
+
+export const MediaObj = $root.MediaObj = (() => {
+
+    function MediaObj(properties) {
+        if (properties)
+            for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                if (properties[keys[i]] != null)
+                    this[keys[i]] = properties[keys[i]];
+    }
+
+    MediaObj.prototype.type = 0;
+    MediaObj.prototype.content = $util.newBuffer([]);
+
+    MediaObj.create = function create(properties) {
+        return new MediaObj(properties);
+    };
+
+    MediaObj.encode = function encode(message, writer) {
+        if (!writer)
+            writer = $Writer.create();
+        if (message.type != null && Object.hasOwnProperty.call(message, "type"))
+            writer.uint32(/* id 1, wireType 0 =*/8).int32(message.type);
+        if (message.content != null && Object.hasOwnProperty.call(message, "content"))
+            writer.uint32(/* id 2, wireType 2 =*/18).bytes(message.content);
+        return writer;
+    };
+
+    MediaObj.encodeDelimited = function encodeDelimited(message, writer) {
+        return this.encode(message, writer).ldelim();
+    };
+
+    MediaObj.decode = function decode(reader, length, error) {
+        if (!(reader instanceof $Reader))
+            reader = $Reader.create(reader);
+        let end = length === undefined ? reader.len : reader.pos + length, message = new $root.MediaObj();
+        while (reader.pos < end) {
+            let tag = reader.uint32();
+            if (tag === error)
+                break;
+            switch (tag >>> 3) {
+            case 1: {
+                    message.type = reader.int32();
+                    break;
+                }
+            case 2: {
+                    message.content = reader.bytes();
+                    break;
+                }
+            default:
+                reader.skipType(tag & 7);
+                break;
+            }
+        }
+        return message;
+    };
+
+    MediaObj.decodeDelimited = function decodeDelimited(reader) {
+        if (!(reader instanceof $Reader))
+            reader = new $Reader(reader);
+        return this.decode(reader, reader.uint32());
+    };
+
+    MediaObj.verify = function verify(message) {
+        if (typeof message !== "object" || message === null)
+            return "object expected";
+        if (message.type != null && message.hasOwnProperty("type"))
+            switch (message.type) {
+            default:
+                return "type: enum value expected";
+            case 0:
+            case 1:
+            case 3:
+                break;
+            }
+        if (message.content != null && message.hasOwnProperty("content"))
+            if (!(message.content && typeof message.content.length === "number" || $util.isString(message.content)))
+                return "content: buffer expected";
+        return null;
+    };
+
+    MediaObj.fromObject = function fromObject(object) {
+        if (object instanceof $root.MediaObj)
+            return object;
+        let message = new $root.MediaObj();
+        switch (object.type) {
+        default:
+            if (typeof object.type === "number") {
+                message.type = object.type;
+                break;
+            }
+            break;
+        case "Image":
+        case 0:
+            message.type = 0;
+            break;
+        case "Video":
+        case 1:
+            message.type = 1;
+            break;
+        case "DynamicImage":
+        case 3:
+            message.type = 3;
+            break;
+        }
+        if (object.content != null)
+            if (typeof object.content === "string")
+                $util.base64.decode(object.content, message.content = $util.newBuffer($util.base64.length(object.content)), 0);
+            else if (object.content.length >= 0)
+                message.content = object.content;
+        return message;
+    };
+
+    MediaObj.toObject = function toObject(message, options) {
+        if (!options)
+            options = {};
+        let object = {};
+        if (options.defaults) {
+            object.type = options.enums === String ? "Image" : 0;
+            if (options.bytes === String)
+                object.content = "";
+            else {
+                object.content = [];
+                if (options.bytes !== Array)
+                    object.content = $util.newBuffer(object.content);
+            }
+        }
+        if (message.type != null && message.hasOwnProperty("type"))
+            object.type = options.enums === String ? $root.CaptionMediaType[message.type] === undefined ? message.type : $root.CaptionMediaType[message.type] : message.type;
+        if (message.content != null && message.hasOwnProperty("content"))
+            object.content = options.bytes === String ? $util.base64.encode(message.content, 0, message.content.length) : options.bytes === Array ? Array.prototype.slice.call(message.content) : message.content;
+        return object;
+    };
+
+    MediaObj.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+    };
+
+    MediaObj.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === undefined) {
+            typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/MediaObj";
+    };
+
+    return MediaObj;
+})();
+
+export const MediaTextListObj = $root.MediaTextListObj = (() => {
+
+    function MediaTextListObj(properties) {
+        this.objs = [];
+        if (properties)
+            for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                if (properties[keys[i]] != null)
+                    this[keys[i]] = properties[keys[i]];
+    }
+
+    MediaTextListObj.prototype.objs = $util.emptyArray;
+    MediaTextListObj.prototype.caption = "";
+    MediaTextListObj.prototype.ref = null;
+
+    MediaTextListObj.create = function create(properties) {
+        return new MediaTextListObj(properties);
+    };
+
+    MediaTextListObj.encode = function encode(message, writer) {
+        if (!writer)
+            writer = $Writer.create();
+        if (message.objs != null && message.objs.length)
+            for (let i = 0; i < message.objs.length; ++i)
+                $root.MediaObj.encode(message.objs[i], writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
+        if (message.caption != null && Object.hasOwnProperty.call(message, "caption"))
+            writer.uint32(/* id 2, wireType 2 =*/18).string(message.caption);
+        if (message.ref != null && Object.hasOwnProperty.call(message, "ref"))
+            $root.ReferenceObj.encode(message.ref, writer.uint32(/* id 3, wireType 2 =*/26).fork()).ldelim();
+        return writer;
+    };
+
+    MediaTextListObj.encodeDelimited = function encodeDelimited(message, writer) {
+        return this.encode(message, writer).ldelim();
+    };
+
+    MediaTextListObj.decode = function decode(reader, length, error) {
+        if (!(reader instanceof $Reader))
+            reader = $Reader.create(reader);
+        let end = length === undefined ? reader.len : reader.pos + length, message = new $root.MediaTextListObj();
+        while (reader.pos < end) {
+            let tag = reader.uint32();
+            if (tag === error)
+                break;
+            switch (tag >>> 3) {
+            case 1: {
+                    if (!(message.objs && message.objs.length))
+                        message.objs = [];
+                    message.objs.push($root.MediaObj.decode(reader, reader.uint32()));
+                    break;
+                }
+            case 2: {
+                    message.caption = reader.string();
+                    break;
+                }
+            case 3: {
+                    message.ref = $root.ReferenceObj.decode(reader, reader.uint32());
+                    break;
+                }
+            default:
+                reader.skipType(tag & 7);
+                break;
+            }
+        }
+        return message;
+    };
+
+    MediaTextListObj.decodeDelimited = function decodeDelimited(reader) {
+        if (!(reader instanceof $Reader))
+            reader = new $Reader(reader);
+        return this.decode(reader, reader.uint32());
+    };
+
+    MediaTextListObj.verify = function verify(message) {
+        if (typeof message !== "object" || message === null)
+            return "object expected";
+        if (message.objs != null && message.hasOwnProperty("objs")) {
+            if (!Array.isArray(message.objs))
+                return "objs: array expected";
+            for (let i = 0; i < message.objs.length; ++i) {
+                let error = $root.MediaObj.verify(message.objs[i]);
+                if (error)
+                    return "objs." + error;
+            }
+        }
+        if (message.caption != null && message.hasOwnProperty("caption"))
+            if (!$util.isString(message.caption))
+                return "caption: string expected";
+        if (message.ref != null && message.hasOwnProperty("ref")) {
+            let error = $root.ReferenceObj.verify(message.ref);
+            if (error)
+                return "ref." + error;
+        }
+        return null;
+    };
+
+    MediaTextListObj.fromObject = function fromObject(object) {
+        if (object instanceof $root.MediaTextListObj)
+            return object;
+        let message = new $root.MediaTextListObj();
+        if (object.objs) {
+            if (!Array.isArray(object.objs))
+                throw TypeError(".MediaTextListObj.objs: array expected");
+            message.objs = [];
+            for (let i = 0; i < object.objs.length; ++i) {
+                if (typeof object.objs[i] !== "object")
+                    throw TypeError(".MediaTextListObj.objs: object expected");
+                message.objs[i] = $root.MediaObj.fromObject(object.objs[i]);
+            }
+        }
+        if (object.caption != null)
+            message.caption = String(object.caption);
+        if (object.ref != null) {
+            if (typeof object.ref !== "object")
+                throw TypeError(".MediaTextListObj.ref: object expected");
+            message.ref = $root.ReferenceObj.fromObject(object.ref);
+        }
+        return message;
+    };
+
+    MediaTextListObj.toObject = function toObject(message, options) {
+        if (!options)
+            options = {};
+        let object = {};
+        if (options.arrays || options.defaults)
+            object.objs = [];
+        if (options.defaults) {
+            object.caption = "";
+            object.ref = null;
+        }
+        if (message.objs && message.objs.length) {
+            object.objs = [];
+            for (let j = 0; j < message.objs.length; ++j)
+                object.objs[j] = $root.MediaObj.toObject(message.objs[j], options);
+        }
+        if (message.caption != null && message.hasOwnProperty("caption"))
+            object.caption = message.caption;
+        if (message.ref != null && message.hasOwnProperty("ref"))
+            object.ref = $root.ReferenceObj.toObject(message.ref, options);
+        return object;
+    };
+
+    MediaTextListObj.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+    };
+
+    MediaTextListObj.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === undefined) {
+            typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/MediaTextListObj";
+    };
+
+    return MediaTextListObj;
+})();
+
 export const ChatSensitivePushMsg = $root.ChatSensitivePushMsg = (() => {
 
     /**

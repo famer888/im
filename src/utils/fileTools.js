@@ -209,24 +209,26 @@ export const saveFileToDirectory = (file, directory, fileName) => {
                 // 将文件内容转换为Buffer对象
                 const data = Buffer.from(content);
 
-                // 构建完整的文件路径
-                let filePath = directory + fileName;
+                // 构建完整的文件路径（须用 join，避免 directory 无尾部分隔符时与 fileName 粘连，或混用 / 与 \）
+                let filePath = path.join(directory, fileName);
 
                 // 检查目录是否存在，如果不存在则创建目录
                 if (!fs.existsSync(directory)) {
                     fs.mkdirSync(directory, { recursive: true });
                 } else if (fs.existsSync(filePath)) {
                     // 新的文件夹路径
-                    const directoryNew = `${directory}${fileName.slice(
-                        0,
-                        fileName.lastIndexOf(".")
-                    )}-${Math.floor(1000000000 + Math.random() * 9000000000)}/`;
+                    const directoryNew = path.join(
+                        directory,
+                        `${fileName.slice(0, fileName.lastIndexOf("."))}-${Math.floor(
+                            1000000000 + Math.random() * 9000000000
+                        )}`
+                    );
 
                     // 如果有相同的文件存在，则创建独立文件夹
                     fs.mkdirSync(directoryNew, { recursive: true });
 
                     // 修改文件的保存路径
-                    filePath = directoryNew + fileName;
+                    filePath = path.join(directoryNew, fileName);
                 }
 
                 fs.writeFileSync(filePath, data); // 写入文件

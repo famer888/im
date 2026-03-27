@@ -53,16 +53,14 @@ const getUserDataDirectory = ({ GroupID, UserID, ChannelID }) => {
         if (!path) {
             path = require("os").tmpdir();
         }
-        if (GroupID || UserID) {
+        if (GroupID || UserID || ChannelID) {
             const nodePath = require("path");
-            path = nodePath.join(
-                path,
-                `/Local Storage/${
-                    GroupID ? "group-" + GroupID
-                            : ChannelID ? "channel-" + ChannelID
-                            : "user-" + UserID
-                }/`
-            );
+            const subDir = GroupID
+                ? "group-" + GroupID
+                : ChannelID
+                  ? "channel-" + ChannelID
+                  : "user-" + UserID;
+            path = nodePath.join(path, "Local Storage", subDir);
         }
         resolve(path);
     });

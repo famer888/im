@@ -366,12 +366,21 @@ function requestAxios(url, params, opts) {
                     // aesDecrypted()
                     FairGuard.recieve(res);
                     const responseData = Buffer.from(res.data);
-                    const header = responseData.slice(0, 6);
-                    const body = responseData.slice(6);
-                    // console.log('requestAxios--', body)
-                    const result = aesDecode(body, bodyAesKey);
+                    try {
+                        const header = responseData.slice(0, 6);
+                        const body = responseData.slice(6);
+                        // console.log('requestAxios--', body)
+                        const result = aesDecode(body, bodyAesKey);
                         //    console.log('requestAxios-2-', result)
-                    resolve(useBigIntResponseBody ? JSONBig.parse(result) : JSON.parse(result));
+                        resolve(useBigIntResponseBody ? JSONBig.parse(result) : JSON.parse(result));
+                    } catch (e) {
+                        try {
+                            const str = responseData.toString("utf8");
+                            resolve(useBigIntResponseBody ? JSONBig.parse(str) : JSON.parse(str));
+                        } catch (err) {
+                            reject(e);
+                        }
+                    }
                 } else {
                     reject(res);
                 }

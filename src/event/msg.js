@@ -35,6 +35,7 @@ import eventChannel from "./channel";
 import { benchmark } from "@/debuggers";
 import progress from "@/utils/progress";
 import { CReqChannelMessageReceipt } from "@/socket/api/message";
+import { handleMsgType17Send } from "@/pages/home/chat-window/chat-msg-list/meida-caption/msg-type-17";
 
 /**
  * 消息去重检查
@@ -982,6 +983,120 @@ const fnMsgReadByMe = async (info) => {
     );
 };
 
+/**
+ * 同账号已读同步（远程其它端操作已读，本地同步已读状态及未读数）
+ * @param {string} type - 消息类型 'friend' | 'group' | 'channel'
+ * @param {Object|Array} data - 推送原始数据（friend: PushReceiptMessageResp 对象, group: receiptMessage 数组）
+ */
+const fnMsgReadSync = async (type, data) => {
+    const loginId = eventCommon.fnCommonInfoRU({ getId: "loginId" });
+
+    const readItems = [];
+
+    if (type === 'friend') {
+        const receipts = _.get(data, "receipts") || [];
+        for (const receipt of receipts) {
+            const sendUid = Number(receipt.sendUid);
+            // 非本人发出的已读回执不处理（只同步自己在其他端的已读操作）
+            if (sendUid !== loginId) continue;
+            const msgId = Number(receipt.msgId);
+            const status = Number(_.get(receipt, "receiptStatus.status"));
+            // status === 1 表示已读
+            if (msgId && status === 1) {
+                readItems.push({ id: Number(receipt.targetId), msgId });
+            }
+        }
+    } else if (type === 'group') {
+        // 遍历每条群已读回执
+        (data || []).forEach(item => {
+            const sendUid = Number(item.sendUid);
+            const readState = item.receiptStatus?.status || 0;
+            // 非本人发出的、或未读状态的回执跳过
+            if (sendUid !== loginId || readState <= 0) return;
+            const groupId = Number(item.groupId);
+            const msgId = Number(item.msgId);
+            if (groupId && msgId) {
+                readItems.push({ id: groupId, msgId });
+            }
+        });
+    } else if (type === 'channel') {
+
+    }
+
+    if (!readItems.length) return;
+
+    const readItemsByConv = {};
+    readItems.forEach(({ id, msgId }) => {
+        if (!readItemsByConv[id]) readItemsByConv[id] = [];
+        readItemsByConv[id].push(msgId);
+    });
+
+    // 逐个会话处理已读同步
+    for (const key in readItemsByConv) {
+        const id = Number(key);
+        // 按 msgId 从大到小排序，优先用最新的已读消息去计算剩余未读
+        const msgIds = readItemsByConv[key].sort((a, b) => b - a);
+
+        let handled = false;
+        for (const msgId of msgIds) {
+            // 尝试从本地 DB 查找该消息，获取其 sendTime 以计算剩余未读
+            const msgInfo = await window.$db.getMsgInfoForMsgId({ id, type, msgId });
+            if (msgInfo && msgInfo.sendTime) {
+                // 获取本地未读信息的起始时间
+                let timeUnread = undefined;
+                try {
+                    const unReadObj = await Cache(`${loginId}-unread`);
+                    if (unReadObj && unReadObj.unread && unReadObj.unread[id + type]) {
+                        timeUnread = unReadObj.unread[id + type].time;
+                    }
+                } catch (e) {
+                    console.warn('[fnMsgReadSync] parse unread cache error:', e);
+                }
+
+                // 基于该消息的 sendTime，查询之后仍未读的消息信息
+                const unreadInfoNew = await window.$db.getMsgUnreadForTimeAfter({
+                    id,
+                    type,
+                    values: {
+                        sendTime: msgInfo.sendTime,
+                        timeUnread: timeUnread,
+                        isSync: true // 标记为多端同步，避免底层向服务器重复发送已读回执(CReqMessageReceipt)
+                    }
+                });
+                // console.log('unreadInfoNew----',unreadInfoNew)
+                // 通知 UI 更新未读数和小红点（noProcessing=true 跳过 base 层处理，直接广播到 UI）
+                eventBase.fnCommunicationSendMsg(
+                    {
+                        operator: "msgReadByMe",
+                        data: {
+                            id,
+                            type,
+                            unreadInfo: unreadInfoNew,
+                        },
+                    },
+                    true
+                );
+                handled = true;
+                break;
+            }
+        }
+
+        // 所有 msgId 在本地均未找到，直接清除该会话的未读数
+        if (!handled) {
+            eventBase.fnCommunicationSendMsg(
+                {
+                    operator: "msgReadByMe",
+                    data: {
+                        id,
+                        type,
+                        unreadInfo: null,
+                    },
+                },
+                true
+            );
+        }
+    }
+};
 //////////////////////// 消息发送
 
 /**
@@ -991,6 +1106,8 @@ const fnMsgTypeToText = ({ chatType, msgType, haveBrackets }) => {
     let text = "";
     if (msgType === 13) {
         text = i18n.t("暂不支持该消息类型");
+    } else if (Number(msgType) === 17 || Number(chatType) === 17) {
+        text = i18n.t("多图");
     } else {
         switch (chatType) {
             case 1: {
@@ -1101,6 +1218,11 @@ const fnMsgContentAddQuote = async (data) => {
 
 // 发送中消息列表 id和时间
 let sendingInfoList = [];
+
+/** 普通消息发送等待服务端回执的超时（毫秒） */
+const MSG_SEND_TIMEOUT_MS = 15000;
+/** msgType 17 多媒体+配文，多文件上传耗时长，单独放宽超时 */
+const MSG_SEND_TIMEOUT_MEDIAS_CAPTION_MS = 5 * 60 * 1000;
 
 /**
  * 消息发送，此方法是pc端操作，发送信息才会进入
@@ -1281,6 +1403,33 @@ const fnMsgSend = async (info) => {
 
         // 文件缩略图
         let fileThumb = null;
+
+        const msgType17Result = await handleMsgType17Send({
+            item,
+            editInfo,
+            type,
+            id,
+            values,
+            customMsgId,
+            sendTime,
+            deleteSeconds,
+            loginInfo,
+            links,
+            info,
+            sendMsgList,
+            eventFile,
+            eventBase,
+            progress,
+        });
+        if (msgType17Result.handled) {
+            sendTime = msgType17Result.sendTime;
+            if (msgType17Result.shouldBreak) {
+                break;
+            }
+            if (msgType17Result.shouldContinue) {
+                continue;
+            }
+        }
 
         // 文件信息, 文件处理并返回文件信息，异步上传
         if (item.type === "file") {
@@ -1537,6 +1686,7 @@ const fnMsgSend = async (info) => {
             type,
             customMsgId: item.customMsgId,
             sendTime: Number(item.sendTime),
+            msgType: item.params?.msgType ?? item.params?.chatType,
         });
 
         // 清除多余的字段
@@ -1648,9 +1798,13 @@ const fnMsgSendTimeout = () => {
     const now = Date.now();
 
     // 超时信息列表
-    const infoTimeoutList = _.cloneDeep(sendingInfoList.filter(
-        (item) => now - item.sendTime > 15000
-    ));
+    const infoTimeoutList = _.cloneDeep(sendingInfoList.filter((item) => {
+        const limit =
+            item.msgType === enumMsgType.mediasCaption
+                ? MSG_SEND_TIMEOUT_MEDIAS_CAPTION_MS
+                : MSG_SEND_TIMEOUT_MS;
+        return now - item.sendTime > limit;
+    }));
     // console.log('infoTimeoutList --------> 1045', infoTimeoutList)
     //  超时id列表
     const idTimeoutList = infoTimeoutList.map((item) => item.customMsgId);
@@ -1959,6 +2113,7 @@ export default {
     fnMsgSendSuccess,
     fnMsgDelete,
     fnMsgFriendRead,
+    fnMsgReadSync,
     fnMsgTypeToText,
     fnMsgReadByMe,
     fnMsgSend,
