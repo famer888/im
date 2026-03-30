@@ -2330,10 +2330,29 @@ export default {
      */
     handleToAt() {
       if (this.atMeIds.length > 0) {
-        // 移动至，并且高亮
-        this.handleMoveToId({
-          customMsgId: this.atMeIds[0],
-          isHighlighted: true,
+        const targetId = this.atMeIds[0];
+
+        // 查找目标消息所在的页面/数据块索引
+        let pageNumTarget = -1;
+        for (const block of this.blockList) {
+          if (block.list.some(msg => msg.customMsgId === targetId)) {
+            pageNumTarget = block.pageNum;
+            break;
+          }
+        }
+
+        // 如果找到了对应的页面，则切换当前显示的页码，触发 DOM 渲染
+        if (pageNumTarget !== -1) {
+          this.blockListShowPageNum = pageNumTarget;
+        }
+
+        this.$nextTick(() => {
+          // 移动至目标消息，并且高亮
+          this.handleMoveToId({
+            customMsgId: targetId,
+            isImmediately: true, // 立即跳转避免动画误差
+            isHighlighted: true, // 高亮展示
+          });
         });
 
         // 排除第一个
@@ -2413,7 +2432,7 @@ export default {
             // 动态更新 initialUnreadCount 用于右上角上箭头展示的数量
             this.initialUnreadCount = newCount > 0 ? newCount : 0;
           }
-          
+
           // 看到了最新一条消息，清空下箭头新消息
           if (this.unreadCount > 0 && this.latestNewMsgId && msgListEnterVisual.some(msg => msg.customMsgId === this.latestNewMsgId)) {
             this.unreadCount = 0;
