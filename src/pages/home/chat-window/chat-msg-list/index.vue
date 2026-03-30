@@ -838,7 +838,7 @@ export default {
         // 如果不在底部，为了提示用户有新消息，根据新增的消息数量累加
         const visibleNewItems = newItems.filter(item => {
           const info = item.info;
-          return !(info.isHide && !info.isSelf) && !((info.msgType === 8 || info.chatType === 8) && info.isHide);
+          return !info.isSelf && !(info.isHide && !info.isSelf) && !((info.msgType === 8 || info.chatType === 8) && info.isHide);
         });
 
         if (visibleNewItems.length > 0) {
@@ -2109,8 +2109,23 @@ export default {
 
                 // 只有没传入搜索 customMsgId 时，我们才重置数量以展示未读气泡
                   if (!customMsgId && this.chatContent.unreadObj) {
+                    let initialCount = this.chatContent.unreadObj.count || 0;
+                    const timeUnread = Number(this.chatContent.unreadObj.time || 0);
+
+                    if (initialCount > 0 && timeUnread > 0) {
+                      let selfUnreadCount = 0;
+                      for (const block of this.blockList) {
+                        for (const msg of block.list) {
+                          if (msg.isSelf && Number(msg.sendTime) >= timeUnread) {
+                            selfUnreadCount++;
+                          }
+                        }
+                      }
+                      initialCount = Math.max(0, initialCount - selfUnreadCount);
+                    }
+
                     // 进入窗口时提示的还有多少条未读，减去可视区域的消息数量 (可视区域在 handleMsgEnterVisualRange 会计算)
-                    this.initialUnreadCount = this.chatContent.unreadObj.count;
+                    this.initialUnreadCount = initialCount;
                     this.unreadCount = 0; // 上箭头模式下，数量由 initialUnreadCount 提供，这里清空下箭头的新消息数
                     this.latestNewMsgId = ""; // 切换窗口重置下箭头锚点
                     if (this.seenUnreadMsgIds) { // 清空已看消息的记录集合
@@ -2166,8 +2181,23 @@ export default {
 
                 // 只有没传入搜索 customMsgId 时，我们才重置数量以展示未读气泡
                 if (!customMsgId && this.chatContent.unreadObj) {
+                  let initialCount = this.chatContent.unreadObj.count || 0;
+                  const timeUnread = Number(this.chatContent.unreadObj.time || 0);
+
+                  if (initialCount > 0 && timeUnread > 0) {
+                    let selfUnreadCount = 0;
+                    for (const block of this.blockList) {
+                      for (const msg of block.list) {
+                        if (msg.isSelf && Number(msg.sendTime) >= timeUnread) {
+                          selfUnreadCount++;
+                        }
+                      }
+                    }
+                    initialCount = Math.max(0, initialCount - selfUnreadCount);
+                  }
+
                   // 进入窗口时提示的还有多少条未读，减去可视区域的消息数量 (可视区域在 handleMsgEnterVisualRange 会计算)
-                  this.initialUnreadCount = this.chatContent.unreadObj.count;
+                  this.initialUnreadCount = initialCount;
                   this.unreadCount = 0; // 上箭头模式下，数量由 initialUnreadCount 提供，这里清空下箭头的新消息数
                   this.latestNewMsgId = ""; // 切换窗口重置下箭头锚点
                   if (this.seenUnreadMsgIds) { // 清空已看消息的记录集合
@@ -2422,15 +2452,20 @@ export default {
               this.$set(this, 'seenUnreadMsgIds', new Set());
             }
 
+            let newSeenCount = 0;
             msgListEnterVisual.forEach(msg => {
               if (!msg.isSelf && Number(msg.sendTime) >= timeUnread) {
-                this.seenUnreadMsgIds.add(msg.customMsgId);
+                if (!this.seenUnreadMsgIds.has(msg.customMsgId)) {
+                  this.seenUnreadMsgIds.add(msg.customMsgId);
+                  newSeenCount++; // 记录本次滚动新看到了几条未读消息
+                }
               }
             });
 
-            const newCount = this.chatContent.unreadObj.count - this.seenUnreadMsgIds.size;
-            // 动态更新 initialUnreadCount 用于右上角上箭头展示的数量
-            this.initialUnreadCount = newCount > 0 ? newCount : 0;
+            // 只有当有新的历史未读消息进入可视区域时，才递减 initialUnreadCount
+            if (newSeenCount > 0) {
+              this.initialUnreadCount = Math.max(0, this.initialUnreadCount - newSeenCount);
+            }
           }
 
           // 看到了最新一条消息，清空下箭头新消息
