@@ -2,6 +2,7 @@ import axios from "axios";
 import { Local } from "@/utils";
 import { sendErrToSentry } from "@/utils/sentry";
 import { baseUrl, FairGuard } from "./unit";
+import eventCommon from "@/event/common.js";
 let baseURL = baseUrl() || process.env.VUE_APP_BASE_API;
 axios.defaults.baseURL = baseURL;
 // 暫存：紀錄執行中的請求
@@ -196,6 +197,18 @@ function apiAxios(
     return new Promise((resolve, reject) => {
         axios(httpDefault)
             .then((res) => {
+                const responseData = res.data;
+                if (responseData && (responseData.code === 100 || (responseData.commonResult && responseData.commonResult.errCode === 100))) {
+                    window.$toast(responseData.msg || responseData.commonResult?.errMsg || "登录已过期，请重新登录");
+                    const { ipcRenderer } = require("@/platform");
+                    ipcRenderer.send("auto-export-db", {});
+                    setTimeout(() => {
+                        eventCommon.fnLoginout();
+                    }, 2000);
+
+                    reject(responseData);
+                    return;
+                }
                 FairGuard.recieve(res);
                 resolve(successState(res));
             })

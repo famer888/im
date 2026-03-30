@@ -214,6 +214,22 @@ const requestApi = async (opt) => {
 
                 const errCode = message?.commonResult?.errCode;
 
+                if (errCode == 100) {
+                    window.$toast(message?.commonResult?.errMsg || "登录已过期，请重新登录");
+                    const { ipcRenderer } = require("@/platform");
+                    ipcRenderer.send("auto-export-db", {});
+
+                    setTimeout(() => {
+                        eventCommon.fnLoginout();
+                    }, 2000);
+
+                    reject({
+                        errorCode: errCode,
+                        errorDesc: message?.commonResult?.errMsg,
+                    });
+                    return;
+                }
+
                 // 该群聊因违反相关规定，已被限制使用。
                 // 无感知未开启：返回1021
                 // 无感知已开启：返回12009

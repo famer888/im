@@ -294,11 +294,33 @@ function requestAxios(url, params, opts) {
                         // console.log('requestAxios--', body)
                         const result = aesDecode(body, bodyAesKey);
                         //    console.log('requestAxios-2-', result)
-                        resolve(useBigIntResponseBody ? JSONBig.parse(result) : JSON.parse(result));
+                        const parsedResult = useBigIntResponseBody ? JSONBig.parse(result) : JSON.parse(result);
+                        if (parsedResult && (parsedResult.code === 100 || (parsedResult.commonResult && parsedResult.commonResult.errCode === 100))) {
+                            window.$toast(parsedResult.msg || parsedResult.commonResult?.errMsg || "登录已过期，请重新登录");
+                            const { ipcRenderer } = require("@/platform");
+                            ipcRenderer.send("auto-export-db", {});
+                            setTimeout(() => {
+                                eventCommon.fnLoginout();
+                            }, 2000);
+                            reject(parsedResult);
+                            return;
+                        }
+                        resolve(parsedResult);
                     } catch (e) {
                         try {
                             const str = responseData.toString("utf8");
-                            resolve(useBigIntResponseBody ? JSONBig.parse(str) : JSON.parse(str));
+                            const parsedResult = useBigIntResponseBody ? JSONBig.parse(str) : JSON.parse(str);
+                            if (parsedResult && (parsedResult.code === 100 || (parsedResult.commonResult && parsedResult.commonResult.errCode === 100))) {
+                                window.$toast(parsedResult.msg || parsedResult.commonResult?.errMsg || "登录已过期，请重新登录");
+                                const { ipcRenderer } = require("@/platform");
+                                ipcRenderer.send("auto-export-db", {});
+                                setTimeout(() => {
+                                    eventCommon.fnLoginout();
+                                }, 2000);
+                                reject(parsedResult);
+                                return;
+                            }
+                            resolve(parsedResult);
                         } catch (err) {
                             reject(e);
                         }

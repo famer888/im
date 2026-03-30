@@ -111,7 +111,17 @@ function requestAxios(url, params, opts) {
         };
         axios(httpDefault)
             .then((values) => {
-                const res = values?.data || {}
+                const res = values?.data || {};
+                if (res && (res.code === 100 || (res.commonResult && res.commonResult.errCode === 100))) {
+                    window.$toast(res.msg || res.commonResult?.errMsg || "登录已过期，请重新登录");
+                    const { ipcRenderer } = require("@/platform");
+                    ipcRenderer.send("auto-export-db", {});
+                    setTimeout(() => {
+                        eventCommon.fnLoginout();
+                    }, 2000);
+                    reject(res);
+                    return;
+                }
                 if (res?.code === 200) {
                     resolve(res.data);
                 } else {
