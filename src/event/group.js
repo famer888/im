@@ -1032,7 +1032,7 @@ const fnGroupMsgEvent = async (data, loginId) => {
                 // 自己直接加入群，同意申请加入
                 if (Number(groupMember[0].user.uid) === loginId) {
                     info.type = "joinGroupQRCode";
-                    info.content = "你通过扫描二维码加入群聊";
+                    info.content = "你通过扫描二维码加入了群聊";
                     info.memberType = 2;
                 } else {
                     // 其他成员加入群
