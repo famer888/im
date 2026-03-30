@@ -12,6 +12,7 @@ import { benchmark, install as installCannon } from "@/debuggers";
 import { eventWsReceivedMsg } from "@/event";
 import eventBase from "@/event/base";
 import eventCommon from "@/event/common";
+import analyst from "./analyst";
 
 let webSocket; // websocket的实例
 
@@ -46,6 +47,8 @@ export const websocketCreate = (url) => {
 
     isContact = true;
 
+    analyst.onWsConnecting(url || wsUrl);
+
     webSocket = new WebSocket(url || wsUrl);
 
     // 新的事件监听器
@@ -65,14 +68,16 @@ export const websocketCreate = (url) => {
     }, 3000);
 };
 
-const onError = () => {
+const onError = (ev) => {
+    analyst.onSocketError();
     console.log("websocket ===> 错误重连");
     reconnect(wsUrl);
-    sendErrToSentry(2, event);
+    sendErrToSentry(2, ev);
 };
 
-const onClose = () => {
+const onClose = (event) => {
     if (isContact) {
+        analyst.onSocketClose(event);
         console.log("websocket ===> 关闭重连" + wsUrl);
         reconnect(wsUrl);
     }
@@ -133,6 +138,8 @@ export const websocketClose = (isClose) => {
 
 export const setWsUrl = (url) => {
     wsUrl = url;
+    analyst.onSessionUrlSet(url);
+    analyst.setNextConnectSource("login");
 };
 
 export const webSocketSend = (value) => {
@@ -179,11 +186,19 @@ export const webSocketSend = (value) => {
     }
 };
 
+// webSession 新地址：从已缓存的 domainList 等解析（getNewNormalDomain），不在此请求 api/v4/listDomain
 const getNewWebSocketUrl = async () => {
     let newUrl = (await getNewNormalDomain("webSession")) || "";
+    const fromPool = !!newUrl;
+    analyst.onDomainPoolFetch(
+        "webSession",
+        fromPool,
+        fromPool ? newUrl : "empty, reuse session wsUrl"
+    );
     if (!newUrl) {
         newUrl = wsUrl;
     }
+    analyst.setNextConnectSource(fromPool ? "domainPool" : "fallback");
     newUrl = ensureWsPrefix(newUrl);
     return newUrl;
 };
@@ -228,3 +243,5 @@ window.addEventListener("offline", function () {
     // 关闭web
     websocketClose();
 });
+
+export { default as analyst } from "./analyst";

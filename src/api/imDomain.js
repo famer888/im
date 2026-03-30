@@ -15,6 +15,7 @@ import {
 let CryptoJS = require("./base/crypto-js.min.js");
 // 事件
 import eventCommon from "@/event/common.js";
+import analyst from "@/socket/analyst";
 
 export const getDomainUrl = () => {
     const domains = eventCommon.fnDomainsGet();
@@ -48,10 +49,12 @@ export const getHistoryMsgs2 = (payload) => {
 
 // 获取动态域名池
 export const getDomainListApi = (payload) => {
-    return postAxios(`${getDomainUrl()}/api/v4/listDomain`, payload.datas, {
-        headers: { accessToken: payload.headers.accessToken },
-        secretKey: payload.secretKey,
-    });
+    return analyst.tapDomainListApi(
+        postAxios(`${getDomainUrl()}/api/v4/listDomain`, payload.datas, {
+            headers: { accessToken: payload.headers.accessToken },
+            secretKey: payload.secretKey,
+        })
+    );
 };
 
 // 上报异常域名接口

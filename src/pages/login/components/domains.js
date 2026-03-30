@@ -1,4 +1,5 @@
 import { getClientTokenData } from "@/utils/trendsDomain/manageToken";
+import analyst from "@/socket/analyst";
 
 // 预埋域名配置 - 需要下载解密的oss文件地址
 const OSS_CONFIG_URLS = {
@@ -192,6 +193,7 @@ const checkDomainByGetListDomain = async (domainUrl, tokenResult) => {
         tokenResult = await getClientToken(domainUrl);
     }
     if (!tokenResult.success) {
+        analyst.traceLoginDomainsListDomain(false, `getToken failed: ${tokenResult.error}`);
         return { domainUrl, listDomain: 'failed', error: `getToken failed: ${tokenResult.error}` };
     }
 
@@ -209,15 +211,20 @@ const checkDomainByGetListDomain = async (domainUrl, tokenResult) => {
             }),
         });
         if (!response.ok) {
+            analyst.traceLoginDomainsListDomain(false, `HTTP ${response.status}`);
             return { domainUrl, listDomain: 'failed', error: `HTTP ${response.status}` };
         }
         const result = await response.json();
         // 检查是否有list
         if (result && (result.data || result.list || result.code === 200)) {
+            const dto = result.domainDtoList || result.data?.domainDtoList;
+            analyst.traceLoginDomainsListDomain(true, "check ok", Array.isArray(dto) ? dto : undefined);
             return { domainUrl, listDomain: 'success' };
         }
+        analyst.traceLoginDomainsListDomain(false, "no list");
         return { domainUrl, listDomain: 'failed', error: 'no list' };
     } catch (error) {
+        analyst.traceLoginDomainsListDomain(false, error.message);
         return { domainUrl, listDomain: 'failed', error: error.message };
     }
 };

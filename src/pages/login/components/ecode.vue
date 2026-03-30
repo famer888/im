@@ -52,6 +52,7 @@ import { getDynamicDomainListForQrCode } from "./network.vue";
 
 // 事件
 import eventCommon from "@/event/common";
+import analyst from "@/socket/analyst";
 
 // 定时器
 let timerOutTimer = null;
@@ -258,6 +259,7 @@ export default {
       getIsLogin(this.currentBaseUrl, { token: this.loginToken, sysMac, sysModel }).then((res) => {
         if (res && Number(res.uid)) {
           const { sessionId, nickName, icon, uploadFileSize, urls } = res;
+          analyst.onIsLoginUrls(urls);
           const loginId = Number(res.uid);
           // console.log("登录成功", res);
           // 初始化所有群的key
