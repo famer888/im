@@ -1483,7 +1483,7 @@ const getNewKey = async () => {
     .toUpperCase();
     try {
         const desc = consumeUpdateKeyPairDesc();
-        console.log('[UpdateKeyPair]密钥更新描述：' + desc);
+        console.$collectE2ee('[UpdateKeyPair]密钥更新描述：' + desc);
         const res = await UpdateKeyPair({ publicKey, desc })
         if (res && res.keyVersion && res.commonResult.errCode === 200) {
             return {
