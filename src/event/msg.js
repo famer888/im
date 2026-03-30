@@ -841,6 +841,64 @@ const fnMsgNewAdd = (info) => {
 };
 
 /**
+ * 未读消息设置并发锁与批处理队列
+ * 解决痛点：断网重连或瞬间接收海量离线消息时，如果每条消息都单独读写本地 Cache 文件，
+ * 会导致严重的 IO 阻塞，甚至因为异步读写引发竞态覆盖（如收100条未读最终只显示1条）。
+ */
+let unreadMutex = Promise.resolve(); // 串行锁，保证无论怎么分批次，Cache的读写绝对串行
+let unreadBatchQueue = []; // 批处理缓冲队列，存放所有待处理未读状态的消息
+let unreadBatchTimer = null; // 防抖定时器
+
+/**
+ * 处理队列中的未读消息（批量读写 Cache）
+ * 将 50ms 内收集到的所有消息，合并为一次本地文件 IO 读写
+ */
+const processUnreadBatch = async (loginId) => {
+    if (unreadBatchQueue.length === 0) return;
+
+    const tasks = unreadBatchQueue;
+    unreadBatchQueue = [];
+
+    try {
+        //批量读取 Cache 一次
+        const res = await Cache(`${loginId}-unread`);
+        const resUread = (res && res.unread) || {};
+
+        //在内存中合并所有的未读数累加
+        tasks.forEach(task => {
+            const { id, type, customMsgId, sendTime } = task.info;
+            const key = id + type;
+            if (resUread[key]) {
+                resUread[key].count++;
+            } else {
+                resUread[key] = {
+                    count: 1,
+                    time: sendTime,
+                    unreadID: customMsgId,
+                };
+            }
+        });
+
+        await Cache(`${loginId}-unread`, { unread: resUread });
+
+        //批量触发 UI 更新（通知 home-left 更新小红点，通知 chat-msg-list 插入消息）
+        tasks.forEach(task => {
+            const { info } = task;
+            const key = info.id + info.type;
+            eventBase.fnCommunicationSendMsg(
+                {
+                    operator: "msgNew",
+                    data: { ...info, unreadObj: resUread[key] },
+                },
+                true
+            );
+        });
+    } catch (err) {
+        console.error("processUnreadBatch error:", err);
+    }
+};
+
+/**
  * 未读消息设置
  */
 const fnUnreadMsgSet = async (info) => {
@@ -851,13 +909,6 @@ const fnUnreadMsgSet = async (info) => {
 
   // 如果当前是选中窗口，不管在不在底部直接已读，不添加未读
   if (infoActive && id + type === infoActive.id + infoActive.type) {
-    // const dom = document.getElementById("allMsgContainer");
-
-    // if (dom) {
-    //     const atBottom =
-    //         dom.scrollHeight - dom.clientHeight - 50 <= dom.scrollT
-    //     // 如果在底部，直接已读
-    //     if (atBottom) {
       eventBase.fnCommunicationSendMsg(
           {
               operator: "msgNew",
@@ -884,34 +935,19 @@ const fnUnreadMsgSet = async (info) => {
       }
 
       return;
-      //     }
-      // }
   }
 
-  // 设置未读
-  const res = await Cache(`${loginId}-unread`);
-  const resUread = (res && res.unread) || {};
+  // 非当前窗口的未读消息，推入内存批处理队列
+  unreadBatchQueue.push({ info });
 
-  if (resUread[id + type]) {
-      resUread[id + type].count++;
-  } else {
-      resUread[id + type] = {
-          count: 1,
-          time: sendTime,
-          unreadID: customMsgId,
-      };
+  // 使用防抖机制，将短时间内的多次未读更新合并为一次 Cache 读写
+  if (!unreadBatchTimer) {
+      unreadBatchTimer = setTimeout(() => {
+          unreadBatchTimer = null;
+          // 利用 unreadMutex 保证即使有多个批次，批次之间也是串行执行，不覆盖
+          unreadMutex = unreadMutex.then(() => processUnreadBatch(loginId));
+      }, 50);
   }
-
-  // 保存到本地
-  await Cache(`${loginId}-unread`, { unread: resUread });
-
-  eventBase.fnCommunicationSendMsg(
-      {
-          operator: "msgNew",
-          data: { ...info, unreadObj: resUread[id + type] },
-      },
-      true
-  );
 };
 
 const fnMsgEdit = (info) => {

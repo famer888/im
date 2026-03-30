@@ -736,7 +736,17 @@ export default class dbBase {
         .aboveOrEqual(String(sendTime))
         .and((message) => message.isAtMe === true) // isAtMe 等于 true
         .toArray() // 获取结果数组
-        .then((messages) => messages.map((message) => message.customMsgId)); // 提取 id
+        .then((messages) => {
+          // 按照 sendTime 和 MsgID 降序排序，确保最新的未读消息排在前面 （跟app同步）
+          messages.sort((a, b) => {
+            if (a.sendTime > b.sendTime) return -1;
+            if (a.sendTime < b.sendTime) return 1;
+            if (a.MsgID > b.MsgID) return -1;
+            if (a.MsgID < b.MsgID) return 1;
+            return 0;
+          });
+          return messages.map((message) => message.customMsgId);
+        }); // 提取 id
     }
   }
   /**
