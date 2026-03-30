@@ -891,6 +891,27 @@ export default {
         return;
       }
 
+      // 更新 atMeIds (如果有被删除的@消息，需要从列表中移除)
+      if (this.atMeIds.length > 0 && idsDelete && idsDelete.length > 0) {
+        const customMsgIdList = idsDelete.filter(item => item.customMsgId).map(item => item.customMsgId);
+        const msgIdList = idsDelete.filter(item => !item.customMsgId).map(item => Number(item.msgId));
+
+        let deletedAtMeIds = [];
+
+        for (const block of this.blockList) {
+          for (const msg of block.list) {
+            const isDeleted = customMsgIdList.includes(msg.customMsgId) || msgIdList.includes(Number(msg.MsgID));
+            if (isDeleted && this.atMeIds.includes(msg.customMsgId)) {
+              deletedAtMeIds.push(msg.customMsgId);
+            }
+          }
+        }
+
+        if (deletedAtMeIds.length > 0) {
+          this.atMeIds = this.atMeIds.filter(id => !deletedAtMeIds.includes(id));
+        }
+      }
+
       // 现在的机制下，只要进入窗口就会把未读清空，unreadCount 变成纯 UI 展示气泡
       // 所以删除消息时不应该直接用数据库的未读数覆盖，否则会导致 UI 气泡异常消失
       // this.unreadCount = unreadMsgCount;
