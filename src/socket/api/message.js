@@ -31,7 +31,7 @@ export function CReqChatSendPrivate(data, flag) {
     });
     const buffer = OneToOneMessageReq.encode(message).finish();
     const rb = initHeader(buffer, 10101, flag);
-    console.log("发出推送-10101-")
+    console.log("发出推送-10101-", flag);
     webSocketSend(rb);
 }
 

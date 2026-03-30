@@ -610,6 +610,9 @@ export const UpdateKeyPairReq = $root.UpdateKeyPairReq = (() => {
      * @interface IUpdateKeyPairReq
      * @property {IClientInfo|null} [clientInfo] UpdateKeyPairReq clientInfo
      * @property {string|null} [publicKey] UpdateKeyPairReq publicKey
+     * @property {number|null} [oldVersion] UpdateKeyPairReq oldVersion
+     * @property {string|null} [oldPublicKey] UpdateKeyPairReq oldPublicKey
+     * @property {string|null} [desc] UpdateKeyPairReq desc
      */
 
     /**
@@ -644,6 +647,30 @@ export const UpdateKeyPairReq = $root.UpdateKeyPairReq = (() => {
     UpdateKeyPairReq.prototype.publicKey = "";
 
     /**
+     * UpdateKeyPairReq oldVersion.
+     * @member {number} oldVersion
+     * @memberof UpdateKeyPairReq
+     * @instance
+     */
+    UpdateKeyPairReq.prototype.oldVersion = 0;
+
+    /**
+     * UpdateKeyPairReq oldPublicKey.
+     * @member {string} oldPublicKey
+     * @memberof UpdateKeyPairReq
+     * @instance
+     */
+    UpdateKeyPairReq.prototype.oldPublicKey = "";
+
+    /**
+     * UpdateKeyPairReq desc.
+     * @member {string} desc
+     * @memberof UpdateKeyPairReq
+     * @instance
+     */
+    UpdateKeyPairReq.prototype.desc = "";
+
+    /**
      * Creates a new UpdateKeyPairReq instance using the specified properties.
      * @function create
      * @memberof UpdateKeyPairReq
@@ -671,6 +698,12 @@ export const UpdateKeyPairReq = $root.UpdateKeyPairReq = (() => {
             $root.ClientInfo.encode(message.clientInfo, writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
         if (message.publicKey != null && Object.hasOwnProperty.call(message, "publicKey"))
             writer.uint32(/* id 2, wireType 2 =*/18).string(message.publicKey);
+        if (message.oldVersion != null && Object.hasOwnProperty.call(message, "oldVersion"))
+            writer.uint32(/* id 3, wireType 0 =*/24).int32(message.oldVersion);
+        if (message.oldPublicKey != null && Object.hasOwnProperty.call(message, "oldPublicKey"))
+            writer.uint32(/* id 4, wireType 2 =*/34).string(message.oldPublicKey);
+        if (message.desc != null && Object.hasOwnProperty.call(message, "desc"))
+            writer.uint32(/* id 5, wireType 2 =*/42).string(message.desc);
         return writer;
     };
 
@@ -713,6 +746,18 @@ export const UpdateKeyPairReq = $root.UpdateKeyPairReq = (() => {
                 }
             case 2: {
                     message.publicKey = reader.string();
+                    break;
+                }
+            case 3: {
+                    message.oldVersion = reader.int32();
+                    break;
+                }
+            case 4: {
+                    message.oldPublicKey = reader.string();
+                    break;
+                }
+            case 5: {
+                    message.desc = reader.string();
                     break;
                 }
             default:
@@ -758,6 +803,15 @@ export const UpdateKeyPairReq = $root.UpdateKeyPairReq = (() => {
         if (message.publicKey != null && message.hasOwnProperty("publicKey"))
             if (!$util.isString(message.publicKey))
                 return "publicKey: string expected";
+        if (message.oldVersion != null && message.hasOwnProperty("oldVersion"))
+            if (!$util.isInteger(message.oldVersion))
+                return "oldVersion: integer expected";
+        if (message.oldPublicKey != null && message.hasOwnProperty("oldPublicKey"))
+            if (!$util.isString(message.oldPublicKey))
+                return "oldPublicKey: string expected";
+        if (message.desc != null && message.hasOwnProperty("desc"))
+            if (!$util.isString(message.desc))
+                return "desc: string expected";
         return null;
     };
 
@@ -780,6 +834,12 @@ export const UpdateKeyPairReq = $root.UpdateKeyPairReq = (() => {
         }
         if (object.publicKey != null)
             message.publicKey = String(object.publicKey);
+        if (object.oldVersion != null)
+            message.oldVersion = object.oldVersion | 0;
+        if (object.oldPublicKey != null)
+            message.oldPublicKey = String(object.oldPublicKey);
+        if (object.desc != null)
+            message.desc = String(object.desc);
         return message;
     };
 
@@ -799,11 +859,20 @@ export const UpdateKeyPairReq = $root.UpdateKeyPairReq = (() => {
         if (options.defaults) {
             object.clientInfo = null;
             object.publicKey = "";
+            object.oldVersion = 0;
+            object.oldPublicKey = "";
+            object.desc = "";
         }
         if (message.clientInfo != null && message.hasOwnProperty("clientInfo"))
             object.clientInfo = $root.ClientInfo.toObject(message.clientInfo, options);
         if (message.publicKey != null && message.hasOwnProperty("publicKey"))
             object.publicKey = message.publicKey;
+        if (message.oldVersion != null && message.hasOwnProperty("oldVersion"))
+            object.oldVersion = message.oldVersion;
+        if (message.oldPublicKey != null && message.hasOwnProperty("oldPublicKey"))
+            object.oldPublicKey = message.oldPublicKey;
+        if (message.desc != null && message.hasOwnProperty("desc"))
+            object.desc = message.desc;
         return object;
     };
 
@@ -2286,6 +2355,567 @@ export const GetKeyPairListResp = $root.GetKeyPairListResp = (() => {
     };
 
     return GetKeyPairListResp;
+})();
+
+export const GetKeyPairOfVerReq = $root.GetKeyPairOfVerReq = (() => {
+
+    /**
+     * Properties of a GetKeyPairOfVerReq.
+     * @exports IGetKeyPairOfVerReq
+     * @interface IGetKeyPairOfVerReq
+     * @property {IClientInfo|null} [clientInfo] GetKeyPairOfVerReq clientInfo
+     * @property {number|Long|null} [uid] GetKeyPairOfVerReq uid
+     * @property {number|null} [appVer] GetKeyPairOfVerReq appVer
+     * @property {number|null} [webVer] GetKeyPairOfVerReq webVer
+     */
+
+    /**
+     * Constructs a new GetKeyPairOfVerReq.
+     * @exports GetKeyPairOfVerReq
+     * @classdesc Represents a GetKeyPairOfVerReq.
+     * @implements IGetKeyPairOfVerReq
+     * @constructor
+     * @param {IGetKeyPairOfVerReq=} [properties] Properties to set
+     */
+    function GetKeyPairOfVerReq(properties) {
+        if (properties)
+            for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                if (properties[keys[i]] != null)
+                    this[keys[i]] = properties[keys[i]];
+    }
+
+    /**
+     * GetKeyPairOfVerReq clientInfo.
+     * @member {IClientInfo|null|undefined} clientInfo
+     * @memberof GetKeyPairOfVerReq
+     * @instance
+     */
+    GetKeyPairOfVerReq.prototype.clientInfo = null;
+
+    /**
+     * GetKeyPairOfVerReq uid.
+     * @member {number|Long} uid
+     * @memberof GetKeyPairOfVerReq
+     * @instance
+     */
+    GetKeyPairOfVerReq.prototype.uid = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+
+    /**
+     * GetKeyPairOfVerReq appVer.
+     * @member {number} appVer
+     * @memberof GetKeyPairOfVerReq
+     * @instance
+     */
+    GetKeyPairOfVerReq.prototype.appVer = 0;
+
+    /**
+     * GetKeyPairOfVerReq webVer.
+     * @member {number} webVer
+     * @memberof GetKeyPairOfVerReq
+     * @instance
+     */
+    GetKeyPairOfVerReq.prototype.webVer = 0;
+
+    /**
+     * Creates a new GetKeyPairOfVerReq instance using the specified properties.
+     * @function create
+     * @memberof GetKeyPairOfVerReq
+     * @static
+     * @param {IGetKeyPairOfVerReq=} [properties] Properties to set
+     * @returns {GetKeyPairOfVerReq} GetKeyPairOfVerReq instance
+     */
+    GetKeyPairOfVerReq.create = function create(properties) {
+        return new GetKeyPairOfVerReq(properties);
+    };
+
+    /**
+     * Encodes the specified GetKeyPairOfVerReq message. Does not implicitly {@link GetKeyPairOfVerReq.verify|verify} messages.
+     * @function encode
+     * @memberof GetKeyPairOfVerReq
+     * @static
+     * @param {IGetKeyPairOfVerReq} message GetKeyPairOfVerReq message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    GetKeyPairOfVerReq.encode = function encode(message, writer) {
+        if (!writer)
+            writer = $Writer.create();
+        if (message.clientInfo != null && Object.hasOwnProperty.call(message, "clientInfo"))
+            $root.ClientInfo.encode(message.clientInfo, writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
+        if (message.uid != null && Object.hasOwnProperty.call(message, "uid"))
+            writer.uint32(/* id 2, wireType 0 =*/16).int64(message.uid);
+        if (message.appVer != null && Object.hasOwnProperty.call(message, "appVer"))
+            writer.uint32(/* id 3, wireType 0 =*/24).int32(message.appVer);
+        if (message.webVer != null && Object.hasOwnProperty.call(message, "webVer"))
+            writer.uint32(/* id 4, wireType 0 =*/32).int32(message.webVer);
+        return writer;
+    };
+
+    /**
+     * Encodes the specified GetKeyPairOfVerReq message, length delimited. Does not implicitly {@link GetKeyPairOfVerReq.verify|verify} messages.
+     * @function encodeDelimited
+     * @memberof GetKeyPairOfVerReq
+     * @static
+     * @param {IGetKeyPairOfVerReq} message GetKeyPairOfVerReq message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    GetKeyPairOfVerReq.encodeDelimited = function encodeDelimited(message, writer) {
+        return this.encode(message, writer).ldelim();
+    };
+
+    /**
+     * Decodes a GetKeyPairOfVerReq message from the specified reader or buffer.
+     * @function decode
+     * @memberof GetKeyPairOfVerReq
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @param {number} [length] Message length if known beforehand
+     * @returns {GetKeyPairOfVerReq} GetKeyPairOfVerReq
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    GetKeyPairOfVerReq.decode = function decode(reader, length, error) {
+        if (!(reader instanceof $Reader))
+            reader = $Reader.create(reader);
+        let end = length === undefined ? reader.len : reader.pos + length, message = new $root.GetKeyPairOfVerReq();
+        while (reader.pos < end) {
+            let tag = reader.uint32();
+            if (tag === error)
+                break;
+            switch (tag >>> 3) {
+            case 1: {
+                    message.clientInfo = $root.ClientInfo.decode(reader, reader.uint32());
+                    break;
+                }
+            case 2: {
+                    message.uid = reader.int64();
+                    break;
+                }
+            case 3: {
+                    message.appVer = reader.int32();
+                    break;
+                }
+            case 4: {
+                    message.webVer = reader.int32();
+                    break;
+                }
+            default:
+                reader.skipType(tag & 7);
+                break;
+            }
+        }
+        return message;
+    };
+
+    /**
+     * Decodes a GetKeyPairOfVerReq message from the specified reader or buffer, length delimited.
+     * @function decodeDelimited
+     * @memberof GetKeyPairOfVerReq
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @returns {GetKeyPairOfVerReq} GetKeyPairOfVerReq
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    GetKeyPairOfVerReq.decodeDelimited = function decodeDelimited(reader) {
+        if (!(reader instanceof $Reader))
+            reader = new $Reader(reader);
+        return this.decode(reader, reader.uint32());
+    };
+
+    /**
+     * Verifies a GetKeyPairOfVerReq message.
+     * @function verify
+     * @memberof GetKeyPairOfVerReq
+     * @static
+     * @param {Object.<string,*>} message Plain object to verify
+     * @returns {string|null} `null` if valid, otherwise the reason why it is not
+     */
+    GetKeyPairOfVerReq.verify = function verify(message) {
+        if (typeof message !== "object" || message === null)
+            return "object expected";
+        if (message.clientInfo != null && message.hasOwnProperty("clientInfo")) {
+            let error = $root.ClientInfo.verify(message.clientInfo);
+            if (error)
+                return "clientInfo." + error;
+        }
+        if (message.uid != null && message.hasOwnProperty("uid"))
+            if (!$util.isInteger(message.uid) && !(message.uid && $util.isInteger(message.uid.low) && $util.isInteger(message.uid.high)))
+                return "uid: integer|Long expected";
+        if (message.appVer != null && message.hasOwnProperty("appVer"))
+            if (!$util.isInteger(message.appVer))
+                return "appVer: integer expected";
+        if (message.webVer != null && message.hasOwnProperty("webVer"))
+            if (!$util.isInteger(message.webVer))
+                return "webVer: integer expected";
+        return null;
+    };
+
+    /**
+     * Creates a GetKeyPairOfVerReq message from a plain object. Also converts values to their respective internal types.
+     * @function fromObject
+     * @memberof GetKeyPairOfVerReq
+     * @static
+     * @param {Object.<string,*>} object Plain object
+     * @returns {GetKeyPairOfVerReq} GetKeyPairOfVerReq
+     */
+    GetKeyPairOfVerReq.fromObject = function fromObject(object) {
+        if (object instanceof $root.GetKeyPairOfVerReq)
+            return object;
+        let message = new $root.GetKeyPairOfVerReq();
+        if (object.clientInfo != null) {
+            if (typeof object.clientInfo !== "object")
+                throw TypeError(".GetKeyPairOfVerReq.clientInfo: object expected");
+            message.clientInfo = $root.ClientInfo.fromObject(object.clientInfo);
+        }
+        if (object.uid != null)
+            if ($util.Long)
+                (message.uid = $util.Long.fromValue(object.uid)).unsigned = false;
+            else if (typeof object.uid === "string")
+                message.uid = parseInt(object.uid, 10);
+            else if (typeof object.uid === "number")
+                message.uid = object.uid;
+            else if (typeof object.uid === "object")
+                message.uid = new $util.LongBits(object.uid.low >>> 0, object.uid.high >>> 0).toNumber();
+        if (object.appVer != null)
+            message.appVer = object.appVer | 0;
+        if (object.webVer != null)
+            message.webVer = object.webVer | 0;
+        return message;
+    };
+
+    /**
+     * Creates a plain object from a GetKeyPairOfVerReq message. Also converts values to other types if specified.
+     * @function toObject
+     * @memberof GetKeyPairOfVerReq
+     * @static
+     * @param {GetKeyPairOfVerReq} message GetKeyPairOfVerReq
+     * @param {$protobuf.IConversionOptions} [options] Conversion options
+     * @returns {Object.<string,*>} Plain object
+     */
+    GetKeyPairOfVerReq.toObject = function toObject(message, options) {
+        if (!options)
+            options = {};
+        let object = {};
+        if (options.defaults) {
+            object.clientInfo = null;
+            if ($util.Long) {
+                let long = new $util.Long(0, 0, false);
+                object.uid = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+            } else
+                object.uid = options.longs === String ? "0" : 0;
+            object.appVer = 0;
+            object.webVer = 0;
+        }
+        if (message.clientInfo != null && message.hasOwnProperty("clientInfo"))
+            object.clientInfo = $root.ClientInfo.toObject(message.clientInfo, options);
+        if (message.uid != null && message.hasOwnProperty("uid"))
+            if (typeof message.uid === "number")
+                object.uid = options.longs === String ? String(message.uid) : message.uid;
+            else
+                object.uid = options.longs === String ? $util.Long.prototype.toString.call(message.uid) : options.longs === Number ? new $util.LongBits(message.uid.low >>> 0, message.uid.high >>> 0).toNumber() : message.uid;
+        if (message.appVer != null && message.hasOwnProperty("appVer"))
+            object.appVer = message.appVer;
+        if (message.webVer != null && message.hasOwnProperty("webVer"))
+            object.webVer = message.webVer;
+        return object;
+    };
+
+    /**
+     * Converts this GetKeyPairOfVerReq to JSON.
+     * @function toJSON
+     * @memberof GetKeyPairOfVerReq
+     * @instance
+     * @returns {Object.<string,*>} JSON object
+     */
+    GetKeyPairOfVerReq.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+    };
+
+    /**
+     * Gets the default type url for GetKeyPairOfVerReq
+     * @function getTypeUrl
+     * @memberof GetKeyPairOfVerReq
+     * @static
+     * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+     * @returns {string} The default type url
+     */
+    GetKeyPairOfVerReq.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === undefined) {
+            typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/GetKeyPairOfVerReq";
+    };
+
+    return GetKeyPairOfVerReq;
+})();
+
+export const GetKeyPairOfVerResp = $root.GetKeyPairOfVerResp = (() => {
+
+    /**
+     * Properties of a GetKeyPairOfVerResp.
+     * @exports IGetKeyPairOfVerResp
+     * @interface IGetKeyPairOfVerResp
+     * @property {ICommonResult|null} [commonResult] GetKeyPairOfVerResp commonResult
+     * @property {IKeyPairBase|null} [appKeyPair] GetKeyPairOfVerResp appKeyPair
+     * @property {IKeyPairBase|null} [webKeyPair] GetKeyPairOfVerResp webKeyPair
+     */
+
+    /**
+     * Constructs a new GetKeyPairOfVerResp.
+     * @exports GetKeyPairOfVerResp
+     * @classdesc Represents a GetKeyPairOfVerResp.
+     * @implements IGetKeyPairOfVerResp
+     * @constructor
+     * @param {IGetKeyPairOfVerResp=} [properties] Properties to set
+     */
+    function GetKeyPairOfVerResp(properties) {
+        if (properties)
+            for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                if (properties[keys[i]] != null)
+                    this[keys[i]] = properties[keys[i]];
+    }
+
+    /**
+     * GetKeyPairOfVerResp commonResult.
+     * @member {ICommonResult|null|undefined} commonResult
+     * @memberof GetKeyPairOfVerResp
+     * @instance
+     */
+    GetKeyPairOfVerResp.prototype.commonResult = null;
+
+    /**
+     * GetKeyPairOfVerResp appKeyPair.
+     * @member {IKeyPairBase|null|undefined} appKeyPair
+     * @memberof GetKeyPairOfVerResp
+     * @instance
+     */
+    GetKeyPairOfVerResp.prototype.appKeyPair = null;
+
+    /**
+     * GetKeyPairOfVerResp webKeyPair.
+     * @member {IKeyPairBase|null|undefined} webKeyPair
+     * @memberof GetKeyPairOfVerResp
+     * @instance
+     */
+    GetKeyPairOfVerResp.prototype.webKeyPair = null;
+
+    /**
+     * Creates a new GetKeyPairOfVerResp instance using the specified properties.
+     * @function create
+     * @memberof GetKeyPairOfVerResp
+     * @static
+     * @param {IGetKeyPairOfVerResp=} [properties] Properties to set
+     * @returns {GetKeyPairOfVerResp} GetKeyPairOfVerResp instance
+     */
+    GetKeyPairOfVerResp.create = function create(properties) {
+        return new GetKeyPairOfVerResp(properties);
+    };
+
+    /**
+     * Encodes the specified GetKeyPairOfVerResp message. Does not implicitly {@link GetKeyPairOfVerResp.verify|verify} messages.
+     * @function encode
+     * @memberof GetKeyPairOfVerResp
+     * @static
+     * @param {IGetKeyPairOfVerResp} message GetKeyPairOfVerResp message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    GetKeyPairOfVerResp.encode = function encode(message, writer) {
+        if (!writer)
+            writer = $Writer.create();
+        if (message.commonResult != null && Object.hasOwnProperty.call(message, "commonResult"))
+            $root.CommonResult.encode(message.commonResult, writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
+        if (message.appKeyPair != null && Object.hasOwnProperty.call(message, "appKeyPair"))
+            $root.KeyPairBase.encode(message.appKeyPair, writer.uint32(/* id 2, wireType 2 =*/18).fork()).ldelim();
+        if (message.webKeyPair != null && Object.hasOwnProperty.call(message, "webKeyPair"))
+            $root.KeyPairBase.encode(message.webKeyPair, writer.uint32(/* id 3, wireType 2 =*/26).fork()).ldelim();
+        return writer;
+    };
+
+    /**
+     * Encodes the specified GetKeyPairOfVerResp message, length delimited. Does not implicitly {@link GetKeyPairOfVerResp.verify|verify} messages.
+     * @function encodeDelimited
+     * @memberof GetKeyPairOfVerResp
+     * @static
+     * @param {IGetKeyPairOfVerResp} message GetKeyPairOfVerResp message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    GetKeyPairOfVerResp.encodeDelimited = function encodeDelimited(message, writer) {
+        return this.encode(message, writer).ldelim();
+    };
+
+    /**
+     * Decodes a GetKeyPairOfVerResp message from the specified reader or buffer.
+     * @function decode
+     * @memberof GetKeyPairOfVerResp
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @param {number} [length] Message length if known beforehand
+     * @returns {GetKeyPairOfVerResp} GetKeyPairOfVerResp
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    GetKeyPairOfVerResp.decode = function decode(reader, length, error) {
+        if (!(reader instanceof $Reader))
+            reader = $Reader.create(reader);
+        let end = length === undefined ? reader.len : reader.pos + length, message = new $root.GetKeyPairOfVerResp();
+        while (reader.pos < end) {
+            let tag = reader.uint32();
+            if (tag === error)
+                break;
+            switch (tag >>> 3) {
+            case 1: {
+                    message.commonResult = $root.CommonResult.decode(reader, reader.uint32());
+                    break;
+                }
+            case 2: {
+                    message.appKeyPair = $root.KeyPairBase.decode(reader, reader.uint32());
+                    break;
+                }
+            case 3: {
+                    message.webKeyPair = $root.KeyPairBase.decode(reader, reader.uint32());
+                    break;
+                }
+            default:
+                reader.skipType(tag & 7);
+                break;
+            }
+        }
+        return message;
+    };
+
+    /**
+     * Decodes a GetKeyPairOfVerResp message from the specified reader or buffer, length delimited.
+     * @function decodeDelimited
+     * @memberof GetKeyPairOfVerResp
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @returns {GetKeyPairOfVerResp} GetKeyPairOfVerResp
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    GetKeyPairOfVerResp.decodeDelimited = function decodeDelimited(reader) {
+        if (!(reader instanceof $Reader))
+            reader = new $Reader(reader);
+        return this.decode(reader, reader.uint32());
+    };
+
+    /**
+     * Verifies a GetKeyPairOfVerResp message.
+     * @function verify
+     * @memberof GetKeyPairOfVerResp
+     * @static
+     * @param {Object.<string,*>} message Plain object to verify
+     * @returns {string|null} `null` if valid, otherwise the reason why it is not
+     */
+    GetKeyPairOfVerResp.verify = function verify(message) {
+        if (typeof message !== "object" || message === null)
+            return "object expected";
+        if (message.commonResult != null && message.hasOwnProperty("commonResult")) {
+            let error = $root.CommonResult.verify(message.commonResult);
+            if (error)
+                return "commonResult." + error;
+        }
+        if (message.appKeyPair != null && message.hasOwnProperty("appKeyPair")) {
+            let error = $root.KeyPairBase.verify(message.appKeyPair);
+            if (error)
+                return "appKeyPair." + error;
+        }
+        if (message.webKeyPair != null && message.hasOwnProperty("webKeyPair")) {
+            let error = $root.KeyPairBase.verify(message.webKeyPair);
+            if (error)
+                return "webKeyPair." + error;
+        }
+        return null;
+    };
+
+    /**
+     * Creates a GetKeyPairOfVerResp message from a plain object. Also converts values to their respective internal types.
+     * @function fromObject
+     * @memberof GetKeyPairOfVerResp
+     * @static
+     * @param {Object.<string,*>} object Plain object
+     * @returns {GetKeyPairOfVerResp} GetKeyPairOfVerResp
+     */
+    GetKeyPairOfVerResp.fromObject = function fromObject(object) {
+        if (object instanceof $root.GetKeyPairOfVerResp)
+            return object;
+        let message = new $root.GetKeyPairOfVerResp();
+        if (object.commonResult != null) {
+            if (typeof object.commonResult !== "object")
+                throw TypeError(".GetKeyPairOfVerResp.commonResult: object expected");
+            message.commonResult = $root.CommonResult.fromObject(object.commonResult);
+        }
+        if (object.appKeyPair != null) {
+            if (typeof object.appKeyPair !== "object")
+                throw TypeError(".GetKeyPairOfVerResp.appKeyPair: object expected");
+            message.appKeyPair = $root.KeyPairBase.fromObject(object.appKeyPair);
+        }
+        if (object.webKeyPair != null) {
+            if (typeof object.webKeyPair !== "object")
+                throw TypeError(".GetKeyPairOfVerResp.webKeyPair: object expected");
+            message.webKeyPair = $root.KeyPairBase.fromObject(object.webKeyPair);
+        }
+        return message;
+    };
+
+    /**
+     * Creates a plain object from a GetKeyPairOfVerResp message. Also converts values to other types if specified.
+     * @function toObject
+     * @memberof GetKeyPairOfVerResp
+     * @static
+     * @param {GetKeyPairOfVerResp} message GetKeyPairOfVerResp
+     * @param {$protobuf.IConversionOptions} [options] Conversion options
+     * @returns {Object.<string,*>} Plain object
+     */
+    GetKeyPairOfVerResp.toObject = function toObject(message, options) {
+        if (!options)
+            options = {};
+        let object = {};
+        if (options.defaults) {
+            object.commonResult = null;
+            object.appKeyPair = null;
+            object.webKeyPair = null;
+        }
+        if (message.commonResult != null && message.hasOwnProperty("commonResult"))
+            object.commonResult = $root.CommonResult.toObject(message.commonResult, options);
+        if (message.appKeyPair != null && message.hasOwnProperty("appKeyPair"))
+            object.appKeyPair = $root.KeyPairBase.toObject(message.appKeyPair, options);
+        if (message.webKeyPair != null && message.hasOwnProperty("webKeyPair"))
+            object.webKeyPair = $root.KeyPairBase.toObject(message.webKeyPair, options);
+        return object;
+    };
+
+    /**
+     * Converts this GetKeyPairOfVerResp to JSON.
+     * @function toJSON
+     * @memberof GetKeyPairOfVerResp
+     * @instance
+     * @returns {Object.<string,*>} JSON object
+     */
+    GetKeyPairOfVerResp.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+    };
+
+    /**
+     * Gets the default type url for GetKeyPairOfVerResp
+     * @function getTypeUrl
+     * @memberof GetKeyPairOfVerResp
+     * @static
+     * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+     * @returns {string} The default type url
+     */
+    GetKeyPairOfVerResp.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === undefined) {
+            typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/GetKeyPairOfVerResp";
+    };
+
+    return GetKeyPairOfVerResp;
 })();
 
 export const CheckVersionReq = $root.CheckVersionReq = (() => {

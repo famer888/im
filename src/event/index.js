@@ -4,7 +4,7 @@ import packet from "@/api/base/imweb-web";
 import channelEvents from "@/api/base/channel_event";
 import { decrypt } from "@/socket/api/request";
 import { ReceiveServerToClient } from "@/socket/api/message";
-import { fnUpdateKeyFriend, fnUpdateOwnKey } from "@/utils/encryption-decryption";
+import { fnUpdateKeyFriend, fnUpdateKeyOwn } from "@/utils/e2ee";
 import { Cache } from "@/cache";
 
 // 事件
@@ -22,15 +22,8 @@ let timeBefore = new Date().getTime();
 const dispatch = (code, data) => {
   switch (code) {
     case 20001: {
-      // WebSocket 登录/重连成功，刷新自身密钥确保 appKeyPairOwn 同步
-      // 仅在 accountConfig 已初始化（有 privateKey）时执行，
-      // 避免初次登录时 fnConfigInit 尚未完成导致误触发 getNewKey 覆盖密钥
-      const { accountConfig: ac } = eventCommon.fnConfigRU() || {};
-      if (ac?.privateKey) {
-        fnUpdateOwnKey().catch(err => {
-          console.error('WebSocket登录-密钥刷新失败', err);
-        });
-      }
+      // 登录成功 接口已对应处理，所以这个推送不需要处理
+
       break;
     }
     // 频道消息接收
@@ -183,15 +176,32 @@ const dispatch = (code, data) => {
     }
     case 20501: {
       const loginId = eventCommon.fnCommonInfoRU({ getId: "loginId" });
-      if (Number(data.uid) === loginId) {
-        console.log('同账号密钥更新')
-        fnUpdateOwnKey().catch(err => {
-          console.error('同账号密钥同步失败', err);
+      const appVer = data?.appKeyPair?.keyVersion;
+      const webVer = data?.webKeyPair?.keyVersion;
+      if (!appVer && data?.appKeyPair?.publicKey) {
+        console.$collectE2ee('20501-appKeyPair版本号为0但publicKey不为空', {
+          uid: Number(data.uid),
+          isOwn: Number(data.uid) === loginId,
+          appPublicKey: !!data.appKeyPair.publicKey,
+          appKeyVersion: appVer,
         });
+      }
+      if (!webVer && data?.webKeyPair?.publicKey) {
+        console.$collectE2ee('20501-webKeyPair版本号为0但publicKey不为空', {
+          uid: Number(data.uid),
+          isOwn: Number(data.uid) === loginId,
+          webPublicKey: !!data.webKeyPair.publicKey,
+          webKeyVersion: webVer,
+        });
+      }
+      if (Number(data.uid) === loginId) {
+        console.log('同账号密钥更新');
+        fnUpdateKeyOwn(data);
       }
       fnUpdateKeyFriend(data);
       break;
     }
+
     case 20701: {
       // 群相关事件
       eventGroup.fnRnGroupEvent(data);
@@ -201,6 +211,7 @@ const dispatch = (code, data) => {
       // 退出登录
       let { commonResult } = data;
       const errCode = commonResult.errCode;
+      console.$collect('收到错误推送code: 29999', errCode);
       if (errCode == 100) {
         // 登出前要先导出
         ipcRenderer.send("auto-export-db", {});
@@ -299,7 +310,7 @@ const fnSocketMessage = (arrayBuffer) => {
 
   // 退出登录
   if (code === 20002) {
-    console.log("退出登录");
+    console.$collect("退出登录：code 20002");
     window.$closeConfirm && window.$closeConfirm();
     ipcRenderer.send("auto-export-db", {});
   }

@@ -19,6 +19,7 @@ import {
 } from "@/api/base/index";
 import { ConcatInt8 } from "@/socket/api/request";
 import { ReceiveKeyPairMessage } from "@/socket/api/message";
+import { setUpdateKeyPairSource, consumeUpdateKeyPairDesc } from "@/utils/e2ee/keypairTracer";
 
 import {
     SystemObj,
@@ -72,6 +73,20 @@ export const fnKeyObjsInit = () => {
     // 初始化好友的 密钥对象集
     Cache(`${loginId}-friend-key-objs`).then((res) => {
         if (res) {
+            try {
+                Object.keys(res).forEach((uid) => {
+                    const keyInfos = res[uid];
+                    if (keyInfos && typeof keyInfos === 'object') {
+                        Object.keys(keyInfos).forEach((key) => {
+                            const publicKey = keyInfos[key];
+                            const version = Number(key.replace("app-", "").replace("pc-", ""));
+                            if (!version || !publicKey) {
+                                console.$collectE2ee('初始化位置存有错误值', { uid, version, publicKey: publicKey || '', key });
+                            }
+                        });
+                    }
+                });
+            } catch (e) {}
             friendKeyObjs = res;
         }
     });
@@ -102,6 +117,7 @@ const fnTryRepairOwnKey = () => {
     const currentTime = new Date().getTime();
     if (currentTime > beforeTime + 1000 * 60 * 10) {
         window.beforeUploadOwnKeyTime = currentTime;
+        setUpdateKeyPairSource('fnTryRepairOwnKey', '自身私钥缺失触发密钥自动修复');
         fnUpdateOwnKey().catch(err => {
             console.error('密钥自动修复失败-', err);
         });
@@ -153,11 +169,16 @@ export const fnChannelRelKeyGet = async (id) => {
     // 自己的私key，同账户app的公key
     const { privateKey } = accountConfig;
 
-    if (!privateKey || !keyInfos.publicKey || !keyInfos.msgKey) {
-        console.error('频道解密-密钥数据不完整-', privateKey, keyInfos);
+    if (!privateKey) {
+        console.error('频道解密-自身私钥缺失');
+        fnTryRepairOwnKey();
+        return null;
+    }
+
+    if (!keyInfos.publicKey || !keyInfos.msgKey) {
+        console.error('频道解密-频道密钥数据不完整-', 'publicKey:', !!keyInfos.publicKey, 'msgKey:', !!keyInfos.msgKey);
         delete channelKeyObjs[id];
         Cache(`${loginId}-channel-key-objs`, channelKeyObjs);
-        fnTryRepairOwnKey();
         return null;
     }
 
@@ -166,10 +187,9 @@ export const fnChannelRelKeyGet = async (id) => {
     try {
          key = secret(privateKey, keyInfos.publicKey).toUpperCase();
     } catch (error) {
-        console.error('频道解密-生成秘钥异常-2-',privateKey, keyInfos)
+        console.error('频道解密-生成秘钥异常-2-', 'publicKey:', !!keyInfos.publicKey, error.message)
         delete channelKeyObjs[id];
         Cache(`${loginId}-channel-key-objs`, channelKeyObjs);
-        fnTryRepairOwnKey();
         return null;
     }
 
@@ -178,10 +198,9 @@ export const fnChannelRelKeyGet = async (id) => {
     try {
       msgkey = _decrypt(msgKeyBuffer, key);
     } catch (error) {
-        console.error('频道解密异常-msgkey-', privateKey, keyInfos)
+        console.error('频道解密异常-msgkey-', !!keyInfos.msgKey, error.message)
         delete channelKeyObjs[id];
         Cache(`${loginId}-channel-key-objs`, channelKeyObjs);
-        fnTryRepairOwnKey();
         return null;
     }
     const buffer = ConcatInt8([
@@ -233,11 +252,16 @@ export const fnGroupRelKeyGet = async (id) => {
     // 自己的私key，同账户app的公key
     const { privateKey } = accountConfig;
 
-    if (!privateKey || !keyInfos.publicKey || !keyInfos.msgKey) {
-        console.error('群解密-密钥数据不完整-', privateKey, keyInfos);
+    if (!privateKey) {
+        console.error('群解密-自身私钥缺失');
+        fnTryRepairOwnKey();
+        return null;
+    }
+
+    if (!keyInfos.publicKey || !keyInfos.msgKey) {
+        console.error('群解密-群密钥数据不完整-', 'publicKey:', !!keyInfos.publicKey, 'msgKey:', !!keyInfos.msgKey);
         delete groupKeyObjs[id];
         Cache(`${loginId}-group-key-objs`, groupKeyObjs);
-        fnTryRepairOwnKey();
         return null;
     }
 
@@ -246,10 +270,9 @@ export const fnGroupRelKeyGet = async (id) => {
     try {
          key = secret(privateKey, keyInfos.publicKey).toUpperCase();
     } catch (error) {
-        console.error('群解密-生成秘钥异常-2-',privateKey, keyInfos)
+        console.error('群解密-生成秘钥异常-2-', 'publicKey:', !!keyInfos.publicKey, error.message)
         delete groupKeyObjs[id];
         Cache(`${loginId}-group-key-objs`, groupKeyObjs);
-        fnTryRepairOwnKey();
         return null;
     }
 
@@ -258,10 +281,9 @@ export const fnGroupRelKeyGet = async (id) => {
     try {
       msgkey = _decrypt(msgKeyBuffer, key);
     } catch (error) {
-        console.error('群解密异常-msgkey-', privateKey, keyInfos)
+        console.error('群解密异常-msgkey-', 'msgKey:', !!keyInfos.msgKey, error.message)
         delete groupKeyObjs[id];
         Cache(`${loginId}-group-key-objs`, groupKeyObjs);
-        fnTryRepairOwnKey();
         return null;
     }
     const buffer = ConcatInt8([
@@ -300,6 +322,18 @@ export const fnFriendRelKeyGet = async ({
     // 自己的私key，同账户app的公key
     const { privateKey, appKeyPair: appKeyPairOwn } = accountConfig;
 
+    const _keyState = (extra) => ({
+        hasPrivateKey: !!privateKey,
+        ownWebKeyVersion: accountConfig.keyVersion,
+        ownAppKeyVersion: appKeyPairOwn?.keyVersion,
+        hasOwnAppPublicKey: !!appKeyPairOwn?.publicKey,
+        msgEncryptionVersion,
+        source,
+        isSelf,
+        senderKeyVersion,
+        ...extra,
+    });
+
     // 如果是助手
     if (msgEncryptionVersion === -1 && id === 10008) {
         // 同账户的 app 密钥
@@ -314,6 +348,7 @@ export const fnFriendRelKeyGet = async ({
                 },
             };
         } catch (error) {
+            console.$collectE2ee('解密-生成秘钥异常-1-助手', _keyState({ error: error.message }));
             console.error("解密-生成秘钥异常-1-", optsStr,
                 'privateKey:', !!privateKey,
                 'appKeyPairOwn.publicKey:', !!appKeyPairOwn?.publicKey,
@@ -453,19 +488,20 @@ export const fnFriendRelKeyGet = async ({
                     // 保存到本地
                     Cache(`${loginId}-friend-key-objs`, friendKeyObjs);
                 } else if (!keyInfosActive) {
+                    console.$collectE2ee('解密-获取密钥失败-1a', _keyState());
                     console.error("解密-获取密钥失败-1-",optsStr, keyPair, params);
                     return null;
                 }
             } else {
                 if (!keyInfosActive) {
-                    // 解密错误
+                    console.$collectE2ee('解密-获取密钥失败-1b', _keyState());
                     console.error("解密-获取密钥失败-1-",optsStr, keyPair, params);
                     return null;
                 }
             }
         } else {
             if (!keyInfosActive) {
-                // 解密错误
+                console.$collectE2ee('解密-获取密钥失败-2', _keyState());
                 console.error("解密-获取密钥失败-2-",optsStr, keyPair, params );
                 return null;
             }
@@ -503,6 +539,13 @@ export const fnFriendRelKeyGet = async ({
 
             return data;
         } catch (error) {
+            console.$collectE2ee('解密-生成秘钥异常-3-shareKey', _keyState({
+                hasWebPublicKey: !!webKeyPair?.publicKey,
+                webKeyVersion: webKeyPair?.keyVersion,
+                hasAppPublicKey: !!appKeyPair?.publicKey,
+                appKeyVersion: appKeyPair?.keyVersion,
+                error: error.message,
+            }));
             console.error('解密-生成秘钥异常-3-', optsStr,
                 'privateKey:', !!privateKey,
                 'appKeyPairOwn:', !!appKeyPairOwn?.publicKey,
@@ -520,6 +563,7 @@ export const fnFriendRelKeyGet = async ({
                     const lastRepair = window._isSelfKeyRepairTime || 0;
                     if (now - lastRepair > 10000) {
                         window._isSelfKeyRepairTime = now;
+                        console.$collectE2ee('isSelf解密-自身密钥缺失', _keyState());
                         console.error('isSelf解密-自身密钥缺失，尝试自动修复',
                             optsStr,
                             'privateKey:', !!privateKey,
@@ -533,23 +577,28 @@ export const fnFriendRelKeyGet = async ({
                                 try {
                                     return secret(cachedConfig.privateKey, cachedConfig.appKeyPair.publicKey).toUpperCase();
                                 } catch (secretErr) {
+                                    console.$collectE2ee('isSelf解密-缓存密钥数据异常', _keyState({ error: secretErr.message }));
                                     console.error('isSelf解密-缓存密钥数据异常，尝试服务端恢复', optsStr, secretErr.message);
                                 }
                             }
                         } catch (e) {
+                            console.$collectE2ee('isSelf解密-缓存恢复失败', _keyState({ error: e.message }));
                             console.error('isSelf解密-缓存恢复失败', optsStr, e);
                         }
                         try {
                             // 第二步：缓存无效或密钥数据损坏，从服务端刷新
+                            setUpdateKeyPairSource('fnFriendRelKeyGet', 'isSelf解密-缓存恢复失败-从服务端刷新密钥');
                             await fnUpdateOwnKey();
                             const { accountConfig: freshConfig } = eventCommon.fnConfigRU();
                             if (freshConfig.privateKey && freshConfig.appKeyPair?.publicKey) {
                                 return secret(freshConfig.privateKey, freshConfig.appKeyPair.publicKey).toUpperCase();
                             }
                         } catch (e) {
+                            console.$collectE2ee('isSelf解密-服务端恢复失败', _keyState({ error: e.message }));
                             console.error('isSelf解密-服务端恢复失败', optsStr, e);
                         }
                     }
+                    console.$collectE2ee('isSelf解密失败-自身密钥无效', _keyState());
                     console.error('isSelf解密失败-自身密钥无效',
                         optsStr,
                         'privateKey:', !!privateKey,
@@ -563,6 +612,7 @@ export const fnFriendRelKeyGet = async ({
                     try {
                         return secret(privateKey, appKeyPairOwn.publicKey).toUpperCase();
                     } catch (e) {
+                        console.$collectE2ee('isSelf解密-secret计算异常', _keyState({ error: e.message }));
                         console.error('isSelf解密-secret计算异常',
                             optsStr,
                             'appKeyPairOwn.keyVersion:', appKeyPairOwn.keyVersion,
@@ -573,6 +623,10 @@ export const fnFriendRelKeyGet = async ({
 
                 // 版本不匹配：发送端 APP 的 keyVersion 与 PC 缓存的 appKeyPairOwn 不一致
                 // 多设备切换场景：尝试从 friendKeyObjs 按版本查找发送端的公钥
+                console.$collectE2ee('isSelf解密-版本不匹配', _keyState({
+                    ownAppKeyVersionActual: appKeyPairOwn.keyVersion,
+                    versionMatch: false,
+                }));
                 console.warn('isSelf解密-版本不匹配，尝试按版本查找',
                     'appKeyPairOwn.keyVersion:', appKeyPairOwn.keyVersion,
                     'senderKeyVersion:', senderKeyVersion);
@@ -584,6 +638,7 @@ export const fnFriendRelKeyGet = async ({
                         try {
                             return secret(privateKey, cachedPubKey).toUpperCase();
                         } catch (e) {
+                            console.$collectE2ee('isSelf解密-缓存版本密钥计算异常', _keyState({ error: e.message }));
                             console.error('isSelf解密-缓存版本密钥计算异常', optsStr, e.message);
                         }
                     }
@@ -602,19 +657,35 @@ export const fnFriendRelKeyGet = async ({
                         try {
                             return secret(privateKey, keyPair.appKeyPair.publicKey).toUpperCase();
                         } catch (e) {
+                            console.$collectE2ee('isSelf解密-API版本密钥计算异常', _keyState({
+                                apiAppKeyVersion: keyPair.appKeyPair.keyVersion,
+                                error: e.message,
+                            }));
                             console.error('isSelf解密-API版本密钥计算异常', optsStr, e.message);
                         }
                     }
                 } catch (e) {
+                    console.$collectE2ee('isSelf解密-API获取版本密钥失败', _keyState({ error: e.message }));
                     console.error('isSelf解密-API获取版本密钥失败', optsStr, e);
                 }
 
-                // 所有尝试失败，降级返回 appKeyPairOwn 密钥（可能不正确）
+                // 所有尝试失败：缓存无命中、API 未返回匹配版本
+                // 说明 senderKeyVersion 对应的私钥已丢失（密钥轮换后旧私钥不可恢复）
+                console.$collectE2ee('isSelf解密-私钥版本不匹配-对应版本私钥已丢失', _keyState({
+                    ownAppKeyVersionActual: appKeyPairOwn.keyVersion,
+                    requiredVersion: senderKeyVersion,
+                    privateKeyLost: true,
+                }));
+                // 降级返回 appKeyPairOwn 密钥（可能不正确）
                 // 不返回 null，是为了让上层 fnMsgDecryption 的 _decrypt 失败后进入 isSelf 重试流程
                 // 重试会调用 fnUpdateOwnKey 刷新密钥，有可能在第二次调用时恢复正确
                 try {
                     return secret(privateKey, appKeyPairOwn.publicKey).toUpperCase();
                 } catch (e) {
+                    console.$collectE2ee('isSelf解密-降级secret计算异常', _keyState({
+                        ownAppKeyVersionActual: appKeyPairOwn.keyVersion,
+                        error: e.message,
+                    }));
                     console.error('isSelf解密-降级secret计算异常',
                         optsStr,
                         'appKeyPairOwn.keyVersion:', appKeyPairOwn.keyVersion,
@@ -635,9 +706,22 @@ export const fnFriendRelKeyGet = async ({
                 }
             }
 
+            console.$collectE2ee('解密-密钥publicKey为空-4', _keyState({
+                hasWebPublicKey: !!webKeyPair?.publicKey,
+                webKeyVersion: webKeyPair?.keyVersion,
+                hasAppPublicKey: !!appKeyPair?.publicKey,
+                appKeyVersion: appKeyPair?.keyVersion,
+            }));
             console.error('解密-密钥publicKey为空-4-', optsStr, source, webKeyPair, appKeyPair)
             return null;
         } catch (error) {
+            console.$collectE2ee('解密-生成秘钥异常-4', _keyState({
+                hasWebPublicKey: !!webKeyPair?.publicKey,
+                webKeyVersion: webKeyPair?.keyVersion,
+                hasAppPublicKey: !!appKeyPair?.publicKey,
+                appKeyVersion: appKeyPair?.keyVersion,
+                error: error.message,
+            }));
             console.error('解密-生成秘钥异常-4-', optsStr,
                 'privateKey:', !!privateKey,
                 'appKeyPairOwn:', !!appKeyPairOwn?.publicKey,
@@ -672,6 +756,17 @@ export const fnMsgDecryption = async ({
         attachmentKey,
         source,
         isSelf})
+    const _e2eeState = (extra) => {
+        const { accountConfig } = eventCommon.fnConfigRU();
+        return {
+            hasPrivateKey: !!accountConfig?.privateKey,
+            ownWebKeyVersion: accountConfig?.keyVersion,
+            ownAppKeyVersion: accountConfig?.appKeyPair?.keyVersion,
+            hasOwnAppPublicKey: !!accountConfig?.appKeyPair?.publicKey,
+            id, type, msgEncryptionVersion, source, isSelf,
+            ...extra,
+        };
+    };
     // 新的内容
     let contentNew = content;
 
@@ -687,6 +782,7 @@ export const fnMsgDecryption = async ({
 
             // 如果群密钥没获取到，则直接结束
             if (!relKey) {
+                console.$collectE2ee('群消息解密失败-密钥获取失败', _e2eeState());
                 console.error("群消息 解密失败-1-", optsStr);
                 return {};
             }
@@ -695,7 +791,7 @@ export const fnMsgDecryption = async ({
             try {
                 contentNew = _decrypt(content, relKey);
             } catch (err) {
-                // 消息解密失败，清除可能过期的群密钥缓存，下次从API重新获取
+                console.$collectE2ee('群消息解密失败-decrypt异常', _e2eeState({ error: err.message }));
                 console.error("群消息 解密失败-2-", optsStr, relKey);
                 delete groupKeyObjs[id];
                 return {};
@@ -705,6 +801,7 @@ export const fnMsgDecryption = async ({
 
             // 如果频道密钥没获取到，则直接结束
             if (!relKey) {
+                console.$collectE2ee('频道消息解密失败-密钥获取失败', _e2eeState());
                 console.error("频道消息 解密失败-1-", optsStr, relKey);
                 return {};
             }
@@ -713,7 +810,7 @@ export const fnMsgDecryption = async ({
             try {
                 contentNew = _decrypt(content, relKey);
             } catch (err) {
-                // 消息解密失败，清除可能过期的频道密钥缓存，下次从API重新获取
+                console.$collectE2ee('频道消息解密失败-decrypt异常', _e2eeState({ error: err.message }));
                 console.error("频道消息 解密失败-2-", optsStr, relKey);
                 delete channelKeyObjs[id];
                 return {};
@@ -729,6 +826,7 @@ export const fnMsgDecryption = async ({
 
             // 如果好友密钥没获取到，则直接结束
             if (!relKey) {
+                console.$collectE2ee('好友消息解密失败-密钥获取失败', _e2eeState());
                 console.error("好友消息 解密失败", optsStr, relKey);
                 return {};
             }
@@ -738,6 +836,10 @@ export const fnMsgDecryption = async ({
                 contentNew = _decrypt(content, relKey);
             } catch (err) {
                 if (!isSelf) {
+                    console.$collectE2ee('好友消息解密失败-可能私钥版本不匹配', _e2eeState({
+                        error: err.message,
+                        hint: '对方可能使用旧版本publicKey加密,当前privateKey已轮换,对应版本私钥已丢失',
+                    }));
                     console.error("消息 解密失败", optsStr, relKey);
                     return {};
                 }
@@ -745,11 +847,13 @@ export const fnMsgDecryption = async ({
                 const now = Date.now();
                 const lastRefresh = window._isSelfDecryptRetryTime || 0;
                 if (now - lastRefresh < 60000) {
+                    console.$collectE2ee('isSelf消息解密失败-限频跳过重试', _e2eeState({ error: err.message }));
                     console.error("消息 解密失败(限频跳过重试)", optsStr, relKey);
                     return {};
                 }
                 window._isSelfDecryptRetryTime = now;
                 try {
+                    setUpdateKeyPairSource('fnMsgDecryption', 'isSelf消息解密失败-刷新密钥重试');
                     await fnUpdateOwnKey();
                     const newRelKey = await fnFriendRelKeyGet({
                         id,
@@ -762,11 +866,13 @@ export const fnMsgDecryption = async ({
                         contentNew = _decrypt(content, newRelKey);
                         relKey = newRelKey;
                     } else {
+                        console.$collectE2ee('isSelf消息解密失败-密钥未变更', _e2eeState());
                         console.error("消息 解密失败(密钥未变更)", optsStr, relKey,
                             "msgEncryptionVersion:", msgEncryptionVersion);
                         return {};
                     }
                 } catch (retryErr) {
+                    console.$collectE2ee('isSelf消息解密重试失败', _e2eeState({ error: retryErr.message }));
                     console.error("消息 解密重试失败", optsStr, relKey, retryErr);
                     return {};
                 }
@@ -780,6 +886,7 @@ export const fnMsgDecryption = async ({
                     "all"
                 );
             } catch (err) {
+                console.$collectE2ee('fileKey解密失败', _e2eeState({ error: err.message }));
                 console.error("fileKey 解密失败", optsStr,attachmentKey, relKey);
             }
         }
@@ -1251,6 +1358,14 @@ export const fnFormartMsgParams = async ({ data, customMsgId, id, type }) => {
             const { accountConfig } = eventCommon.fnConfigRU();
             params.version = accountConfig.keyVersion;
 
+            console.$collectE2ee('私聊加密-开始', {
+                id, customMsgId,
+                ownWebKeyVersion: accountConfig.keyVersion,
+                hasPrivateKey: !!accountConfig.privateKey,
+                ownAppKeyVersion: accountConfig.appKeyPair?.keyVersion,
+                hasOwnAppPublicKey: !!accountConfig.appKeyPair?.publicKey,
+            });
+
             const data = await fnFriendRelKeyGet({
                 id,
                 msgEncryptionVersion: -1,
@@ -1259,32 +1374,64 @@ export const fnFormartMsgParams = async ({ data, customMsgId, id, type }) => {
             });
 
             if (!data) {
-                console.log(2);
+                console.$collectE2ee('私聊加密-密钥获取失败', {
+                    id, customMsgId, ownWebKeyVersion: accountConfig.keyVersion,
+                    hasPrivateKey: !!accountConfig.privateKey,
+                    ownAppKeyVersion: accountConfig.appKeyPair?.keyVersion,
+                    hasOwnAppPublicKey: !!accountConfig.appKeyPair?.publicKey,
+                });
                 window.$toast(i18n.t("密钥异常，发送消息失败"));
-                // benchmark: 私聊密钥获取失败
                 benchmark.markFailed(customMsgId, 'fnFriendRelKeyGet');
                 return;
             }
 
             const { app, pc, appOwn } = data;
 
-            // 如果群密钥没获取到，则直接结束
             if (!app && !pc && id !== 10008) {
+                console.$collectE2ee('私聊加密-app和pc密钥都为空', {
+                    id, customMsgId, ownWebKeyVersion: accountConfig.keyVersion,
+                    hasApp: !!app, hasPc: !!pc,
+                    appKeyVersion: app?.keyVersion, pcKeyVersion: pc?.keyVersion,
+                });
                 window.$toast(i18n.t("密钥异常，发送消息失败"));
-                // benchmark: app和pc密钥都为空
                 benchmark.markFailed(customMsgId, 'noAppAndPcKey');
                 return;
             }
 
             if (app) {
-                params.appContent = {
-                    content: _encrypt2(app.relKey, contentCode),
-                    attachmentKey: appAttachmentKey,
-                    version: app.keyVersion,
-                };
+                console.$collectE2ee('私聊加密-appContent', {
+                    id, customMsgId,
+                    appKeyVersion: app.keyVersion,
+                    hasAppRelKey: !!app.relKey,
+                    ownWebKeyVersion: accountConfig.keyVersion,
+                    ownAppKeyVersion: accountConfig.appKeyPair?.keyVersion,
+                    hasPrivateKey: !!accountConfig.privateKey,
+                    versionValid: app.keyVersion > 0,
+                });
+                if (app.keyVersion === 0 && app.relKey) {
+                    params.appContent = {
+                        content: contentCode,
+                        attachmentKey: appAttachmentKey,
+                        version: 0,
+                    };
+                } else {
+                    params.appContent = {
+                        content: _encrypt2(app.relKey, contentCode),
+                        attachmentKey: appAttachmentKey,
+                        version: app.keyVersion,
+                    };
+                }
             }
 
             if (pc) {
+                console.$collectE2ee('私聊加密-webContent', {
+                    id, customMsgId,
+                    pcKeyVersion: pc.keyVersion,
+                    hasPcRelKey: !!pc.relKey,
+                    ownWebKeyVersion: accountConfig.keyVersion,
+                    hasPrivateKey: !!accountConfig.privateKey,
+                    versionValid: pc.keyVersion > 0,
+                });
                 params.webContent = {
                     content: _encrypt2(pc.relKey, contentCode),
                     attachmentKey: webAttachmentKey,
@@ -1293,6 +1440,15 @@ export const fnFormartMsgParams = async ({ data, customMsgId, id, type }) => {
             }
 
             if (appOwn) {
+                console.$collectE2ee('私聊加密-myselfAppContent', {
+                    id, customMsgId,
+                    appOwnKeyVersion: appOwn.keyVersion,
+                    hasAppOwnRelKey: !!appOwn.relKey,
+                    ownAppKeyVersion: accountConfig.appKeyPair?.keyVersion,
+                    hasPrivateKey: !!accountConfig.privateKey,
+                    versionValid: appOwn.keyVersion > 0,
+                    versionMatch: appOwn.keyVersion === accountConfig.appKeyPair?.keyVersion,
+                });
                 params.myselfAppContent = {
                     content: _encrypt2(appOwn.relKey, contentCode),
                     attachmentKey: ownAppAttachmentKey,
@@ -1326,7 +1482,9 @@ const getNewKey = async () => {
     .toString("hex")
     .toUpperCase();
     try {
-        const res = await UpdateKeyPair({ publicKey })
+        const desc = consumeUpdateKeyPairDesc();
+        console.log('[UpdateKeyPair]密钥更新描述：' + desc);
+        const res = await UpdateKeyPair({ publicKey, desc })
         if (res && res.keyVersion && res.commonResult.errCode === 200) {
             return {
                 publicKey,
@@ -1347,18 +1505,26 @@ export const fnUpdateOwnKey = () => {
     _pendingUpdateOwnKey = GetKeyPair({
         targetId: Number(loginId),
       }).then( async res => {
+        // $e2ee: 更新密钥版本为
+        console.$collectE2ee('更新密钥版本为', res);
         const { appKeyPair = null, webKeyPair = null } = res || {}
         if(!appKeyPair || !webKeyPair) return { code: 500 };
         const { accountConfig } = eventCommon.fnConfigRU();
         let { publicKey, privateKey, keyVersion } = accountConfig;
 
         if( publicKey !== webKeyPair.publicKey || keyVersion !== webKeyPair.keyVersion || !privateKey ) {
+            // $e2ee：密钥与服务器不对称
+            console.$collectE2ee('密钥与服务器不对称');
             const newKey =  await getNewKey()
             publicKey = newKey.publicKey;
             privateKey = newKey.privateKey;
             keyVersion = newKey.keyVersion
         }
-        if(!publicKey || !privateKey || !keyVersion || !appKeyPair) return { code: 501 };
+        if(!publicKey || !privateKey || !keyVersion || !appKeyPair) {
+            // $e2ee: 更新密钥后后，密钥信息缺失
+            console.$collectE2ee('更新密钥后后，密钥信息缺失', { publicKey, privateKey, keyVersion, appKeyPair });
+            return { code: 501 }
+        };
 
         const keyInfos = {
             publicKey,
@@ -1366,10 +1532,12 @@ export const fnUpdateOwnKey = () => {
             keyVersion,
             appKeyPair,
         };
+        
         eventCommon.fnCommonInfoRU({
             infoMerge: keyInfos,
         });
-
+        // $e2ee: 写入到本地
+        console.$collectE2ee('写入到本地', keyInfos);
         eventCommon.fnConfigRU({
             isAccount: true,
             infoMerge: keyInfos,
@@ -1380,6 +1548,41 @@ export const fnUpdateOwnKey = () => {
       });
     return _pendingUpdateOwnKey;
 }
+
+/**
+ * 同账号密钥轻量更新（20501 推送 uid === loginId 时使用）
+ * 推送数据字段完整时直接更新 accountConfig.appKeyPair；
+ * 缺少 publicKey 或 keyVersion 时降级调用 fnUpdateOwnKey 走接口拉取
+ */
+export const fnUpdateKeyOwn = ({ appKeyPair }) => {
+    const appVer = Number(appKeyPair?.keyVersion) || 0;
+    const appValid = appKeyPair && appKeyPair.publicKey && appVer > 0;
+
+    if (!appValid) {
+        // $e2ee：同下
+        console.$collectE2ee('同账号密钥推送数据不完整，降级调用接口', { appPubKey: !!appKeyPair?.publicKey, appVer: appKeyPair?.keyVersion });
+        console.warn('同账号密钥推送数据不完整，降级调用接口', 'appPubKey:', !!appKeyPair?.publicKey, 'appVer:', appKeyPair?.keyVersion);
+        setUpdateKeyPairSource('fnUpdateKeyOwn', '同账号密钥推送数据不完整-降级调用接口');
+        return fnUpdateOwnKey().catch(err => {
+            // $e2ee：同下
+            console.$collectE2ee('同账号密钥同步失败(API)', err);
+            console.error('同账号密钥同步失败(API)', err);
+        });
+    }
+
+    const { accountConfig } = eventCommon.fnConfigRU();
+    const localAppVer = Number(accountConfig.appKeyPair?.keyVersion) || 0;
+
+    if (localAppVer > 0 && appVer < localAppVer) {
+        console.$collectE2ee('！！推送了旧版本公钥', { localAppVer, pushAppVer: appVer });
+        return;
+    }
+
+    const updates = { appKeyPair };
+
+    eventCommon.fnConfigRU({ isAccount: true, infoMerge: updates });
+    eventCommon.fnCommonInfoRU({ infoMerge: updates });
+};
 
 /**
  * 更新好友的密钥

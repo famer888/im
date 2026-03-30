@@ -23,7 +23,7 @@ import {
     fnGroupRelKeyGet,
     fnFriendRelKeyGet,
     fnChannelRelKeyGet,
-} from "@/utils/encryption-decryption";
+} from "@/utils/e2ee";
 import { getOssDomains } from "@/utils/trendsDomain/manageOssDownUpload";
 
 import { enumMsgType } from "@/utils/base";

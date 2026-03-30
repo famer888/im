@@ -291,7 +291,7 @@
 import dayjs from "dayjs";
 
 // 工具
-import { fnUpdateGroupKey, fnUpdateFriendKey, fnMsgDecryption } from "@/utils/encryption-decryption.js";
+import { fnUpdateGroupKey, fnUpdateFriendKey, fnMsgDecryption } from "@/utils/e2ee/index.js";
 import { chatPageDateformat, chatDate } from "@/utils/base";
 import { Cache } from "@/cache";
 import {

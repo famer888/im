@@ -283,62 +283,61 @@ class Benchmark {
     setTimeout(() => this._printReport(), 100)
   }
 
-  _printReport() {
-    console.group('%c📊 Benchmark Report', 'font-size: 14px; font-weight: bold; color: #4CAF50;')
-
-    // 系统信息
-    console.group('🖥️ System Info')
+  _collectReportData() {
+    const lines = []
     const sysInfo = getSystemInfo()
     const memInfo = getMemoryInfo()
     const appMemInfo = getAppMemoryInfo()
     const version = getVersion()
-    console.log('版本:', version)
-    console.log('CPU:', sysInfo.cpu)
-    console.log('硬盘:', sysInfo.disk)
-    console.log('内存:', memInfo)
+
+    lines.push(`[System] 版本:${version} | CPU:${sysInfo.cpu} | 硬盘:${sysInfo.disk} | 内存:${memInfo}`)
     if (appMemInfo) {
-      console.log(`应用: RSS ${appMemInfo.rss} | 堆已用 ${appMemInfo.heapUsed} / 堆总量 ${appMemInfo.heapTotal}`)
+      lines.push(`[System] 应用: RSS ${appMemInfo.rss} | 堆已用 ${appMemInfo.heapUsed} / 堆总量 ${appMemInfo.heapTotal}`)
     }
-    console.groupEnd()
 
-    // 重连记录
     const reconnectCount = this.getReconnectCount()
-    console.log(`🔄 重连次数(5分钟内): ${reconnectCount}`)
+    lines.push(`[Reconnect] 重连次数(5分钟内): ${reconnectCount}`)
 
-    // getMsgList 耗时
     if (this.marks.getMsgList.size > 0) {
-      console.group('📋 getMsgList')
-      for (const [id, text] of this.marks.getMsgList) {
-        console.log(text)
+      for (const [, text] of this.marks.getMsgList) {
+        lines.push(`[getMsgList] ${text}`)
       }
-      console.groupEnd()
     }
 
-    // addDB 耗时
     if (this.marks.addDB.size > 0) {
-      console.group('💾 addDB')
-      for (const [id, text] of this.marks.addDB) {
-        console.log(text)
+      for (const [, text] of this.marks.addDB) {
+        lines.push(`[addDB] ${text}`)
       }
-      console.groupEnd()
     }
 
-    // sendLog 信息
     if (this.marks.sendLog.size > 0) {
-      console.group('📨 sendLog')
       for (const [customMsgId, log] of this.marks.sendLog) {
         const sent = log.sended ? '√' : 'X'
         const recieved = log.recieved ? '√' : 'X'
         const Rsent = (log.status & STATUS.RENDER_SUCCESS) ? '√' : 'X'
         const Rfailed = (log.status & STATUS.RENDER_FAILED) ? '√' : 'X'
         const failNames = Object.keys(log.fnMsgSendFail).join('-') || 'none'
-
-        console.log(`${customMsgId}: ${log.MsgId || '-'} | sent${sent} | recieved${recieved} | Rsent${Rsent} | Rfailed${Rfailed} | mount:${log.mounted} | references:${failNames}`)
+        lines.push(`[sendLog] ${customMsgId}: ${log.MsgId || '-'} | sent${sent} | recieved${recieved} | Rsent${Rsent} | Rfailed${Rfailed} | mount:${log.mounted} | references:${failNames}`)
       }
-      console.groupEnd()
     }
 
+    return lines
+  }
+
+  _printReport() {
+    const lines = this._collectReportData()
+
+    console.group('%c📊 Benchmark Report', 'font-size: 14px; font-weight: bold; color: #4CAF50;')
+    for (const line of lines) {
+      console.log(line)
+    }
     console.groupEnd()
+
+    try {
+      if (typeof console.$collect === 'function') {
+        console.$collect(`[Benchmark Report] ${lines.join(' || ')}`)
+      }
+    } catch { /* 日志系统不可影响业务 */ }
   }
   summary(values) {
     // 先别处理
