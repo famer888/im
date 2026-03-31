@@ -26,6 +26,8 @@
 <script>
 import i18n from "@/assets/lang/i18n";
 import { updateUserInfo } from "@/api/imBase";
+// 事件
+import eventCommon from "@/event/common";
 
 export default {
   data() {
