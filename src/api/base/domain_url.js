@@ -202,12 +202,14 @@ export const UrlReportReq = $root.UrlReportReq = (() => {
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    UrlReportReq.decode = function decode(reader, length) {
+    UrlReportReq.decode = function decode(reader, length, error) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.UrlReportReq();
         while (reader.pos < end) {
             let tag = reader.uint32();
+            if (tag === error)
+                break;
             switch (tag >>> 3) {
             case 1: {
                     message.clientInfo = $root.ClientInfo.decode(reader, reader.uint32());
@@ -750,12 +752,14 @@ export const UrlReportResp = $root.UrlReportResp = (() => {
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    UrlReportResp.decode = function decode(reader, length) {
+    UrlReportResp.decode = function decode(reader, length, error) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.UrlReportResp();
         while (reader.pos < end) {
             let tag = reader.uint32();
+            if (tag === error)
+                break;
             switch (tag >>> 3) {
             case 1: {
                     message.commonResult = $root.CommonResult.decode(reader, reader.uint32());
@@ -1012,12 +1016,14 @@ export const ListUrlReq = $root.ListUrlReq = (() => {
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    ListUrlReq.decode = function decode(reader, length) {
+    ListUrlReq.decode = function decode(reader, length, error) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.ListUrlReq();
         while (reader.pos < end) {
             let tag = reader.uint32();
+            if (tag === error)
+                break;
             switch (tag >>> 3) {
             case 1: {
                     message.clientInfo = $root.ClientInfo.decode(reader, reader.uint32());
@@ -1377,12 +1383,14 @@ export const ListUrlResp = $root.ListUrlResp = (() => {
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    ListUrlResp.decode = function decode(reader, length) {
+    ListUrlResp.decode = function decode(reader, length, error) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.ListUrlResp();
         while (reader.pos < end) {
             let tag = reader.uint32();
+            if (tag === error)
+                break;
             switch (tag >>> 3) {
             case 1: {
                     message.commonResult = $root.CommonResult.decode(reader, reader.uint32());
@@ -1661,12 +1669,14 @@ export const DomainUrl = $root.DomainUrl = (() => {
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    DomainUrl.decode = function decode(reader, length) {
+    DomainUrl.decode = function decode(reader, length, error) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.DomainUrl();
         while (reader.pos < end) {
             let tag = reader.uint32();
+            if (tag === error)
+                break;
             switch (tag >>> 3) {
             case 1: {
                     message.areaId = reader.int32();
@@ -2177,12 +2187,14 @@ export const CheckUrlReq = $root.CheckUrlReq = (() => {
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    CheckUrlReq.decode = function decode(reader, length) {
+    CheckUrlReq.decode = function decode(reader, length, error) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.CheckUrlReq();
         while (reader.pos < end) {
             let tag = reader.uint32();
+            if (tag === error)
+                break;
             switch (tag >>> 3) {
             case 1: {
                     message.clientInfo = $root.ClientInfo.decode(reader, reader.uint32());
@@ -2619,12 +2631,14 @@ export const CheckUrlResp = $root.CheckUrlResp = (() => {
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    CheckUrlResp.decode = function decode(reader, length) {
+    CheckUrlResp.decode = function decode(reader, length, error) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.CheckUrlResp();
         while (reader.pos < end) {
             let tag = reader.uint32();
+            if (tag === error)
+                break;
             switch (tag >>> 3) {
             case 1: {
                     message.commonResult = $root.CommonResult.decode(reader, reader.uint32());
@@ -3241,12 +3255,14 @@ export const ClientTokenReq = $root.ClientTokenReq = (() => {
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    ClientTokenReq.decode = function decode(reader, length) {
+    ClientTokenReq.decode = function decode(reader, length, error) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.ClientTokenReq();
         while (reader.pos < end) {
             let tag = reader.uint32();
+            if (tag === error)
+                break;
             switch (tag >>> 3) {
             case 1: {
                     message.clientInfo = $root.ClientInfo.decode(reader, reader.uint32());
@@ -3493,12 +3509,14 @@ export const ClientTokenResp = $root.ClientTokenResp = (() => {
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    ClientTokenResp.decode = function decode(reader, length) {
+    ClientTokenResp.decode = function decode(reader, length, error) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.ClientTokenResp();
         while (reader.pos < end) {
             let tag = reader.uint32();
+            if (tag === error)
+                break;
             switch (tag >>> 3) {
             case 1: {
                     message.commonResult = $root.CommonResult.decode(reader, reader.uint32());
@@ -3692,6 +3710,8 @@ export const ClientInfo = $root.ClientInfo = (() => {
      * @property {number|null} [language] ClientInfo language
      * @property {string|null} [sysMac] ClientInfo sysMac
      * @property {string|null} [sysModel] ClientInfo sysModel
+     * @property {string|null} [token] ClientInfo token
+     * @property {string|null} [version] ClientInfo version
      */
 
     /**
@@ -3766,6 +3786,22 @@ export const ClientInfo = $root.ClientInfo = (() => {
     ClientInfo.prototype.sysModel = "";
 
     /**
+     * ClientInfo token.
+     * @member {string} token
+     * @memberof ClientInfo
+     * @instance
+     */
+    ClientInfo.prototype.token = "";
+
+    /**
+     * ClientInfo version.
+     * @member {string} version
+     * @memberof ClientInfo
+     * @instance
+     */
+    ClientInfo.prototype.version = "";
+
+    /**
      * Creates a new ClientInfo instance using the specified properties.
      * @function create
      * @memberof ClientInfo
@@ -3803,6 +3839,10 @@ export const ClientInfo = $root.ClientInfo = (() => {
             writer.uint32(/* id 6, wireType 2 =*/50).string(message.sysMac);
         if (message.sysModel != null && Object.hasOwnProperty.call(message, "sysModel"))
             writer.uint32(/* id 7, wireType 2 =*/58).string(message.sysModel);
+        if (message.token != null && Object.hasOwnProperty.call(message, "token"))
+            writer.uint32(/* id 8, wireType 2 =*/66).string(message.token);
+        if (message.version != null && Object.hasOwnProperty.call(message, "version"))
+            writer.uint32(/* id 9, wireType 2 =*/74).string(message.version);
         return writer;
     };
 
@@ -3830,12 +3870,14 @@ export const ClientInfo = $root.ClientInfo = (() => {
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    ClientInfo.decode = function decode(reader, length) {
+    ClientInfo.decode = function decode(reader, length, error) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.ClientInfo();
         while (reader.pos < end) {
             let tag = reader.uint32();
+            if (tag === error)
+                break;
             switch (tag >>> 3) {
             case 1: {
                     message.sessionId = reader.string();
@@ -3863,6 +3905,14 @@ export const ClientInfo = $root.ClientInfo = (() => {
                 }
             case 7: {
                     message.sysModel = reader.string();
+                    break;
+                }
+            case 8: {
+                    message.token = reader.string();
+                    break;
+                }
+            case 9: {
+                    message.version = reader.string();
                     break;
                 }
             default:
@@ -3918,6 +3968,7 @@ export const ClientInfo = $root.ClientInfo = (() => {
             case 2:
             case 3:
             case 4:
+            case 5:
                 break;
             }
         if (message.language != null && message.hasOwnProperty("language"))
@@ -3929,6 +3980,12 @@ export const ClientInfo = $root.ClientInfo = (() => {
         if (message.sysModel != null && message.hasOwnProperty("sysModel"))
             if (!$util.isString(message.sysModel))
                 return "sysModel: string expected";
+        if (message.token != null && message.hasOwnProperty("token"))
+            if (!$util.isString(message.token))
+                return "token: string expected";
+        if (message.version != null && message.hasOwnProperty("version"))
+            if (!$util.isString(message.version))
+                return "version: string expected";
         return null;
     };
 
@@ -3977,6 +4034,10 @@ export const ClientInfo = $root.ClientInfo = (() => {
         case 4:
             message.plat = 4;
             break;
+        case "HARMONYOS":
+        case 5:
+            message.plat = 5;
+            break;
         }
         if (object.language != null)
             message.language = object.language | 0;
@@ -3984,6 +4045,10 @@ export const ClientInfo = $root.ClientInfo = (() => {
             message.sysMac = String(object.sysMac);
         if (object.sysModel != null)
             message.sysModel = String(object.sysModel);
+        if (object.token != null)
+            message.token = String(object.token);
+        if (object.version != null)
+            message.version = String(object.version);
         return message;
     };
 
@@ -4008,6 +4073,8 @@ export const ClientInfo = $root.ClientInfo = (() => {
             object.language = 0;
             object.sysMac = "";
             object.sysModel = "";
+            object.token = "";
+            object.version = "";
         }
         if (message.sessionId != null && message.hasOwnProperty("sessionId"))
             object.sessionId = message.sessionId;
@@ -4023,6 +4090,10 @@ export const ClientInfo = $root.ClientInfo = (() => {
             object.sysMac = message.sysMac;
         if (message.sysModel != null && message.hasOwnProperty("sysModel"))
             object.sysModel = message.sysModel;
+        if (message.token != null && message.hasOwnProperty("token"))
+            object.token = message.token;
+        if (message.version != null && message.hasOwnProperty("version"))
+            object.version = message.version;
         return object;
     };
 
@@ -4162,12 +4233,14 @@ export const CommonResult = $root.CommonResult = (() => {
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    CommonResult.decode = function decode(reader, length) {
+    CommonResult.decode = function decode(reader, length, error) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.CommonResult();
         while (reader.pos < end) {
             let tag = reader.uint32();
+            if (tag === error)
+                break;
             switch (tag >>> 3) {
             case 1: {
                     message.errCode = reader.int32();
@@ -4390,12 +4463,14 @@ export const CommonResultResp = $root.CommonResultResp = (() => {
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    CommonResultResp.decode = function decode(reader, length) {
+    CommonResultResp.decode = function decode(reader, length, error) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.CommonResultResp();
         while (reader.pos < end) {
             let tag = reader.uint32();
+            if (tag === error)
+                break;
             switch (tag >>> 3) {
             case 1: {
                     message.commonResult = $root.CommonResult.decode(reader, reader.uint32());
@@ -4598,12 +4673,14 @@ export const CommonResultReq = $root.CommonResultReq = (() => {
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    CommonResultReq.decode = function decode(reader, length) {
+    CommonResultReq.decode = function decode(reader, length, error) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.CommonResultReq();
         while (reader.pos < end) {
             let tag = reader.uint32();
+            if (tag === error)
+                break;
             switch (tag >>> 3) {
             case 1: {
                     message.clientInfo = $root.ClientInfo.decode(reader, reader.uint32());
@@ -4853,12 +4930,14 @@ export const ValidateCode = $root.ValidateCode = (() => {
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    ValidateCode.decode = function decode(reader, length) {
+    ValidateCode.decode = function decode(reader, length, error) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.ValidateCode();
         while (reader.pos < end) {
             let tag = reader.uint32();
+            if (tag === error)
+                break;
             switch (tag >>> 3) {
             case 1: {
                     message.validateValue = reader.string();
@@ -4946,6 +5025,7 @@ export const ValidateCode = $root.ValidateCode = (() => {
             case 20:
             case 21:
             case 22:
+            case 23:
                 break;
             }
         return null;
@@ -5064,6 +5144,10 @@ export const ValidateCode = $root.ValidateCode = (() => {
         case 22:
             message.validateType = 22;
             break;
+        case "VERIFY_LOGIN_PASSWORD":
+        case 23:
+            message.validateType = 23;
+            break;
         }
         return message;
     };
@@ -5153,6 +5237,7 @@ export const ValidateCode = $root.ValidateCode = (() => {
  * @property {number} BIND_ACCOUNT=20 BIND_ACCOUNT value
  * @property {number} VERIFY_LOGIN_PHONE=21 VERIFY_LOGIN_PHONE value
  * @property {number} VERIFY_LOGIN_EMAIL=22 VERIFY_LOGIN_EMAIL value
+ * @property {number} VERIFY_LOGIN_PASSWORD=23 VERIFY_LOGIN_PASSWORD value
  */
 export const GetValidateCodeType = $root.GetValidateCodeType = (() => {
     const valuesById = {}, values = Object.create(valuesById);
@@ -5178,6 +5263,7 @@ export const GetValidateCodeType = $root.GetValidateCodeType = (() => {
     values[valuesById[20] = "BIND_ACCOUNT"] = 20;
     values[valuesById[21] = "VERIFY_LOGIN_PHONE"] = 21;
     values[valuesById[22] = "VERIFY_LOGIN_EMAIL"] = 22;
+    values[valuesById[23] = "VERIFY_LOGIN_PASSWORD"] = 23;
     return values;
 })();
 
@@ -5240,6 +5326,7 @@ export const Gender = $root.Gender = (() => {
  * @property {number} UNKOWN=2 UNKOWN value
  * @property {number} MAC=3 MAC value
  * @property {number} WIN=4 WIN value
+ * @property {number} HARMONYOS=5 HARMONYOS value
  */
 export const Platform = $root.Platform = (() => {
     const valuesById = {}, values = Object.create(valuesById);
@@ -5248,6 +5335,7 @@ export const Platform = $root.Platform = (() => {
     values[valuesById[2] = "UNKOWN"] = 2;
     values[valuesById[3] = "MAC"] = 3;
     values[valuesById[4] = "WIN"] = 4;
+    values[valuesById[5] = "HARMONYOS"] = 5;
     return values;
 })();
 
@@ -5418,11 +5506,14 @@ export const GroupReqStatus = $root.GroupReqStatus = (() => {
  * @property {number} GROUP_SET_ADMIN=8 GROUP_SET_ADMIN value
  * @property {number} GROUP_CANCLE_ADMIN=9 GROUP_CANCLE_ADMIN value
  * @property {number} GROUP_ADMIN_UPDATE=10 GROUP_ADMIN_UPDATE value
- * @property {number} GROUP_IS_BANNED=11 GROUP_IS_BANNED value
+ * @property {number} GROUP_IS_DISABLED=11 GROUP_IS_DISABLED value
  * @property {number} GROUP_MEMBER_SHUTUP=12 GROUP_MEMBER_SHUTUP value
- * @property {number} GROUP_IS_DISABLE=13 GROUP_IS_DISABLE value
+ * @property {number} GROUP_IS_DISBANDED=13 GROUP_IS_DISBANDED value
  * @property {number} GROUP_LINK=14 GROUP_LINK value
  * @property {number} GROUP_ALIAS=15 GROUP_ALIAS value
+ * @property {number} GROUP_IS_ENABLED=16 GROUP_IS_ENABLED value
+ * @property {number} GROUP_OBSERVE_ADD=17 GROUP_OBSERVE_ADD value
+ * @property {number} GROUP_OBSERVE_REMOVE=18 GROUP_OBSERVE_REMOVE value
  */
 export const GroupReqType = $root.GroupReqType = (() => {
     const valuesById = {}, values = Object.create(valuesById);
@@ -5437,11 +5528,14 @@ export const GroupReqType = $root.GroupReqType = (() => {
     values[valuesById[8] = "GROUP_SET_ADMIN"] = 8;
     values[valuesById[9] = "GROUP_CANCLE_ADMIN"] = 9;
     values[valuesById[10] = "GROUP_ADMIN_UPDATE"] = 10;
-    values[valuesById[11] = "GROUP_IS_BANNED"] = 11;
+    values[valuesById[11] = "GROUP_IS_DISABLED"] = 11;
     values[valuesById[12] = "GROUP_MEMBER_SHUTUP"] = 12;
-    values[valuesById[13] = "GROUP_IS_DISABLE"] = 13;
+    values[valuesById[13] = "GROUP_IS_DISBANDED"] = 13;
     values[valuesById[14] = "GROUP_LINK"] = 14;
     values[valuesById[15] = "GROUP_ALIAS"] = 15;
+    values[valuesById[16] = "GROUP_IS_ENABLED"] = 16;
+    values[valuesById[17] = "GROUP_OBSERVE_ADD"] = 17;
+    values[valuesById[18] = "GROUP_OBSERVE_REMOVE"] = 18;
     return values;
 })();
 
@@ -5476,12 +5570,14 @@ export const GroupHandleType = $root.GroupHandleType = (() => {
  * @property {number} DELIVERED=0 DELIVERED value
  * @property {number} VIEWED=1 VIEWED value
  * @property {number} PLAYED=2 PLAYED value
+ * @property {number} PROCESSED=3 PROCESSED value
  */
 export const MsgReceiptStatus = $root.MsgReceiptStatus = (() => {
     const valuesById = {}, values = Object.create(valuesById);
     values[valuesById[0] = "DELIVERED"] = 0;
     values[valuesById[1] = "VIEWED"] = 1;
     values[valuesById[2] = "PLAYED"] = 2;
+    values[valuesById[3] = "PROCESSED"] = 3;
     return values;
 })();
 
@@ -5508,12 +5604,14 @@ export const CheckVersionFlag = $root.CheckVersionFlag = (() => {
  * @property {number} KEY_USER=0 KEY_USER value
  * @property {number} KEY_GROUP=1 KEY_GROUP value
  * @property {number} KEY_USER_WEB=2 KEY_USER_WEB value
+ * @property {number} KEY_CHANNEL=3 KEY_CHANNEL value
  */
 export const KeyPairType = $root.KeyPairType = (() => {
     const valuesById = {}, values = Object.create(valuesById);
     values[valuesById[0] = "KEY_USER"] = 0;
     values[valuesById[1] = "KEY_GROUP"] = 1;
     values[valuesById[2] = "KEY_USER_WEB"] = 2;
+    values[valuesById[3] = "KEY_CHANNEL"] = 3;
     return values;
 })();
 
@@ -5526,6 +5624,7 @@ export const KeyPairType = $root.KeyPairType = (() => {
  * @property {number} CHECK_APPLY=2 CHECK_APPLY value
  * @property {number} PUSH_NOTICE=3 PUSH_NOTICE value
  * @property {number} SET_ADMIN=4 SET_ADMIN value
+ * @property {number} SET_JOIN_NOTICE=5 SET_JOIN_NOTICE value
  */
 export const AdminRightType = $root.AdminRightType = (() => {
     const valuesById = {}, values = Object.create(valuesById);
@@ -5534,6 +5633,7 @@ export const AdminRightType = $root.AdminRightType = (() => {
     values[valuesById[2] = "CHECK_APPLY"] = 2;
     values[valuesById[3] = "PUSH_NOTICE"] = 3;
     values[valuesById[4] = "SET_ADMIN"] = 4;
+    values[valuesById[5] = "SET_JOIN_NOTICE"] = 5;
     return values;
 })();
 
@@ -5586,6 +5686,20 @@ export const InviteLinkType = $root.InviteLinkType = (() => {
 })();
 
 /**
+ * EditType enum.
+ * @exports EditType
+ * @enum {number}
+ * @property {number} UNMODIFIED=0 UNMODIFIED value
+ * @property {number} MODIFIED=1 MODIFIED value
+ */
+export const EditType = $root.EditType = (() => {
+    const valuesById = {}, values = Object.create(valuesById);
+    values[valuesById[0] = "UNMODIFIED"] = 0;
+    values[valuesById[1] = "MODIFIED"] = 1;
+    return values;
+})();
+
+/**
  * FilterType enum.
  * @exports FilterType
  * @enum {number}
@@ -5622,6 +5736,38 @@ export const SafeSwitchType = $root.SafeSwitchType = (() => {
     values[valuesById[1] = "PHONE_TYPE"] = 1;
     values[valuesById[2] = "GOOGLE_AUTH_TYPE"] = 2;
     values[valuesById[3] = "TRADE_PASSWORD_TYPE"] = 3;
+    return values;
+})();
+
+/**
+ * operateType enum.
+ * @exports operateType
+ * @enum {number}
+ * @property {number} UPDATE=0 UPDATE value
+ * @property {number} DELETE=1 DELETE value
+ */
+export const operateType = $root.operateType = (() => {
+    const valuesById = {}, values = Object.create(valuesById);
+    values[valuesById[0] = "UPDATE"] = 0;
+    values[valuesById[1] = "DELETE"] = 1;
+    return values;
+})();
+
+/**
+ * CheckTradePassword enum.
+ * @exports CheckTradePassword
+ * @enum {number}
+ * @property {number} OLD_ERROR=0 OLD_ERROR value
+ * @property {number} NEW_THE_SAME=1 NEW_THE_SAME value
+ * @property {number} PASS=2 PASS value
+ * @property {number} OVER_TIME=3 OVER_TIME value
+ */
+export const CheckTradePassword = $root.CheckTradePassword = (() => {
+    const valuesById = {}, values = Object.create(valuesById);
+    values[valuesById[0] = "OLD_ERROR"] = 0;
+    values[valuesById[1] = "NEW_THE_SAME"] = 1;
+    values[valuesById[2] = "PASS"] = 2;
+    values[valuesById[3] = "OVER_TIME"] = 3;
     return values;
 })();
 
@@ -5721,12 +5867,14 @@ export const GroupAssistantMessageContent = $root.GroupAssistantMessageContent =
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    GroupAssistantMessageContent.decode = function decode(reader, length) {
+    GroupAssistantMessageContent.decode = function decode(reader, length, error) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.GroupAssistantMessageContent();
         while (reader.pos < end) {
             let tag = reader.uint32();
+            if (tag === error)
+                break;
             switch (tag >>> 3) {
             case 1: {
                     message.content = reader.bytes();
@@ -5881,6 +6029,7 @@ export const UserBase = $root.UserBase = (() => {
      * @property {string|null} [realName] UserBase realName
      * @property {string|null} [idNumber] UserBase idNumber
      * @property {number|Long|null} [createTime] UserBase createTime
+     * @property {number|null} [userType] UserBase userType
      */
 
     /**
@@ -6011,6 +6160,14 @@ export const UserBase = $root.UserBase = (() => {
     UserBase.prototype.createTime = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
 
     /**
+     * UserBase userType.
+     * @member {number} userType
+     * @memberof UserBase
+     * @instance
+     */
+    UserBase.prototype.userType = 0;
+
+    /**
      * Creates a new UserBase instance using the specified properties.
      * @function create
      * @memberof UserBase
@@ -6062,6 +6219,8 @@ export const UserBase = $root.UserBase = (() => {
             writer.uint32(/* id 13, wireType 2 =*/106).string(message.idNumber);
         if (message.createTime != null && Object.hasOwnProperty.call(message, "createTime"))
             writer.uint32(/* id 14, wireType 0 =*/112).int64(message.createTime);
+        if (message.userType != null && Object.hasOwnProperty.call(message, "userType"))
+            writer.uint32(/* id 15, wireType 0 =*/120).int32(message.userType);
         return writer;
     };
 
@@ -6089,12 +6248,14 @@ export const UserBase = $root.UserBase = (() => {
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    UserBase.decode = function decode(reader, length) {
+    UserBase.decode = function decode(reader, length, error) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.UserBase();
         while (reader.pos < end) {
             let tag = reader.uint32();
+            if (tag === error)
+                break;
             switch (tag >>> 3) {
             case 1: {
                     message.uid = reader.int64();
@@ -6150,6 +6311,10 @@ export const UserBase = $root.UserBase = (() => {
                 }
             case 14: {
                     message.createTime = reader.int64();
+                    break;
+                }
+            case 15: {
+                    message.userType = reader.int32();
                     break;
                 }
             default:
@@ -6239,6 +6404,9 @@ export const UserBase = $root.UserBase = (() => {
         if (message.createTime != null && message.hasOwnProperty("createTime"))
             if (!$util.isInteger(message.createTime) && !(message.createTime && $util.isInteger(message.createTime.low) && $util.isInteger(message.createTime.high)))
                 return "createTime: integer|Long expected";
+        if (message.userType != null && message.hasOwnProperty("userType"))
+            if (!$util.isInteger(message.userType))
+                return "userType: integer expected";
         return null;
     };
 
@@ -6320,6 +6488,8 @@ export const UserBase = $root.UserBase = (() => {
                 message.createTime = object.createTime;
             else if (typeof object.createTime === "object")
                 message.createTime = new $util.LongBits(object.createTime.low >>> 0, object.createTime.high >>> 0).toNumber();
+        if (object.userType != null)
+            message.userType = object.userType | 0;
         return message;
     };
 
@@ -6359,6 +6529,7 @@ export const UserBase = $root.UserBase = (() => {
                 object.createTime = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
             } else
                 object.createTime = options.longs === String ? "0" : 0;
+            object.userType = 0;
         }
         if (message.uid != null && message.hasOwnProperty("uid"))
             if (typeof message.uid === "number")
@@ -6394,6 +6565,8 @@ export const UserBase = $root.UserBase = (() => {
                 object.createTime = options.longs === String ? String(message.createTime) : message.createTime;
             else
                 object.createTime = options.longs === String ? $util.Long.prototype.toString.call(message.createTime) : options.longs === Number ? new $util.LongBits(message.createTime.low >>> 0, message.createTime.high >>> 0).toNumber() : message.createTime;
+        if (message.userType != null && message.hasOwnProperty("userType"))
+            object.userType = message.userType;
         return object;
     };
 
@@ -6522,12 +6695,14 @@ export const UserSwitch = $root.UserSwitch = (() => {
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    UserSwitch.decode = function decode(reader, length) {
+    UserSwitch.decode = function decode(reader, length, error) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.UserSwitch();
         while (reader.pos < end) {
             let tag = reader.uint32();
+            if (tag === error)
+                break;
             switch (tag >>> 3) {
             case 1: {
                     message.phoneValidate = reader.bool();
@@ -6661,6 +6836,7 @@ export const FriendRelation = $root.FriendRelation = (() => {
      * @interface IFriendRelation
      * @property {boolean|null} [bfFriend] FriendRelation bfFriend
      * @property {string|null} [remarkName] FriendRelation remarkName
+     * @property {number|null} [status] FriendRelation status
      */
 
     /**
@@ -6695,6 +6871,14 @@ export const FriendRelation = $root.FriendRelation = (() => {
     FriendRelation.prototype.remarkName = "";
 
     /**
+     * FriendRelation status.
+     * @member {number} status
+     * @memberof FriendRelation
+     * @instance
+     */
+    FriendRelation.prototype.status = 0;
+
+    /**
      * Creates a new FriendRelation instance using the specified properties.
      * @function create
      * @memberof FriendRelation
@@ -6722,6 +6906,8 @@ export const FriendRelation = $root.FriendRelation = (() => {
             writer.uint32(/* id 1, wireType 0 =*/8).bool(message.bfFriend);
         if (message.remarkName != null && Object.hasOwnProperty.call(message, "remarkName"))
             writer.uint32(/* id 2, wireType 2 =*/18).string(message.remarkName);
+        if (message.status != null && Object.hasOwnProperty.call(message, "status"))
+            writer.uint32(/* id 3, wireType 0 =*/24).int32(message.status);
         return writer;
     };
 
@@ -6749,12 +6935,14 @@ export const FriendRelation = $root.FriendRelation = (() => {
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    FriendRelation.decode = function decode(reader, length) {
+    FriendRelation.decode = function decode(reader, length, error) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.FriendRelation();
         while (reader.pos < end) {
             let tag = reader.uint32();
+            if (tag === error)
+                break;
             switch (tag >>> 3) {
             case 1: {
                     message.bfFriend = reader.bool();
@@ -6762,6 +6950,10 @@ export const FriendRelation = $root.FriendRelation = (() => {
                 }
             case 2: {
                     message.remarkName = reader.string();
+                    break;
+                }
+            case 3: {
+                    message.status = reader.int32();
                     break;
                 }
             default:
@@ -6805,6 +6997,9 @@ export const FriendRelation = $root.FriendRelation = (() => {
         if (message.remarkName != null && message.hasOwnProperty("remarkName"))
             if (!$util.isString(message.remarkName))
                 return "remarkName: string expected";
+        if (message.status != null && message.hasOwnProperty("status"))
+            if (!$util.isInteger(message.status))
+                return "status: integer expected";
         return null;
     };
 
@@ -6824,6 +7019,8 @@ export const FriendRelation = $root.FriendRelation = (() => {
             message.bfFriend = Boolean(object.bfFriend);
         if (object.remarkName != null)
             message.remarkName = String(object.remarkName);
+        if (object.status != null)
+            message.status = object.status | 0;
         return message;
     };
 
@@ -6843,11 +7040,14 @@ export const FriendRelation = $root.FriendRelation = (() => {
         if (options.defaults) {
             object.bfFriend = false;
             object.remarkName = "";
+            object.status = 0;
         }
         if (message.bfFriend != null && message.hasOwnProperty("bfFriend"))
             object.bfFriend = message.bfFriend;
         if (message.remarkName != null && message.hasOwnProperty("remarkName"))
             object.remarkName = message.remarkName;
+        if (message.status != null && message.hasOwnProperty("status"))
+            object.status = message.status;
         return object;
     };
 
@@ -6987,12 +7187,14 @@ export const ArchiveInfo = $root.ArchiveInfo = (() => {
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    ArchiveInfo.decode = function decode(reader, length) {
+    ArchiveInfo.decode = function decode(reader, length, error) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.ArchiveInfo();
         while (reader.pos < end) {
             let tag = reader.uint32();
+            if (tag === error)
+                break;
             switch (tag >>> 3) {
             case 1: {
                     message.target = reader.int64();
@@ -7185,6 +7387,7 @@ export const GroupMemberBase = $root.GroupMemberBase = (() => {
      * @property {number|Long|null} [score] GroupMemberBase score
      * @property {IAdminRightBase|null} [right] GroupMemberBase right
      * @property {boolean|null} [bfMyBlack] GroupMemberBase bfMyBlack
+     * @property {number|null} [labelType] GroupMemberBase labelType
      */
 
     /**
@@ -7259,6 +7462,14 @@ export const GroupMemberBase = $root.GroupMemberBase = (() => {
     GroupMemberBase.prototype.bfMyBlack = false;
 
     /**
+     * GroupMemberBase labelType.
+     * @member {number} labelType
+     * @memberof GroupMemberBase
+     * @instance
+     */
+    GroupMemberBase.prototype.labelType = 0;
+
+    /**
      * Creates a new GroupMemberBase instance using the specified properties.
      * @function create
      * @memberof GroupMemberBase
@@ -7296,6 +7507,8 @@ export const GroupMemberBase = $root.GroupMemberBase = (() => {
             $root.AdminRightBase.encode(message.right, writer.uint32(/* id 6, wireType 2 =*/50).fork()).ldelim();
         if (message.bfMyBlack != null && Object.hasOwnProperty.call(message, "bfMyBlack"))
             writer.uint32(/* id 7, wireType 0 =*/56).bool(message.bfMyBlack);
+        if (message.labelType != null && Object.hasOwnProperty.call(message, "labelType"))
+            writer.uint32(/* id 8, wireType 0 =*/64).int32(message.labelType);
         return writer;
     };
 
@@ -7323,12 +7536,14 @@ export const GroupMemberBase = $root.GroupMemberBase = (() => {
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    GroupMemberBase.decode = function decode(reader, length) {
+    GroupMemberBase.decode = function decode(reader, length, error) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.GroupMemberBase();
         while (reader.pos < end) {
             let tag = reader.uint32();
+            if (tag === error)
+                break;
             switch (tag >>> 3) {
             case 1: {
                     message.user = $root.UserBase.decode(reader, reader.uint32());
@@ -7356,6 +7571,10 @@ export const GroupMemberBase = $root.GroupMemberBase = (() => {
                 }
             case 7: {
                     message.bfMyBlack = reader.bool();
+                    break;
+                }
+            case 8: {
+                    message.labelType = reader.int32();
                     break;
                 }
             default:
@@ -7424,6 +7643,9 @@ export const GroupMemberBase = $root.GroupMemberBase = (() => {
         if (message.bfMyBlack != null && message.hasOwnProperty("bfMyBlack"))
             if (typeof message.bfMyBlack !== "boolean")
                 return "bfMyBlack: boolean expected";
+        if (message.labelType != null && message.hasOwnProperty("labelType"))
+            if (!$util.isInteger(message.labelType))
+                return "labelType: integer expected";
         return null;
     };
 
@@ -7491,6 +7713,8 @@ export const GroupMemberBase = $root.GroupMemberBase = (() => {
         }
         if (object.bfMyBlack != null)
             message.bfMyBlack = Boolean(object.bfMyBlack);
+        if (object.labelType != null)
+            message.labelType = object.labelType | 0;
         return message;
     };
 
@@ -7523,6 +7747,7 @@ export const GroupMemberBase = $root.GroupMemberBase = (() => {
                 object.score = options.longs === String ? "0" : 0;
             object.right = null;
             object.bfMyBlack = false;
+            object.labelType = 0;
         }
         if (message.user != null && message.hasOwnProperty("user"))
             object.user = $root.UserBase.toObject(message.user, options);
@@ -7544,6 +7769,8 @@ export const GroupMemberBase = $root.GroupMemberBase = (() => {
             object.right = $root.AdminRightBase.toObject(message.right, options);
         if (message.bfMyBlack != null && message.hasOwnProperty("bfMyBlack"))
             object.bfMyBlack = message.bfMyBlack;
+        if (message.labelType != null && message.hasOwnProperty("labelType"))
+            object.labelType = message.labelType;
         return object;
     };
 
@@ -7601,6 +7828,7 @@ export const ContactsDetailBase = $root.ContactsDetailBase = (() => {
      * @property {number|null} [groupShutupTime] ContactsDetailBase groupShutupTime
      * @property {number|null} [searchType] ContactsDetailBase searchType
      * @property {string|null} [addToken] ContactsDetailBase addToken
+     * @property {boolean|null} [bfIdSearch] ContactsDetailBase bfIdSearch
      */
 
     /**
@@ -7771,6 +7999,14 @@ export const ContactsDetailBase = $root.ContactsDetailBase = (() => {
     ContactsDetailBase.prototype.addToken = "";
 
     /**
+     * ContactsDetailBase bfIdSearch.
+     * @member {boolean} bfIdSearch
+     * @memberof ContactsDetailBase
+     * @instance
+     */
+    ContactsDetailBase.prototype.bfIdSearch = false;
+
+    /**
      * Creates a new ContactsDetailBase instance using the specified properties.
      * @function create
      * @memberof ContactsDetailBase
@@ -7832,6 +8068,8 @@ export const ContactsDetailBase = $root.ContactsDetailBase = (() => {
             writer.uint32(/* id 18, wireType 0 =*/144).int32(message.searchType);
         if (message.addToken != null && Object.hasOwnProperty.call(message, "addToken"))
             writer.uint32(/* id 19, wireType 2 =*/154).string(message.addToken);
+        if (message.bfIdSearch != null && Object.hasOwnProperty.call(message, "bfIdSearch"))
+            writer.uint32(/* id 20, wireType 0 =*/160).bool(message.bfIdSearch);
         return writer;
     };
 
@@ -7859,12 +8097,14 @@ export const ContactsDetailBase = $root.ContactsDetailBase = (() => {
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    ContactsDetailBase.decode = function decode(reader, length) {
+    ContactsDetailBase.decode = function decode(reader, length, error) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.ContactsDetailBase();
         while (reader.pos < end) {
             let tag = reader.uint32();
+            if (tag === error)
+                break;
             switch (tag >>> 3) {
             case 1: {
                     message.userInfo = $root.UserBase.decode(reader, reader.uint32());
@@ -7940,6 +8180,10 @@ export const ContactsDetailBase = $root.ContactsDetailBase = (() => {
                 }
             case 19: {
                     message.addToken = reader.string();
+                    break;
+                }
+            case 20: {
+                    message.bfIdSearch = reader.bool();
                     break;
                 }
             default:
@@ -8036,6 +8280,9 @@ export const ContactsDetailBase = $root.ContactsDetailBase = (() => {
         if (message.addToken != null && message.hasOwnProperty("addToken"))
             if (!$util.isString(message.addToken))
                 return "addToken: string expected";
+        if (message.bfIdSearch != null && message.hasOwnProperty("bfIdSearch"))
+            if (typeof message.bfIdSearch !== "boolean")
+                return "bfIdSearch: boolean expected";
         return null;
     };
 
@@ -8092,6 +8339,8 @@ export const ContactsDetailBase = $root.ContactsDetailBase = (() => {
             message.searchType = object.searchType | 0;
         if (object.addToken != null)
             message.addToken = String(object.addToken);
+        if (object.bfIdSearch != null)
+            message.bfIdSearch = Boolean(object.bfIdSearch);
         return message;
     };
 
@@ -8128,6 +8377,7 @@ export const ContactsDetailBase = $root.ContactsDetailBase = (() => {
             object.groupShutupTime = 0;
             object.searchType = 0;
             object.addToken = "";
+            object.bfIdSearch = false;
         }
         if (message.userInfo != null && message.hasOwnProperty("userInfo"))
             object.userInfo = $root.UserBase.toObject(message.userInfo, options);
@@ -8167,6 +8417,8 @@ export const ContactsDetailBase = $root.ContactsDetailBase = (() => {
             object.searchType = message.searchType;
         if (message.addToken != null && message.hasOwnProperty("addToken"))
             object.addToken = message.addToken;
+        if (message.bfIdSearch != null && message.hasOwnProperty("bfIdSearch"))
+            object.bfIdSearch = message.bfIdSearch;
         return object;
     };
 
@@ -8295,12 +8547,14 @@ export const MsgReceiptStatusBase = $root.MsgReceiptStatusBase = (() => {
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    MsgReceiptStatusBase.decode = function decode(reader, length) {
+    MsgReceiptStatusBase.decode = function decode(reader, length, error) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.MsgReceiptStatusBase();
         while (reader.pos < end) {
             let tag = reader.uint32();
+            if (tag === error)
+                break;
             switch (tag >>> 3) {
             case 1: {
                     message.status = reader.int32();
@@ -8352,6 +8606,7 @@ export const MsgReceiptStatusBase = $root.MsgReceiptStatusBase = (() => {
             case 0:
             case 1:
             case 2:
+            case 3:
                 break;
             }
         if (message.time != null && message.hasOwnProperty("time"))
@@ -8390,6 +8645,10 @@ export const MsgReceiptStatusBase = $root.MsgReceiptStatusBase = (() => {
         case "PLAYED":
         case 2:
             message.status = 2;
+            break;
+        case "PROCESSED":
+        case 3:
+            message.status = 3;
             break;
         }
         if (object.time != null)
@@ -8562,12 +8821,14 @@ export const MsgReceiptBase = $root.MsgReceiptBase = (() => {
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    MsgReceiptBase.decode = function decode(reader, length) {
+    MsgReceiptBase.decode = function decode(reader, length, error) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.MsgReceiptBase();
         while (reader.pos < end) {
             let tag = reader.uint32();
+            if (tag === error)
+                break;
             switch (tag >>> 3) {
             case 1: {
                     message.targetUser = $root.UserBase.decode(reader, reader.uint32());
@@ -8835,12 +9096,14 @@ export const UserOnOrOffLine = $root.UserOnOrOffLine = (() => {
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    UserOnOrOffLine.decode = function decode(reader, length) {
+    UserOnOrOffLine.decode = function decode(reader, length, error) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.UserOnOrOffLine();
         while (reader.pos < end) {
             let tag = reader.uint32();
+            if (tag === error)
+                break;
             switch (tag >>> 3) {
             case 1: {
                     message.uid = reader.int64();
@@ -9136,12 +9399,14 @@ export const KeyPairBase = $root.KeyPairBase = (() => {
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    KeyPairBase.decode = function decode(reader, length) {
+    KeyPairBase.decode = function decode(reader, length, error) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.KeyPairBase();
         while (reader.pos < end) {
             let tag = reader.uint32();
+            if (tag === error)
+                break;
             switch (tag >>> 3) {
             case 1: {
                     message.publicKey = reader.string();
@@ -9302,6 +9567,7 @@ export const AdminRightBase = $root.AdminRightBase = (() => {
      * @property {boolean|null} [bfPushNotice] AdminRightBase bfPushNotice
      * @property {boolean|null} [bfSetAdmin] AdminRightBase bfSetAdmin
      * @property {boolean|null} [bfResetQrcode] AdminRightBase bfResetQrcode
+     * @property {boolean|null} [bfSetJoinNotice] AdminRightBase bfSetJoinNotice
      */
 
     /**
@@ -9360,6 +9626,14 @@ export const AdminRightBase = $root.AdminRightBase = (() => {
     AdminRightBase.prototype.bfResetQrcode = false;
 
     /**
+     * AdminRightBase bfSetJoinNotice.
+     * @member {boolean} bfSetJoinNotice
+     * @memberof AdminRightBase
+     * @instance
+     */
+    AdminRightBase.prototype.bfSetJoinNotice = false;
+
+    /**
      * Creates a new AdminRightBase instance using the specified properties.
      * @function create
      * @memberof AdminRightBase
@@ -9393,6 +9667,8 @@ export const AdminRightBase = $root.AdminRightBase = (() => {
             writer.uint32(/* id 4, wireType 0 =*/32).bool(message.bfSetAdmin);
         if (message.bfResetQrcode != null && Object.hasOwnProperty.call(message, "bfResetQrcode"))
             writer.uint32(/* id 5, wireType 0 =*/40).bool(message.bfResetQrcode);
+        if (message.bfSetJoinNotice != null && Object.hasOwnProperty.call(message, "bfSetJoinNotice"))
+            writer.uint32(/* id 6, wireType 0 =*/48).bool(message.bfSetJoinNotice);
         return writer;
     };
 
@@ -9420,12 +9696,14 @@ export const AdminRightBase = $root.AdminRightBase = (() => {
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    AdminRightBase.decode = function decode(reader, length) {
+    AdminRightBase.decode = function decode(reader, length, error) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.AdminRightBase();
         while (reader.pos < end) {
             let tag = reader.uint32();
+            if (tag === error)
+                break;
             switch (tag >>> 3) {
             case 1: {
                     message.bfUpdateData = reader.bool();
@@ -9445,6 +9723,10 @@ export const AdminRightBase = $root.AdminRightBase = (() => {
                 }
             case 5: {
                     message.bfResetQrcode = reader.bool();
+                    break;
+                }
+            case 6: {
+                    message.bfSetJoinNotice = reader.bool();
                     break;
                 }
             default:
@@ -9497,6 +9779,9 @@ export const AdminRightBase = $root.AdminRightBase = (() => {
         if (message.bfResetQrcode != null && message.hasOwnProperty("bfResetQrcode"))
             if (typeof message.bfResetQrcode !== "boolean")
                 return "bfResetQrcode: boolean expected";
+        if (message.bfSetJoinNotice != null && message.hasOwnProperty("bfSetJoinNotice"))
+            if (typeof message.bfSetJoinNotice !== "boolean")
+                return "bfSetJoinNotice: boolean expected";
         return null;
     };
 
@@ -9522,6 +9807,8 @@ export const AdminRightBase = $root.AdminRightBase = (() => {
             message.bfSetAdmin = Boolean(object.bfSetAdmin);
         if (object.bfResetQrcode != null)
             message.bfResetQrcode = Boolean(object.bfResetQrcode);
+        if (object.bfSetJoinNotice != null)
+            message.bfSetJoinNotice = Boolean(object.bfSetJoinNotice);
         return message;
     };
 
@@ -9544,6 +9831,7 @@ export const AdminRightBase = $root.AdminRightBase = (() => {
             object.bfPushNotice = false;
             object.bfSetAdmin = false;
             object.bfResetQrcode = false;
+            object.bfSetJoinNotice = false;
         }
         if (message.bfUpdateData != null && message.hasOwnProperty("bfUpdateData"))
             object.bfUpdateData = message.bfUpdateData;
@@ -9555,6 +9843,8 @@ export const AdminRightBase = $root.AdminRightBase = (() => {
             object.bfSetAdmin = message.bfSetAdmin;
         if (message.bfResetQrcode != null && message.hasOwnProperty("bfResetQrcode"))
             object.bfResetQrcode = message.bfResetQrcode;
+        if (message.bfSetJoinNotice != null && message.hasOwnProperty("bfSetJoinNotice"))
+            object.bfSetJoinNotice = message.bfSetJoinNotice;
         return object;
     };
 
@@ -9716,12 +10006,14 @@ export const GroupNoticeBase = $root.GroupNoticeBase = (() => {
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    GroupNoticeBase.decode = function decode(reader, length) {
+    GroupNoticeBase.decode = function decode(reader, length, error) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.GroupNoticeBase();
         while (reader.pos < end) {
             let tag = reader.uint32();
+            if (tag === error)
+                break;
             switch (tag >>> 3) {
             case 1: {
                     message.editUser = $root.GroupMemberBase.decode(reader, reader.uint32());
@@ -10034,12 +10326,14 @@ export const EmoticonBase = $root.EmoticonBase = (() => {
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    EmoticonBase.decode = function decode(reader, length) {
+    EmoticonBase.decode = function decode(reader, length, error) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.EmoticonBase();
         while (reader.pos < end) {
             let tag = reader.uint32();
+            if (tag === error)
+                break;
             switch (tag >>> 3) {
             case 1: {
                     message.emoticonId = reader.int64();
@@ -10420,12 +10714,14 @@ export const CoinLinkBase = $root.CoinLinkBase = (() => {
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    CoinLinkBase.decode = function decode(reader, length) {
+    CoinLinkBase.decode = function decode(reader, length, error) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.CoinLinkBase();
         while (reader.pos < end) {
             let tag = reader.uint32();
+            if (tag === error)
+                break;
             switch (tag >>> 3) {
             case 1: {
                     message.coinId = reader.int32();
@@ -10968,12 +11264,14 @@ export const CoinTypeBase = $root.CoinTypeBase = (() => {
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    CoinTypeBase.decode = function decode(reader, length) {
+    CoinTypeBase.decode = function decode(reader, length, error) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.CoinTypeBase();
         while (reader.pos < end) {
             let tag = reader.uint32();
+            if (tag === error)
+                break;
             switch (tag >>> 3) {
             case 1: {
                     message.id = reader.int32();
@@ -11430,12 +11728,14 @@ export const NewsCategoryBase = $root.NewsCategoryBase = (() => {
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    NewsCategoryBase.decode = function decode(reader, length) {
+    NewsCategoryBase.decode = function decode(reader, length, error) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.NewsCategoryBase();
         while (reader.pos < end) {
             let tag = reader.uint32();
+            if (tag === error)
+                break;
             switch (tag >>> 3) {
             case 1: {
                     message.categoryId = reader.int32();
@@ -11702,12 +12002,14 @@ export const NewsBase = $root.NewsBase = (() => {
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    NewsBase.decode = function decode(reader, length) {
+    NewsBase.decode = function decode(reader, length, error) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.NewsBase();
         while (reader.pos < end) {
             let tag = reader.uint32();
+            if (tag === error)
+                break;
             switch (tag >>> 3) {
             case 1: {
                     message.newsId = reader.int64();
@@ -12037,12 +12339,14 @@ export const PaymentBase = $root.PaymentBase = (() => {
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    PaymentBase.decode = function decode(reader, length) {
+    PaymentBase.decode = function decode(reader, length, error) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.PaymentBase();
         while (reader.pos < end) {
             let tag = reader.uint32();
+            if (tag === error)
+                break;
             switch (tag >>> 3) {
             case 1: {
                     message.paymentId = reader.int32();
@@ -12312,12 +12616,14 @@ export const PaymentBasics = $root.PaymentBasics = (() => {
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    PaymentBasics.decode = function decode(reader, length) {
+    PaymentBasics.decode = function decode(reader, length, error) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.PaymentBasics();
         while (reader.pos < end) {
             let tag = reader.uint32();
+            if (tag === error)
+                break;
             switch (tag >>> 3) {
             case 1: {
                     message.paymentId = reader.int64();
@@ -12586,12 +12892,14 @@ export const TranslationInfo = $root.TranslationInfo = (() => {
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    TranslationInfo.decode = function decode(reader, length) {
+    TranslationInfo.decode = function decode(reader, length, error) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.TranslationInfo();
         while (reader.pos < end) {
             let tag = reader.uint32();
+            if (tag === error)
+                break;
             switch (tag >>> 3) {
             case 2: {
                     message.autoTranslateStatus = reader.int32();
@@ -12849,12 +13157,14 @@ export const BotGameInfo = $root.BotGameInfo = (() => {
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    BotGameInfo.decode = function decode(reader, length) {
+    BotGameInfo.decode = function decode(reader, length, error) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.BotGameInfo();
         while (reader.pos < end) {
             let tag = reader.uint32();
+            if (tag === error)
+                break;
             switch (tag >>> 3) {
             case 1: {
                     message.gameId = reader.string();
@@ -13076,12 +13386,14 @@ export const BotAgentInfo = $root.BotAgentInfo = (() => {
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    BotAgentInfo.decode = function decode(reader, length) {
+    BotAgentInfo.decode = function decode(reader, length, error) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.BotAgentInfo();
         while (reader.pos < end) {
             let tag = reader.uint32();
+            if (tag === error)
+                break;
             switch (tag >>> 3) {
             case 1: {
                     message.agentId = reader.int32();
@@ -13325,12 +13637,14 @@ export const AwsConfig = $root.AwsConfig = (() => {
      * @throws {Error} If the payload is not a reader or valid buffer
      * @throws {$protobuf.util.ProtocolError} If required fields are missing
      */
-    AwsConfig.decode = function decode(reader, length) {
+    AwsConfig.decode = function decode(reader, length, error) {
         if (!(reader instanceof $Reader))
             reader = $Reader.create(reader);
         let end = length === undefined ? reader.len : reader.pos + length, message = new $root.AwsConfig();
         while (reader.pos < end) {
             let tag = reader.uint32();
+            if (tag === error)
+                break;
             switch (tag >>> 3) {
             case 2: {
                     message.accessKey = reader.string();
@@ -13492,6 +13806,938 @@ export const PageSort = $root.PageSort = (() => {
     values[valuesById[0] = "ASC"] = 0;
     values[valuesById[1] = "DESC"] = 1;
     return values;
+})();
+
+/**
+ * UploadChannelType enum.
+ * @exports UploadChannelType
+ * @enum {number}
+ * @property {number} OSS_DEFAULT=0 OSS_DEFAULT value
+ * @property {number} OSS_CHAT=1 OSS_CHAT value
+ * @property {number} OSS_LOW_RATE=2 OSS_LOW_RATE value
+ */
+export const UploadChannelType = $root.UploadChannelType = (() => {
+    const valuesById = {}, values = Object.create(valuesById);
+    values[valuesById[0] = "OSS_DEFAULT"] = 0;
+    values[valuesById[1] = "OSS_CHAT"] = 1;
+    values[valuesById[2] = "OSS_LOW_RATE"] = 2;
+    return values;
+})();
+
+export const LinkObj = $root.LinkObj = (() => {
+
+    /**
+     * Properties of a LinkObj.
+     * @exports ILinkObj
+     * @interface ILinkObj
+     * @property {string|null} [link] LinkObj link
+     * @property {number|null} [location] LinkObj location
+     * @property {number|null} [length] LinkObj length
+     */
+
+    /**
+     * Constructs a new LinkObj.
+     * @exports LinkObj
+     * @classdesc Represents a LinkObj.
+     * @implements ILinkObj
+     * @constructor
+     * @param {ILinkObj=} [properties] Properties to set
+     */
+    function LinkObj(properties) {
+        if (properties)
+            for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                if (properties[keys[i]] != null)
+                    this[keys[i]] = properties[keys[i]];
+    }
+
+    /**
+     * LinkObj link.
+     * @member {string} link
+     * @memberof LinkObj
+     * @instance
+     */
+    LinkObj.prototype.link = "";
+
+    /**
+     * LinkObj location.
+     * @member {number} location
+     * @memberof LinkObj
+     * @instance
+     */
+    LinkObj.prototype.location = 0;
+
+    /**
+     * LinkObj length.
+     * @member {number} length
+     * @memberof LinkObj
+     * @instance
+     */
+    LinkObj.prototype.length = 0;
+
+    /**
+     * Creates a new LinkObj instance using the specified properties.
+     * @function create
+     * @memberof LinkObj
+     * @static
+     * @param {ILinkObj=} [properties] Properties to set
+     * @returns {LinkObj} LinkObj instance
+     */
+    LinkObj.create = function create(properties) {
+        return new LinkObj(properties);
+    };
+
+    /**
+     * Encodes the specified LinkObj message. Does not implicitly {@link LinkObj.verify|verify} messages.
+     * @function encode
+     * @memberof LinkObj
+     * @static
+     * @param {ILinkObj} message LinkObj message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    LinkObj.encode = function encode(message, writer) {
+        if (!writer)
+            writer = $Writer.create();
+        if (message.link != null && Object.hasOwnProperty.call(message, "link"))
+            writer.uint32(/* id 1, wireType 2 =*/10).string(message.link);
+        if (message.location != null && Object.hasOwnProperty.call(message, "location"))
+            writer.uint32(/* id 2, wireType 0 =*/16).int32(message.location);
+        if (message.length != null && Object.hasOwnProperty.call(message, "length"))
+            writer.uint32(/* id 3, wireType 0 =*/24).int32(message.length);
+        return writer;
+    };
+
+    /**
+     * Encodes the specified LinkObj message, length delimited. Does not implicitly {@link LinkObj.verify|verify} messages.
+     * @function encodeDelimited
+     * @memberof LinkObj
+     * @static
+     * @param {ILinkObj} message LinkObj message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    LinkObj.encodeDelimited = function encodeDelimited(message, writer) {
+        return this.encode(message, writer).ldelim();
+    };
+
+    /**
+     * Decodes a LinkObj message from the specified reader or buffer.
+     * @function decode
+     * @memberof LinkObj
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @param {number} [length] Message length if known beforehand
+     * @returns {LinkObj} LinkObj
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    LinkObj.decode = function decode(reader, length, error) {
+        if (!(reader instanceof $Reader))
+            reader = $Reader.create(reader);
+        let end = length === undefined ? reader.len : reader.pos + length, message = new $root.LinkObj();
+        while (reader.pos < end) {
+            let tag = reader.uint32();
+            if (tag === error)
+                break;
+            switch (tag >>> 3) {
+            case 1: {
+                    message.link = reader.string();
+                    break;
+                }
+            case 2: {
+                    message.location = reader.int32();
+                    break;
+                }
+            case 3: {
+                    message.length = reader.int32();
+                    break;
+                }
+            default:
+                reader.skipType(tag & 7);
+                break;
+            }
+        }
+        return message;
+    };
+
+    /**
+     * Decodes a LinkObj message from the specified reader or buffer, length delimited.
+     * @function decodeDelimited
+     * @memberof LinkObj
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @returns {LinkObj} LinkObj
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    LinkObj.decodeDelimited = function decodeDelimited(reader) {
+        if (!(reader instanceof $Reader))
+            reader = new $Reader(reader);
+        return this.decode(reader, reader.uint32());
+    };
+
+    /**
+     * Verifies a LinkObj message.
+     * @function verify
+     * @memberof LinkObj
+     * @static
+     * @param {Object.<string,*>} message Plain object to verify
+     * @returns {string|null} `null` if valid, otherwise the reason why it is not
+     */
+    LinkObj.verify = function verify(message) {
+        if (typeof message !== "object" || message === null)
+            return "object expected";
+        if (message.link != null && message.hasOwnProperty("link"))
+            if (!$util.isString(message.link))
+                return "link: string expected";
+        if (message.location != null && message.hasOwnProperty("location"))
+            if (!$util.isInteger(message.location))
+                return "location: integer expected";
+        if (message.length != null && message.hasOwnProperty("length"))
+            if (!$util.isInteger(message.length))
+                return "length: integer expected";
+        return null;
+    };
+
+    /**
+     * Creates a LinkObj message from a plain object. Also converts values to their respective internal types.
+     * @function fromObject
+     * @memberof LinkObj
+     * @static
+     * @param {Object.<string,*>} object Plain object
+     * @returns {LinkObj} LinkObj
+     */
+    LinkObj.fromObject = function fromObject(object) {
+        if (object instanceof $root.LinkObj)
+            return object;
+        let message = new $root.LinkObj();
+        if (object.link != null)
+            message.link = String(object.link);
+        if (object.location != null)
+            message.location = object.location | 0;
+        if (object.length != null)
+            message.length = object.length | 0;
+        return message;
+    };
+
+    /**
+     * Creates a plain object from a LinkObj message. Also converts values to other types if specified.
+     * @function toObject
+     * @memberof LinkObj
+     * @static
+     * @param {LinkObj} message LinkObj
+     * @param {$protobuf.IConversionOptions} [options] Conversion options
+     * @returns {Object.<string,*>} Plain object
+     */
+    LinkObj.toObject = function toObject(message, options) {
+        if (!options)
+            options = {};
+        let object = {};
+        if (options.defaults) {
+            object.link = "";
+            object.location = 0;
+            object.length = 0;
+        }
+        if (message.link != null && message.hasOwnProperty("link"))
+            object.link = message.link;
+        if (message.location != null && message.hasOwnProperty("location"))
+            object.location = message.location;
+        if (message.length != null && message.hasOwnProperty("length"))
+            object.length = message.length;
+        return object;
+    };
+
+    /**
+     * Converts this LinkObj to JSON.
+     * @function toJSON
+     * @memberof LinkObj
+     * @instance
+     * @returns {Object.<string,*>} JSON object
+     */
+    LinkObj.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+    };
+
+    /**
+     * Gets the default type url for LinkObj
+     * @function getTypeUrl
+     * @memberof LinkObj
+     * @static
+     * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+     * @returns {string} The default type url
+     */
+    LinkObj.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === undefined) {
+            typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/LinkObj";
+    };
+
+    return LinkObj;
+})();
+
+export const FeeConfig = $root.FeeConfig = (() => {
+
+    /**
+     * Properties of a FeeConfig.
+     * @exports IFeeConfig
+     * @interface IFeeConfig
+     * @property {number|null} [scenesType] FeeConfig scenesType
+     * @property {string|null} [scenesName] FeeConfig scenesName
+     * @property {Array.<ICoinFeeConfig>|null} [feeConfigs] FeeConfig feeConfigs
+     */
+
+    /**
+     * Constructs a new FeeConfig.
+     * @exports FeeConfig
+     * @classdesc Represents a FeeConfig.
+     * @implements IFeeConfig
+     * @constructor
+     * @param {IFeeConfig=} [properties] Properties to set
+     */
+    function FeeConfig(properties) {
+        this.feeConfigs = [];
+        if (properties)
+            for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                if (properties[keys[i]] != null)
+                    this[keys[i]] = properties[keys[i]];
+    }
+
+    /**
+     * FeeConfig scenesType.
+     * @member {number} scenesType
+     * @memberof FeeConfig
+     * @instance
+     */
+    FeeConfig.prototype.scenesType = 0;
+
+    /**
+     * FeeConfig scenesName.
+     * @member {string} scenesName
+     * @memberof FeeConfig
+     * @instance
+     */
+    FeeConfig.prototype.scenesName = "";
+
+    /**
+     * FeeConfig feeConfigs.
+     * @member {Array.<ICoinFeeConfig>} feeConfigs
+     * @memberof FeeConfig
+     * @instance
+     */
+    FeeConfig.prototype.feeConfigs = $util.emptyArray;
+
+    /**
+     * Creates a new FeeConfig instance using the specified properties.
+     * @function create
+     * @memberof FeeConfig
+     * @static
+     * @param {IFeeConfig=} [properties] Properties to set
+     * @returns {FeeConfig} FeeConfig instance
+     */
+    FeeConfig.create = function create(properties) {
+        return new FeeConfig(properties);
+    };
+
+    /**
+     * Encodes the specified FeeConfig message. Does not implicitly {@link FeeConfig.verify|verify} messages.
+     * @function encode
+     * @memberof FeeConfig
+     * @static
+     * @param {IFeeConfig} message FeeConfig message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    FeeConfig.encode = function encode(message, writer) {
+        if (!writer)
+            writer = $Writer.create();
+        if (message.scenesType != null && Object.hasOwnProperty.call(message, "scenesType"))
+            writer.uint32(/* id 2, wireType 0 =*/16).int32(message.scenesType);
+        if (message.scenesName != null && Object.hasOwnProperty.call(message, "scenesName"))
+            writer.uint32(/* id 3, wireType 2 =*/26).string(message.scenesName);
+        if (message.feeConfigs != null && message.feeConfigs.length)
+            for (let i = 0; i < message.feeConfigs.length; ++i)
+                $root.CoinFeeConfig.encode(message.feeConfigs[i], writer.uint32(/* id 4, wireType 2 =*/34).fork()).ldelim();
+        return writer;
+    };
+
+    /**
+     * Encodes the specified FeeConfig message, length delimited. Does not implicitly {@link FeeConfig.verify|verify} messages.
+     * @function encodeDelimited
+     * @memberof FeeConfig
+     * @static
+     * @param {IFeeConfig} message FeeConfig message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    FeeConfig.encodeDelimited = function encodeDelimited(message, writer) {
+        return this.encode(message, writer).ldelim();
+    };
+
+    /**
+     * Decodes a FeeConfig message from the specified reader or buffer.
+     * @function decode
+     * @memberof FeeConfig
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @param {number} [length] Message length if known beforehand
+     * @returns {FeeConfig} FeeConfig
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    FeeConfig.decode = function decode(reader, length, error) {
+        if (!(reader instanceof $Reader))
+            reader = $Reader.create(reader);
+        let end = length === undefined ? reader.len : reader.pos + length, message = new $root.FeeConfig();
+        while (reader.pos < end) {
+            let tag = reader.uint32();
+            if (tag === error)
+                break;
+            switch (tag >>> 3) {
+            case 2: {
+                    message.scenesType = reader.int32();
+                    break;
+                }
+            case 3: {
+                    message.scenesName = reader.string();
+                    break;
+                }
+            case 4: {
+                    if (!(message.feeConfigs && message.feeConfigs.length))
+                        message.feeConfigs = [];
+                    message.feeConfigs.push($root.CoinFeeConfig.decode(reader, reader.uint32()));
+                    break;
+                }
+            default:
+                reader.skipType(tag & 7);
+                break;
+            }
+        }
+        return message;
+    };
+
+    /**
+     * Decodes a FeeConfig message from the specified reader or buffer, length delimited.
+     * @function decodeDelimited
+     * @memberof FeeConfig
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @returns {FeeConfig} FeeConfig
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    FeeConfig.decodeDelimited = function decodeDelimited(reader) {
+        if (!(reader instanceof $Reader))
+            reader = new $Reader(reader);
+        return this.decode(reader, reader.uint32());
+    };
+
+    /**
+     * Verifies a FeeConfig message.
+     * @function verify
+     * @memberof FeeConfig
+     * @static
+     * @param {Object.<string,*>} message Plain object to verify
+     * @returns {string|null} `null` if valid, otherwise the reason why it is not
+     */
+    FeeConfig.verify = function verify(message) {
+        if (typeof message !== "object" || message === null)
+            return "object expected";
+        if (message.scenesType != null && message.hasOwnProperty("scenesType"))
+            if (!$util.isInteger(message.scenesType))
+                return "scenesType: integer expected";
+        if (message.scenesName != null && message.hasOwnProperty("scenesName"))
+            if (!$util.isString(message.scenesName))
+                return "scenesName: string expected";
+        if (message.feeConfigs != null && message.hasOwnProperty("feeConfigs")) {
+            if (!Array.isArray(message.feeConfigs))
+                return "feeConfigs: array expected";
+            for (let i = 0; i < message.feeConfigs.length; ++i) {
+                let error = $root.CoinFeeConfig.verify(message.feeConfigs[i]);
+                if (error)
+                    return "feeConfigs." + error;
+            }
+        }
+        return null;
+    };
+
+    /**
+     * Creates a FeeConfig message from a plain object. Also converts values to their respective internal types.
+     * @function fromObject
+     * @memberof FeeConfig
+     * @static
+     * @param {Object.<string,*>} object Plain object
+     * @returns {FeeConfig} FeeConfig
+     */
+    FeeConfig.fromObject = function fromObject(object) {
+        if (object instanceof $root.FeeConfig)
+            return object;
+        let message = new $root.FeeConfig();
+        if (object.scenesType != null)
+            message.scenesType = object.scenesType | 0;
+        if (object.scenesName != null)
+            message.scenesName = String(object.scenesName);
+        if (object.feeConfigs) {
+            if (!Array.isArray(object.feeConfigs))
+                throw TypeError(".FeeConfig.feeConfigs: array expected");
+            message.feeConfigs = [];
+            for (let i = 0; i < object.feeConfigs.length; ++i) {
+                if (typeof object.feeConfigs[i] !== "object")
+                    throw TypeError(".FeeConfig.feeConfigs: object expected");
+                message.feeConfigs[i] = $root.CoinFeeConfig.fromObject(object.feeConfigs[i]);
+            }
+        }
+        return message;
+    };
+
+    /**
+     * Creates a plain object from a FeeConfig message. Also converts values to other types if specified.
+     * @function toObject
+     * @memberof FeeConfig
+     * @static
+     * @param {FeeConfig} message FeeConfig
+     * @param {$protobuf.IConversionOptions} [options] Conversion options
+     * @returns {Object.<string,*>} Plain object
+     */
+    FeeConfig.toObject = function toObject(message, options) {
+        if (!options)
+            options = {};
+        let object = {};
+        if (options.arrays || options.defaults)
+            object.feeConfigs = [];
+        if (options.defaults) {
+            object.scenesType = 0;
+            object.scenesName = "";
+        }
+        if (message.scenesType != null && message.hasOwnProperty("scenesType"))
+            object.scenesType = message.scenesType;
+        if (message.scenesName != null && message.hasOwnProperty("scenesName"))
+            object.scenesName = message.scenesName;
+        if (message.feeConfigs && message.feeConfigs.length) {
+            object.feeConfigs = [];
+            for (let j = 0; j < message.feeConfigs.length; ++j)
+                object.feeConfigs[j] = $root.CoinFeeConfig.toObject(message.feeConfigs[j], options);
+        }
+        return object;
+    };
+
+    /**
+     * Converts this FeeConfig to JSON.
+     * @function toJSON
+     * @memberof FeeConfig
+     * @instance
+     * @returns {Object.<string,*>} JSON object
+     */
+    FeeConfig.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+    };
+
+    /**
+     * Gets the default type url for FeeConfig
+     * @function getTypeUrl
+     * @memberof FeeConfig
+     * @static
+     * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+     * @returns {string} The default type url
+     */
+    FeeConfig.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === undefined) {
+            typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/FeeConfig";
+    };
+
+    return FeeConfig;
+})();
+
+export const CoinFeeConfig = $root.CoinFeeConfig = (() => {
+
+    /**
+     * Properties of a CoinFeeConfig.
+     * @exports ICoinFeeConfig
+     * @interface ICoinFeeConfig
+     * @property {string|null} [coinName] CoinFeeConfig coinName
+     * @property {string|null} [minFee] CoinFeeConfig minFee
+     * @property {string|null} [maxFee] CoinFeeConfig maxFee
+     * @property {string|null} [baseFee] CoinFeeConfig baseFee
+     * @property {string|null} [feeRate] CoinFeeConfig feeRate
+     * @property {string|null} [fixedFee] CoinFeeConfig fixedFee
+     * @property {number|null} [mathType] CoinFeeConfig mathType
+     * @property {number|null} [feeScale] CoinFeeConfig feeScale
+     * @property {number|null} [roundingModeType] CoinFeeConfig roundingModeType
+     */
+
+    /**
+     * Constructs a new CoinFeeConfig.
+     * @exports CoinFeeConfig
+     * @classdesc Represents a CoinFeeConfig.
+     * @implements ICoinFeeConfig
+     * @constructor
+     * @param {ICoinFeeConfig=} [properties] Properties to set
+     */
+    function CoinFeeConfig(properties) {
+        if (properties)
+            for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                if (properties[keys[i]] != null)
+                    this[keys[i]] = properties[keys[i]];
+    }
+
+    /**
+     * CoinFeeConfig coinName.
+     * @member {string} coinName
+     * @memberof CoinFeeConfig
+     * @instance
+     */
+    CoinFeeConfig.prototype.coinName = "";
+
+    /**
+     * CoinFeeConfig minFee.
+     * @member {string} minFee
+     * @memberof CoinFeeConfig
+     * @instance
+     */
+    CoinFeeConfig.prototype.minFee = "";
+
+    /**
+     * CoinFeeConfig maxFee.
+     * @member {string} maxFee
+     * @memberof CoinFeeConfig
+     * @instance
+     */
+    CoinFeeConfig.prototype.maxFee = "";
+
+    /**
+     * CoinFeeConfig baseFee.
+     * @member {string} baseFee
+     * @memberof CoinFeeConfig
+     * @instance
+     */
+    CoinFeeConfig.prototype.baseFee = "";
+
+    /**
+     * CoinFeeConfig feeRate.
+     * @member {string} feeRate
+     * @memberof CoinFeeConfig
+     * @instance
+     */
+    CoinFeeConfig.prototype.feeRate = "";
+
+    /**
+     * CoinFeeConfig fixedFee.
+     * @member {string} fixedFee
+     * @memberof CoinFeeConfig
+     * @instance
+     */
+    CoinFeeConfig.prototype.fixedFee = "";
+
+    /**
+     * CoinFeeConfig mathType.
+     * @member {number} mathType
+     * @memberof CoinFeeConfig
+     * @instance
+     */
+    CoinFeeConfig.prototype.mathType = 0;
+
+    /**
+     * CoinFeeConfig feeScale.
+     * @member {number} feeScale
+     * @memberof CoinFeeConfig
+     * @instance
+     */
+    CoinFeeConfig.prototype.feeScale = 0;
+
+    /**
+     * CoinFeeConfig roundingModeType.
+     * @member {number} roundingModeType
+     * @memberof CoinFeeConfig
+     * @instance
+     */
+    CoinFeeConfig.prototype.roundingModeType = 0;
+
+    /**
+     * Creates a new CoinFeeConfig instance using the specified properties.
+     * @function create
+     * @memberof CoinFeeConfig
+     * @static
+     * @param {ICoinFeeConfig=} [properties] Properties to set
+     * @returns {CoinFeeConfig} CoinFeeConfig instance
+     */
+    CoinFeeConfig.create = function create(properties) {
+        return new CoinFeeConfig(properties);
+    };
+
+    /**
+     * Encodes the specified CoinFeeConfig message. Does not implicitly {@link CoinFeeConfig.verify|verify} messages.
+     * @function encode
+     * @memberof CoinFeeConfig
+     * @static
+     * @param {ICoinFeeConfig} message CoinFeeConfig message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    CoinFeeConfig.encode = function encode(message, writer) {
+        if (!writer)
+            writer = $Writer.create();
+        if (message.coinName != null && Object.hasOwnProperty.call(message, "coinName"))
+            writer.uint32(/* id 1, wireType 2 =*/10).string(message.coinName);
+        if (message.minFee != null && Object.hasOwnProperty.call(message, "minFee"))
+            writer.uint32(/* id 2, wireType 2 =*/18).string(message.minFee);
+        if (message.maxFee != null && Object.hasOwnProperty.call(message, "maxFee"))
+            writer.uint32(/* id 3, wireType 2 =*/26).string(message.maxFee);
+        if (message.baseFee != null && Object.hasOwnProperty.call(message, "baseFee"))
+            writer.uint32(/* id 4, wireType 2 =*/34).string(message.baseFee);
+        if (message.feeRate != null && Object.hasOwnProperty.call(message, "feeRate"))
+            writer.uint32(/* id 5, wireType 2 =*/42).string(message.feeRate);
+        if (message.fixedFee != null && Object.hasOwnProperty.call(message, "fixedFee"))
+            writer.uint32(/* id 6, wireType 2 =*/50).string(message.fixedFee);
+        if (message.mathType != null && Object.hasOwnProperty.call(message, "mathType"))
+            writer.uint32(/* id 7, wireType 0 =*/56).int32(message.mathType);
+        if (message.feeScale != null && Object.hasOwnProperty.call(message, "feeScale"))
+            writer.uint32(/* id 8, wireType 0 =*/64).int32(message.feeScale);
+        if (message.roundingModeType != null && Object.hasOwnProperty.call(message, "roundingModeType"))
+            writer.uint32(/* id 9, wireType 0 =*/72).int32(message.roundingModeType);
+        return writer;
+    };
+
+    /**
+     * Encodes the specified CoinFeeConfig message, length delimited. Does not implicitly {@link CoinFeeConfig.verify|verify} messages.
+     * @function encodeDelimited
+     * @memberof CoinFeeConfig
+     * @static
+     * @param {ICoinFeeConfig} message CoinFeeConfig message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    CoinFeeConfig.encodeDelimited = function encodeDelimited(message, writer) {
+        return this.encode(message, writer).ldelim();
+    };
+
+    /**
+     * Decodes a CoinFeeConfig message from the specified reader or buffer.
+     * @function decode
+     * @memberof CoinFeeConfig
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @param {number} [length] Message length if known beforehand
+     * @returns {CoinFeeConfig} CoinFeeConfig
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    CoinFeeConfig.decode = function decode(reader, length, error) {
+        if (!(reader instanceof $Reader))
+            reader = $Reader.create(reader);
+        let end = length === undefined ? reader.len : reader.pos + length, message = new $root.CoinFeeConfig();
+        while (reader.pos < end) {
+            let tag = reader.uint32();
+            if (tag === error)
+                break;
+            switch (tag >>> 3) {
+            case 1: {
+                    message.coinName = reader.string();
+                    break;
+                }
+            case 2: {
+                    message.minFee = reader.string();
+                    break;
+                }
+            case 3: {
+                    message.maxFee = reader.string();
+                    break;
+                }
+            case 4: {
+                    message.baseFee = reader.string();
+                    break;
+                }
+            case 5: {
+                    message.feeRate = reader.string();
+                    break;
+                }
+            case 6: {
+                    message.fixedFee = reader.string();
+                    break;
+                }
+            case 7: {
+                    message.mathType = reader.int32();
+                    break;
+                }
+            case 8: {
+                    message.feeScale = reader.int32();
+                    break;
+                }
+            case 9: {
+                    message.roundingModeType = reader.int32();
+                    break;
+                }
+            default:
+                reader.skipType(tag & 7);
+                break;
+            }
+        }
+        return message;
+    };
+
+    /**
+     * Decodes a CoinFeeConfig message from the specified reader or buffer, length delimited.
+     * @function decodeDelimited
+     * @memberof CoinFeeConfig
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @returns {CoinFeeConfig} CoinFeeConfig
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    CoinFeeConfig.decodeDelimited = function decodeDelimited(reader) {
+        if (!(reader instanceof $Reader))
+            reader = new $Reader(reader);
+        return this.decode(reader, reader.uint32());
+    };
+
+    /**
+     * Verifies a CoinFeeConfig message.
+     * @function verify
+     * @memberof CoinFeeConfig
+     * @static
+     * @param {Object.<string,*>} message Plain object to verify
+     * @returns {string|null} `null` if valid, otherwise the reason why it is not
+     */
+    CoinFeeConfig.verify = function verify(message) {
+        if (typeof message !== "object" || message === null)
+            return "object expected";
+        if (message.coinName != null && message.hasOwnProperty("coinName"))
+            if (!$util.isString(message.coinName))
+                return "coinName: string expected";
+        if (message.minFee != null && message.hasOwnProperty("minFee"))
+            if (!$util.isString(message.minFee))
+                return "minFee: string expected";
+        if (message.maxFee != null && message.hasOwnProperty("maxFee"))
+            if (!$util.isString(message.maxFee))
+                return "maxFee: string expected";
+        if (message.baseFee != null && message.hasOwnProperty("baseFee"))
+            if (!$util.isString(message.baseFee))
+                return "baseFee: string expected";
+        if (message.feeRate != null && message.hasOwnProperty("feeRate"))
+            if (!$util.isString(message.feeRate))
+                return "feeRate: string expected";
+        if (message.fixedFee != null && message.hasOwnProperty("fixedFee"))
+            if (!$util.isString(message.fixedFee))
+                return "fixedFee: string expected";
+        if (message.mathType != null && message.hasOwnProperty("mathType"))
+            if (!$util.isInteger(message.mathType))
+                return "mathType: integer expected";
+        if (message.feeScale != null && message.hasOwnProperty("feeScale"))
+            if (!$util.isInteger(message.feeScale))
+                return "feeScale: integer expected";
+        if (message.roundingModeType != null && message.hasOwnProperty("roundingModeType"))
+            if (!$util.isInteger(message.roundingModeType))
+                return "roundingModeType: integer expected";
+        return null;
+    };
+
+    /**
+     * Creates a CoinFeeConfig message from a plain object. Also converts values to their respective internal types.
+     * @function fromObject
+     * @memberof CoinFeeConfig
+     * @static
+     * @param {Object.<string,*>} object Plain object
+     * @returns {CoinFeeConfig} CoinFeeConfig
+     */
+    CoinFeeConfig.fromObject = function fromObject(object) {
+        if (object instanceof $root.CoinFeeConfig)
+            return object;
+        let message = new $root.CoinFeeConfig();
+        if (object.coinName != null)
+            message.coinName = String(object.coinName);
+        if (object.minFee != null)
+            message.minFee = String(object.minFee);
+        if (object.maxFee != null)
+            message.maxFee = String(object.maxFee);
+        if (object.baseFee != null)
+            message.baseFee = String(object.baseFee);
+        if (object.feeRate != null)
+            message.feeRate = String(object.feeRate);
+        if (object.fixedFee != null)
+            message.fixedFee = String(object.fixedFee);
+        if (object.mathType != null)
+            message.mathType = object.mathType | 0;
+        if (object.feeScale != null)
+            message.feeScale = object.feeScale | 0;
+        if (object.roundingModeType != null)
+            message.roundingModeType = object.roundingModeType | 0;
+        return message;
+    };
+
+    /**
+     * Creates a plain object from a CoinFeeConfig message. Also converts values to other types if specified.
+     * @function toObject
+     * @memberof CoinFeeConfig
+     * @static
+     * @param {CoinFeeConfig} message CoinFeeConfig
+     * @param {$protobuf.IConversionOptions} [options] Conversion options
+     * @returns {Object.<string,*>} Plain object
+     */
+    CoinFeeConfig.toObject = function toObject(message, options) {
+        if (!options)
+            options = {};
+        let object = {};
+        if (options.defaults) {
+            object.coinName = "";
+            object.minFee = "";
+            object.maxFee = "";
+            object.baseFee = "";
+            object.feeRate = "";
+            object.fixedFee = "";
+            object.mathType = 0;
+            object.feeScale = 0;
+            object.roundingModeType = 0;
+        }
+        if (message.coinName != null && message.hasOwnProperty("coinName"))
+            object.coinName = message.coinName;
+        if (message.minFee != null && message.hasOwnProperty("minFee"))
+            object.minFee = message.minFee;
+        if (message.maxFee != null && message.hasOwnProperty("maxFee"))
+            object.maxFee = message.maxFee;
+        if (message.baseFee != null && message.hasOwnProperty("baseFee"))
+            object.baseFee = message.baseFee;
+        if (message.feeRate != null && message.hasOwnProperty("feeRate"))
+            object.feeRate = message.feeRate;
+        if (message.fixedFee != null && message.hasOwnProperty("fixedFee"))
+            object.fixedFee = message.fixedFee;
+        if (message.mathType != null && message.hasOwnProperty("mathType"))
+            object.mathType = message.mathType;
+        if (message.feeScale != null && message.hasOwnProperty("feeScale"))
+            object.feeScale = message.feeScale;
+        if (message.roundingModeType != null && message.hasOwnProperty("roundingModeType"))
+            object.roundingModeType = message.roundingModeType;
+        return object;
+    };
+
+    /**
+     * Converts this CoinFeeConfig to JSON.
+     * @function toJSON
+     * @memberof CoinFeeConfig
+     * @instance
+     * @returns {Object.<string,*>} JSON object
+     */
+    CoinFeeConfig.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+    };
+
+    /**
+     * Gets the default type url for CoinFeeConfig
+     * @function getTypeUrl
+     * @memberof CoinFeeConfig
+     * @static
+     * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+     * @returns {string} The default type url
+     */
+    CoinFeeConfig.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === undefined) {
+            typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/CoinFeeConfig";
+    };
+
+    return CoinFeeConfig;
 })();
 
 export { $root as default };

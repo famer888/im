@@ -791,9 +791,20 @@ const fnGroupMsgEvent = async (data, loginId) => {
         msgId: [Number(commonMsgDto.msgId)],
     });
 
+    // 以下与 switch 中「仅发通知、未入群或未维护成员缓存」分支对齐，跳过 fnRefreshGroupMemberList（避免无谓的群详情/成员接口）：
+    // - type 1/2/15 且 status !== 1：邀请/扫码/名片待审核或进行中（case 1 else、case 2 else、case 15 else）
+    // - type 3/4 且 status === 2 且 receiveUid 为本人：管理员拒绝「你」的申请（单播接收者）；避免误伤其他端请依赖 receiveUid
+    // type 5 拒绝入群：case 5 里带通知的分支是 fromUid===loginId（邀请方），邀请方通常在群内，不应跳过兜底，故不列入
+    const conditions = [
+        [1, 2, 15].includes(groupReqType) && groupReqStatus !== 1,
+        [3, 4].includes(groupReqType) &&
+            groupReqStatus === 2 &&
+            Number(receiveUid) === loginId,
+    ];
+
     // 兜底：确保群成员缓存不为空（防止旧群清理等异常场景导致后续事件在空数据上操作）
     const _cachedMembers = await Cache(`${loginId}_${info.groupId}_groupMemberList`);
-    if (!_cachedMembers || _cachedMembers.length === 0) {
+    if ((!_cachedMembers || _cachedMembers.length === 0) && !conditions.some(Boolean)) {
         await fnRefreshGroupMemberList(info.groupId);
     }
 
@@ -2960,6 +2971,7 @@ const fnRefreshGroupMemberList = async (groupId) => {
         getId: "loginId",
     });
     if (!loginId || !groupId) return [];
+    console.log('>>> fnRefreshGroupMemberList', groupId);
 
     const cacheName = `${loginId}_${groupId}_groupMemberList`;
 

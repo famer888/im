@@ -25056,6 +25056,8 @@ export const ClientInfo = $root.ClientInfo = (() => {
      * @property {number|null} [language] ClientInfo language
      * @property {string|null} [sysMac] ClientInfo sysMac
      * @property {string|null} [sysModel] ClientInfo sysModel
+     * @property {string|null} [token] ClientInfo token
+     * @property {string|null} [version] ClientInfo version
      */
 
     /**
@@ -25130,6 +25132,22 @@ export const ClientInfo = $root.ClientInfo = (() => {
     ClientInfo.prototype.sysModel = "";
 
     /**
+     * ClientInfo token.
+     * @member {string} token
+     * @memberof ClientInfo
+     * @instance
+     */
+    ClientInfo.prototype.token = "";
+
+    /**
+     * ClientInfo version.
+     * @member {string} version
+     * @memberof ClientInfo
+     * @instance
+     */
+    ClientInfo.prototype.version = "";
+
+    /**
      * Creates a new ClientInfo instance using the specified properties.
      * @function create
      * @memberof ClientInfo
@@ -25167,6 +25185,10 @@ export const ClientInfo = $root.ClientInfo = (() => {
             writer.uint32(/* id 6, wireType 2 =*/50).string(message.sysMac);
         if (message.sysModel != null && Object.hasOwnProperty.call(message, "sysModel"))
             writer.uint32(/* id 7, wireType 2 =*/58).string(message.sysModel);
+        if (message.token != null && Object.hasOwnProperty.call(message, "token"))
+            writer.uint32(/* id 8, wireType 2 =*/66).string(message.token);
+        if (message.version != null && Object.hasOwnProperty.call(message, "version"))
+            writer.uint32(/* id 9, wireType 2 =*/74).string(message.version);
         return writer;
     };
 
@@ -25229,6 +25251,14 @@ export const ClientInfo = $root.ClientInfo = (() => {
                 }
             case 7: {
                     message.sysModel = reader.string();
+                    break;
+                }
+            case 8: {
+                    message.token = reader.string();
+                    break;
+                }
+            case 9: {
+                    message.version = reader.string();
                     break;
                 }
             default:
@@ -25296,6 +25326,12 @@ export const ClientInfo = $root.ClientInfo = (() => {
         if (message.sysModel != null && message.hasOwnProperty("sysModel"))
             if (!$util.isString(message.sysModel))
                 return "sysModel: string expected";
+        if (message.token != null && message.hasOwnProperty("token"))
+            if (!$util.isString(message.token))
+                return "token: string expected";
+        if (message.version != null && message.hasOwnProperty("version"))
+            if (!$util.isString(message.version))
+                return "version: string expected";
         return null;
     };
 
@@ -25355,6 +25391,10 @@ export const ClientInfo = $root.ClientInfo = (() => {
             message.sysMac = String(object.sysMac);
         if (object.sysModel != null)
             message.sysModel = String(object.sysModel);
+        if (object.token != null)
+            message.token = String(object.token);
+        if (object.version != null)
+            message.version = String(object.version);
         return message;
     };
 
@@ -25379,6 +25419,8 @@ export const ClientInfo = $root.ClientInfo = (() => {
             object.language = 0;
             object.sysMac = "";
             object.sysModel = "";
+            object.token = "";
+            object.version = "";
         }
         if (message.sessionId != null && message.hasOwnProperty("sessionId"))
             object.sessionId = message.sessionId;
@@ -25394,6 +25436,10 @@ export const ClientInfo = $root.ClientInfo = (() => {
             object.sysMac = message.sysMac;
         if (message.sysModel != null && message.hasOwnProperty("sysModel"))
             object.sysModel = message.sysModel;
+        if (message.token != null && message.hasOwnProperty("token"))
+            object.token = message.token;
+        if (message.version != null && message.hasOwnProperty("version"))
+            object.version = message.version;
         return object;
     };
 
@@ -26924,6 +26970,7 @@ export const KeyPairType = $root.KeyPairType = (() => {
  * @property {number} CHECK_APPLY=2 CHECK_APPLY value
  * @property {number} PUSH_NOTICE=3 PUSH_NOTICE value
  * @property {number} SET_ADMIN=4 SET_ADMIN value
+ * @property {number} SET_JOIN_NOTICE=5 SET_JOIN_NOTICE value
  */
 export const AdminRightType = $root.AdminRightType = (() => {
     const valuesById = {}, values = Object.create(valuesById);
@@ -26932,6 +26979,7 @@ export const AdminRightType = $root.AdminRightType = (() => {
     values[valuesById[2] = "CHECK_APPLY"] = 2;
     values[valuesById[3] = "PUSH_NOTICE"] = 3;
     values[valuesById[4] = "SET_ADMIN"] = 4;
+    values[valuesById[5] = "SET_JOIN_NOTICE"] = 5;
     return values;
 })();
 
@@ -27034,6 +27082,38 @@ export const SafeSwitchType = $root.SafeSwitchType = (() => {
     values[valuesById[1] = "PHONE_TYPE"] = 1;
     values[valuesById[2] = "GOOGLE_AUTH_TYPE"] = 2;
     values[valuesById[3] = "TRADE_PASSWORD_TYPE"] = 3;
+    return values;
+})();
+
+/**
+ * operateType enum.
+ * @exports operateType
+ * @enum {number}
+ * @property {number} UPDATE=0 UPDATE value
+ * @property {number} DELETE=1 DELETE value
+ */
+export const operateType = $root.operateType = (() => {
+    const valuesById = {}, values = Object.create(valuesById);
+    values[valuesById[0] = "UPDATE"] = 0;
+    values[valuesById[1] = "DELETE"] = 1;
+    return values;
+})();
+
+/**
+ * CheckTradePassword enum.
+ * @exports CheckTradePassword
+ * @enum {number}
+ * @property {number} OLD_ERROR=0 OLD_ERROR value
+ * @property {number} NEW_THE_SAME=1 NEW_THE_SAME value
+ * @property {number} PASS=2 PASS value
+ * @property {number} OVER_TIME=3 OVER_TIME value
+ */
+export const CheckTradePassword = $root.CheckTradePassword = (() => {
+    const valuesById = {}, values = Object.create(valuesById);
+    values[valuesById[0] = "OLD_ERROR"] = 0;
+    values[valuesById[1] = "NEW_THE_SAME"] = 1;
+    values[valuesById[2] = "PASS"] = 2;
+    values[valuesById[3] = "OVER_TIME"] = 3;
     return values;
 })();
 
@@ -28102,6 +28182,7 @@ export const FriendRelation = $root.FriendRelation = (() => {
      * @interface IFriendRelation
      * @property {boolean|null} [bfFriend] FriendRelation bfFriend
      * @property {string|null} [remarkName] FriendRelation remarkName
+     * @property {number|null} [status] FriendRelation status
      */
 
     /**
@@ -28136,6 +28217,14 @@ export const FriendRelation = $root.FriendRelation = (() => {
     FriendRelation.prototype.remarkName = "";
 
     /**
+     * FriendRelation status.
+     * @member {number} status
+     * @memberof FriendRelation
+     * @instance
+     */
+    FriendRelation.prototype.status = 0;
+
+    /**
      * Creates a new FriendRelation instance using the specified properties.
      * @function create
      * @memberof FriendRelation
@@ -28163,6 +28252,8 @@ export const FriendRelation = $root.FriendRelation = (() => {
             writer.uint32(/* id 1, wireType 0 =*/8).bool(message.bfFriend);
         if (message.remarkName != null && Object.hasOwnProperty.call(message, "remarkName"))
             writer.uint32(/* id 2, wireType 2 =*/18).string(message.remarkName);
+        if (message.status != null && Object.hasOwnProperty.call(message, "status"))
+            writer.uint32(/* id 3, wireType 0 =*/24).int32(message.status);
         return writer;
     };
 
@@ -28207,6 +28298,10 @@ export const FriendRelation = $root.FriendRelation = (() => {
                     message.remarkName = reader.string();
                     break;
                 }
+            case 3: {
+                    message.status = reader.int32();
+                    break;
+                }
             default:
                 reader.skipType(tag & 7);
                 break;
@@ -28248,6 +28343,9 @@ export const FriendRelation = $root.FriendRelation = (() => {
         if (message.remarkName != null && message.hasOwnProperty("remarkName"))
             if (!$util.isString(message.remarkName))
                 return "remarkName: string expected";
+        if (message.status != null && message.hasOwnProperty("status"))
+            if (!$util.isInteger(message.status))
+                return "status: integer expected";
         return null;
     };
 
@@ -28267,6 +28365,8 @@ export const FriendRelation = $root.FriendRelation = (() => {
             message.bfFriend = Boolean(object.bfFriend);
         if (object.remarkName != null)
             message.remarkName = String(object.remarkName);
+        if (object.status != null)
+            message.status = object.status | 0;
         return message;
     };
 
@@ -28286,11 +28386,14 @@ export const FriendRelation = $root.FriendRelation = (() => {
         if (options.defaults) {
             object.bfFriend = false;
             object.remarkName = "";
+            object.status = 0;
         }
         if (message.bfFriend != null && message.hasOwnProperty("bfFriend"))
             object.bfFriend = message.bfFriend;
         if (message.remarkName != null && message.hasOwnProperty("remarkName"))
             object.remarkName = message.remarkName;
+        if (message.status != null && message.hasOwnProperty("status"))
+            object.status = message.status;
         return object;
     };
 
@@ -30810,6 +30913,7 @@ export const AdminRightBase = $root.AdminRightBase = (() => {
      * @property {boolean|null} [bfPushNotice] AdminRightBase bfPushNotice
      * @property {boolean|null} [bfSetAdmin] AdminRightBase bfSetAdmin
      * @property {boolean|null} [bfResetQrcode] AdminRightBase bfResetQrcode
+     * @property {boolean|null} [bfSetJoinNotice] AdminRightBase bfSetJoinNotice
      */
 
     /**
@@ -30868,6 +30972,14 @@ export const AdminRightBase = $root.AdminRightBase = (() => {
     AdminRightBase.prototype.bfResetQrcode = false;
 
     /**
+     * AdminRightBase bfSetJoinNotice.
+     * @member {boolean} bfSetJoinNotice
+     * @memberof AdminRightBase
+     * @instance
+     */
+    AdminRightBase.prototype.bfSetJoinNotice = false;
+
+    /**
      * Creates a new AdminRightBase instance using the specified properties.
      * @function create
      * @memberof AdminRightBase
@@ -30901,6 +31013,8 @@ export const AdminRightBase = $root.AdminRightBase = (() => {
             writer.uint32(/* id 4, wireType 0 =*/32).bool(message.bfSetAdmin);
         if (message.bfResetQrcode != null && Object.hasOwnProperty.call(message, "bfResetQrcode"))
             writer.uint32(/* id 5, wireType 0 =*/40).bool(message.bfResetQrcode);
+        if (message.bfSetJoinNotice != null && Object.hasOwnProperty.call(message, "bfSetJoinNotice"))
+            writer.uint32(/* id 6, wireType 0 =*/48).bool(message.bfSetJoinNotice);
         return writer;
     };
 
@@ -30957,6 +31071,10 @@ export const AdminRightBase = $root.AdminRightBase = (() => {
                     message.bfResetQrcode = reader.bool();
                     break;
                 }
+            case 6: {
+                    message.bfSetJoinNotice = reader.bool();
+                    break;
+                }
             default:
                 reader.skipType(tag & 7);
                 break;
@@ -31007,6 +31125,9 @@ export const AdminRightBase = $root.AdminRightBase = (() => {
         if (message.bfResetQrcode != null && message.hasOwnProperty("bfResetQrcode"))
             if (typeof message.bfResetQrcode !== "boolean")
                 return "bfResetQrcode: boolean expected";
+        if (message.bfSetJoinNotice != null && message.hasOwnProperty("bfSetJoinNotice"))
+            if (typeof message.bfSetJoinNotice !== "boolean")
+                return "bfSetJoinNotice: boolean expected";
         return null;
     };
 
@@ -31032,6 +31153,8 @@ export const AdminRightBase = $root.AdminRightBase = (() => {
             message.bfSetAdmin = Boolean(object.bfSetAdmin);
         if (object.bfResetQrcode != null)
             message.bfResetQrcode = Boolean(object.bfResetQrcode);
+        if (object.bfSetJoinNotice != null)
+            message.bfSetJoinNotice = Boolean(object.bfSetJoinNotice);
         return message;
     };
 
@@ -31054,6 +31177,7 @@ export const AdminRightBase = $root.AdminRightBase = (() => {
             object.bfPushNotice = false;
             object.bfSetAdmin = false;
             object.bfResetQrcode = false;
+            object.bfSetJoinNotice = false;
         }
         if (message.bfUpdateData != null && message.hasOwnProperty("bfUpdateData"))
             object.bfUpdateData = message.bfUpdateData;
@@ -31065,6 +31189,8 @@ export const AdminRightBase = $root.AdminRightBase = (() => {
             object.bfSetAdmin = message.bfSetAdmin;
         if (message.bfResetQrcode != null && message.hasOwnProperty("bfResetQrcode"))
             object.bfResetQrcode = message.bfResetQrcode;
+        if (message.bfSetJoinNotice != null && message.hasOwnProperty("bfSetJoinNotice"))
+            object.bfSetJoinNotice = message.bfSetJoinNotice;
         return object;
     };
 
@@ -35584,6 +35710,7 @@ export const CoinFeeConfig = $root.CoinFeeConfig = (() => {
      * @property {string|null} [fixedFee] CoinFeeConfig fixedFee
      * @property {number|null} [mathType] CoinFeeConfig mathType
      * @property {number|null} [feeScale] CoinFeeConfig feeScale
+     * @property {number|null} [roundingModeType] CoinFeeConfig roundingModeType
      */
 
     /**
@@ -35666,6 +35793,14 @@ export const CoinFeeConfig = $root.CoinFeeConfig = (() => {
     CoinFeeConfig.prototype.feeScale = 0;
 
     /**
+     * CoinFeeConfig roundingModeType.
+     * @member {number} roundingModeType
+     * @memberof CoinFeeConfig
+     * @instance
+     */
+    CoinFeeConfig.prototype.roundingModeType = 0;
+
+    /**
      * Creates a new CoinFeeConfig instance using the specified properties.
      * @function create
      * @memberof CoinFeeConfig
@@ -35705,6 +35840,8 @@ export const CoinFeeConfig = $root.CoinFeeConfig = (() => {
             writer.uint32(/* id 7, wireType 0 =*/56).int32(message.mathType);
         if (message.feeScale != null && Object.hasOwnProperty.call(message, "feeScale"))
             writer.uint32(/* id 8, wireType 0 =*/64).int32(message.feeScale);
+        if (message.roundingModeType != null && Object.hasOwnProperty.call(message, "roundingModeType"))
+            writer.uint32(/* id 9, wireType 0 =*/72).int32(message.roundingModeType);
         return writer;
     };
 
@@ -35773,6 +35910,10 @@ export const CoinFeeConfig = $root.CoinFeeConfig = (() => {
                     message.feeScale = reader.int32();
                     break;
                 }
+            case 9: {
+                    message.roundingModeType = reader.int32();
+                    break;
+                }
             default:
                 reader.skipType(tag & 7);
                 break;
@@ -35832,6 +35973,9 @@ export const CoinFeeConfig = $root.CoinFeeConfig = (() => {
         if (message.feeScale != null && message.hasOwnProperty("feeScale"))
             if (!$util.isInteger(message.feeScale))
                 return "feeScale: integer expected";
+        if (message.roundingModeType != null && message.hasOwnProperty("roundingModeType"))
+            if (!$util.isInteger(message.roundingModeType))
+                return "roundingModeType: integer expected";
         return null;
     };
 
@@ -35863,6 +36007,8 @@ export const CoinFeeConfig = $root.CoinFeeConfig = (() => {
             message.mathType = object.mathType | 0;
         if (object.feeScale != null)
             message.feeScale = object.feeScale | 0;
+        if (object.roundingModeType != null)
+            message.roundingModeType = object.roundingModeType | 0;
         return message;
     };
 
@@ -35888,6 +36034,7 @@ export const CoinFeeConfig = $root.CoinFeeConfig = (() => {
             object.fixedFee = "";
             object.mathType = 0;
             object.feeScale = 0;
+            object.roundingModeType = 0;
         }
         if (message.coinName != null && message.hasOwnProperty("coinName"))
             object.coinName = message.coinName;
@@ -35905,6 +36052,8 @@ export const CoinFeeConfig = $root.CoinFeeConfig = (() => {
             object.mathType = message.mathType;
         if (message.feeScale != null && message.hasOwnProperty("feeScale"))
             object.feeScale = message.feeScale;
+        if (message.roundingModeType != null && message.hasOwnProperty("roundingModeType"))
+            object.roundingModeType = message.roundingModeType;
         return object;
     };
 

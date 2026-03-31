@@ -391,7 +391,7 @@ export default {
           }
           // 群切换也调用详情同步（特别是免打扰状态）
           const beforeTime = (this.getGroupDetailTimes[info.id] || 0) + 30000;
-          if (beforeTime < Date.now()) {
+          if (beforeTime < Date.now() && info.id !== 'invitation') {
             this.getGroupDetailTimes[info.id] = Date.now();
             eventGroup.fnGroupDetailGet(info.id);
           }

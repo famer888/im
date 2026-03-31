@@ -733,6 +733,8 @@ export const ClientInfo = $root.ClientInfo = (() => {
      * @property {number|null} [language] ClientInfo language
      * @property {string|null} [sysMac] ClientInfo sysMac
      * @property {string|null} [sysModel] ClientInfo sysModel
+     * @property {string|null} [token] ClientInfo token
+     * @property {string|null} [version] ClientInfo version
      */
 
     /**
@@ -807,6 +809,22 @@ export const ClientInfo = $root.ClientInfo = (() => {
     ClientInfo.prototype.sysModel = "";
 
     /**
+     * ClientInfo token.
+     * @member {string} token
+     * @memberof ClientInfo
+     * @instance
+     */
+    ClientInfo.prototype.token = "";
+
+    /**
+     * ClientInfo version.
+     * @member {string} version
+     * @memberof ClientInfo
+     * @instance
+     */
+    ClientInfo.prototype.version = "";
+
+    /**
      * Creates a new ClientInfo instance using the specified properties.
      * @function create
      * @memberof ClientInfo
@@ -844,6 +862,10 @@ export const ClientInfo = $root.ClientInfo = (() => {
             writer.uint32(/* id 6, wireType 2 =*/50).string(message.sysMac);
         if (message.sysModel != null && Object.hasOwnProperty.call(message, "sysModel"))
             writer.uint32(/* id 7, wireType 2 =*/58).string(message.sysModel);
+        if (message.token != null && Object.hasOwnProperty.call(message, "token"))
+            writer.uint32(/* id 8, wireType 2 =*/66).string(message.token);
+        if (message.version != null && Object.hasOwnProperty.call(message, "version"))
+            writer.uint32(/* id 9, wireType 2 =*/74).string(message.version);
         return writer;
     };
 
@@ -906,6 +928,14 @@ export const ClientInfo = $root.ClientInfo = (() => {
                 }
             case 7: {
                     message.sysModel = reader.string();
+                    break;
+                }
+            case 8: {
+                    message.token = reader.string();
+                    break;
+                }
+            case 9: {
+                    message.version = reader.string();
                     break;
                 }
             default:
@@ -973,6 +1003,12 @@ export const ClientInfo = $root.ClientInfo = (() => {
         if (message.sysModel != null && message.hasOwnProperty("sysModel"))
             if (!$util.isString(message.sysModel))
                 return "sysModel: string expected";
+        if (message.token != null && message.hasOwnProperty("token"))
+            if (!$util.isString(message.token))
+                return "token: string expected";
+        if (message.version != null && message.hasOwnProperty("version"))
+            if (!$util.isString(message.version))
+                return "version: string expected";
         return null;
     };
 
@@ -1032,6 +1068,10 @@ export const ClientInfo = $root.ClientInfo = (() => {
             message.sysMac = String(object.sysMac);
         if (object.sysModel != null)
             message.sysModel = String(object.sysModel);
+        if (object.token != null)
+            message.token = String(object.token);
+        if (object.version != null)
+            message.version = String(object.version);
         return message;
     };
 
@@ -1056,6 +1096,8 @@ export const ClientInfo = $root.ClientInfo = (() => {
             object.language = 0;
             object.sysMac = "";
             object.sysModel = "";
+            object.token = "";
+            object.version = "";
         }
         if (message.sessionId != null && message.hasOwnProperty("sessionId"))
             object.sessionId = message.sessionId;
@@ -1071,6 +1113,10 @@ export const ClientInfo = $root.ClientInfo = (() => {
             object.sysMac = message.sysMac;
         if (message.sysModel != null && message.hasOwnProperty("sysModel"))
             object.sysModel = message.sysModel;
+        if (message.token != null && message.hasOwnProperty("token"))
+            object.token = message.token;
+        if (message.version != null && message.hasOwnProperty("version"))
+            object.version = message.version;
         return object;
     };
 
@@ -2601,6 +2647,7 @@ export const KeyPairType = $root.KeyPairType = (() => {
  * @property {number} CHECK_APPLY=2 CHECK_APPLY value
  * @property {number} PUSH_NOTICE=3 PUSH_NOTICE value
  * @property {number} SET_ADMIN=4 SET_ADMIN value
+ * @property {number} SET_JOIN_NOTICE=5 SET_JOIN_NOTICE value
  */
 export const AdminRightType = $root.AdminRightType = (() => {
     const valuesById = {}, values = Object.create(valuesById);
@@ -2609,6 +2656,7 @@ export const AdminRightType = $root.AdminRightType = (() => {
     values[valuesById[2] = "CHECK_APPLY"] = 2;
     values[valuesById[3] = "PUSH_NOTICE"] = 3;
     values[valuesById[4] = "SET_ADMIN"] = 4;
+    values[valuesById[5] = "SET_JOIN_NOTICE"] = 5;
     return values;
 })();
 
@@ -2711,6 +2759,38 @@ export const SafeSwitchType = $root.SafeSwitchType = (() => {
     values[valuesById[1] = "PHONE_TYPE"] = 1;
     values[valuesById[2] = "GOOGLE_AUTH_TYPE"] = 2;
     values[valuesById[3] = "TRADE_PASSWORD_TYPE"] = 3;
+    return values;
+})();
+
+/**
+ * operateType enum.
+ * @exports operateType
+ * @enum {number}
+ * @property {number} UPDATE=0 UPDATE value
+ * @property {number} DELETE=1 DELETE value
+ */
+export const operateType = $root.operateType = (() => {
+    const valuesById = {}, values = Object.create(valuesById);
+    values[valuesById[0] = "UPDATE"] = 0;
+    values[valuesById[1] = "DELETE"] = 1;
+    return values;
+})();
+
+/**
+ * CheckTradePassword enum.
+ * @exports CheckTradePassword
+ * @enum {number}
+ * @property {number} OLD_ERROR=0 OLD_ERROR value
+ * @property {number} NEW_THE_SAME=1 NEW_THE_SAME value
+ * @property {number} PASS=2 PASS value
+ * @property {number} OVER_TIME=3 OVER_TIME value
+ */
+export const CheckTradePassword = $root.CheckTradePassword = (() => {
+    const valuesById = {}, values = Object.create(valuesById);
+    values[valuesById[0] = "OLD_ERROR"] = 0;
+    values[valuesById[1] = "NEW_THE_SAME"] = 1;
+    values[valuesById[2] = "PASS"] = 2;
+    values[valuesById[3] = "OVER_TIME"] = 3;
     return values;
 })();
 
@@ -3779,6 +3859,7 @@ export const FriendRelation = $root.FriendRelation = (() => {
      * @interface IFriendRelation
      * @property {boolean|null} [bfFriend] FriendRelation bfFriend
      * @property {string|null} [remarkName] FriendRelation remarkName
+     * @property {number|null} [status] FriendRelation status
      */
 
     /**
@@ -3813,6 +3894,14 @@ export const FriendRelation = $root.FriendRelation = (() => {
     FriendRelation.prototype.remarkName = "";
 
     /**
+     * FriendRelation status.
+     * @member {number} status
+     * @memberof FriendRelation
+     * @instance
+     */
+    FriendRelation.prototype.status = 0;
+
+    /**
      * Creates a new FriendRelation instance using the specified properties.
      * @function create
      * @memberof FriendRelation
@@ -3840,6 +3929,8 @@ export const FriendRelation = $root.FriendRelation = (() => {
             writer.uint32(/* id 1, wireType 0 =*/8).bool(message.bfFriend);
         if (message.remarkName != null && Object.hasOwnProperty.call(message, "remarkName"))
             writer.uint32(/* id 2, wireType 2 =*/18).string(message.remarkName);
+        if (message.status != null && Object.hasOwnProperty.call(message, "status"))
+            writer.uint32(/* id 3, wireType 0 =*/24).int32(message.status);
         return writer;
     };
 
@@ -3884,6 +3975,10 @@ export const FriendRelation = $root.FriendRelation = (() => {
                     message.remarkName = reader.string();
                     break;
                 }
+            case 3: {
+                    message.status = reader.int32();
+                    break;
+                }
             default:
                 reader.skipType(tag & 7);
                 break;
@@ -3925,6 +4020,9 @@ export const FriendRelation = $root.FriendRelation = (() => {
         if (message.remarkName != null && message.hasOwnProperty("remarkName"))
             if (!$util.isString(message.remarkName))
                 return "remarkName: string expected";
+        if (message.status != null && message.hasOwnProperty("status"))
+            if (!$util.isInteger(message.status))
+                return "status: integer expected";
         return null;
     };
 
@@ -3944,6 +4042,8 @@ export const FriendRelation = $root.FriendRelation = (() => {
             message.bfFriend = Boolean(object.bfFriend);
         if (object.remarkName != null)
             message.remarkName = String(object.remarkName);
+        if (object.status != null)
+            message.status = object.status | 0;
         return message;
     };
 
@@ -3963,11 +4063,14 @@ export const FriendRelation = $root.FriendRelation = (() => {
         if (options.defaults) {
             object.bfFriend = false;
             object.remarkName = "";
+            object.status = 0;
         }
         if (message.bfFriend != null && message.hasOwnProperty("bfFriend"))
             object.bfFriend = message.bfFriend;
         if (message.remarkName != null && message.hasOwnProperty("remarkName"))
             object.remarkName = message.remarkName;
+        if (message.status != null && message.hasOwnProperty("status"))
+            object.status = message.status;
         return object;
     };
 
@@ -6487,6 +6590,7 @@ export const AdminRightBase = $root.AdminRightBase = (() => {
      * @property {boolean|null} [bfPushNotice] AdminRightBase bfPushNotice
      * @property {boolean|null} [bfSetAdmin] AdminRightBase bfSetAdmin
      * @property {boolean|null} [bfResetQrcode] AdminRightBase bfResetQrcode
+     * @property {boolean|null} [bfSetJoinNotice] AdminRightBase bfSetJoinNotice
      */
 
     /**
@@ -6545,6 +6649,14 @@ export const AdminRightBase = $root.AdminRightBase = (() => {
     AdminRightBase.prototype.bfResetQrcode = false;
 
     /**
+     * AdminRightBase bfSetJoinNotice.
+     * @member {boolean} bfSetJoinNotice
+     * @memberof AdminRightBase
+     * @instance
+     */
+    AdminRightBase.prototype.bfSetJoinNotice = false;
+
+    /**
      * Creates a new AdminRightBase instance using the specified properties.
      * @function create
      * @memberof AdminRightBase
@@ -6578,6 +6690,8 @@ export const AdminRightBase = $root.AdminRightBase = (() => {
             writer.uint32(/* id 4, wireType 0 =*/32).bool(message.bfSetAdmin);
         if (message.bfResetQrcode != null && Object.hasOwnProperty.call(message, "bfResetQrcode"))
             writer.uint32(/* id 5, wireType 0 =*/40).bool(message.bfResetQrcode);
+        if (message.bfSetJoinNotice != null && Object.hasOwnProperty.call(message, "bfSetJoinNotice"))
+            writer.uint32(/* id 6, wireType 0 =*/48).bool(message.bfSetJoinNotice);
         return writer;
     };
 
@@ -6634,6 +6748,10 @@ export const AdminRightBase = $root.AdminRightBase = (() => {
                     message.bfResetQrcode = reader.bool();
                     break;
                 }
+            case 6: {
+                    message.bfSetJoinNotice = reader.bool();
+                    break;
+                }
             default:
                 reader.skipType(tag & 7);
                 break;
@@ -6684,6 +6802,9 @@ export const AdminRightBase = $root.AdminRightBase = (() => {
         if (message.bfResetQrcode != null && message.hasOwnProperty("bfResetQrcode"))
             if (typeof message.bfResetQrcode !== "boolean")
                 return "bfResetQrcode: boolean expected";
+        if (message.bfSetJoinNotice != null && message.hasOwnProperty("bfSetJoinNotice"))
+            if (typeof message.bfSetJoinNotice !== "boolean")
+                return "bfSetJoinNotice: boolean expected";
         return null;
     };
 
@@ -6709,6 +6830,8 @@ export const AdminRightBase = $root.AdminRightBase = (() => {
             message.bfSetAdmin = Boolean(object.bfSetAdmin);
         if (object.bfResetQrcode != null)
             message.bfResetQrcode = Boolean(object.bfResetQrcode);
+        if (object.bfSetJoinNotice != null)
+            message.bfSetJoinNotice = Boolean(object.bfSetJoinNotice);
         return message;
     };
 
@@ -6731,6 +6854,7 @@ export const AdminRightBase = $root.AdminRightBase = (() => {
             object.bfPushNotice = false;
             object.bfSetAdmin = false;
             object.bfResetQrcode = false;
+            object.bfSetJoinNotice = false;
         }
         if (message.bfUpdateData != null && message.hasOwnProperty("bfUpdateData"))
             object.bfUpdateData = message.bfUpdateData;
@@ -6742,6 +6866,8 @@ export const AdminRightBase = $root.AdminRightBase = (() => {
             object.bfSetAdmin = message.bfSetAdmin;
         if (message.bfResetQrcode != null && message.hasOwnProperty("bfResetQrcode"))
             object.bfResetQrcode = message.bfResetQrcode;
+        if (message.bfSetJoinNotice != null && message.hasOwnProperty("bfSetJoinNotice"))
+            object.bfSetJoinNotice = message.bfSetJoinNotice;
         return object;
     };
 
@@ -11261,6 +11387,7 @@ export const CoinFeeConfig = $root.CoinFeeConfig = (() => {
      * @property {string|null} [fixedFee] CoinFeeConfig fixedFee
      * @property {number|null} [mathType] CoinFeeConfig mathType
      * @property {number|null} [feeScale] CoinFeeConfig feeScale
+     * @property {number|null} [roundingModeType] CoinFeeConfig roundingModeType
      */
 
     /**
@@ -11343,6 +11470,14 @@ export const CoinFeeConfig = $root.CoinFeeConfig = (() => {
     CoinFeeConfig.prototype.feeScale = 0;
 
     /**
+     * CoinFeeConfig roundingModeType.
+     * @member {number} roundingModeType
+     * @memberof CoinFeeConfig
+     * @instance
+     */
+    CoinFeeConfig.prototype.roundingModeType = 0;
+
+    /**
      * Creates a new CoinFeeConfig instance using the specified properties.
      * @function create
      * @memberof CoinFeeConfig
@@ -11382,6 +11517,8 @@ export const CoinFeeConfig = $root.CoinFeeConfig = (() => {
             writer.uint32(/* id 7, wireType 0 =*/56).int32(message.mathType);
         if (message.feeScale != null && Object.hasOwnProperty.call(message, "feeScale"))
             writer.uint32(/* id 8, wireType 0 =*/64).int32(message.feeScale);
+        if (message.roundingModeType != null && Object.hasOwnProperty.call(message, "roundingModeType"))
+            writer.uint32(/* id 9, wireType 0 =*/72).int32(message.roundingModeType);
         return writer;
     };
 
@@ -11450,6 +11587,10 @@ export const CoinFeeConfig = $root.CoinFeeConfig = (() => {
                     message.feeScale = reader.int32();
                     break;
                 }
+            case 9: {
+                    message.roundingModeType = reader.int32();
+                    break;
+                }
             default:
                 reader.skipType(tag & 7);
                 break;
@@ -11509,6 +11650,9 @@ export const CoinFeeConfig = $root.CoinFeeConfig = (() => {
         if (message.feeScale != null && message.hasOwnProperty("feeScale"))
             if (!$util.isInteger(message.feeScale))
                 return "feeScale: integer expected";
+        if (message.roundingModeType != null && message.hasOwnProperty("roundingModeType"))
+            if (!$util.isInteger(message.roundingModeType))
+                return "roundingModeType: integer expected";
         return null;
     };
 
@@ -11540,6 +11684,8 @@ export const CoinFeeConfig = $root.CoinFeeConfig = (() => {
             message.mathType = object.mathType | 0;
         if (object.feeScale != null)
             message.feeScale = object.feeScale | 0;
+        if (object.roundingModeType != null)
+            message.roundingModeType = object.roundingModeType | 0;
         return message;
     };
 
@@ -11565,6 +11711,7 @@ export const CoinFeeConfig = $root.CoinFeeConfig = (() => {
             object.fixedFee = "";
             object.mathType = 0;
             object.feeScale = 0;
+            object.roundingModeType = 0;
         }
         if (message.coinName != null && message.hasOwnProperty("coinName"))
             object.coinName = message.coinName;
@@ -11582,6 +11729,8 @@ export const CoinFeeConfig = $root.CoinFeeConfig = (() => {
             object.mathType = message.mathType;
         if (message.feeScale != null && message.hasOwnProperty("feeScale"))
             object.feeScale = message.feeScale;
+        if (message.roundingModeType != null && message.hasOwnProperty("roundingModeType"))
+            object.roundingModeType = message.roundingModeType;
         return object;
     };
 
@@ -11759,6 +11908,7 @@ export const OneToOneMessage = $root.OneToOneMessage = (() => {
      * @property {Array.<ILinkObj>|null} [links] OneToOneMessage links
      * @property {number|Long|null} [sentOverTime] OneToOneMessage sentOverTime
      * @property {number|null} [channel] OneToOneMessage channel
+     * @property {boolean|null} [isHide] OneToOneMessage isHide
      */
 
     /**
@@ -11962,6 +12112,14 @@ export const OneToOneMessage = $root.OneToOneMessage = (() => {
     OneToOneMessage.prototype.channel = 0;
 
     /**
+     * OneToOneMessage isHide.
+     * @member {boolean} isHide
+     * @memberof OneToOneMessage
+     * @instance
+     */
+    OneToOneMessage.prototype.isHide = false;
+
+    /**
      * Creates a new OneToOneMessage instance using the specified properties.
      * @function create
      * @memberof OneToOneMessage
@@ -12032,6 +12190,8 @@ export const OneToOneMessage = $root.OneToOneMessage = (() => {
             writer.uint32(/* id 22, wireType 0 =*/176).int64(message.sentOverTime);
         if (message.channel != null && Object.hasOwnProperty.call(message, "channel"))
             writer.uint32(/* id 23, wireType 0 =*/184).int32(message.channel);
+        if (message.isHide != null && Object.hasOwnProperty.call(message, "isHide"))
+            writer.uint32(/* id 24, wireType 0 =*/192).bool(message.isHide);
         return writer;
     };
 
@@ -12160,6 +12320,10 @@ export const OneToOneMessage = $root.OneToOneMessage = (() => {
                 }
             case 23: {
                     message.channel = reader.int32();
+                    break;
+                }
+            case 24: {
+                    message.isHide = reader.bool();
                     break;
                 }
             default:
@@ -12315,6 +12479,9 @@ export const OneToOneMessage = $root.OneToOneMessage = (() => {
         if (message.channel != null && message.hasOwnProperty("channel"))
             if (!$util.isInteger(message.channel))
                 return "channel: integer expected";
+        if (message.isHide != null && message.hasOwnProperty("isHide"))
+            if (typeof message.isHide !== "boolean")
+                return "isHide: boolean expected";
         return null;
     };
 
@@ -12551,6 +12718,8 @@ export const OneToOneMessage = $root.OneToOneMessage = (() => {
                 message.sentOverTime = new $util.LongBits(object.sentOverTime.low >>> 0, object.sentOverTime.high >>> 0).toNumber();
         if (object.channel != null)
             message.channel = object.channel | 0;
+        if (object.isHide != null)
+            message.isHide = Boolean(object.isHide);
         return message;
     };
 
@@ -12618,6 +12787,7 @@ export const OneToOneMessage = $root.OneToOneMessage = (() => {
             } else
                 object.sentOverTime = options.longs === String ? "0" : 0;
             object.channel = 0;
+            object.isHide = false;
         }
         if (message.msgId != null && message.hasOwnProperty("msgId"))
             if (typeof message.msgId === "number")
@@ -12683,6 +12853,8 @@ export const OneToOneMessage = $root.OneToOneMessage = (() => {
                 object.sentOverTime = options.longs === String ? $util.Long.prototype.toString.call(message.sentOverTime) : options.longs === Number ? new $util.LongBits(message.sentOverTime.low >>> 0, message.sentOverTime.high >>> 0).toNumber() : message.sentOverTime;
         if (message.channel != null && message.hasOwnProperty("channel"))
             object.channel = message.channel;
+        if (message.isHide != null && message.hasOwnProperty("isHide"))
+            object.isHide = message.isHide;
         return object;
     };
 
@@ -13001,6 +13173,7 @@ export const GroupMessage = $root.GroupMessage = (() => {
      * @property {number|null} [edit] GroupMessage edit
      * @property {Array.<ILinkObj>|null} [links] GroupMessage links
      * @property {number|Long|null} [sentOverTime] GroupMessage sentOverTime
+     * @property {boolean|null} [isHide] GroupMessage isHide
      */
 
     /**
@@ -13174,6 +13347,14 @@ export const GroupMessage = $root.GroupMessage = (() => {
     GroupMessage.prototype.sentOverTime = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
 
     /**
+     * GroupMessage isHide.
+     * @member {boolean} isHide
+     * @memberof GroupMessage
+     * @instance
+     */
+    GroupMessage.prototype.isHide = false;
+
+    /**
      * Creates a new GroupMessage instance using the specified properties.
      * @function create
      * @memberof GroupMessage
@@ -13241,6 +13422,8 @@ export const GroupMessage = $root.GroupMessage = (() => {
                 $root.LinkObj.encode(message.links[i], writer.uint32(/* id 19, wireType 2 =*/154).fork()).ldelim();
         if (message.sentOverTime != null && Object.hasOwnProperty.call(message, "sentOverTime"))
             writer.uint32(/* id 20, wireType 0 =*/160).int64(message.sentOverTime);
+        if (message.isHide != null && Object.hasOwnProperty.call(message, "isHide"))
+            writer.uint32(/* id 21, wireType 0 =*/168).bool(message.isHide);
         return writer;
     };
 
@@ -13362,6 +13545,10 @@ export const GroupMessage = $root.GroupMessage = (() => {
                 }
             case 20: {
                     message.sentOverTime = reader.int64();
+                    break;
+                }
+            case 21: {
+                    message.isHide = reader.bool();
                     break;
                 }
             default:
@@ -13502,6 +13689,9 @@ export const GroupMessage = $root.GroupMessage = (() => {
         if (message.sentOverTime != null && message.hasOwnProperty("sentOverTime"))
             if (!$util.isInteger(message.sentOverTime) && !(message.sentOverTime && $util.isInteger(message.sentOverTime.low) && $util.isInteger(message.sentOverTime.high)))
                 return "sentOverTime: integer|Long expected";
+        if (message.isHide != null && message.hasOwnProperty("isHide"))
+            if (typeof message.isHide !== "boolean")
+                return "isHide: boolean expected";
         return null;
     };
 
@@ -13724,6 +13914,8 @@ export const GroupMessage = $root.GroupMessage = (() => {
                 message.sentOverTime = object.sentOverTime;
             else if (typeof object.sentOverTime === "object")
                 message.sentOverTime = new $util.LongBits(object.sentOverTime.low >>> 0, object.sentOverTime.high >>> 0).toNumber();
+        if (object.isHide != null)
+            message.isHide = Boolean(object.isHide);
         return message;
     };
 
@@ -13788,6 +13980,7 @@ export const GroupMessage = $root.GroupMessage = (() => {
                 object.sentOverTime = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
             } else
                 object.sentOverTime = options.longs === String ? "0" : 0;
+            object.isHide = false;
         }
         if (message.sendUid != null && message.hasOwnProperty("sendUid"))
             if (typeof message.sendUid === "number")
@@ -13854,6 +14047,8 @@ export const GroupMessage = $root.GroupMessage = (() => {
                 object.sentOverTime = options.longs === String ? String(message.sentOverTime) : message.sentOverTime;
             else
                 object.sentOverTime = options.longs === String ? $util.Long.prototype.toString.call(message.sentOverTime) : options.longs === Number ? new $util.LongBits(message.sentOverTime.low >>> 0, message.sentOverTime.high >>> 0).toNumber() : message.sentOverTime;
+        if (message.isHide != null && message.hasOwnProperty("isHide"))
+            object.isHide = message.isHide;
         return object;
     };
 
@@ -23777,6 +23972,7 @@ export const ReceiveGroupEventReceiptMessage = $root.ReceiveGroupEventReceiptMes
             case 4:
             case 5:
             case 6:
+            case 7:
                 break;
             }
         if (message.msgId != null && message.hasOwnProperty("msgId")) {
@@ -23868,6 +24064,10 @@ export const ReceiveGroupEventReceiptMessage = $root.ReceiveGroupEventReceiptMes
         case "GROUP_UPDATE":
         case 6:
             message.msgType = 6;
+            break;
+        case "GROUP_REQ_FORCE_DESTROY":
+        case 7:
+            message.msgType = 7;
             break;
         }
         if (object.msgId) {
@@ -44510,6 +44710,7 @@ export const GroupReqMsgDto = $root.GroupReqMsgDto = (() => {
  * @property {number} GROUP_REQ_BROADCAST=4 GROUP_REQ_BROADCAST value
  * @property {number} GROUP_REQ_UNICAST=5 GROUP_REQ_UNICAST value
  * @property {number} GROUP_UPDATE=6 GROUP_UPDATE value
+ * @property {number} GROUP_REQ_FORCE_DESTROY=7 GROUP_REQ_FORCE_DESTROY value
  */
 export const GroupMsgType = $root.GroupMsgType = (() => {
     const valuesById = {}, values = Object.create(valuesById);
@@ -44520,6 +44721,7 @@ export const GroupMsgType = $root.GroupMsgType = (() => {
     values[valuesById[4] = "GROUP_REQ_BROADCAST"] = 4;
     values[valuesById[5] = "GROUP_REQ_UNICAST"] = 5;
     values[valuesById[6] = "GROUP_UPDATE"] = 6;
+    values[valuesById[7] = "GROUP_REQ_FORCE_DESTROY"] = 7;
     return values;
 })();
 
@@ -44531,6 +44733,7 @@ export const GroupMsgType = $root.GroupMsgType = (() => {
  * @property {number} GROUP_EVENT_BROADCAST=1 GROUP_EVENT_BROADCAST value
  * @property {number} GROUP_EVENT_UNICAST=2 GROUP_EVENT_UNICAST value
  * @property {number} GROUP_EVENT_UPDATE=3 GROUP_EVENT_UPDATE value
+ * @property {number} GROUP_EVENT_FORCE_DESTROY=4 GROUP_EVENT_FORCE_DESTROY value
  */
 export const GroupEventType = $root.GroupEventType = (() => {
     const valuesById = {}, values = Object.create(valuesById);
@@ -44538,6 +44741,7 @@ export const GroupEventType = $root.GroupEventType = (() => {
     values[valuesById[1] = "GROUP_EVENT_BROADCAST"] = 1;
     values[valuesById[2] = "GROUP_EVENT_UNICAST"] = 2;
     values[valuesById[3] = "GROUP_EVENT_UPDATE"] = 3;
+    values[valuesById[4] = "GROUP_EVENT_FORCE_DESTROY"] = 4;
     return values;
 })();
 
@@ -44760,6 +44964,7 @@ export const CommonMsgDto = $root.CommonMsgDto = (() => {
             case 1:
             case 2:
             case 3:
+            case 4:
                 break;
             }
         if (message.msgType != null && message.hasOwnProperty("msgType"))
@@ -44773,6 +44978,7 @@ export const CommonMsgDto = $root.CommonMsgDto = (() => {
             case 4:
             case 5:
             case 6:
+            case 7:
                 break;
             }
         if (message.msg != null && message.hasOwnProperty("msg"))
@@ -44833,6 +45039,10 @@ export const CommonMsgDto = $root.CommonMsgDto = (() => {
         case 3:
             message.evenType = 3;
             break;
+        case "GROUP_EVENT_FORCE_DESTROY":
+        case 4:
+            message.evenType = 4;
+            break;
         }
         switch (object.msgType) {
         default:
@@ -44868,6 +45078,10 @@ export const CommonMsgDto = $root.CommonMsgDto = (() => {
         case "GROUP_UPDATE":
         case 6:
             message.msgType = 6;
+            break;
+        case "GROUP_REQ_FORCE_DESTROY":
+        case 7:
+            message.msgType = 7;
             break;
         }
         if (object.msg != null)
@@ -45677,6 +45891,7 @@ export const GroupReqEventMsgDto = $root.GroupReqEventMsgDto = (() => {
      * @property {GroupReqType|null} [groupReqType] GroupReqEventMsgDto groupReqType
      * @property {GroupReqStatus|null} [groupReqStatus] GroupReqEventMsgDto groupReqStatus
      * @property {Array.<IGroupMemberBase>|null} [groupMember] GroupReqEventMsgDto groupMember
+     * @property {boolean|null} [isHide] GroupReqEventMsgDto isHide
      */
 
     /**
@@ -45760,6 +45975,14 @@ export const GroupReqEventMsgDto = $root.GroupReqEventMsgDto = (() => {
     GroupReqEventMsgDto.prototype.groupMember = $util.emptyArray;
 
     /**
+     * GroupReqEventMsgDto isHide.
+     * @member {boolean} isHide
+     * @memberof GroupReqEventMsgDto
+     * @instance
+     */
+    GroupReqEventMsgDto.prototype.isHide = false;
+
+    /**
      * Creates a new GroupReqEventMsgDto instance using the specified properties.
      * @function create
      * @memberof GroupReqEventMsgDto
@@ -45800,6 +46023,8 @@ export const GroupReqEventMsgDto = $root.GroupReqEventMsgDto = (() => {
         if (message.groupMember != null && message.groupMember.length)
             for (let i = 0; i < message.groupMember.length; ++i)
                 $root.GroupMemberBase.encode(message.groupMember[i], writer.uint32(/* id 8, wireType 2 =*/66).fork()).ldelim();
+        if (message.isHide != null && Object.hasOwnProperty.call(message, "isHide"))
+            writer.uint32(/* id 9, wireType 0 =*/72).bool(message.isHide);
         return writer;
     };
 
@@ -45868,6 +46093,10 @@ export const GroupReqEventMsgDto = $root.GroupReqEventMsgDto = (() => {
                     if (!(message.groupMember && message.groupMember.length))
                         message.groupMember = [];
                     message.groupMember.push($root.GroupMemberBase.decode(reader, reader.uint32()));
+                    break;
+                }
+            case 9: {
+                    message.isHide = reader.bool();
                     break;
                 }
             default:
@@ -45968,6 +46197,9 @@ export const GroupReqEventMsgDto = $root.GroupReqEventMsgDto = (() => {
                     return "groupMember." + error;
             }
         }
+        if (message.isHide != null && message.hasOwnProperty("isHide"))
+            if (typeof message.isHide !== "boolean")
+                return "isHide: boolean expected";
         return null;
     };
 
@@ -46138,6 +46370,8 @@ export const GroupReqEventMsgDto = $root.GroupReqEventMsgDto = (() => {
                 message.groupMember[i] = $root.GroupMemberBase.fromObject(object.groupMember[i]);
             }
         }
+        if (object.isHide != null)
+            message.isHide = Boolean(object.isHide);
         return message;
     };
 
@@ -46176,6 +46410,7 @@ export const GroupReqEventMsgDto = $root.GroupReqEventMsgDto = (() => {
             object.groupNoticeMsgDto = null;
             object.groupReqType = options.enums === String ? "GROUP_TRANSFER" : 0;
             object.groupReqStatus = options.enums === String ? "CHECKING" : 0;
+            object.isHide = false;
         }
         if (message.commonMsgDto != null && message.hasOwnProperty("commonMsgDto"))
             object.commonMsgDto = $root.CommonMsgDto.toObject(message.commonMsgDto, options);
@@ -46205,6 +46440,8 @@ export const GroupReqEventMsgDto = $root.GroupReqEventMsgDto = (() => {
             for (let j = 0; j < message.groupMember.length; ++j)
                 object.groupMember[j] = $root.GroupMemberBase.toObject(message.groupMember[j], options);
         }
+        if (message.isHide != null && message.hasOwnProperty("isHide"))
+            object.isHide = message.isHide;
         return object;
     };
 
@@ -46922,6 +47159,7 @@ export const GroupEventReq = $root.GroupEventReq = (() => {
             case 1:
             case 2:
             case 3:
+            case 4:
                 break;
             }
         if (message.minMsgId != null && message.hasOwnProperty("minMsgId"))
@@ -46981,6 +47219,10 @@ export const GroupEventReq = $root.GroupEventReq = (() => {
         case "GROUP_EVENT_UPDATE":
         case 3:
             message.eventType = 3;
+            break;
+        case "GROUP_EVENT_FORCE_DESTROY":
+        case 4:
+            message.eventType = 4;
             break;
         }
         if (object.minMsgId != null)

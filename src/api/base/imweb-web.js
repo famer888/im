@@ -8057,6 +8057,7 @@ export const ReceiveGroupEventReceiptMessage = $root.ReceiveGroupEventReceiptMes
             case 4:
             case 5:
             case 6:
+            case 7:
                 break;
             }
         if (message.msgId != null && message.hasOwnProperty("msgId")) {
@@ -8148,6 +8149,10 @@ export const ReceiveGroupEventReceiptMessage = $root.ReceiveGroupEventReceiptMes
         case "GROUP_UPDATE":
         case 6:
             message.msgType = 6;
+            break;
+        case "GROUP_REQ_FORCE_DESTROY":
+        case 7:
+            message.msgType = 7;
             break;
         }
         if (object.msgId) {
@@ -16113,6 +16118,563 @@ export const PushReadChannelMessage = $root.PushReadChannelMessage = (() => {
     return PushReadChannelMessage;
 })();
 
+/**
+ * CaptionMediaType enum.
+ * @exports CaptionMediaType
+ * @enum {number}
+ * @property {number} Image=0 Image value
+ * @property {number} Video=1 Video value
+ * @property {number} DynamicImage=3 DynamicImage value
+ */
+export const CaptionMediaType = $root.CaptionMediaType = (() => {
+    const valuesById = {}, values = Object.create(valuesById);
+    values[valuesById[0] = "Image"] = 0;
+    values[valuesById[1] = "Video"] = 1;
+    values[valuesById[3] = "DynamicImage"] = 3;
+    return values;
+})();
+
+export const MediaObj = $root.MediaObj = (() => {
+
+    /**
+     * Properties of a MediaObj.
+     * @exports IMediaObj
+     * @interface IMediaObj
+     * @property {CaptionMediaType|null} [type] MediaObj type
+     * @property {Uint8Array|null} [content] MediaObj content
+     */
+
+    /**
+     * Constructs a new MediaObj.
+     * @exports MediaObj
+     * @classdesc Represents a MediaObj.
+     * @implements IMediaObj
+     * @constructor
+     * @param {IMediaObj=} [properties] Properties to set
+     */
+    function MediaObj(properties) {
+        if (properties)
+            for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                if (properties[keys[i]] != null)
+                    this[keys[i]] = properties[keys[i]];
+    }
+
+    /**
+     * MediaObj type.
+     * @member {CaptionMediaType} type
+     * @memberof MediaObj
+     * @instance
+     */
+    MediaObj.prototype.type = 0;
+
+    /**
+     * MediaObj content.
+     * @member {Uint8Array} content
+     * @memberof MediaObj
+     * @instance
+     */
+    MediaObj.prototype.content = $util.newBuffer([]);
+
+    /**
+     * Creates a new MediaObj instance using the specified properties.
+     * @function create
+     * @memberof MediaObj
+     * @static
+     * @param {IMediaObj=} [properties] Properties to set
+     * @returns {MediaObj} MediaObj instance
+     */
+    MediaObj.create = function create(properties) {
+        return new MediaObj(properties);
+    };
+
+    /**
+     * Encodes the specified MediaObj message. Does not implicitly {@link MediaObj.verify|verify} messages.
+     * @function encode
+     * @memberof MediaObj
+     * @static
+     * @param {IMediaObj} message MediaObj message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    MediaObj.encode = function encode(message, writer) {
+        if (!writer)
+            writer = $Writer.create();
+        if (message.type != null && Object.hasOwnProperty.call(message, "type"))
+            writer.uint32(/* id 1, wireType 0 =*/8).int32(message.type);
+        if (message.content != null && Object.hasOwnProperty.call(message, "content"))
+            writer.uint32(/* id 2, wireType 2 =*/18).bytes(message.content);
+        return writer;
+    };
+
+    /**
+     * Encodes the specified MediaObj message, length delimited. Does not implicitly {@link MediaObj.verify|verify} messages.
+     * @function encodeDelimited
+     * @memberof MediaObj
+     * @static
+     * @param {IMediaObj} message MediaObj message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    MediaObj.encodeDelimited = function encodeDelimited(message, writer) {
+        return this.encode(message, writer).ldelim();
+    };
+
+    /**
+     * Decodes a MediaObj message from the specified reader or buffer.
+     * @function decode
+     * @memberof MediaObj
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @param {number} [length] Message length if known beforehand
+     * @returns {MediaObj} MediaObj
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    MediaObj.decode = function decode(reader, length, error) {
+        if (!(reader instanceof $Reader))
+            reader = $Reader.create(reader);
+        let end = length === undefined ? reader.len : reader.pos + length, message = new $root.MediaObj();
+        while (reader.pos < end) {
+            let tag = reader.uint32();
+            if (tag === error)
+                break;
+            switch (tag >>> 3) {
+            case 1: {
+                    message.type = reader.int32();
+                    break;
+                }
+            case 2: {
+                    message.content = reader.bytes();
+                    break;
+                }
+            default:
+                reader.skipType(tag & 7);
+                break;
+            }
+        }
+        return message;
+    };
+
+    /**
+     * Decodes a MediaObj message from the specified reader or buffer, length delimited.
+     * @function decodeDelimited
+     * @memberof MediaObj
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @returns {MediaObj} MediaObj
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    MediaObj.decodeDelimited = function decodeDelimited(reader) {
+        if (!(reader instanceof $Reader))
+            reader = new $Reader(reader);
+        return this.decode(reader, reader.uint32());
+    };
+
+    /**
+     * Verifies a MediaObj message.
+     * @function verify
+     * @memberof MediaObj
+     * @static
+     * @param {Object.<string,*>} message Plain object to verify
+     * @returns {string|null} `null` if valid, otherwise the reason why it is not
+     */
+    MediaObj.verify = function verify(message) {
+        if (typeof message !== "object" || message === null)
+            return "object expected";
+        if (message.type != null && message.hasOwnProperty("type"))
+            switch (message.type) {
+            default:
+                return "type: enum value expected";
+            case 0:
+            case 1:
+            case 3:
+                break;
+            }
+        if (message.content != null && message.hasOwnProperty("content"))
+            if (!(message.content && typeof message.content.length === "number" || $util.isString(message.content)))
+                return "content: buffer expected";
+        return null;
+    };
+
+    /**
+     * Creates a MediaObj message from a plain object. Also converts values to their respective internal types.
+     * @function fromObject
+     * @memberof MediaObj
+     * @static
+     * @param {Object.<string,*>} object Plain object
+     * @returns {MediaObj} MediaObj
+     */
+    MediaObj.fromObject = function fromObject(object) {
+        if (object instanceof $root.MediaObj)
+            return object;
+        let message = new $root.MediaObj();
+        switch (object.type) {
+        default:
+            if (typeof object.type === "number") {
+                message.type = object.type;
+                break;
+            }
+            break;
+        case "Image":
+        case 0:
+            message.type = 0;
+            break;
+        case "Video":
+        case 1:
+            message.type = 1;
+            break;
+        case "DynamicImage":
+        case 3:
+            message.type = 3;
+            break;
+        }
+        if (object.content != null)
+            if (typeof object.content === "string")
+                $util.base64.decode(object.content, message.content = $util.newBuffer($util.base64.length(object.content)), 0);
+            else if (object.content.length >= 0)
+                message.content = object.content;
+        return message;
+    };
+
+    /**
+     * Creates a plain object from a MediaObj message. Also converts values to other types if specified.
+     * @function toObject
+     * @memberof MediaObj
+     * @static
+     * @param {MediaObj} message MediaObj
+     * @param {$protobuf.IConversionOptions} [options] Conversion options
+     * @returns {Object.<string,*>} Plain object
+     */
+    MediaObj.toObject = function toObject(message, options) {
+        if (!options)
+            options = {};
+        let object = {};
+        if (options.defaults) {
+            object.type = options.enums === String ? "Image" : 0;
+            if (options.bytes === String)
+                object.content = "";
+            else {
+                object.content = [];
+                if (options.bytes !== Array)
+                    object.content = $util.newBuffer(object.content);
+            }
+        }
+        if (message.type != null && message.hasOwnProperty("type"))
+            object.type = options.enums === String ? $root.CaptionMediaType[message.type] === undefined ? message.type : $root.CaptionMediaType[message.type] : message.type;
+        if (message.content != null && message.hasOwnProperty("content"))
+            object.content = options.bytes === String ? $util.base64.encode(message.content, 0, message.content.length) : options.bytes === Array ? Array.prototype.slice.call(message.content) : message.content;
+        return object;
+    };
+
+    /**
+     * Converts this MediaObj to JSON.
+     * @function toJSON
+     * @memberof MediaObj
+     * @instance
+     * @returns {Object.<string,*>} JSON object
+     */
+    MediaObj.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+    };
+
+    /**
+     * Gets the default type url for MediaObj
+     * @function getTypeUrl
+     * @memberof MediaObj
+     * @static
+     * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+     * @returns {string} The default type url
+     */
+    MediaObj.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === undefined) {
+            typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/MediaObj";
+    };
+
+    return MediaObj;
+})();
+
+export const MediaTextListObj = $root.MediaTextListObj = (() => {
+
+    /**
+     * Properties of a MediaTextListObj.
+     * @exports IMediaTextListObj
+     * @interface IMediaTextListObj
+     * @property {Array.<IMediaObj>|null} [objs] MediaTextListObj objs
+     * @property {string|null} [caption] MediaTextListObj caption
+     * @property {IReferenceObj|null} [ref] MediaTextListObj ref
+     */
+
+    /**
+     * Constructs a new MediaTextListObj.
+     * @exports MediaTextListObj
+     * @classdesc Represents a MediaTextListObj.
+     * @implements IMediaTextListObj
+     * @constructor
+     * @param {IMediaTextListObj=} [properties] Properties to set
+     */
+    function MediaTextListObj(properties) {
+        this.objs = [];
+        if (properties)
+            for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                if (properties[keys[i]] != null)
+                    this[keys[i]] = properties[keys[i]];
+    }
+
+    /**
+     * MediaTextListObj objs.
+     * @member {Array.<IMediaObj>} objs
+     * @memberof MediaTextListObj
+     * @instance
+     */
+    MediaTextListObj.prototype.objs = $util.emptyArray;
+
+    /**
+     * MediaTextListObj caption.
+     * @member {string} caption
+     * @memberof MediaTextListObj
+     * @instance
+     */
+    MediaTextListObj.prototype.caption = "";
+
+    /**
+     * MediaTextListObj ref.
+     * @member {IReferenceObj|null|undefined} ref
+     * @memberof MediaTextListObj
+     * @instance
+     */
+    MediaTextListObj.prototype.ref = null;
+
+    /**
+     * Creates a new MediaTextListObj instance using the specified properties.
+     * @function create
+     * @memberof MediaTextListObj
+     * @static
+     * @param {IMediaTextListObj=} [properties] Properties to set
+     * @returns {MediaTextListObj} MediaTextListObj instance
+     */
+    MediaTextListObj.create = function create(properties) {
+        return new MediaTextListObj(properties);
+    };
+
+    /**
+     * Encodes the specified MediaTextListObj message. Does not implicitly {@link MediaTextListObj.verify|verify} messages.
+     * @function encode
+     * @memberof MediaTextListObj
+     * @static
+     * @param {IMediaTextListObj} message MediaTextListObj message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    MediaTextListObj.encode = function encode(message, writer) {
+        if (!writer)
+            writer = $Writer.create();
+        if (message.objs != null && message.objs.length)
+            for (let i = 0; i < message.objs.length; ++i)
+                $root.MediaObj.encode(message.objs[i], writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
+        if (message.caption != null && Object.hasOwnProperty.call(message, "caption"))
+            writer.uint32(/* id 2, wireType 2 =*/18).string(message.caption);
+        if (message.ref != null && Object.hasOwnProperty.call(message, "ref"))
+            $root.ReferenceObj.encode(message.ref, writer.uint32(/* id 3, wireType 2 =*/26).fork()).ldelim();
+        return writer;
+    };
+
+    /**
+     * Encodes the specified MediaTextListObj message, length delimited. Does not implicitly {@link MediaTextListObj.verify|verify} messages.
+     * @function encodeDelimited
+     * @memberof MediaTextListObj
+     * @static
+     * @param {IMediaTextListObj} message MediaTextListObj message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    MediaTextListObj.encodeDelimited = function encodeDelimited(message, writer) {
+        return this.encode(message, writer).ldelim();
+    };
+
+    /**
+     * Decodes a MediaTextListObj message from the specified reader or buffer.
+     * @function decode
+     * @memberof MediaTextListObj
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @param {number} [length] Message length if known beforehand
+     * @returns {MediaTextListObj} MediaTextListObj
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    MediaTextListObj.decode = function decode(reader, length, error) {
+        if (!(reader instanceof $Reader))
+            reader = $Reader.create(reader);
+        let end = length === undefined ? reader.len : reader.pos + length, message = new $root.MediaTextListObj();
+        while (reader.pos < end) {
+            let tag = reader.uint32();
+            if (tag === error)
+                break;
+            switch (tag >>> 3) {
+            case 1: {
+                    if (!(message.objs && message.objs.length))
+                        message.objs = [];
+                    message.objs.push($root.MediaObj.decode(reader, reader.uint32()));
+                    break;
+                }
+            case 2: {
+                    message.caption = reader.string();
+                    break;
+                }
+            case 3: {
+                    message.ref = $root.ReferenceObj.decode(reader, reader.uint32());
+                    break;
+                }
+            default:
+                reader.skipType(tag & 7);
+                break;
+            }
+        }
+        return message;
+    };
+
+    /**
+     * Decodes a MediaTextListObj message from the specified reader or buffer, length delimited.
+     * @function decodeDelimited
+     * @memberof MediaTextListObj
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @returns {MediaTextListObj} MediaTextListObj
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    MediaTextListObj.decodeDelimited = function decodeDelimited(reader) {
+        if (!(reader instanceof $Reader))
+            reader = new $Reader(reader);
+        return this.decode(reader, reader.uint32());
+    };
+
+    /**
+     * Verifies a MediaTextListObj message.
+     * @function verify
+     * @memberof MediaTextListObj
+     * @static
+     * @param {Object.<string,*>} message Plain object to verify
+     * @returns {string|null} `null` if valid, otherwise the reason why it is not
+     */
+    MediaTextListObj.verify = function verify(message) {
+        if (typeof message !== "object" || message === null)
+            return "object expected";
+        if (message.objs != null && message.hasOwnProperty("objs")) {
+            if (!Array.isArray(message.objs))
+                return "objs: array expected";
+            for (let i = 0; i < message.objs.length; ++i) {
+                let error = $root.MediaObj.verify(message.objs[i]);
+                if (error)
+                    return "objs." + error;
+            }
+        }
+        if (message.caption != null && message.hasOwnProperty("caption"))
+            if (!$util.isString(message.caption))
+                return "caption: string expected";
+        if (message.ref != null && message.hasOwnProperty("ref")) {
+            let error = $root.ReferenceObj.verify(message.ref);
+            if (error)
+                return "ref." + error;
+        }
+        return null;
+    };
+
+    /**
+     * Creates a MediaTextListObj message from a plain object. Also converts values to their respective internal types.
+     * @function fromObject
+     * @memberof MediaTextListObj
+     * @static
+     * @param {Object.<string,*>} object Plain object
+     * @returns {MediaTextListObj} MediaTextListObj
+     */
+    MediaTextListObj.fromObject = function fromObject(object) {
+        if (object instanceof $root.MediaTextListObj)
+            return object;
+        let message = new $root.MediaTextListObj();
+        if (object.objs) {
+            if (!Array.isArray(object.objs))
+                throw TypeError(".MediaTextListObj.objs: array expected");
+            message.objs = [];
+            for (let i = 0; i < object.objs.length; ++i) {
+                if (typeof object.objs[i] !== "object")
+                    throw TypeError(".MediaTextListObj.objs: object expected");
+                message.objs[i] = $root.MediaObj.fromObject(object.objs[i]);
+            }
+        }
+        if (object.caption != null)
+            message.caption = String(object.caption);
+        if (object.ref != null) {
+            if (typeof object.ref !== "object")
+                throw TypeError(".MediaTextListObj.ref: object expected");
+            message.ref = $root.ReferenceObj.fromObject(object.ref);
+        }
+        return message;
+    };
+
+    /**
+     * Creates a plain object from a MediaTextListObj message. Also converts values to other types if specified.
+     * @function toObject
+     * @memberof MediaTextListObj
+     * @static
+     * @param {MediaTextListObj} message MediaTextListObj
+     * @param {$protobuf.IConversionOptions} [options] Conversion options
+     * @returns {Object.<string,*>} Plain object
+     */
+    MediaTextListObj.toObject = function toObject(message, options) {
+        if (!options)
+            options = {};
+        let object = {};
+        if (options.arrays || options.defaults)
+            object.objs = [];
+        if (options.defaults) {
+            object.caption = "";
+            object.ref = null;
+        }
+        if (message.objs && message.objs.length) {
+            object.objs = [];
+            for (let j = 0; j < message.objs.length; ++j)
+                object.objs[j] = $root.MediaObj.toObject(message.objs[j], options);
+        }
+        if (message.caption != null && message.hasOwnProperty("caption"))
+            object.caption = message.caption;
+        if (message.ref != null && message.hasOwnProperty("ref"))
+            object.ref = $root.ReferenceObj.toObject(message.ref, options);
+        return object;
+    };
+
+    /**
+     * Converts this MediaTextListObj to JSON.
+     * @function toJSON
+     * @memberof MediaTextListObj
+     * @instance
+     * @returns {Object.<string,*>} JSON object
+     */
+    MediaTextListObj.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+    };
+
+    /**
+     * Gets the default type url for MediaTextListObj
+     * @function getTypeUrl
+     * @memberof MediaTextListObj
+     * @static
+     * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+     * @returns {string} The default type url
+     */
+    MediaTextListObj.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === undefined) {
+            typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/MediaTextListObj";
+    };
+
+    return MediaTextListObj;
+})();
+
 export const TextObj = $root.TextObj = (() => {
 
     /**
@@ -21176,323 +21738,6 @@ export const RedPacketObj = $root.RedPacketObj = (() => {
     };
 
     return RedPacketObj;
-})();
-
-/**
- * CaptionMediaType enum.
- * @exports CaptionMediaType
- * @enum {number}
- * @property {number} Image=0 Image value
- * @property {number} Video=1 Video value
- * @property {number} DynamicImage=3 DynamicImage value
- */
-export const CaptionMediaType = $root.CaptionMediaType = (() => {
-    const valuesById = {}, values = Object.create(valuesById);
-    values[valuesById[0] = "Image"] = 0;
-    values[valuesById[1] = "Video"] = 1;
-    values[valuesById[3] = "DynamicImage"] = 3;
-    return values;
-})();
-
-export const MediaObj = $root.MediaObj = (() => {
-
-    function MediaObj(properties) {
-        if (properties)
-            for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                if (properties[keys[i]] != null)
-                    this[keys[i]] = properties[keys[i]];
-    }
-
-    MediaObj.prototype.type = 0;
-    MediaObj.prototype.content = $util.newBuffer([]);
-
-    MediaObj.create = function create(properties) {
-        return new MediaObj(properties);
-    };
-
-    MediaObj.encode = function encode(message, writer) {
-        if (!writer)
-            writer = $Writer.create();
-        if (message.type != null && Object.hasOwnProperty.call(message, "type"))
-            writer.uint32(/* id 1, wireType 0 =*/8).int32(message.type);
-        if (message.content != null && Object.hasOwnProperty.call(message, "content"))
-            writer.uint32(/* id 2, wireType 2 =*/18).bytes(message.content);
-        return writer;
-    };
-
-    MediaObj.encodeDelimited = function encodeDelimited(message, writer) {
-        return this.encode(message, writer).ldelim();
-    };
-
-    MediaObj.decode = function decode(reader, length, error) {
-        if (!(reader instanceof $Reader))
-            reader = $Reader.create(reader);
-        let end = length === undefined ? reader.len : reader.pos + length, message = new $root.MediaObj();
-        while (reader.pos < end) {
-            let tag = reader.uint32();
-            if (tag === error)
-                break;
-            switch (tag >>> 3) {
-            case 1: {
-                    message.type = reader.int32();
-                    break;
-                }
-            case 2: {
-                    message.content = reader.bytes();
-                    break;
-                }
-            default:
-                reader.skipType(tag & 7);
-                break;
-            }
-        }
-        return message;
-    };
-
-    MediaObj.decodeDelimited = function decodeDelimited(reader) {
-        if (!(reader instanceof $Reader))
-            reader = new $Reader(reader);
-        return this.decode(reader, reader.uint32());
-    };
-
-    MediaObj.verify = function verify(message) {
-        if (typeof message !== "object" || message === null)
-            return "object expected";
-        if (message.type != null && message.hasOwnProperty("type"))
-            switch (message.type) {
-            default:
-                return "type: enum value expected";
-            case 0:
-            case 1:
-            case 3:
-                break;
-            }
-        if (message.content != null && message.hasOwnProperty("content"))
-            if (!(message.content && typeof message.content.length === "number" || $util.isString(message.content)))
-                return "content: buffer expected";
-        return null;
-    };
-
-    MediaObj.fromObject = function fromObject(object) {
-        if (object instanceof $root.MediaObj)
-            return object;
-        let message = new $root.MediaObj();
-        switch (object.type) {
-        default:
-            if (typeof object.type === "number") {
-                message.type = object.type;
-                break;
-            }
-            break;
-        case "Image":
-        case 0:
-            message.type = 0;
-            break;
-        case "Video":
-        case 1:
-            message.type = 1;
-            break;
-        case "DynamicImage":
-        case 3:
-            message.type = 3;
-            break;
-        }
-        if (object.content != null)
-            if (typeof object.content === "string")
-                $util.base64.decode(object.content, message.content = $util.newBuffer($util.base64.length(object.content)), 0);
-            else if (object.content.length >= 0)
-                message.content = object.content;
-        return message;
-    };
-
-    MediaObj.toObject = function toObject(message, options) {
-        if (!options)
-            options = {};
-        let object = {};
-        if (options.defaults) {
-            object.type = options.enums === String ? "Image" : 0;
-            if (options.bytes === String)
-                object.content = "";
-            else {
-                object.content = [];
-                if (options.bytes !== Array)
-                    object.content = $util.newBuffer(object.content);
-            }
-        }
-        if (message.type != null && message.hasOwnProperty("type"))
-            object.type = options.enums === String ? $root.CaptionMediaType[message.type] === undefined ? message.type : $root.CaptionMediaType[message.type] : message.type;
-        if (message.content != null && message.hasOwnProperty("content"))
-            object.content = options.bytes === String ? $util.base64.encode(message.content, 0, message.content.length) : options.bytes === Array ? Array.prototype.slice.call(message.content) : message.content;
-        return object;
-    };
-
-    MediaObj.prototype.toJSON = function toJSON() {
-        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
-    };
-
-    MediaObj.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
-        if (typeUrlPrefix === undefined) {
-            typeUrlPrefix = "type.googleapis.com";
-        }
-        return typeUrlPrefix + "/MediaObj";
-    };
-
-    return MediaObj;
-})();
-
-export const MediaTextListObj = $root.MediaTextListObj = (() => {
-
-    function MediaTextListObj(properties) {
-        this.objs = [];
-        if (properties)
-            for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
-                if (properties[keys[i]] != null)
-                    this[keys[i]] = properties[keys[i]];
-    }
-
-    MediaTextListObj.prototype.objs = $util.emptyArray;
-    MediaTextListObj.prototype.caption = "";
-    MediaTextListObj.prototype.ref = null;
-
-    MediaTextListObj.create = function create(properties) {
-        return new MediaTextListObj(properties);
-    };
-
-    MediaTextListObj.encode = function encode(message, writer) {
-        if (!writer)
-            writer = $Writer.create();
-        if (message.objs != null && message.objs.length)
-            for (let i = 0; i < message.objs.length; ++i)
-                $root.MediaObj.encode(message.objs[i], writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
-        if (message.caption != null && Object.hasOwnProperty.call(message, "caption"))
-            writer.uint32(/* id 2, wireType 2 =*/18).string(message.caption);
-        if (message.ref != null && Object.hasOwnProperty.call(message, "ref"))
-            $root.ReferenceObj.encode(message.ref, writer.uint32(/* id 3, wireType 2 =*/26).fork()).ldelim();
-        return writer;
-    };
-
-    MediaTextListObj.encodeDelimited = function encodeDelimited(message, writer) {
-        return this.encode(message, writer).ldelim();
-    };
-
-    MediaTextListObj.decode = function decode(reader, length, error) {
-        if (!(reader instanceof $Reader))
-            reader = $Reader.create(reader);
-        let end = length === undefined ? reader.len : reader.pos + length, message = new $root.MediaTextListObj();
-        while (reader.pos < end) {
-            let tag = reader.uint32();
-            if (tag === error)
-                break;
-            switch (tag >>> 3) {
-            case 1: {
-                    if (!(message.objs && message.objs.length))
-                        message.objs = [];
-                    message.objs.push($root.MediaObj.decode(reader, reader.uint32()));
-                    break;
-                }
-            case 2: {
-                    message.caption = reader.string();
-                    break;
-                }
-            case 3: {
-                    message.ref = $root.ReferenceObj.decode(reader, reader.uint32());
-                    break;
-                }
-            default:
-                reader.skipType(tag & 7);
-                break;
-            }
-        }
-        return message;
-    };
-
-    MediaTextListObj.decodeDelimited = function decodeDelimited(reader) {
-        if (!(reader instanceof $Reader))
-            reader = new $Reader(reader);
-        return this.decode(reader, reader.uint32());
-    };
-
-    MediaTextListObj.verify = function verify(message) {
-        if (typeof message !== "object" || message === null)
-            return "object expected";
-        if (message.objs != null && message.hasOwnProperty("objs")) {
-            if (!Array.isArray(message.objs))
-                return "objs: array expected";
-            for (let i = 0; i < message.objs.length; ++i) {
-                let error = $root.MediaObj.verify(message.objs[i]);
-                if (error)
-                    return "objs." + error;
-            }
-        }
-        if (message.caption != null && message.hasOwnProperty("caption"))
-            if (!$util.isString(message.caption))
-                return "caption: string expected";
-        if (message.ref != null && message.hasOwnProperty("ref")) {
-            let error = $root.ReferenceObj.verify(message.ref);
-            if (error)
-                return "ref." + error;
-        }
-        return null;
-    };
-
-    MediaTextListObj.fromObject = function fromObject(object) {
-        if (object instanceof $root.MediaTextListObj)
-            return object;
-        let message = new $root.MediaTextListObj();
-        if (object.objs) {
-            if (!Array.isArray(object.objs))
-                throw TypeError(".MediaTextListObj.objs: array expected");
-            message.objs = [];
-            for (let i = 0; i < object.objs.length; ++i) {
-                if (typeof object.objs[i] !== "object")
-                    throw TypeError(".MediaTextListObj.objs: object expected");
-                message.objs[i] = $root.MediaObj.fromObject(object.objs[i]);
-            }
-        }
-        if (object.caption != null)
-            message.caption = String(object.caption);
-        if (object.ref != null) {
-            if (typeof object.ref !== "object")
-                throw TypeError(".MediaTextListObj.ref: object expected");
-            message.ref = $root.ReferenceObj.fromObject(object.ref);
-        }
-        return message;
-    };
-
-    MediaTextListObj.toObject = function toObject(message, options) {
-        if (!options)
-            options = {};
-        let object = {};
-        if (options.arrays || options.defaults)
-            object.objs = [];
-        if (options.defaults) {
-            object.caption = "";
-            object.ref = null;
-        }
-        if (message.objs && message.objs.length) {
-            object.objs = [];
-            for (let j = 0; j < message.objs.length; ++j)
-                object.objs[j] = $root.MediaObj.toObject(message.objs[j], options);
-        }
-        if (message.caption != null && message.hasOwnProperty("caption"))
-            object.caption = message.caption;
-        if (message.ref != null && message.hasOwnProperty("ref"))
-            object.ref = $root.ReferenceObj.toObject(message.ref, options);
-        return object;
-    };
-
-    MediaTextListObj.prototype.toJSON = function toJSON() {
-        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
-    };
-
-    MediaTextListObj.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
-        if (typeUrlPrefix === undefined) {
-            typeUrlPrefix = "type.googleapis.com";
-        }
-        return typeUrlPrefix + "/MediaTextListObj";
-    };
-
-    return MediaTextListObj;
 })();
 
 export const ChatSensitivePushMsg = $root.ChatSensitivePushMsg = (() => {
@@ -34223,6 +34468,7 @@ export const GroupReqMsgDto = $root.GroupReqMsgDto = (() => {
  * @property {number} GROUP_REQ_BROADCAST=4 GROUP_REQ_BROADCAST value
  * @property {number} GROUP_REQ_UNICAST=5 GROUP_REQ_UNICAST value
  * @property {number} GROUP_UPDATE=6 GROUP_UPDATE value
+ * @property {number} GROUP_REQ_FORCE_DESTROY=7 GROUP_REQ_FORCE_DESTROY value
  */
 export const GroupMsgType = $root.GroupMsgType = (() => {
     const valuesById = {}, values = Object.create(valuesById);
@@ -34233,6 +34479,7 @@ export const GroupMsgType = $root.GroupMsgType = (() => {
     values[valuesById[4] = "GROUP_REQ_BROADCAST"] = 4;
     values[valuesById[5] = "GROUP_REQ_UNICAST"] = 5;
     values[valuesById[6] = "GROUP_UPDATE"] = 6;
+    values[valuesById[7] = "GROUP_REQ_FORCE_DESTROY"] = 7;
     return values;
 })();
 
@@ -34244,6 +34491,7 @@ export const GroupMsgType = $root.GroupMsgType = (() => {
  * @property {number} GROUP_EVENT_BROADCAST=1 GROUP_EVENT_BROADCAST value
  * @property {number} GROUP_EVENT_UNICAST=2 GROUP_EVENT_UNICAST value
  * @property {number} GROUP_EVENT_UPDATE=3 GROUP_EVENT_UPDATE value
+ * @property {number} GROUP_EVENT_FORCE_DESTROY=4 GROUP_EVENT_FORCE_DESTROY value
  */
 export const GroupEventType = $root.GroupEventType = (() => {
     const valuesById = {}, values = Object.create(valuesById);
@@ -34251,6 +34499,7 @@ export const GroupEventType = $root.GroupEventType = (() => {
     values[valuesById[1] = "GROUP_EVENT_BROADCAST"] = 1;
     values[valuesById[2] = "GROUP_EVENT_UNICAST"] = 2;
     values[valuesById[3] = "GROUP_EVENT_UPDATE"] = 3;
+    values[valuesById[4] = "GROUP_EVENT_FORCE_DESTROY"] = 4;
     return values;
 })();
 
@@ -34473,6 +34722,7 @@ export const CommonMsgDto = $root.CommonMsgDto = (() => {
             case 1:
             case 2:
             case 3:
+            case 4:
                 break;
             }
         if (message.msgType != null && message.hasOwnProperty("msgType"))
@@ -34486,6 +34736,7 @@ export const CommonMsgDto = $root.CommonMsgDto = (() => {
             case 4:
             case 5:
             case 6:
+            case 7:
                 break;
             }
         if (message.msg != null && message.hasOwnProperty("msg"))
@@ -34546,6 +34797,10 @@ export const CommonMsgDto = $root.CommonMsgDto = (() => {
         case 3:
             message.evenType = 3;
             break;
+        case "GROUP_EVENT_FORCE_DESTROY":
+        case 4:
+            message.evenType = 4;
+            break;
         }
         switch (object.msgType) {
         default:
@@ -34581,6 +34836,10 @@ export const CommonMsgDto = $root.CommonMsgDto = (() => {
         case "GROUP_UPDATE":
         case 6:
             message.msgType = 6;
+            break;
+        case "GROUP_REQ_FORCE_DESTROY":
+        case 7:
+            message.msgType = 7;
             break;
         }
         if (object.msg != null)
@@ -36658,6 +36917,7 @@ export const GroupEventReq = $root.GroupEventReq = (() => {
             case 1:
             case 2:
             case 3:
+            case 4:
                 break;
             }
         if (message.minMsgId != null && message.hasOwnProperty("minMsgId"))
@@ -36717,6 +36977,10 @@ export const GroupEventReq = $root.GroupEventReq = (() => {
         case "GROUP_EVENT_UPDATE":
         case 3:
             message.eventType = 3;
+            break;
+        case "GROUP_EVENT_FORCE_DESTROY":
+        case 4:
+            message.eventType = 4;
             break;
         }
         if (object.minMsgId != null)

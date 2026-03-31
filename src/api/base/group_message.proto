@@ -29,7 +29,7 @@ message GroupReqMsgDto {
     GroupHandleType handleType  = 17; // 群处理消息类型
     string      rId     = 18; // 记录ID，用于已接收响应
     bool        groupShutup    = 19; // 群禁言 add v1.1.0
-    GroupNoticeBase    groupNotice  = 20; // 群简介 add v1.1.0
+    GroupNoticeBase    groupNotice  = 20; // 群公告 add v1.1.0
     GroupMemberType checkUserType   = 21; // 审核人群身份类型 add V1.1.0
     bool        bfGroupReadCancel    = 22; // 群阅后即焚设置值 add v1.3.0
     int32       groupMsgCancelTime   = 23;  //群消息销毁时间[秒] add v1.3.0
@@ -38,13 +38,14 @@ message GroupReqMsgDto {
 
 // 群事件消息类型
 enum GroupMsgType {
-    GROUP_REQ_FORCE_INITIATE    = 0; // 群请求强制初始化事件
+    GROUP_REQ_FORCE_INITIATE    = 0; // 群请求强制初始化事件 （用户补偿异常 或 补偿区间过大 直接推送强制初始化）
     GROUP_REQ_CREATE            = 1; // 群请求创建群事件
     GROUP_REQ_INITIATE          = 2; // 群请求初始化事件（相对于本客户端来说是初始化，其他端还是广播消息中的入群事件）
     GROUP_REQ_DESTROY           = 3; // 群请求销毁事件（相对于本客户端来说是销毁，其他端还是广播消息中的退群事件）
     GROUP_REQ_BROADCAST         = 4; // 群请求广播事件（注意：创建群、初始化、销毁事件和广播消息在同一序列）
     GROUP_REQ_UNICAST           = 5; // 群请求单播事件
     GROUP_UPDATE                = 6; // 群更新事件
+    GROUP_REQ_FORCE_DESTROY     = 7; // 群请求强制销毁事件，当服务端检测到用户已不在群，但仍然请求相关接口，则推送强制销毁（可能存在销毁事件丢失导致）
 }
 
 // 群事件类型
@@ -53,6 +54,7 @@ enum GroupEventType {
     GROUP_EVENT_BROADCAST         = 1; // 群请求广播事件（注意：创建群、初始化、销毁事件和广播消息在同一序列）
     GROUP_EVENT_UNICAST           = 2; // 群请求单播事件
     GROUP_EVENT_UPDATE            = 3; // 群更新事件
+    GROUP_EVENT_FORCE_DESTROY     = 4; // 群请求强制初始化事件
 }
 
 // 公共信息
