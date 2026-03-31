@@ -218,7 +218,7 @@ const dispatch = (code, data) => {
       // 退出登录
       let { commonResult } = data;
       const errCode = commonResult.errCode;
-      console.log('收到错误推送code: 29999', errCode);
+      console.$collect('收到错误推送code: 29999', errCode);
       if (errCode == 100) {
         // 登出前要先导出
         ipcRenderer.send("auto-export-db", {});
@@ -321,7 +321,7 @@ const fnSocketMessage = (arrayBuffer) => {
 
   // 退出登录
   if (code === 20002) {
-    console.log("退出登录：code 20002");
+    console.$collect("退出登录：code 20002");
     window.$closeConfirm && window.$closeConfirm();
     ipcRenderer.send("auto-export-db", {});
   }
