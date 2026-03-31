@@ -70,7 +70,10 @@ message GetTokenResp {
 // 更新用户密钥req [/sys/updateKeyPair]
 message UpdateKeyPairReq {
     ClientInfo     clientInfo   = 1; // 客户端信息
-    string         publicKey    = 2; // 公钥
+    string         publicKey    = 2; // 新公钥
+    int32          oldVersion   = 3; // 客户端当前持有的密钥版本号（0=首次/未知）
+    string         oldPublicKey = 4; // 客户端当前持有的公钥（空串=首次/未知）
+    string         desc         = 5; // 触发描述（客户端自行拼装：来源标识 + 触发场景 + 调用路径等）
 }
 
 // 更新用户密钥resp
@@ -109,6 +112,21 @@ message GetKeyPairListReq{
 message GetKeyPairListResp{
     CommonResult   commonResult   = 1; // 结果信息
     repeated KeyPairBase keyPairs = 2; // 秘钥对列表
+}
+
+// 根据版本号获取用户密钥对req [/sys/getKeyPairOfVer]
+message GetKeyPairOfVerReq {
+    ClientInfo     clientInfo   = 1; // 客户端信息
+    int64          uid          = 2; // 目标用户id
+    int32          appVer       = 3; // app密钥版本(不传则下发最新)
+    int32          webVer       = 4; // web密钥版本(不传则下发最新)
+}
+
+// 根据版本号获取用户密钥对resp
+message GetKeyPairOfVerResp {
+    CommonResult   commonResult   = 1; // 结果信息
+    KeyPairBase    appKeyPair     = 2; // app密钥对
+    KeyPairBase    webKeyPair     = 3; // web密钥对
 }
 
 // 检测新版本请求 [/sys/checkVersion]（add v1.0.0暂未使用）

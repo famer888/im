@@ -20,7 +20,7 @@ import {
     checkDirectory,
 } from "@/utils/fileTools";
 import { getUserDataDirectory, getWorkingDir, filterSensitiveWords } from "@/utils/tools";
-import { fnMsgDecryption } from "@/utils/encryption-decryption";
+import { fnMsgDecryption } from "@/utils/e2ee";
 import { getKeys } from "@/utils/upload";
 import { fnEmojiToText, fnTextSendInfoGet } from "@/utils/widget/editor";
 import { shouldPreventSendingMessage } from "@/utils/tools";
@@ -362,9 +362,10 @@ const fnFriendMsgAdd = async (msg) => {
     } else if (msg.msgType == enumMsgType.dice || (!msg.version && !msg.text)) {
         content = msg.appContent?.content || msg.content;
     } else if (isSelf) {
-        // myselfWebContent不存在或version为空，无法解密
-        // myselfAppContent由发送端用secret(发送端私钥, App公钥)加密，
-        // 需要发送端在发送时生成myselfWebContent
+        console.$collectE2ee('isSelf消息缺少myselfWebContent', {
+            msgId: Number(msg.msgId), source: msg.source, version: msg.version,
+            hasMyselfWebContent: !!msg.myselfWebContent, hasMyselfAppContent: !!msg.myselfAppContent,
+        });
         console.error(
             "isSelf消息缺少myselfWebContent，无法解密",
             Number(msg.msgId),
@@ -377,6 +378,9 @@ const fnFriendMsgAdd = async (msg) => {
     } else {
         // 好友发送
         if (!msg.webContent) {
+            console.$collectE2ee('好友消息缺少webContent', {
+                msgId: Number(msg.msgId), source: msg.source, version: msg.version,
+            });
             console.error("好友消息缺少webContent", Number(msg.msgId), msg.source, msg.version);
             return;
         }
@@ -400,9 +404,12 @@ const fnFriendMsgAdd = async (msg) => {
         isSelf,
         senderKeyVersion: isSelf ? msg.version : undefined,
     });
-
+    
     // 如果解密失败，则终止执行
     if (!contentStr) {
+        console.$collectE2ee('私聊解密结果为空', {
+            friendId, isSelf, version, source: msg.source, msgId: Number(msg.msgId),
+        });
         return;
     }
 

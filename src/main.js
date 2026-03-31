@@ -9,7 +9,7 @@ import ImeFixPlugin from "@/utils/ime-fix";
 import ComImage from "@/components/image.vue";
 import { fnPopUpMountToWindow } from "@/utils/pop-up";
 import infiniteScroll from 'vue-infinite-scroll';
-import { initLogCollectSystem } from "@/utils/logCollect";
+import { initLogCollectSystem } from "@/utils/logger/renderer";
 
 Vue.use(infiniteScroll);
 Vue.use(VueRouter);

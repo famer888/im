@@ -4,7 +4,7 @@ import packet from "@/api/base/imweb-web";
 import channelEvents from "@/api/base/channel_event";
 import { decrypt } from "@/socket/api/request";
 import { ReceiveServerToClient } from "@/socket/api/message";
-import { fnUpdateKeyFriend, fnUpdateKeyOwn } from "@/utils/encryption-decryption";
+import { fnUpdateKeyFriend, fnUpdateKeyOwn } from "@/utils/e2ee";
 import { Cache } from "@/cache";
 
 // 事件
@@ -183,6 +183,24 @@ const dispatch = (code, data) => {
     }
     case 20501: {
       const loginId = eventCommon.fnCommonInfoRU({ getId: "loginId" });
+      const appVer = data?.appKeyPair?.keyVersion;
+      const webVer = data?.webKeyPair?.keyVersion;
+      if (!appVer && data?.appKeyPair?.publicKey) {
+        console.$collectE2ee('20501-appKeyPair版本号为0但publicKey不为空', {
+          uid: Number(data.uid),
+          isOwn: Number(data.uid) === loginId,
+          appPublicKey: !!data.appKeyPair.publicKey,
+          appKeyVersion: appVer,
+        });
+      }
+      if (!webVer && data?.webKeyPair?.publicKey) {
+        console.$collectE2ee('20501-webKeyPair版本号为0但publicKey不为空', {
+          uid: Number(data.uid),
+          isOwn: Number(data.uid) === loginId,
+          webPublicKey: !!data.webKeyPair.publicKey,
+          webKeyVersion: webVer,
+        });
+      }
       if (Number(data.uid) === loginId) {
         console.log('同账号密钥更新');
         fnUpdateKeyOwn(data);
@@ -200,6 +218,7 @@ const dispatch = (code, data) => {
       // 退出登录
       let { commonResult } = data;
       const errCode = commonResult.errCode;
+      console.log('收到错误推送code: 29999', errCode);
       if (errCode == 100) {
         // 登出前要先导出
         ipcRenderer.send("auto-export-db", {});
@@ -302,7 +321,7 @@ const fnSocketMessage = (arrayBuffer) => {
 
   // 退出登录
   if (code === 20002) {
-    console.log("退出登录");
+    console.log("退出登录：code 20002");
     window.$closeConfirm && window.$closeConfirm();
     ipcRenderer.send("auto-export-db", {});
   }

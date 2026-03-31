@@ -1,5 +1,5 @@
 import { CReqChatSendPrivate, CReqSendChatGroup, CReqSendChatChannel } from "@/socket/api/message";
-import { fnFormartMsgParams } from "./encryption-decryption";
+import { fnFormartMsgParams } from "./e2ee";
 
 // 工具
 import { strIsSafe } from "@/utils/base";

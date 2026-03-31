@@ -40,7 +40,7 @@
 import { remote } from "@/platform";
 import { Cache } from "@/cache";
 import { getMacAddress } from "@/utils/trendsAesKey";
-import { fnInitAllGroupKey ,fnInitAllChannelKey,fnInitAllFriendKey} from "@/utils/encryption-decryption";
+import { fnInitAllGroupKey ,fnInitAllChannelKey,fnInitAllFriendKey} from "@/utils/e2ee";
 
 // 控件
 import QrcodeVue from "qrcode.vue";
