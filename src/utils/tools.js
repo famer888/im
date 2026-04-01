@@ -21,12 +21,11 @@ const filterSensitiveWords = (str) => {
     if(whiteArr.some(item => item === str)) return str;
 
     const arr = eventCommon.fnSensitiveWordsGet();
-    let result = str; // 遍历数组中的每个字符串
+    let result = str;
     arr.forEach((item) => {
-        if (["<", ">", "="].includes(item)) return;
-        // 使用正则表达式将匹配到的字符替换为*
-        const regex = new RegExp(item, "g");
-        result = result.replace(regex, "*".repeat(item.length));
+        if (!item || ["<", ">", "="].includes(item)) return;
+        const replacement = "*".repeat(item.length);
+        result = result.split(item).join(replacement);
     });
 
     return result;
