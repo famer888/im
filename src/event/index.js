@@ -16,8 +16,11 @@ import eventChannel from "./channel";
 import eventCheduledCeletion from "./cheduled-deletion";
 import eventCommon from "@/event/common";
 import { FairGuard } from "@/api/base/unit";
-// 之前的时间
-let timeBefore = new Date().getTime();
+import {
+  enqueueWsDispatch,
+  DEFAULT_WS_DISPATCH_PRIORITY,
+} from "./scheduler";
+
 
 const dispatch = (code, data) => {
   switch (code) {
@@ -267,57 +270,52 @@ const dispatch = (code, data) => {
   }
 };
 const expired = new Expired(dispatch);
+
+const WS_PACKET_STR = {
+  20001: "LoginResp", // 登录
+  20102: "PushOneToOneMessageResp", // 私聊消息接收
+  20202: "PushGroupMessageResp", // 群聊消息接收(自己/其他人)
+  20103: "PushRecallOneToOneMessageResp", // 私聊消息删除
+  20201: "SendGroupMessageResp", //群聊消息发送
+  20203: "PushRecallGroupMessageResp", // 群聊消息删除
+  20101: "OneToOneMessageResp", // 消息发送成功
+  20104: "PushReceiptMessageResp", // 消息发送同步
+  20301: "PushFriendRecordMessageResp", //添加好友通知
+  20302: "PushFriendReqNumResp", //好友申请
+  20401: "PushGroupReqNumResp", // 推送群请求
+  20402: "PushGroupReqMessageResp", // 推送群请求与处理消息
+  20501: "PushKeyPairChangeMessageResp",
+  29999: "ErrrMessageResp", // 消息报错
+  20601: "PushUserOnOrOffLineMessageResp", // 推送用户上下线
+  20701: "PushGroupEventMessage", //群相关事件
+  20403: "PushGroupMsgReceiptMessage",
+  4203: "PushChannelMessage", // 频道消息接收
+  4205: "PushRecallChannelMessage", // 频道消息撤回/删除
+  4201: "PushSendChannelMessageSuccessMessage", // 频道消息发送成功
+  4204: "PushChannelEventMessage", // 频道身份变更
+  4206: "PushReadChannelMessage", // 频道已读
+};
+
 /**
  * 接收到websocket的消息
+ * @param {ArrayBuffer} arrayBuffer
+ * @param {number} [priority=DEFAULT_WS_DISPATCH_PRIORITY] dispatch 优先级，数值越小越先执行（预留）
  */
-export function eventWsReceivedMsg(arrayBuffer) {
-  let timeNow = new Date().getTime();
-  let timeout = 0;
-
-  if (timeNow - timeBefore < 80) {
-    timeout = timeBefore + 80 - timeNow;
-    timeBefore = timeBefore + 80;
-  } else {
-    timeBefore = timeNow;
-  }
-
-  setTimeout(() => {
-    fnSocketMessage(arrayBuffer);
-  }, timeout);
+export function eventWsReceivedMsg(
+  arrayBuffer,
+  priority = DEFAULT_WS_DISPATCH_PRIORITY
+) {
+  fnSocketMessage(arrayBuffer, priority);
 }
 
 /**
- * 处理收到的消息
+ * ACK：解析、FairGuard、确认接收、expired.check（须同步以维护 Expired 栈顺序）
+ * dispatch：入队，由调度器按时间片执行
  */
-const fnSocketMessage = (arrayBuffer) => {
-  const packetStr = {
-    20001: "LoginResp", // 登录
-    20102: "PushOneToOneMessageResp", // 私聊消息接收
-    20202: "PushGroupMessageResp", // 群聊消息接收(自己/其他人)
-    20103: "PushRecallOneToOneMessageResp", // 私聊消息删除
-    20201: "SendGroupMessageResp", //群聊消息发送
-    20203: "PushRecallGroupMessageResp", // 群聊消息删除
-    20101: "OneToOneMessageResp", // 消息发送成功
-    20104: "PushReceiptMessageResp", // 消息发送同步
-    20301: "PushFriendRecordMessageResp", //添加好友通知
-    20302: "PushFriendReqNumResp", //好友申请
-    20401: "PushGroupReqNumResp", // 推送群请求
-    20402: "PushGroupReqMessageResp", // 推送群请求与处理消息
-    20501: "PushKeyPairChangeMessageResp",
-    29999: "ErrrMessageResp", // 消息报错
-    20601: "PushUserOnOrOffLineMessageResp", // 推送用户上下线
-    20701: "PushGroupEventMessage", //群相关事件
-    20403: "PushGroupMsgReceiptMessage",
-    4203: "PushChannelMessage", // 频道消息接收
-    4205: "PushRecallChannelMessage", // 频道消息撤回/删除
-    4201: "PushSendChannelMessageSuccessMessage", // 频道消息发送成功
-    4204: "PushChannelEventMessage", // 频道身份变更
-    4206: "PushReadChannelMessage", // 频道已读
-  };
-
+const fnSocketMessage = (arrayBuffer, dispatchPriority) => {
   const code = new DataView(arrayBuffer.slice(2, 4)).getUint16();
   const buffer = Buffer.from(arrayBuffer.slice(16));
-  const method = packetStr[code];
+  const method = WS_PACKET_STR[code];
 
   // 退出登录
   if (code === 20002) {
@@ -375,7 +373,9 @@ const fnSocketMessage = (arrayBuffer) => {
     console.$collect('收到推送--' + code);
   }
   if (expired.check(code, data)) {
-    dispatch(code, data);
+    const c = code;
+    const d = data;
+    enqueueWsDispatch(() => dispatch(c, d), dispatchPriority);
   }
 };
 
