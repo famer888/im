@@ -1,10 +1,26 @@
 import { IDS, messagesSchema } from "./schema";
 import { fnMsgAdd } from "@/event/msg";
 import eventCommon from "@/event/common";
+import { eventWsReceivedMsg } from "@/event";
+import { getCannonWsFrameArrayBuffers, refreshCannonWsFramesCache } from "./fixtures/cannonWsFrames";
+import Config from "@/config.js";
+import { getAesKeySync } from "@/utils/trendsAesKey";
+import { AES_KEY } from "@/api/base/unit";
+import cannonCheckboxImg from "@/assets/images/message/checkBox.png";
+import cannonCheckboxedImg from "@/assets/images/message/checkBoxed.png";
 
 // 动态获取当前登录id
 const getLoginId = () => {
   return eventCommon.fnCommonInfoRU({ getId: "loginId" });
+};
+
+/** 与 socket decrypt 使用的密钥来源一致 */
+const getSocketAesKeyForCannonGen = () => {
+  let k = Config.TRENDS_AES_KEY ? getAesKeySync() : AES_KEY;
+  if (Config.TRENDS_AES_KEY && (!k || k === "")) {
+    k = AES_KEY;
+  }
+  return k != null ? String(k) : "";
 };
 
 let currentIndex = 0;
@@ -14,6 +30,52 @@ let timer = null;
 let msgIdCounter = 10000; // 自增的 msgId 计数器
 let customMsgIdCounter = Date.now(); // 自增的 customMsgId 计数器
 let specialUid = null; // 特殊 uid，有 1/4 概率被选中
+let useEncodedFixture = false; // true：回放本地帧，走 eventWsReceivedMsg（与 WS 入口一致）
+
+const generateEncodedFramesFile = ({ count, baseMsgId }) => {
+  const loginId = parseInt(String(getLoginId() || ""), 10);
+  if (!loginId || Number.isNaN(loginId)) {
+    throw new Error("无法读取 loginId，请先登录");
+  }
+  const aesKey = getSocketAesKeyForCannonGen();
+  if (!aesKey) {
+    throw new Error("无法读取 AES 密钥");
+  }
+  if (!IDS.length) {
+    throw new Error("schema IDS 为空");
+  }
+  const req = window.require || null;
+  if (!req) {
+    throw new Error("当前环境不支持 Node API");
+  }
+  const fs = req("fs");
+  const path = req("path");
+  const { spawnSync } = req("child_process");
+  const root = process.cwd();
+  const script = path.join(root, "src", "debuggers", "cannon-generate-ws-frames.cjs");
+  const output = path.join(root, "src", "debuggers", "fixtures", "cannon-ws-frames.generated.json");
+  const peerPath = path.join(root, "src", "debuggers", "fixtures", "cannon-ws-gen-peer-ids.json");
+  fs.writeFileSync(peerPath, JSON.stringify({ ids: IDS }), "utf8");
+  const args = [
+    script,
+    "--count", String(count),
+    "--key", aesKey,
+    "--receiveUid", String(loginId),
+    "--baseMsgId", String(baseMsgId != null ? baseMsgId : 100000),
+    "--peerIdsFile", peerPath,
+    "--out", output,
+  ];
+  const nodeBin = process.env.CANNON_NODE_BIN || "node";
+  const r = spawnSync(nodeBin, args, { encoding: "utf8" });
+  if (r.error) {
+    throw r.error;
+  }
+  if (r.status !== 0) {
+    throw new Error((r.stderr || r.stdout || "生成失败").trim());
+  }
+  refreshCannonWsFramesCache();
+  return output;
+};
 
 // 伪装成ws消息给渲染进程发送消息，轮流给IDS每个用户发送消息
 const generateMessage = () => {
@@ -84,19 +146,26 @@ const generateMessage = () => {
 }
 
 const sendToWebsocket = () => {
-  // 注意这里不是要你使用websocket发送哦，而是直接调用分发函数即可，跳过解码流程
-  const { msg, contentStr, fileKey, type } = generateMessage();
-
-  // 直接调用 fnMsgAdd，完全跳过 websocket 解码、解密和限流流程
-  fnMsgAdd({ msg, contentStr, fileKey, type });
+  if (useEncodedFixture) {
+    const frames = getCannonWsFrameArrayBuffers();
+    if (!frames.length) {
+      console.warn("[Cannon] 本地帧为空，已停止");
+      stop();
+      return;
+    }
+    const idx = sentCount % frames.length;
+    eventWsReceivedMsg(frames[idx].slice(0));
+  } else {
+    const { msg, contentStr, fileKey, type } = generateMessage();
+    fnMsgAdd({ msg, contentStr, fileKey, type });
+  }
 
   if (sentCount % 10000 === 0) {
     console.log(`[Cannon] 已发送 ${sentCount} 条消息`);
   }
 
-  // 计数
   counter();
-}
+};
 
 export const install = () => {
   // 这里的install是install的UI层，需要你在docuement.body下添加开始结束两个按钮，fixed在右下角置顶
@@ -170,8 +239,85 @@ export const install = () => {
   intervalInput.type = 'number';
   intervalInput.value = '80';
   intervalInput.placeholder = '间隔时间(ms)';
-  intervalInput.style.cssText = 'width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;font-size:13px;box-sizing:border-box;margin-bottom:12px;';
+  intervalInput.style.cssText = 'width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;font-size:13px;box-sizing:border-box;margin-bottom:8px;';
   panel.appendChild(intervalInput);
+
+  const genTitle = document.createElement('div');
+  genTitle.textContent = '── 生成 WS 原始帧（写入 fixtures） ──';
+  genTitle.style.cssText = 'font-size:12px;color:#333;margin:10px 0 6px;font-weight:bold;';
+  panel.appendChild(genTitle);
+
+  const mkLabel = (text) => {
+    const el = document.createElement('div');
+    el.textContent = text;
+    el.style.cssText = 'font-size:12px;color:#555;margin-bottom:4px;';
+    return el;
+  };
+  const mkInput = (type, placeholder, defVal) => {
+    const el = document.createElement('input');
+    el.type = type;
+    if (defVal != null) el.value = defVal;
+    if (placeholder) el.placeholder = placeholder;
+    el.style.cssText = 'width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;font-size:13px;box-sizing:border-box;margin-bottom:8px;';
+    return el;
+  };
+
+  const genHint = document.createElement('div');
+  genHint.textContent = `自动生成：loginId=${String(getLoginId() || '') || '—'}，AES=与当前客户端一致，对方 uid=schema IDS 轮转（${IDS.length} 个）`;
+  genHint.style.cssText = 'font-size:11px;color:#666;margin-bottom:8px;line-height:1.4;';
+  panel.appendChild(genHint);
+
+  panel.appendChild(mkLabel('生成条数：'));
+  const genCountInput = mkInput('number', '', '10000');
+
+  panel.appendChild(mkLabel('起始 msgId：'));
+  const genBaseMsgIdInput = mkInput('number', '', '100000');
+
+  const genBtn = document.createElement('button');
+  genBtn.textContent = '📦 生成并写入本地文件';
+  genBtn.style.cssText = 'width:100%;padding:8px;background:#2196F3;color:#fff;border:none;border-radius:4px;font-size:13px;font-weight:bold;cursor:pointer;margin-bottom:10px;';
+  genBtn.onclick = () => {
+    try {
+      const gCount = parseInt(genCountInput.value, 10) || 10000;
+      const baseMsgId = parseInt(genBaseMsgIdInput.value, 10) || 100000;
+      genBtn.disabled = true;
+      genBtn.textContent = '生成中…';
+      const out = generateEncodedFramesFile({
+        count: gCount,
+        baseMsgId,
+      });
+      window.$toast && window.$toast(`[Cannon] 已写入 ${gCount} 条：${out}`);
+      console.log('[Cannon] WS 帧已生成', out);
+    } catch (e) {
+      console.error(e);
+      window.$toast && window.$toast(`[Cannon] 生成失败：${e.message || e}`);
+    } finally {
+      genBtn.disabled = false;
+      genBtn.textContent = '📦 生成并写入本地文件';
+    }
+  };
+  panel.appendChild(genBtn);
+
+  const encodedRow = document.createElement('div');
+  encodedRow.style.cssText = 'display:flex;align-items:center;gap:8px;font-size:12px;color:#555;margin-bottom:12px;cursor:pointer;user-select:none;';
+  let useEncodedLocal = false;
+  const encodedToggleImg = document.createElement('img');
+  encodedToggleImg.alt = '';
+  encodedToggleImg.draggable = false;
+  encodedToggleImg.style.cssText = 'flex-shrink:0;width:16px;height:16px;border-radius:50%;';
+  const syncEncodedToggle = () => {
+    encodedToggleImg.src = useEncodedLocal ? cannonCheckboxedImg : cannonCheckboxImg;
+  };
+  syncEncodedToggle();
+  encodedRow.appendChild(encodedToggleImg);
+  const encodedText = document.createElement('span');
+  encodedText.textContent = '使用本地 encoded 帧（走 WS 入口 eventWsReceivedMsg）';
+  encodedRow.appendChild(encodedText);
+  encodedRow.onclick = () => {
+    useEncodedLocal = !useEncodedLocal;
+    syncEncodedToggle();
+  };
+  panel.appendChild(encodedRow);
 
   // 创建按钮容器
   const btnContainer = document.createElement('div');
@@ -187,7 +333,15 @@ export const install = () => {
     const count = parseInt(countInput.value) || 1000000;
     const interval = parseInt(intervalInput.value) || 0;
     const uid = parseInt(specialUidInput.value) || null;
-    start({ count, interval, specialUid: uid });
+    if (useEncodedLocal) {
+      const frames = getCannonWsFrameArrayBuffers();
+      if (!frames.length) {
+        window.$toast && window.$toast("[Cannon] 无本地帧：请生成或填写 fixtures/cannon-ws-frames.generated.json、CANNON_WS_FRAMES_B64");
+        console.warn("[Cannon] 本地 WS 帧为空");
+        return;
+      }
+    }
+    start({ count, interval, specialUid: uid, useEncodedFixture: useEncodedLocal });
     statusDiv.textContent = `状态: 运行中 (0/${count})`;
     statusDiv.style.color = '#4CAF50';
     startBtn.disabled = true;
@@ -265,12 +419,14 @@ export const start = (options) => {
   // options.count
   // options.interval
   // options.specialUid
+  // options.useEncodedFixture
   if (timer) {
     console.warn('[Cannon] 已经在运行中，请先停止');
     return;
   }
 
-  const { count = 1000000, interval = 80, specialUid: uid = null } = options || {};
+  const { count = 1000000, interval = 80, specialUid: uid = null, useEncodedFixture: encoded = false } = options || {};
+  useEncodedFixture = encoded;
   maxCount = count;
   sentCount = 0;
   currentIndex = 0;

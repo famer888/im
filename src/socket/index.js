@@ -98,7 +98,7 @@ const onOpen = () => {
     });
 
     // 安装 Cannon 压力测试工具
-    // installCannon();
+    installCannon();
 };
 
 const onMessage = (event) => {
