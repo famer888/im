@@ -157,44 +157,6 @@ function getBaseData() {
     setBaseIndex(baseIndex + 1);
 }
 
-function buildCollapseDoc() {
-    try {
-        const dataPath = nodePath.join(userData, `CollapseDoc`);
-        if (!fs.existsSync(dataPath)) {
-            fs.mkdirSync(dataPath);
-        }
-        const filePath = nodePath.join(userData, `CollapseDoc/index.json`);
-        let pathFlg = isFileExist(filePath);
-        if (!pathFlg) {
-            let data = {
-                createTime: new Date().getTime(),
-                msg: "初始化文件",
-            };
-            let params = [data];
-            fs.writeFileSync(filePath, JSON.stringify(params), {
-                encoding: "utf-8",
-            });
-        }
-    } catch (error) {}
-}
-
-function setCollapseDoc(val) {
-    try {
-        const filePath = nodePath.join(userData, `CollapseDoc/index.json`);
-        let pathFlg = isFileExist(filePath);
-        if (!pathFlg) buildCollapseDoc();
-        let file = fs.readFileSync(filePath, { encoding: "utf-8" });
-        let list = JSON.parse(file);
-        let nowTime = new Date().getTime();
-        let bcTime = 1000 * 60 * 60 * 24 * 7;
-        list = list.filter(
-            (item) => item.createTime && nowTime - item.createTime < bcTime
-        );
-        list.push(val);
-        fs.writeFileSync(filePath, JSON.stringify(list), { encoding: "utf-8" });
-    } catch (error) {}
-}
-
 function setDQbaseData(value) {
     try {
         const dataPath = nodePath.join(userData, `dqDataIndex.json`);
@@ -747,34 +709,35 @@ const setMainWin = async () => {
             // do nothing
         }
     });
-    mainWindow.webContents.on("did-fail-load", (e) => {
-        writeLog('crash-report', 'error', '[did-fail-load] 页面加载失败', e ? {
-            errorCode: e.errorCode, errorDescription: e.errorDescription,
-            validatedURL: e.validatedURL, isMainFrame: e.isMainFrame,
-        } : {});
-        if (process.env.NODE_ENV === "production") {
-            e &&
-                setCollapseDoc({
-                    errorInfo: e,
-                    msg: "系统报错：加载失败",
-                    createTime: new Date().getTime(),
+    mainWindow.webContents.on(
+        "did-fail-load",
+        (event, errorCode, errorDescription, validatedURL, isMainFrame) => {
+            const failDetail = {
+                errorCode,
+                errorDescription,
+                validatedURL,
+                isMainFrame,
+            };
+            writeLog("crash-report", "error", "[did-fail-load] 页面加载失败", {
+                ...failDetail,
+                msg: "系统报错：加载失败",
+                createTime: Date.now(),
+            });
+            setTimeout(() => {
+                mainWindow.reload();
+                mainWindow.send("collapse", {
+                    type: "did-fail-load",
                 });
+            }, 2000);
         }
-        setTimeout(() => {
-            mainWindow.reload();
-            mainWindow.send("collapse", {
-                type: "did-fail-load",
-            });
-        }, 2000);
-    });
-    mainWindow.webContents.on("crashed", (e) => {
-        writeLog('crash-report', 'error', '[crashed] 渲染器进程崩溃', e ? { killed: e.killed, reason: e.reason } : {});
-        e &&
-            setCollapseDoc({
-                errorInfo: e,
-                msg: "系统报错：渲染器进程崩溃",
-                createTime: new Date().getTime(),
-            });
+    );
+    mainWindow.webContents.on("crashed", (event, killed) => {
+        const crashDetail = { killed };
+        writeLog("crash-report", "error", "[crashed] 渲染器进程崩溃", {
+            ...crashDetail,
+            msg: "系统报错：渲染器进程崩溃",
+            createTime: Date.now(),
+        });
     });
     mainWindow.webContents.on("new-window", (event, url) => {
         event.preventDefault();
@@ -822,10 +785,11 @@ const setMainWin = async () => {
             mainWindowState.manage(mainWindow);
         } catch (error) {
             error &&
-                setCollapseDoc({
-                    errorInfo: error,
+                writeLog("crash-report", "error", "[changeWindow] 失败", {
                     msg: "系统报错：changeWindow失败",
-                    createTime: new Date().getTime(),
+                    createTime: Date.now(),
+                    message: error.message,
+                    stack: error.stack,
                 });
         }
     });
@@ -1021,7 +985,10 @@ const createMainWindow = async () => {
     ipcMain.handle("outFile", outFile);
 
     ipcMain.on("whiteErrorDoc", (e, args) => {
-        setCollapseDoc(args);
+        writeLog("crash-report", "error", "[whiteErrorDoc] 渲染进程上报", {
+            ...(args && typeof args === "object" ? args : { payload: args }),
+            createTime: Date.now(),
+        });
     });
 
     ipcMain.on("checkAutoOpen", (e, args) => {
@@ -1224,7 +1191,6 @@ if (!app.requestSingleInstanceLock()) {
     console.log("获取到没有呢", baseIndex);
     userData = nodePath.join(userData, `/DATA_${baseIndex}/`);
     app.setPath("userData", userData);
-    buildCollapseDoc();
 } else {
     console.log("这里是设置");
     setBaseIndex(1);
@@ -1250,7 +1216,6 @@ app.on("second-instance", (event, argv) => {
 // windows上，需要正确设置appUserModelId，才能正常显示通知，不然通知的应用标识会显示为：electron.app.xxx
 app.on("will-finish-launching", (e) => {
     app.setAppUserModelId("ocs-new");
-    // e && setCollapseDoc({errorInfo: e, msg: '系统报错：加载失败', createTime: new Date().getTime()})
 });
 
 function registerLocalResourceProtocol(ses) {
