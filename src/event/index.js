@@ -17,7 +17,10 @@ import eventCheduledCeletion from "./cheduled-deletion";
 import eventCommon from "@/event/common";
 import { FairGuard } from "@/api/base/unit";
 import {
-  enqueueWsDispatch,
+  registerWsParseRunner,
+  registerWsDispatchRunner,
+  enqueueWsParseTask,
+  enqueueWsDispatchTask,
   DEFAULT_WS_DISPATCH_PRIORITY,
 } from "./scheduler";
 
@@ -305,14 +308,14 @@ export function eventWsReceivedMsg(
   arrayBuffer,
   priority = DEFAULT_WS_DISPATCH_PRIORITY
 ) {
-  fnSocketMessage(arrayBuffer, priority);
+  enqueueWsParseTask(arrayBuffer.slice(0), priority);
 }
 
 /**
- * ACK：解析、FairGuard、确认接收、expired.check（须同步以维护 Expired 栈顺序）
- * dispatch：入队，由调度器按时间片执行
+ * 解析阶段（在调度器时间片内执行）：decrypt/decode、FairGuard、ACK、expired.check；
+ * check 通过则投递纯数据任务 { code, data }，无 per-message 闭包。
  */
-const fnSocketMessage = (arrayBuffer, dispatchPriority) => {
+function runSocketParsePhase(arrayBuffer, dispatchPriority) {
   const code = new DataView(arrayBuffer.slice(2, 4)).getUint16();
   const buffer = Buffer.from(arrayBuffer.slice(16));
   const method = WS_PACKET_STR[code];
@@ -373,11 +376,16 @@ const fnSocketMessage = (arrayBuffer, dispatchPriority) => {
     console.$collect('收到推送--' + code);
   }
   if (expired.check(code, data)) {
-    const c = code;
-    const d = data;
-    enqueueWsDispatch(() => dispatch(c, d), dispatchPriority);
+    enqueueWsDispatchTask({ code, data }, dispatchPriority);
   }
-};
+}
+
+registerWsParseRunner((task) => {
+  runSocketParsePhase(task.arrayBuffer, task.priority);
+});
+registerWsDispatchRunner((task) => {
+  dispatch(task.code, task.data);
+});
 
 
 

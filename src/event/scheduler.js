@@ -1,27 +1,20 @@
 /**
- * WebSocket 推送 dispatch 侧调度：Fiber 式合作调度 + 空闲感知。
- * - 优先 requestIdleCallback：用 IdleDeadline.timeRemaining() 判断浏览器分配的空闲时间。
- * - timeout：长期高负载时仍会被强制回调，避免队列饿死（此时按 frameBudgetMs 再切片）。
- * - 无 rIC 环境（旧 Safari 等）：回退 requestAnimationFrame + frameBudgetMs。
- * ACK（解析、FairGuard、ReceiveServerToClient、expired.check）仍在 event 层同步完成。
+ * WebSocket 解析与 dispatch 两阶段协作调度（requestIdleCallback + 时间片）。
+ * - 解析队列：单帧内按预算处理 decrypt/decode 等，避免万条连续同步占满主线程。
+ * - dispatch 队列：纯数据任务 { code, data }，无 per-message 闭包。
  */
 
 /** 默认与当前全体消息一致；数值越小优先级越高（越先被消费） */
 export const DEFAULT_WS_DISPATCH_PRIORITY = 0;
 
-/** 预留：高优先级推送（例如关键信令）；接入时传入 enqueueWsDispatch(fn, WS_DISPATCH_PRIORITY_HIGH) */
+/** 预留：高优先级 */
 export const WS_DISPATCH_PRIORITY_HIGH = -100;
 
-/** 预留：低优先级推送（例如可延迟 UI）；接入时传入 enqueueWsDispatch(fn, WS_DISPATCH_PRIORITY_LOW) */
+/** 预留：低优先级 */
 export const WS_DISPATCH_PRIORITY_LOW = 100;
 
-/**
- * 单帧内连续执行 dispatch 的时间预算（毫秒）。
- * 用于：无 rIC 时的 rAF 回退；rIC 因 timeout 强制触发时的上限，避免占满主线程。
- */
 let frameBudgetMs = 6;
 
-/** rIC 的 timeout：一直无空闲时最晚多久必须执行一次，防止队列积压 */
 let idleCallbackTimeoutMs = 50;
 
 /** @param {number} ms */
@@ -34,19 +27,20 @@ export function setWsDispatchIdleTimeoutMs(ms) {
   idleCallbackTimeoutMs = Math.max(16, ms);
 }
 
-/** @type {Map<number, Array<() => void>>} */
-const queues = new Map();
-
-let flushScheduled = false;
-
-function hasAnyWork() {
+/**
+ * @param {Map<number, unknown[]>} queues
+ */
+function hasAnyWorkIn(queues) {
   for (const q of queues.values()) {
     if (q.length) return true;
   }
   return false;
 }
 
-function getHighestPriorityQueue() {
+/**
+ * @param {Map<number, unknown[]>} queues
+ */
+function getHighestPriorityQueueFrom(queues) {
   const keys = Array.from(queues.keys()).sort((a, b) => a - b);
   for (const k of keys) {
     const q = queues.get(k);
@@ -56,10 +50,15 @@ function getHighestPriorityQueue() {
 }
 
 /**
- * @param {IdleDeadline | null} idleDeadline null 表示 rAF 回退路径
+ * @param {{
+ *   queues: Map<number, unknown[]>,
+ *   scheduledFlag: { value: boolean },
+ *   processOne: (task: unknown) => void,
+ * }} opts
  */
-function flushWithIdleDeadline(idleDeadline) {
-  flushScheduled = false;
+function flushWithIdleDeadlineForQueues(idleDeadline, opts) {
+  const { queues, scheduledFlag, processOne } = opts;
+  scheduledFlag.value = false;
 
   const rafSliceEnd =
     idleDeadline == null ? performance.now() + frameBudgetMs : null;
@@ -68,7 +67,7 @@ function flushWithIdleDeadline(idleDeadline) {
       ? performance.now() + frameBudgetMs
       : null;
 
-  while (hasAnyWork()) {
+  while (hasAnyWorkIn(queues)) {
     if (idleDeadline) {
       if (idleDeadline.didTimeout) {
         if (
@@ -84,45 +83,111 @@ function flushWithIdleDeadline(idleDeadline) {
       break;
     }
 
-    const q = getHighestPriorityQueue();
+    const q = getHighestPriorityQueueFrom(queues);
     if (!q) break;
-    const fn = q.shift();
-    if (!fn) continue;
+    const task = q.shift();
+    if (task == null) continue;
     try {
-      fn();
+      processOne(task);
     } catch (e) {
-      console.error("[wsDispatchScheduler]", e);
+      console.error("[wsScheduler]", e);
     }
   }
 
-  if (hasAnyWork()) {
-    scheduleFlush();
+  if (hasAnyWorkIn(queues)) {
+    scheduleIdleFlush(opts);
   }
 }
 
-function scheduleFlush() {
-  if (flushScheduled) return;
-  flushScheduled = true;
+function scheduleIdleFlush(opts) {
+  const scheduledFlag = opts.scheduledFlag;
+  if (scheduledFlag.value) return;
+  scheduledFlag.value = true;
 
   if (typeof requestIdleCallback === "function") {
     requestIdleCallback(
       (deadline) => {
-        flushWithIdleDeadline(deadline);
+        flushWithIdleDeadlineForQueues(deadline, opts);
       },
       { timeout: idleCallbackTimeoutMs }
     );
   } else {
-    requestAnimationFrame(() => flushWithIdleDeadline(null));
+    requestAnimationFrame(() => flushWithIdleDeadlineForQueues(null, opts));
   }
 }
 
+// ---------- 解析阶段 ----------
+
+/** @type {Map<number, Array<{ arrayBuffer: ArrayBuffer, priority: number }>>} */
+const parseQueues = new Map();
+
+const parseScheduled = { value: false };
+
+/** @type {(task: { arrayBuffer: ArrayBuffer, priority: number }) => void} */
+let parseRunner = (task) => {
+  console.warn("[wsScheduler] parseRunner 未注册", task);
+};
+
+export function registerWsParseRunner(fn) {
+  parseRunner = fn;
+}
+
+const parseFlushOpts = {
+  queues: parseQueues,
+  scheduledFlag: parseScheduled,
+  processOne(task) {
+    parseRunner(task);
+  },
+};
+
 /**
- * @param {() => void} fn
+ * @param {ArrayBuffer} arrayBuffer 建议调用方已 slice(0) 拷贝，避免外部复用
  * @param {number} [priority=DEFAULT_WS_DISPATCH_PRIORITY]
  */
-export function enqueueWsDispatch(fn, priority = DEFAULT_WS_DISPATCH_PRIORITY) {
+export function enqueueWsParseTask(
+  arrayBuffer,
+  priority = DEFAULT_WS_DISPATCH_PRIORITY
+) {
   const p = priority ?? DEFAULT_WS_DISPATCH_PRIORITY;
-  if (!queues.has(p)) queues.set(p, []);
-  queues.get(p).push(fn);
-  scheduleFlush();
+  if (!parseQueues.has(p)) parseQueues.set(p, []);
+  parseQueues.get(p).push({ arrayBuffer, priority: p });
+  scheduleIdleFlush(parseFlushOpts);
+}
+
+// ---------- dispatch 阶段 ----------
+
+/** @type {Map<number, Array<{ code: number, data: object }>>} */
+const dispatchQueues = new Map();
+
+const dispatchScheduled = { value: false };
+
+/** @type {(task: { code: number, data: object }) => void} */
+let dispatchRunner = (task) => {
+  console.warn("[wsScheduler] dispatchRunner 未注册", task);
+};
+
+export function registerWsDispatchRunner(fn) {
+  dispatchRunner = fn;
+}
+
+const dispatchFlushOpts = {
+  queues: dispatchQueues,
+  scheduledFlag: dispatchScheduled,
+  processOne(task) {
+    dispatchRunner(task);
+  },
+};
+
+/**
+ * @param {{ code: number, data: object }} task
+ * @param {number} [priority=DEFAULT_WS_DISPATCH_PRIORITY]
+ */
+export function enqueueWsDispatchTask(
+  task,
+  priority = DEFAULT_WS_DISPATCH_PRIORITY
+) {
+  const p = priority ?? DEFAULT_WS_DISPATCH_PRIORITY;
+  if (!dispatchQueues.has(p)) dispatchQueues.set(p, []);
+  dispatchQueues.get(p).push({ code: task.code, data: task.data });
+  scheduleIdleFlush(dispatchFlushOpts);
 }
