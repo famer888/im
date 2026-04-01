@@ -40,7 +40,9 @@ const batchReport = async () => {
         datas: list.map(item => item.prams), 
         headers: { accessToken },
     } 
-    batchReportErrorDomainApi(pra) 
+    if (pra.datas.some((d) => d && d.domainUrl)) {
+        batchReportErrorDomainApi(pra)
+    }
     waitReport.clear()
 }
 
@@ -55,6 +57,7 @@ export const reportErrorDomain = async (errorPath, opts) => {
 
     if([429, 403,502, 504].includes(httpStatus)) return
 
+    const path = typeof errorPath === "string" ? errorPath.trim() : errorPath;
 
     let domainUrl = getUrlDomain(errorPath);
     let reqTime = Number(getCurrentTimestamp13Digits());
@@ -78,7 +81,7 @@ export const reportErrorDomain = async (errorPath, opts) => {
         domainUrl,
         errorDesc: errorDesc.toString(),
         errorType: 0,
-        errorPath,
+        errorPath: path,
         httpStatus,
         mchId,
         moduleCode,
@@ -97,9 +100,9 @@ export const reportErrorDomain = async (errorPath, opts) => {
     }
     if(isPastTimestamp(lastReportTime, 10000)) {
         lastReportTime = Date.now()
-        reportErrorDomainApi(pra)
+        if (domainUrl) reportErrorDomainApi(pra)
     } else {
-        waitReport.add(domainUrl, reportReq) 
+        if (domainUrl) waitReport.add(domainUrl, reportReq) 
     }
     setErrorRecord(domainUrl, reqTime)
 }
