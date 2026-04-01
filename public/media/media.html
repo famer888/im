@@ -28,10 +28,15 @@
     .media-layer { position: fixed; top: 0; left: 0; right: 0; bottom: 0; display: none; align-items: center; justify-content: center; }
     .media-layer.active { display: flex; }
     /* 以最长边（宽或高）占满容器，另一边按比例缩放。如：容器高1024，图片1800x3600 → 以1024高显示，宽=1800*(1024/3600) */
-    #image-layer { overflow: hidden; }
-    #img-wrap { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    #image-layer, #video-layer { overflow: hidden; }
+    #img-wrap, #video-wrap { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+    #img-wrap { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
     #image-layer img { width: 100%; height: 100%; object-fit: contain; user-select: none; -webkit-user-drag: none; }
     #video-layer { background: transparent; }
+    /* 放大观看时隐藏播放器 UI；禁止点按画面触发播放/暂停，由脚本区分 tap / drag */
+    #video-layer.video-zoomed .plyr__controls,
+    #video-layer.video-zoomed .plyr__control--overlaid { visibility: hidden !important; pointer-events: none !important; }
+    #video-layer.video-zoomed video { pointer-events: none; }
     #video-layer .plyr { width: 100%; height: 100%; }
     #video-layer video { width: 100%; height: 100%; object-fit: contain; }
     .plyr--video { --plyr-color-main: #7b8aff; --plyr-video-background: transparent; background: transparent; }
@@ -51,7 +56,9 @@
   <div id="image-layer" class="media-layer">
   </div>
   <div id="video-layer" class="media-layer">
-    <video id="video-player" preload="metadata"></video>
+    <div id="video-wrap">
+      <video id="video-player" preload="metadata"></video>
+    </div>
   </div>
   <!-- <div style="position:fixed;top:36px;left:12px;z-index:100;display:flex;gap:6px;">
     <button onclick="mediaView.init('test.jpg',window.MediaType.IMAGE)" style="padding:4px 10px;border:none;border-radius:6px;background:rgba(255,255,255,0.15);color:#fff;cursor:pointer;font-size:12px;">Test Image</button>
@@ -78,7 +85,11 @@
       autoplay: true
     });
 
-    const IMAGE_WZOOM_OPTIONS = { minScale: 1, maxScale: 3, speed: 2, zoomOnClick: false, zoomOnDblClick: false };
+    /** 图片与视频共用；非 image 类型时不等待 load，可用 width/height 覆盖原始尺寸 */
+    const MEDIA_WZOOM_BASE = { minScale: 1, maxScale: 3, speed: 2, zoomOnClick: false, zoomOnDblClick: false };
+    function mediaWZoomOptions(overrides) {
+      return Object.assign({}, MEDIA_WZOOM_BASE, overrides);
+    }
 
     function debounce(fn, wait) {
       let t;
@@ -88,6 +99,10 @@
       };
     }
 
+    /** 放大态下：位移超过此值视为 drag，不触发缩放回 1（图片与视频共用） */
+    const MEDIA_TAP_MOVE_MAX_PX = 12;
+    const MEDIA_TAP_TIME_MAX_MS = 500;
+
     const mediaView = {
       _rotation: 0,
       _wz: null,
@@ -95,16 +110,59 @@
       _mediaType: '',
       _naturalWidth: 0,
       _naturalHeight: 0,
+      /** 视频 tap 复位后吞掉紧随的 click，避免误触播放/暂停 */
+      _consumeNextVideoClick: false,
 
       /** WZoom 在首次 init 时缓存了 viewport 尺寸，窗口拉伸/最大化后需重建，否则缩放的坐标焦点会偏移 */
-      _rebuildImageWheelZoom() {
-        if (this._mediaType !== window.MediaType.IMAGE) return;
-        if (!document.querySelector('#img-wrap img')) return;
+      _syncImageZoomChrome(scale) {
+        const layer = document.getElementById('image-layer');
+        if (!layer || this._mediaType !== window.MediaType.IMAGE) return;
+        layer.classList.toggle('image-zoomed', scale > 1);
+      },
+
+      _syncVideoZoomChrome(scale) {
+        const layer = document.getElementById('video-layer');
+        if (!layer || this._mediaType !== window.MediaType.VIDEO) return;
+        layer.classList.toggle('video-zoomed', scale > 1);
+      },
+
+      _rebuildWheelZoom() {
         if (this._wz) {
           this._wz.destroy();
           this._wz = null;
         }
-        this._wz = WZoom.create('#img-wrap img', IMAGE_WZOOM_OPTIONS);
+        if (this._mediaType === window.MediaType.IMAGE) {
+          if (!document.querySelector('#img-wrap img')) return;
+          const w = this._naturalWidth || undefined;
+          const h = this._naturalHeight || undefined;
+          const self = this;
+          const opts = mediaWZoomOptions({
+            type: 'image',
+            rescale(wz) {
+              self._syncImageZoomChrome(wz.content.currentScale);
+            }
+          });
+          if (w) opts.width = w;
+          if (h) opts.height = h;
+          this._wz = WZoom.create('#img-wrap img', opts);
+          this._syncImageZoomChrome(this._wz.content.currentScale);
+        } else if (this._mediaType === window.MediaType.VIDEO) {
+          const plyrEl = document.querySelector('#video-wrap .plyr');
+          if (!plyrEl) return;
+          const w = this._naturalWidth || undefined;
+          const h = this._naturalHeight || undefined;
+          const self = this;
+          const opts = mediaWZoomOptions({
+            type: 'html',
+            rescale(wz) {
+              self._syncVideoZoomChrome(wz.content.currentScale);
+            }
+          });
+          if (w) opts.width = w;
+          if (h) opts.height = h;
+          this._wz = WZoom.create(plyrEl, opts);
+          this._syncVideoZoomChrome(this._wz.content.currentScale);
+        }
       },
 
       init(src, mediaType, width, height, cover) {
@@ -127,23 +185,30 @@
 
         if (mediaType === window.MediaType.IMAGE) {
           imageLayer.classList.add('active');
+          imageLayer.classList.remove('image-zoomed');
           videoLayer.classList.remove('active');
+          videoLayer.classList.remove('video-zoomed');
           if (this._wz) { this._wz.destroy(); this._wz = null; }
           imageLayer.innerHTML = '<div id="img-wrap"><img /></div>';
           const img = imageLayer.querySelector('img');
           img.src = src;
           if (width) img.setAttribute('data-width', width);
           if (height) img.setAttribute('data-height', height);
-          this._rebuildImageWheelZoom();
+          this._rebuildWheelZoom();
         } else if (mediaType === window.MediaType.VIDEO) {
           videoLayer.classList.add('active');
+          videoLayer.classList.remove('video-zoomed');
           imageLayer.classList.remove('active');
+          imageLayer.classList.remove('image-zoomed');
           if (this._wz) { this._wz.destroy(); this._wz = null; }
           imageLayer.innerHTML = '';
           const videoEl = document.getElementById('video-player');
           if (cover) videoEl.poster = cover;
           videoPlayer.source = { type: 'video', sources: [{ src: src }] };
-          videoPlayer.once('ready', () => videoPlayer.play());
+          videoPlayer.once('ready', () => {
+            videoPlayer.play();
+            this._rebuildWheelZoom();
+          });
         }
       },
 
@@ -204,7 +269,105 @@
       true
     );
 
-    window.addEventListener('resize', debounce(() => mediaView._rebuildImageWheelZoom(), 120));
+    window.addEventListener('resize', debounce(() => mediaView._rebuildWheelZoom(), 120));
+
+    (function bindMediaZoomTapReset() {
+      const imageLayer = document.getElementById('image-layer');
+      const videoWrap = document.getElementById('video-wrap');
+      const videoLayer = document.getElementById('video-layer');
+      if (!imageLayer || !videoWrap || !videoLayer) return;
+
+      let tapTrack = null;
+
+      function removeGlobalPointerListeners() {
+        window.removeEventListener('pointermove', onGlobalPointerMove, true);
+        window.removeEventListener('pointerup', onGlobalPointerUp, true);
+        window.removeEventListener('pointercancel', onGlobalPointerCancel, true);
+      }
+
+      function onGlobalPointerMove(e) {
+        if (!tapTrack || e.pointerId !== tapTrack.id) return;
+        if (Math.hypot(e.clientX - tapTrack.x, e.clientY - tapTrack.y) > MEDIA_TAP_MOVE_MAX_PX) {
+          tapTrack.moved = true;
+        }
+      }
+
+      function onGlobalPointerCancel(e) {
+        if (!tapTrack || e.pointerId !== tapTrack.id) return;
+        tapTrack = null;
+        removeGlobalPointerListeners();
+      }
+
+      function onGlobalPointerUp(e) {
+        if (!tapTrack || e.pointerId !== tapTrack.id) return;
+        const track = tapTrack;
+        tapTrack = null;
+        removeGlobalPointerListeners();
+        if (mediaView._mediaType !== track.mode) return;
+        if (!mediaView._wz || mediaView._wz.content.currentScale <= 1) return;
+        if (track.moved) return;
+        if (Date.now() - track.t > MEDIA_TAP_TIME_MAX_MS) return;
+        mediaView._wz.maxZoomDown();
+        if (track.mode === window.MediaType.VIDEO) {
+          mediaView._consumeNextVideoClick = true;
+          setTimeout(() => {
+            if (mediaView._consumeNextVideoClick) mediaView._consumeNextVideoClick = false;
+          }, 400);
+          e.preventDefault();
+          e.stopImmediatePropagation();
+        }
+      }
+
+      function beginTapTrack(e, mode) {
+        if (!e.isPrimary || mediaView._mediaType !== mode) return;
+        if (!mediaView._wz || mediaView._wz.content.currentScale <= 1) return;
+        if (tapTrack) {
+          removeGlobalPointerListeners();
+          tapTrack = null;
+        }
+        tapTrack = { id: e.pointerId, x: e.clientX, y: e.clientY, t: Date.now(), moved: false, mode };
+        window.addEventListener('pointermove', onGlobalPointerMove, true);
+        window.addEventListener('pointerup', onGlobalPointerUp, true);
+        window.addEventListener('pointercancel', onGlobalPointerCancel, true);
+      }
+
+      imageLayer.addEventListener(
+        'pointerdown',
+        (e) => {
+          if (!imageLayer.classList.contains('active')) return;
+          if (!e.target.closest('#img-wrap')) return;
+          beginTapTrack(e, window.MediaType.IMAGE);
+        },
+        true
+      );
+
+      videoWrap.addEventListener(
+        'pointerdown',
+        (e) => {
+          if (!videoLayer.classList.contains('active')) return;
+          if (!e.target.closest('#video-wrap')) return;
+          beginTapTrack(e, window.MediaType.VIDEO);
+        },
+        true
+      );
+
+      videoWrap.addEventListener(
+        'click',
+        (e) => {
+          if (mediaView._consumeNextVideoClick) {
+            mediaView._consumeNextVideoClick = false;
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            return;
+          }
+          if (mediaView._mediaType !== window.MediaType.VIDEO) return;
+          if (!videoLayer.classList.contains('video-zoomed')) return;
+          e.preventDefault();
+          e.stopImmediatePropagation();
+        },
+        true
+      );
+    })();
   </script>
 </body>
 
