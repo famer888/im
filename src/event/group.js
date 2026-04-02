@@ -856,10 +856,11 @@ const fnGroupMsgEvent = async (data, loginId) => {
         content: "",
         remark: "",
         notification: "",
-        updateTime: Number(commonMsgDto.updateTime),
+        updateTime: Number(commonMsgDto?.updateTime),
         groupReqType,
         groupReqStatus,
         customMsgId,
+        msgId: Number(commonMsgDto?.msgId),
     };
     let bfTop = false;
 
