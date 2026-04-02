@@ -59,6 +59,82 @@ let groupEventProcessQueue = {};
 // groupUpdate 通知防抖定时器（批量踢人等场景下，多个事件只发一次最终的 groupUpdate）
 let groupUpdateDebounceTimers = {};
 
+// 接口返回1099后，ws会收到这个推送
+// evenType: 4 msgType: 7 强制销毁群（GroupEventType.FORCE_DESTROY + GroupMsgType.FORCE_DESTROY）
+// 1. 删除会话，2. 清除缓存，3. 清除 groupId 对应事件补偿与初始化排队；4. 事件回执
+const fnForceGroupDetroy = (groupReqEventMsgDto) => {
+    try {
+        if (!groupReqEventMsgDto?.length) {
+            return;
+        }
+        const first = groupReqEventMsgDto[0].commonMsgDto;
+        if (Number(first.msgType) !== 7) {
+            return;
+        }
+        const gid = Number(first.groupBaseInfo.groupId);
+    
+        fnGroupClear(gid);
+    
+        delete compensateParams[gid];
+        ["broadcast", "unicast", "update"].forEach((suffix) => {
+            const key = gid + suffix;
+            replenishingGroupEventKeyList = replenishingGroupEventKeyList.filter(
+                (item) => item !== key
+            );
+        });
+    
+        groupInitInfoList = groupInitInfoList.filter((item) => item.id !== gid);
+        groupInitDetailsGetList = groupInitDetailsGetList.filter(
+            (item) => item !== gid
+        );
+        groupInitDelayedList = groupInitDelayedList.filter(
+            (item) => item.id !== gid
+        );
+        groupInitMemberGetList = groupInitMemberGetList.filter(
+            (item) => item.id !== gid
+        );
+        groupInitInterfaceGetueue = groupInitInterfaceGetueue.filter(
+            (item) => item.id !== gid
+        );
+        ["broadcast", "unicast", "update"].forEach((t) => {
+            delete groupInitEvents[gid + t];
+        });
+        delete memberListObj[gid];
+    
+        eventBase.fnCommunicationSendMsg({
+            operator: "groupNotification",
+            operatorType: "exit",
+            data: {
+                id: gid,
+                type: "group",
+                groupId: gid,
+                groupName: "",
+                notification: "",
+                content: "",
+                time: Date.now(),
+                sendTime: Date.now(),
+            },
+        });
+    
+        groupReqEventMsgDto.forEach((item) => {
+            receiveGroupEvent({
+                groupId: gid,
+                receiptStatus: 0,
+                msgType: item.commonMsgDto.msgType,
+                msgId: [Number(item.commonMsgDto.msgId)],
+            });
+            receiveGroupEvent({
+                groupId: gid,
+                receiptStatus: 3,
+                msgType: item.commonMsgDto.msgType,
+                msgId: [Number(item.commonMsgDto.msgId)],
+            });
+        });
+    } catch(error) {
+        console.log('群强制初始化事件失败：', error?.message || error);
+    }
+};
+
 /**
  * 检查退群/解散群事件是否应该被执行的守卫函数
  * 如果是退群或解散群聊事件，检查本地存储包括数据库缓存和会话列表
@@ -326,6 +402,10 @@ const fnRnGroupEvent = async (data, isGroupInitEvent) => {
             case 2: {
                 typeStr = "unicast";
                 break;
+            }
+            case 4: {
+                fnForceGroupDetroy(data.groupReqEventMsgDto);
+                return;
             }
             default:
         }
