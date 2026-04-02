@@ -325,9 +325,9 @@ export default {
                 case "downloadError": {
                     // 下载报错
                     if (chatType === 3) {
-                        return this.$t("视频文件已过期");
+                        return this.$t("视频已过期");
                     }
-                    return this.$t("图片文件已过期");
+                    return this.$t("图片已过期");
                 }
                 case "decryptionError": {
                     // 解密报错

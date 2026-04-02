@@ -82,24 +82,24 @@ export default {
       // 视频非 loading 时显示播放按钮
       return this.isVideo && !this.loading;
     },
-    // downloadError: 图片已过期或已被清理
+    // downloadError: 图片已过期
     // decryptionError: 无法加载图片
     showStatus() {
       return ['downloadError', 'decryptionError'].includes(this.status);
     },
     isExpired() {
-      // 判断是否为过期状态（包含"过期"或"清理"关键词）
+      // downloadError：资源已过期
       return this.status && this.status.includes('downloadError');
     },
     statusText() {
       // 将 status 转换为用户友好的文本，根据 isVideo 显示不同文案
       const statusMap = this.isVideo
         ? {
-            downloadError: this.$t('视频文件已过期或已被清理'),
+            downloadError: this.$t('视频已过期'),
             decryptionError: this.$t('无法加载视频')
           }
         : {
-            downloadError: this.$t('图片文件已过期或已被清理'),
+            downloadError: this.$t('图片已过期'),
             decryptionError: this.$t('无法加载图片')
           };
       return statusMap[this.status] || this.status;
