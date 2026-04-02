@@ -149,9 +149,11 @@ export const webSocketSend = (value) => {
                 webSocket.send(value);
             }
         } catch (error) {
+            if (location.href.includes('/login')) return;
             window.$toast(i18n.t("当前网络异常，请检查网络设置"));
         }
     } else {
+        if (location.href.includes('/login')) return;
         window.$toast(i18n.t("当前网络异常，请检查网络设置"));
     }
 };
