@@ -214,7 +214,7 @@ export default {
           const { chatType } = this.msgInfo || {};
           chatType === 3 && this.initProgressBar();
           const taskId = chatType === 3 ? progress.getTask(this.msgInfo)?.taskId : null;
-          this._onProgress && this._onProgress(0);
+          this._onProgress && !this.msgInfo?.percent && this._onProgress(0);
           eventFile.fnOperatorFile({
               taskId,
               id: this.chatContent.id,
@@ -405,6 +405,7 @@ export default {
           overflow: hidden;
           text-align: center;
           width: fit-content;
+          background: #bababa;
         }
         > .btnPay {
             position: absolute;

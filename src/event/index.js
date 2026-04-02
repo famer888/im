@@ -323,6 +323,7 @@ function runSocketParsePhase(arrayBuffer, dispatchPriority) {
   // 退出登录
   if (code === 20002) {
     console.$collect("退出登录：code 20002");
+    console.log("退出登录：code 20002");
     window.$closeConfirm && window.$closeConfirm();
     ipcRenderer.send("auto-export-db", {});
   }
@@ -372,7 +373,7 @@ function runSocketParsePhase(arrayBuffer, dispatchPriority) {
     ReceiveServerToClient(data.id);
   }
   if (![29901, 20001].includes(code)) {
-    // console.log("收到推送", code);
+    console.log("收到推送", code);
     console.$collect('收到推送--' + code);
   }
   if (expired.check(code, data)) {

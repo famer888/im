@@ -198,7 +198,7 @@ export default {
     box-sizing: border-box;
     background: #e8e8e8;
     overflow: hidden;
-    border-radius: 4px;
+    border-radius: 10px;
 
     &::v-deep .comMsgImage {
       max-width: unset;

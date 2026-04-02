@@ -370,12 +370,14 @@ export default {
     eventHandling(info, operator) {
       switch (operator) {
         case "editorAddText": {
-          // 添加 文本
-          this.$refs.input.innerHTML += info.text;
+          const input = this.$refs?.input;
+          if (!input) break;
+          const t = info?.text;
+          if (t == null || String(t) === "") break;
+          input.focus();
+          // 在失焦前光标处插入（如 text content @name|、@name| text content），非末尾追加
+          this.handleInsertPlainTextAtCaret(String(t));
           this.handlePlaceholderVisibleSet();
-
-          // 光标移动到最后
-          this.handleMoveCursorToEnd();
           break;
         }
         case "sendEditorFoucs": {
@@ -433,6 +435,100 @@ export default {
 
       // 打开定时删除配置的会话框
       this.rcheduleDeletionConfigDialogVisible = true;
+    },
+    /**
+     * 在保存选区或当前光标处插入纯文本，光标置于插入内容之后（与 closeOperator 中 restore 的 savedSelection 一致）
+     */
+    handleInsertPlainTextAtCaret(text) {
+      const input = this.$refs.input;
+      if (!input) return;
+      const s = text == null ? "" : String(text);
+      if (!s) return;
+
+      const safeClone = (r) => {
+        if (!r) return null;
+        try {
+          return r.cloneRange();
+        } catch {
+          return null;
+        }
+      };
+
+      const rangeInInput = (r) => {
+        if (!r) return false;
+        try {
+          const n = r.commonAncestorContainer;
+          return n === input || input.contains(n);
+        } catch {
+          return false;
+        }
+      };
+
+      let range = null;
+      if (savedSelection && rangeInInput(savedSelection)) {
+        range = safeClone(savedSelection);
+      }
+      if (!range) {
+        try {
+          const sel = window.getSelection();
+          if (sel.rangeCount > 0 && rangeInInput(sel.getRangeAt(0))) {
+            range = safeClone(sel.getRangeAt(0));
+          }
+        } catch {
+          range = null;
+        }
+      }
+
+      if (!range) {
+        try {
+          this.handleMoveCursorToEnd();
+          const sel = window.getSelection();
+          if (sel.rangeCount > 0 && rangeInInput(sel.getRangeAt(0))) {
+            range = safeClone(sel.getRangeAt(0));
+          }
+        } catch {
+          range = null;
+        }
+      }
+
+      if (!range) {
+        try {
+          range = document.createRange();
+          range.selectNodeContents(input);
+          range.collapse(false);
+        } catch {
+          return;
+        }
+      }
+
+      try {
+        if (!range.collapsed) {
+          range.deleteContents();
+        }
+
+        const textNode = document.createTextNode(s);
+        range.insertNode(textNode);
+
+        const after = document.createRange();
+        after.setStartAfter(textNode);
+        after.collapse(true);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(after);
+        savedSelection = safeClone(after) || after;
+      } catch {
+        try {
+          input.innerHTML += s;
+          this.handleMoveCursorToEnd();
+          const sel = window.getSelection();
+          if (sel.rangeCount > 0) {
+            const rest = safeClone(sel.getRangeAt(0));
+            if (rest) savedSelection = rest;
+          }
+        } catch {
+          /* noop */
+        }
+      }
     },
     /**
      * 移动光标到最后
@@ -596,7 +692,6 @@ export default {
         }
 
         // @存在
-        console.log("atLastIndex--", atLastIndex)
         if (atLastIndex !== -1) {
           // 第一个就是@
           if (atLastIndex === 0) {
