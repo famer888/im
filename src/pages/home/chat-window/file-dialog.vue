@@ -59,6 +59,9 @@ import { getFileIcon, fileSizeFormat, textToEmojiText, enumMsgType } from "@/uti
 import eventBase from "@/event/base";
 import eventCommon from "@/event/common";
 
+/** 频道 msgType 17（多图/视频+配文）最多媒体数 */
+const CHANNEL_MEDIACAPTION_MAX_FILES = 9;
+
 export default {
   props: ["chatContent", "files", "quoteInfo"],
   components: {
@@ -76,8 +79,16 @@ export default {
     },
   },
   mounted() {
-    // 文件列表
-    this.list = this.handleFileInfoListGet(this.files);
+    let filesInput = this.files;
+    if (
+      this.chatContent.type === "channel" &&
+      Array.isArray(filesInput) &&
+      filesInput.length > CHANNEL_MEDIACAPTION_MAX_FILES &&
+      this.isAllGridMediaRawFiles(filesInput)
+    ) {
+      filesInput = filesInput.slice(0, CHANNEL_MEDIACAPTION_MAX_FILES);
+    }
+    this.list = this.handleFileInfoListGet(filesInput);
 
     // 同步输入框的内容
     const dom = document.getElementById("sendMessageInput");
@@ -101,6 +112,23 @@ export default {
       return ["gif", "jpg", "jpeg", "png", "webp", "bmp", "mp4", "webm", "ogg"].includes(
         ext
       );
+    },
+    /** 与 channelGridMediasSend 一致：均为九宫格支持的图/视频类型（用于 msgType 17 数量上限） */
+    isAllGridMediaRawFiles(files) {
+      if (!files || files.length < 2) return false;
+      return files.every((file) =>
+        this.isGridMediaFileItem({ type: file.type, file })
+      );
+    },
+    trimChannelGridListToMax() {
+      if (this.chatContent.type !== "channel") return;
+      if (this.list.length <= CHANNEL_MEDIACAPTION_MAX_FILES) return;
+      if (
+        this.list.length >= 2 &&
+        this.list.every((x) => this.isGridMediaFileItem(x))
+      ) {
+        this.list = this.list.slice(0, CHANNEL_MEDIACAPTION_MAX_FILES);
+      }
     },
     handleClose() {
       // 关闭 文件对话框
@@ -202,6 +230,7 @@ export default {
 
         // 设置列表
         this.list = [...this.list, ...infoList];
+        this.trimChannelGridListToMax();
       }
     },
     /**
