@@ -2,7 +2,8 @@ import DOMPurify from "dompurify";
 
 /**
  * 富文本 / 消息 HTML：允许常见标签，移除 script、事件处理器、javascript:/data: 危险 URL 等。
- * 对 span+隐藏样式+img onerror 一类 payload 依赖 DOMPurify 默认策略 + 禁用高风险标签。
+ * 事件属性、javascript:/data: 等由 DOMPurify 默认处理；style 保留但由库内建规则净化（避免误伤富文本颜色/排版）。
+ * 高风险标签显式禁止，防 svg/math 等旁路。
  */
 const RICH_HTML_CONFIG = {
   USE_PROFILES: { html: true },
@@ -25,7 +26,6 @@ const RICH_HTML_CONFIG = {
     "svg",
     "math",
   ],
-  FORBID_ATTR: ["style"],
 };
 
 export function sanitizeHtml(dirty) {
