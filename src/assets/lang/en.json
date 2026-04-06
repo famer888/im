@@ -205,6 +205,7 @@
   "设置消息已读后销毁时间": "Set the message destruction time after it has been read",
   "你被禁言": "You are banned",
   "上传/文件视频大小超过50M!": "Upload/file video size exceeds 50M!",
+  "单次最多发送 9 张图片，超出部分将不会发送": "You can send up to 9 images or videos at a time. Extra items will not be sent.",
   "重新加载": "Reload",
   "首次数据初始化": "Initial data initialization",
   "加密检测": "Encryption Detection",

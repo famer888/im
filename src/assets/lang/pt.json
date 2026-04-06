@@ -205,6 +205,7 @@
   "设置消息已读后销毁时间": "Defina o tempo de destruição após a leitura da mensagem",
   "你被禁言": "está banido",
   "上传/文件视频大小超过50M!": "O tamanho do upload/arquivo do vídeo excede 50 milhões!",
+  "单次最多发送 9 张图片，超出部分将不会发送": "Pode enviar no máximo 9 imagens ou vídeos de cada vez. O excedente não será enviado.",
   "重新加载": "recarregar",
   "首次数据初始化": "Primeira inicialização de dados",
   "加密检测": "Detecção de criptografia",

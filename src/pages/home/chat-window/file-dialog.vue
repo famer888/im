@@ -68,7 +68,12 @@ export default {
     ComEditor,
   },
   data() {
-    return { list: [], loading: false };
+    return {
+      list: [],
+      loading: false,
+      /** 频道多图/视频曾超过 9 张（已裁切），发送时提示一次 */
+      channelGridHadExcessSelection: false,
+    };
   },
   computed: {
     channelGridMediasSend() {
@@ -86,6 +91,7 @@ export default {
       filesInput.length > CHANNEL_MEDIACAPTION_MAX_FILES &&
       this.isAllGridMediaRawFiles(filesInput)
     ) {
+      this.channelGridHadExcessSelection = true;
       filesInput = filesInput.slice(0, CHANNEL_MEDIACAPTION_MAX_FILES);
     }
     this.list = this.handleFileInfoListGet(filesInput);
@@ -120,15 +126,18 @@ export default {
         this.isGridMediaFileItem({ type: file.type, file })
       );
     },
+    /** @returns {boolean} 是否因超过上限而裁切了列表 */
     trimChannelGridListToMax() {
-      if (this.chatContent.type !== "channel") return;
-      if (this.list.length <= CHANNEL_MEDIACAPTION_MAX_FILES) return;
+      if (this.chatContent.type !== "channel") return false;
+      if (this.list.length <= CHANNEL_MEDIACAPTION_MAX_FILES) return false;
       if (
         this.list.length >= 2 &&
         this.list.every((x) => this.isGridMediaFileItem(x))
       ) {
         this.list = this.list.slice(0, CHANNEL_MEDIACAPTION_MAX_FILES);
+        return true;
       }
+      return false;
     },
     handleClose() {
       // 关闭 文件对话框
@@ -154,6 +163,15 @@ export default {
       }
 
       if (this.channelGridMediasSend) {
+        if (this.trimChannelGridListToMax()) {
+          this.channelGridHadExcessSelection = true;
+        }
+        if (this.channelGridHadExcessSelection) {
+          window.$toast(
+            this.$t("单次最多发送 9 张图片，超出部分将不会发送")
+          );
+          this.channelGridHadExcessSelection = false;
+        }
         const caption = list
           .filter((t) => t.type === "text")
           .map((t) => textToEmojiText(t.values.content))
@@ -230,7 +248,9 @@ export default {
 
         // 设置列表
         this.list = [...this.list, ...infoList];
-        this.trimChannelGridListToMax();
+        if (this.trimChannelGridListToMax()) {
+          this.channelGridHadExcessSelection = true;
+        }
       }
     },
     /**
