@@ -21,7 +21,7 @@
     v-else-if="info.type === 'customLink'"
     href="javascript:void(0)"
     @click.stop="handleGoLink(info, true)"
-    v-html="info.content"
+    v-html="sanitizeHtml(info.content)"
     ></a>
   <br v-else />
 </template>
@@ -29,6 +29,7 @@
 import { filterSensitiveWords } from "@/utils/tools";
 import { isChannelLink } from "@/api/imChannel.js";
 import { completionUrl } from "@/utils/base";
+import { sanitizeHtml } from "@/utils/sanitizeHtml";
 
 // 事件
 import eventBase from "@/event/base";
@@ -41,6 +42,7 @@ export default {
   name: "lebleEle",
   props: ["info", "isNotification", "currentChatId"],
   methods: {
+    sanitizeHtml,
     filterSensitiveWords,
     /**
      * 跳转频道聊天窗

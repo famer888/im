@@ -71,6 +71,7 @@ import TextAvatar from "@/components/text-avatar";
 // 事件
 import eventCommon from "@/event/common";
 import eventBase from "@/event/base";
+import { highlightSearchHtml } from "@/utils/sanitizeHtml";
 
 let timer = null;
 
@@ -380,11 +381,7 @@ export default {
       }, 400);
     },
     getWordKeyHtml(content) {
-      if (!content) return "";
-      return content.replace(
-        this.searchText,
-        `<span>${this.searchText}</span>`
-      );
+      return highlightSearchHtml(content, this.searchText, "");
     },
     /**
      * 移动至搜索的位置

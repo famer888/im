@@ -1,14 +1,15 @@
 import i18n from "@/assets/lang/i18n";
 import { emojiObj } from "/public/emoji";
 import { strIsSafe } from "@/utils/base";
+import { sanitizeHtml } from "@/utils/sanitizeHtml";
 
 /**
  * html字符串 按文本，换行，图片，a标签，h4标签 拆分为对象数组
  */
 export const splitHtmlStringToObjects = (htmlString) => {
-    // 创建一个临时的 DOM 元素来解析 HTML
+    // 创建一个临时的 DOM 元素来解析 HTML（先净化，避免解析时执行 XSS）
     const tempDiv = document.createElement("div");
-    tempDiv.innerHTML = htmlString;
+    tempDiv.innerHTML = sanitizeHtml(htmlString || "");
 
     // 用来存放拆分后的结果
     const result = [];

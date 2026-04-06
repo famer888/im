@@ -1,5 +1,16 @@
 import { textToEmojiText } from "@/utils/base";
 import { copyText } from "@/utils/clipboard";
+import { sanitizeHtml } from "@/utils/sanitizeHtml";
+
+/** 从表情 img 取占位文本（如 [微笑]）；无法识别则去掉该图，避免 match 为 null */
+function imgTagToEmojiPlaceholder(imgStr) {
+    if (!imgStr || typeof imgStr !== "string") return "";
+    const dataKey = imgStr.match(/\bdata-key="([^"]*)"/);
+    if (dataKey && dataKey[1]) return dataKey[1];
+    const bracket = imgStr.match(/\[[^\]]+\]/);
+    if (bracket) return bracket[0];
+    return "";
+}
 
 /**
  * 发送的文本消息 获取
@@ -7,16 +18,17 @@ import { copyText } from "@/utils/clipboard";
 export const fnTextSendInfoGet = (htmlString) => {
     // 单条消息最大字数，表情算1，换行算1
     const msgMaxSize = 1500;
+    const safeHtml = sanitizeHtml(htmlString || "");
     const tempDiv = document.createElement("div"); // 创建一个临时的 div 元素
-    tempDiv.innerHTML = htmlString; // 将 HTML 字符串赋值给该元素
+    tempDiv.innerHTML = safeHtml; // 将 HTML 字符串赋值给该元素
     // 纯文本
     const text = tempDiv.textContent || tempDiv.innerText || ""; // 提取文本内容
 
     // 包含的图片
-    const imgTags = htmlString.match(/<img\b[^>]*>/gi) || [];
+    const imgTags = safeHtml.match(/<img\b[^>]*>/gi) || [];
 
     // 包含的换行
-    const brTags = htmlString.match(/<br class="[0-9]*">/gi) || [];
+    const brTags = safeHtml.match(/<br class="[0-9]*">/gi) || [];
 
     // 字符串数组
     const strArr = [];
@@ -25,13 +37,13 @@ export const fnTextSendInfoGet = (htmlString) => {
     if (text.length + imgTags.length > msgMaxSize) {
         // 标签加上索引，进行排序
         let tags = imgTags.map((str) => {
-            return { index: htmlString.indexOf(str), str };
+            return { index: safeHtml.indexOf(str), str };
         });
 
         tags = [
             ...tags,
             ...brTags.map((str) => {
-                return { index: htmlString.indexOf(str), str };
+                return { index: safeHtml.indexOf(str), str };
             }),
         ];
 
@@ -41,7 +53,7 @@ export const fnTextSendInfoGet = (htmlString) => {
         // 依次替换记录索引
         const indexList = [];
 
-        let htmlStringNew = htmlString;
+        let htmlStringNew = safeHtml;
         for (const item of tags) {
             indexList.push(htmlStringNew.indexOf(item.str));
             htmlStringNew = htmlStringNew.replace(item.str, " ");
@@ -69,19 +81,20 @@ export const fnTextSendInfoGet = (htmlString) => {
             strArr.push(str);
         }
     } else {
-        strArr.push(htmlString);
+        strArr.push(safeHtml);
     }
 
     // 返回处理后的 字符串列表
     return strArr.map((str) => {
         // 替换换行
         let content = str.replace(/<br class="[0-9]*">/g, "\n");
-            content = content.replace(/&nbsp;/g, ' ');
+        content = content.replace(/&nbsp;/g, " ");
 
-        // 替换表情
+        // 替换表情（净化后可能无 []，须用 data-key 或降级为空）
         for (const imgStr of imgTags) {
             if (content.includes(imgStr)) {
-                content = content.replace(imgStr, imgStr.match(/\[.*?\]/)[0]);
+                const ph = imgTagToEmojiPlaceholder(imgStr);
+                content = content.replace(imgStr, ph);
             }
         }
 
@@ -99,18 +112,20 @@ export const fnTextSendInfoGet = (htmlString) => {
  * 表情图片替换为文本
  */
 export const fnEmojiToText = (htmlString) => {
+    const safeHtml = sanitizeHtml(htmlString || "");
     const tempDiv = document.createElement("div"); // 创建一个临时的 div 元素
-    tempDiv.innerHTML = htmlString; // 将 HTML 字符串赋值给该元素
+    tempDiv.innerHTML = safeHtml; // 将 HTML 字符串赋值给该元素
 
     // 包含的图片
-    const imgTags = htmlString.match(/<img\b[^>]*>/gi) || [];
+    const imgTags = safeHtml.match(/<img\b[^>]*>/gi) || [];
 
     // 替换换行
-    let content = htmlString;
+    let content = safeHtml;
 
     // 替换表情
     for (const imgStr of imgTags) {
-        content = content.replace(imgStr, imgStr.match(/\[.*?\]/)[0]);
+        const ph = imgTagToEmojiPlaceholder(imgStr);
+        content = content.replace(imgStr, ph);
     }
 
     return content;
@@ -187,8 +202,8 @@ export const fnGetSelectInnerHTML = () => {
     const selectedNodes = range.cloneContents();
     const div = document.createElement("div");
     div.appendChild(selectedNodes);
-    return div.innerHTML;
-}
+    return sanitizeHtml(div.innerHTML);
+};
 
 /**
  * 复制当前选中的内容

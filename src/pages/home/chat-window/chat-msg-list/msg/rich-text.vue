@@ -5,7 +5,7 @@
       @click.right="(e) => $emit('rightClick', e)"
     >
       <slot></slot>
-      <div class="contentText" v-html="content" ref="htmlContent">
+      <div class="contentText" v-html="safeContent" ref="htmlContent">
       </div>
     </div>
   </template>
@@ -13,6 +13,7 @@
   // 事件
 import { ipcRenderer } from "@/platform";
 import eventCommon from "@/event/common";
+import { sanitizeHtml } from "@/utils/sanitizeHtml";
 
 export default {
     props: ["isSelf", "content", "atUsers", "currentGuoupId"],
@@ -20,21 +21,27 @@ export default {
       return {
       };
     },
+    computed: {
+      safeContent() {
+        return sanitizeHtml(this.content || "");
+      },
+    },
+    watch: {
+      safeContent() {
+        this.bindImageClickEvents();
+      },
+    },
     mounted() {
       this.bindImageClickEvents();
     },
     methods: {
       bindImageClickEvents() {
-        // 等待 DOM 更新完成（如果内容异步加载）
         this.$nextTick(() => {
           const container = this.$refs.htmlContent;
-          const images = container.getElementsByTagName('img');
-          
-          // 遍历所有图片并绑定点击事件
-          Array.from(images).forEach(img => {
-            img.addEventListener('click', () => {
-              this.imgClick(img.src);  // 调用方法并传入图片地址
-            });
+          if (!container) return;
+          const images = container.getElementsByTagName("img");
+          Array.from(images).forEach((img) => {
+            img.onclick = () => this.imgClick(img.src);
           });
         });
       },
