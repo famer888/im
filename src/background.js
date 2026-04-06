@@ -310,7 +310,7 @@ function updateTray(unread = 0) {
                     updateTray(0);
                     mainWindow.show();
                 });
-                tray.setToolTip("【97 版本1.6.7-2】");
+                tray.setToolTip("【97 版本1.6.7-3】");
             }
 
             if (isOsx) {
