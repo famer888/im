@@ -52,7 +52,7 @@
         </div>
       </div>
       <img class="icon-search" src="@/assets/images/headNav/icon-search-black.png" @click="serachChat" v-if="chatContent?.id != 10008"/>
-      <div class="more" v-if="![10007, 9902].includes(chatContent.id)" @click.stop="handleChatRightMenuVisibleChange">
+      <div class="more" v-if="![10007, 10009].includes(chatContent.id)" @click.stop="handleChatRightMenuVisibleChange">
         <img src="@/assets/images/system/icon-menu.png" />
       </div>
       <div class="right-menu-place" v-if="rightMenuVisible && sideBarType === 'inner'"></div>

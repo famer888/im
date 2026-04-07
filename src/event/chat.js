@@ -92,7 +92,7 @@ const fnChatWindowUpdate = async (info) => {
         // 如果不存在则获取信息后，再变更
         if (updateInfo.type === "friend") {
             // 如果是 系统账户的消息
-            if ([9902, "channelNotice"].includes(updateInfo.id) || (updateInfo.id === 10007 && !updateInfo.isSelf)) {
+            if ([10009, "channelNotice"].includes(updateInfo.id) || (updateInfo.id === 10007 && !updateInfo.isSelf)) {
                 chatInfo = {
                     pic: _.get(updateInfo, "sendUser.icon"),
                     name:
