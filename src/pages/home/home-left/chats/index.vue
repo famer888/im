@@ -196,6 +196,7 @@ import { Cache } from "@/cache";
 
 // 工具
 import { chatTime } from "@/utils/base";
+import { sanitizeHtml } from "@/utils/sanitizeHtml";
 
 // 事件
 import eventBase from "@/event/base";
@@ -516,15 +517,10 @@ export default {
      * 转换富文本消息为文本
      */
     handleRichTextToText(htmlString) {
-        // 替换所有图片和视频标签为 [图片] 或 [视频]
-        let replaced = htmlString
-          .replace(/<img[^>]*>/g, '[图片]')  // 替换图片标签
-          .replace(/<video[^>]*>.*?<\/video>/g, '[视频]');  // 替换视频标签（包括内容）
-
-        // 移除所有其他 HTML 标签
-        // const textOnly = replaced.replace(/<\/?[^>]+(>|$)/g, '');
-
-        return replaced;
+        const safe = sanitizeHtml(htmlString || "");
+        return safe
+          .replace(/<img\b[^>]*>/gi, "[图片]")
+          .replace(/<video\b[^>]*>[\s\S]*?<\/video>/gi, "[视频]");
     },
     /**
      * 点击选中聊天窗

@@ -28,6 +28,7 @@
 // 事件
 import eventBase from "@/event/base";
 import eventCommon from "@/event/common";
+import { highlightSearchHtml } from "@/utils/sanitizeHtml";
 
 export default {
   props: ["searchText", "isLeader", "type"],
@@ -119,10 +120,7 @@ export default {
      * 高亮
      */
     getWordKeyHtml(content) {
-      return content.replace(
-        this.searchText,
-        `<span class="highlight">${this.searchText}</span>`
-      );
+      return highlightSearchHtml(content, this.searchText, "highlight");
     },
     /**
      * 监听事件执行

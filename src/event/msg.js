@@ -24,6 +24,7 @@ import { fnMsgDecryption } from "@/utils/e2ee";
 import { getKeys } from "@/utils/upload";
 import { fnEmojiToText, fnTextSendInfoGet } from "@/utils/widget/editor";
 import { shouldPreventSendingMessage } from "@/utils/tools";
+import { sanitizeHtml } from "@/utils/sanitizeHtml";
 
 // 事件
 import eventBase from "./base";
@@ -404,7 +405,7 @@ const fnFriendMsgAdd = async (msg) => {
         isSelf,
         senderKeyVersion: isSelf ? msg.version : undefined,
     });
-    
+
     // 如果解密失败，则终止执行
     if (!contentStr) {
         console.$collectE2ee('私聊解密结果为空', {
@@ -2152,12 +2153,11 @@ const handleNotificationIcon = async (icon, id) => {
 };
 
 const handleRichTextToText = (htmlString) => {
-    // 替换所有图片和视频标签为 [图片] 或 [视频]
-    let replaced = htmlString
-      .replace(/<img[^>]*>/g, '[图片]')  // 替换图片标签
-      .replace(/<video[^>]*>.*?<\/video>/g, '[视频]');  // 替换视频标签（包括内容）
-    // 移除所有其他 HTML 标签
-    const textOnly = replaced.replace(/<[^>]*>/g, '');
+    const safe = sanitizeHtml(htmlString || "");
+    let replaced = safe
+        .replace(/<img[^>]*>/g, "[图片]")
+        .replace(/<video[^>]*>.*?<\/video>/g, "[视频]");
+    const textOnly = replaced.replace(/<[^>]*>/g, "");
     return textOnly;
 };
 

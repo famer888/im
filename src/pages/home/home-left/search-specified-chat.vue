@@ -36,6 +36,7 @@
 import dayjs from "dayjs";
 import eventCommon from "@/event/common";
 import eventBase from "@/event/base";
+import { highlightSearchHtml } from "@/utils/sanitizeHtml";
 export default {
     name: "searchSpecifiedChat",
     props: ["info", "searchText"],
@@ -59,10 +60,7 @@ export default {
     methods: {
         dayjs,
         getWordKeyHtml(content) {
-            return content.replace(
-                this.searchText,
-                `<span class="highlight">${this.searchText}</span>`
-            );
+            return highlightSearchHtml(content, this.searchText, "highlight");
         },
         sortList(arr) {
             // 排序：最新的时间（sendTime更大）排在前面

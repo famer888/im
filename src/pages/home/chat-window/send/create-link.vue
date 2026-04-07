@@ -18,6 +18,7 @@
 
 <script>
 import { textToEmojiImage } from "@/utils/base";
+import { sanitizeHtml } from "@/utils/sanitizeHtml";
 export default {
   name: 'createLink',
   props: ['selectText', 'chatContent'],
@@ -28,7 +29,9 @@ export default {
   },
   created() {
     this.$nextTick(() => {
-      this.$refs.linkTextInput.innerHTML = textToEmojiImage(this.selectText)
+      this.$refs.linkTextInput.innerHTML = sanitizeHtml(
+        textToEmojiImage(this.selectText || "")
+      );
     })
   },
   methods: {
