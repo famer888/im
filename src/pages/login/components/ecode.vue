@@ -70,7 +70,7 @@ export default {
       networkCheckVisible: false, // 显示网络检测
       deviceConfig: null, // 设备信息
       loginToken: "", //  登录token
-      officialUrl: "ocs.com", // 官方地址
+      officialUrl: "97chat.com", // 官方地址
       isOutTime: false, // 是否超时
       qrCodeUrlError: false, // 二维码错误
       isLoading: false, // 是否读取中

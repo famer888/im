@@ -37,7 +37,7 @@ import { Cache } from "@/cache";
 export default {
   computed: {
     isTestEnv() {
-      return packName === "ocs-new-test";
+      return packName === "97-new-test";
     },
   },
   methods: {

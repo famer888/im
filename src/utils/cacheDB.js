@@ -19,7 +19,7 @@ const checkDirectory = (dirPath) => {
 
 export const cacheDB = async (uid) => {
     let myWorker = new Worker("worker/cacheDB.js");
-    let dbName = `${uid}-68-2.0.3`;
+    let dbName = `${uid}-97-2.0.3`;
     const { path, key, directoryPath } = await getCachPar(uid);
     await checkDirectory(directoryPath);
     myWorker.postMessage({ dbName, params: { uid }, key, savePath: path });
@@ -52,7 +52,7 @@ const getExportInfo = async (uid) => {
             if(!directoryPath) return resolve({});
             const path = nodePath.join(directoryPath, "/temporarydata.txt");
             // path地址为
-            // C:\Users\admin\AppData\Local\Temp\68LocalStorage\user-665468\temporarydata.txt
+            // C:\Users\admin\AppData\Local\Temp\97LocalStorage\user-665497\temporarydata.txt
             // temporarydata.txt 文件内容格式：{"exportTime":1736408227677}
             // console.log(path, 533333333)
             fs.readFile(path, "utf8", (err, data) => {
@@ -78,7 +78,7 @@ const getCachPar = async (uid) => {
     });
 
     let path = nodePath.join(directoryPath, "/abc");
-    let key = `6854`;
+    let key = `9754`;
     return { path, key, directoryPath };
 };
 
