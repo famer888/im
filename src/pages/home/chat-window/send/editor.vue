@@ -109,6 +109,7 @@ import { fnRcheduleDeletionTimeTextGet } from "@/utils/widget";
 
 import { filterSensitiveWords } from "@/utils/tools";
 import { textToEmojiImage, generateUniqueId, strIsSafe } from "@/utils/base";
+import { sanitizeHtml, escapeHtml } from "@/utils/sanitizeHtml";
 import {
   fnTextSendInfoGet,
   fnTextGetAt,
@@ -182,7 +183,9 @@ export default {
 
       if (draftInfo) {
         // 草稿同步
-        this.$refs["input"].innerHTML = textToEmojiImage(draftInfo);
+        this.$refs["input"].innerHTML = sanitizeHtml(
+          textToEmojiImage(draftInfo)
+        );
 
         // 光标移动到最后
         this.handleMoveCursorToEnd();
@@ -197,7 +200,7 @@ export default {
       // 弹窗输入同步
       const dom = document.getElementById("sendMessageInput");
       if (dom) {
-        this.$refs["input"].innerHTML = dom.innerHTML;
+        this.$refs["input"].innerHTML = sanitizeHtml(dom.innerHTML);
 
         // 是否显示占位提示
         this.handlePlaceholderVisibleSet();
@@ -250,8 +253,8 @@ export default {
   watch: {
     editInfo(editInfo) {
       const { content } = editInfo || {};
-      if(content) {
-        this.$refs.input.innerHTML = editInfo.content
+      if (content) {
+        this.$refs.input.innerHTML = sanitizeHtml(editInfo.content);
       }
     }
   },
@@ -264,12 +267,11 @@ export default {
       const { linkText, linkValue } = opts;
       this.handleInputFocus();
       let selectText = fnGetSelectInnerHTML();
-      let inputValue = this.$refs.input.innerHTML
-      let linkData = `<a href="${linkValue}">${linkText}</a>`
-       inputValue =inputValue.replace(selectText, linkData)
+      let inputValue = this.$refs.input.innerHTML;
+      let linkData = `<a href="${linkValue}">${linkText}</a>`;
+      inputValue = inputValue.replace(selectText, linkData);
 
-
-      this.$refs.input.innerHTML = inputValue
+      this.$refs.input.innerHTML = sanitizeHtml(inputValue);
       this.createLinkOpts.push(opts);
       this.createLinkVisible = false;
       this.handlePlaceholderVisibleSet()
@@ -370,8 +372,10 @@ export default {
     eventHandling(info, operator) {
       switch (operator) {
         case "editorAddText": {
-          // 添加 文本
-          this.$refs.input.innerHTML += info.text;
+          // 添加 文本（须转义，避免当作 HTML 解析）
+          this.$refs.input.innerHTML += escapeHtml(
+            info.text == null ? "" : String(info.text)
+          );
           this.handlePlaceholderVisibleSet();
 
           // 光标移动到最后
@@ -505,7 +509,11 @@ export default {
               document.execCommand("delete");
             }
 
-            document.execCommand("insertHTML", false, img.outerHTML);
+            document.execCommand(
+              "insertHTML",
+              false,
+              sanitizeHtml(img.outerHTML)
+            );
 
             this.handlePlaceholderVisibleSet();
           }
@@ -812,7 +820,7 @@ export default {
       }
 
       // let oldInputContent = this.$refs["input"].innerHTML
-      this.$refs["input"].innerHTML = inputContent;
+      this.$refs["input"].innerHTML = sanitizeHtml(inputContent);
 
       // 光标移动到对应位置
       this.handleCursorSet(indexBefore + 1 + textReplace.length, eleIndex);
@@ -1146,8 +1154,8 @@ export default {
         }
 
         setTimeout(() => {
-          // 添加粘贴的内容，表情转换
-          const content = textToEmojiImage(text);
+          // 添加粘贴的内容，表情转换（剪贴板纯文本中的标签会被 insertHTML 解析，须净化）
+          const content = sanitizeHtml(textToEmojiImage(text));
 
           const { childNodes } = document.getElementById(this.inputId);
 
