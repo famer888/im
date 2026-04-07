@@ -23,7 +23,7 @@ export default {
   data() {
     return {
       pageName: '版本信息',
-      version: '1.6.7-1'
+      version: '1.6.8'
     }
   },
   methods: {
