@@ -41,7 +41,8 @@ export default {
     font-size: 12px;
   }
 
-  > img {
+  /* 表情在子组件 lable-ele 内渲染，scoped 下 > img 选不中，需穿透 */
+  ::v-deep img {
     display: inline-block;
     position: relative;
     top: 3px;
