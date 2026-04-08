@@ -261,9 +261,10 @@ export const strReplaceEmojiImgLabel = (inputString) => {
 
     // 表情文字 替换成图片
     const regex = /\[(.+?)\]/g;
-    const arr = _.uniq(htmlString.match(regex));
+    const matches = htmlString.match(regex);
+    const arr = matches ? Array.from(new Set(matches)) : [];
 
-    if (arr) {
+    if (arr.length) {
         for (const item of arr) {
             if (emojiObj[item]) {
                 htmlString = htmlString.replaceAll(
