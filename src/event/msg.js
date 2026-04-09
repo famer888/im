@@ -1032,6 +1032,104 @@ const fnMsgReadByMe = async (info) => {
     );
 };
 
+/** 同会话已读同步串行：每键独立队列，避免并发交错写 UI；空闲时删除 Map 项防止键无限增长 */
+const readSyncJobQueues = new Map();
+const readSyncDraining = new Map();
+/** 单会话待处理任务上限，极端推送洪峰时丢弃最旧待执行任务，避免内存持续增长 */
+const READ_SYNC_MAX_QUEUED_PER_CONV = 64;
+
+const drainReadSyncConvQueue = async (convKey) => {
+    if (readSyncDraining.get(convKey)) return;
+    readSyncDraining.set(convKey, true);
+    try {
+        for (;;) {
+            const q = readSyncJobQueues.get(convKey);
+            if (!q || q.length === 0) break;
+            const job = q.shift();
+            try {
+                await job();
+            } catch (e) {
+                console.warn("[fnMsgReadSync] queue job error", convKey, e);
+            }
+        }
+    } finally {
+        readSyncDraining.set(convKey, false);
+        const q = readSyncJobQueues.get(convKey);
+        if (q && q.length > 0) {
+            void drainReadSyncConvQueue(convKey);
+        } else {
+            readSyncJobQueues.delete(convKey);
+            readSyncDraining.delete(convKey);
+        }
+    }
+};
+
+const enqueueReadSyncConvJob = (convKey, job) => {
+    if (!readSyncJobQueues.has(convKey)) {
+        readSyncJobQueues.set(convKey, []);
+    }
+    const q = readSyncJobQueues.get(convKey);
+    while (q.length >= READ_SYNC_MAX_QUEUED_PER_CONV) {
+        q.shift();
+    }
+    q.push(job);
+    void drainReadSyncConvQueue(convKey);
+};
+
+/**
+ * 单会话已读同步（在对应 convKey 队列中串行执行）
+ */
+const fnMsgReadSyncProcessOneConv = async (loginId, type, id, msgIds) => {
+    let handled = false;
+    for (const msgId of msgIds) {
+        const msgInfo = await window.$db.getMsgInfoForMsgId({ id, type, msgId });
+        if (msgInfo && msgInfo.sendTime) {
+            let timeUnread = undefined;
+            try {
+                const unReadObj = await Cache(`${loginId}-unread`);
+                if (unReadObj && unReadObj.unread && unReadObj.unread[id + type]) {
+                    timeUnread = unReadObj.unread[id + type].time;
+                }
+            } catch (e) {
+                console.warn('[fnMsgReadSync] parse unread cache error:', e);
+            }
+
+            if (!timeUnread || Number(msgInfo.sendTime) < Number(timeUnread)) {
+                console.log(`[fnMsgReadSync] msgInfo.sendTime(${msgInfo.sendTime}) < timeUnread(${timeUnread}), ignore stale receipt.`);
+                handled = true;
+                break;
+            }
+
+            const unreadInfoNew = await window.$db.getMsgUnreadForTimeAfter({
+                id,
+                type,
+                values: {
+                    sendTime: msgInfo.sendTime,
+                    timeUnread: timeUnread,
+                    isSync: true,
+                },
+            });
+            eventBase.fnCommunicationSendMsg(
+                {
+                    operator: "msgReadByMe",
+                    data: {
+                        id,
+                        type,
+                        unreadInfo: unreadInfoNew,
+                    },
+                },
+                true
+            );
+            handled = true;
+            break;
+        }
+    }
+
+    if (!handled) {
+        console.log(`[fnMsgReadSync] msgIds 未在本地找到, id:${id}, type:${type}`);
+    }
+};
+
 /**
  * 同账号已读同步（远程其它端操作已读，本地同步已读状态及未读数）
  * @param {string} type - 消息类型 'friend' | 'group' | 'channel'
@@ -1086,70 +1184,13 @@ const fnMsgReadSync = async (type, data) => {
         readItemsByConv[id].push(msgId);
     });
 
-    // 逐个会话处理已读同步
     for (const key in readItemsByConv) {
         const id = Number(key);
-        // 按 msgId 从大到小排序，优先用最新的已读消息去计算剩余未读
         const msgIds = readItemsByConv[key].sort((a, b) => b - a);
-
-        let handled = false;
-        for (const msgId of msgIds) {
-            // 尝试从本地 DB 查找该消息，获取其 sendTime 以计算剩余未读
-            const msgInfo = await window.$db.getMsgInfoForMsgId({ id, type, msgId });
-            if (msgInfo && msgInfo.sendTime) {
-                // 获取本地未读信息的起始时间
-                let timeUnread = undefined;
-                try {
-                    const unReadObj = await Cache(`${loginId}-unread`);
-                    if (unReadObj && unReadObj.unread && unReadObj.unread[id + type]) {
-                        timeUnread = unReadObj.unread[id + type].time;
-                    }
-                } catch (e) {
-                    console.warn('[fnMsgReadSync] parse unread cache error:', e);
-                }
-
-                // 如果当前没有任何未读，说明已经全部已读；
-                // 或者该已读回执对应的消息早于我们记录的第一条未读消息，
-                // 说明这是个历史/重复回执，不应该去重新计算，否则会把新消息重新标为未读（红点复现）
-                if (!timeUnread || Number(msgInfo.sendTime) < Number(timeUnread)) {
-                    console.log(`[fnMsgReadSync] msgInfo.sendTime(${msgInfo.sendTime}) < timeUnread(${timeUnread}), ignore stale receipt.`);
-                    handled = true;
-                    break;
-                }
-
-                // 基于该消息的 sendTime，查询之后仍未读的消息信息
-                const unreadInfoNew = await window.$db.getMsgUnreadForTimeAfter({
-                    id,
-                    type,
-                    values: {
-                        sendTime: msgInfo.sendTime,
-                        timeUnread: timeUnread,
-                        isSync: true // 标记为多端同步，避免底层向服务器重复发送已读回执(CReqMessageReceipt)
-                    }
-                });
-                console.log('unreadInfoNew----',unreadInfoNew)
-                // 通知 UI 更新未读数和小红点（noProcessing=true 跳过 base 层处理，直接广播到 UI）
-                eventBase.fnCommunicationSendMsg(
-                    {
-                        operator: "msgReadByMe",
-                        data: {
-                            id,
-                            type,
-                            unreadInfo: unreadInfoNew,
-                        },
-                    },
-                    true
-                );
-                handled = true;
-                break;
-            }
-        }
-
-        // 如果所有推送的已读 msgId 在本地均未找到
-        if (!handled) {
-            // 收到已读回执但本地查不到对应消息
-            console.log(`[fnMsgReadSync] msgIds 未在本地找到, id:${id}, type:${type}`);
-        }
+        const convKey = `${id}${type}`;
+        enqueueReadSyncConvJob(convKey, () =>
+            fnMsgReadSyncProcessOneConv(loginId, type, id, msgIds)
+        );
     }
 };
 //////////////////////// 消息发送
