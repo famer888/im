@@ -36,7 +36,7 @@ class InviteLink {
     if (data?.commonResult?.errCode === 200) {
       return data.qrUrl || '';
     } else {
-      throw new Error('获取群链接失败：' + data?.commonResult?.errMsg);
+      throw new Error('获取群链接失败：' + (data?.commonResult?.errMsg || data?.errorDesc));
     }
   }
   translateGroupLink(qrUrl) {

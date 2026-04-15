@@ -1,6 +1,6 @@
 import i18n from "@/assets/lang/i18n";
 import { emojiObj } from "/public/emoji";
-import { strIsSafe } from "@/utils/base";
+import { strIsSafe, getHttpHttpsHrefOrEmpty } from "@/utils/base";
 import { sanitizeHtml } from "@/utils/sanitizeHtml";
 
 /**
@@ -34,21 +34,22 @@ export const splitHtmlStringToObjects = (htmlString) => {
                     key: node.dataset.key,
                 });
             } else if (node.tagName === "A") {
-                // 如果是链接，添加对象包含 href 和文本内容
-                const href = node.getAttribute("href");
+                // data-href 保存了原始链接，不受 sanitizeHtml URI 白名单影响；href 仅保留 URL 解析后的 http(s)
+                const rawHref = node.dataset.href || node.getAttribute("href") || "";
+                const href = getHttpHttpsHrefOrEmpty(rawHref);
                 const type = node.getAttribute("type");
                 const linkText = node.textContent.trim();
-                if(type === 'customLink' && strIsSafe(linkText)) {
-                    const linkText = node.innerHTML.trim();
+                if (type === "customLink" && strIsSafe(linkText)) {
+                    const customInnerHtml = node.innerHTML.trim();
                     result.push({
                         type: "customLink",
-                        href: href,
-                        content: linkText,
+                        href,
+                        content: customInnerHtml,
                     });
-                } else if(linkText) {
+                } else if (linkText) {
                     result.push({
                         type: "link",
-                        href: href,
+                        href,
                         content: linkText,
                     });
                 }

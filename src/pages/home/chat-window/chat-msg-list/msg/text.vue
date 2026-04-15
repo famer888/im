@@ -97,7 +97,7 @@ export default {
         if(link && location >= 0 && length > 0) {
           let source = htmlStr.substring(location, location + length);
           let href = link.replace('http', 'ht#customLink#tp'); // 替换http防污染
-          const result = `<a href="${href}" type="customLink">${source}</a>`
+          const result = `<a href="${href}" data-href="${link}" type="customLink">${source}</a>`
           htmlString = htmlString.replace(source, result)
         }
       })
