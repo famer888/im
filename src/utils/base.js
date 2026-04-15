@@ -409,7 +409,6 @@ export const getHttpHttpsHrefOrEmpty = (raw) => {
     try {
         const u = new URL(s);
         if (u.protocol !== "http:" && u.protocol !== "https:") return "";
-        console.log('???', u);
         return u.href;
     } catch {
         return "";
