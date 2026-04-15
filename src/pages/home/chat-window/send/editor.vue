@@ -268,7 +268,7 @@ export default {
       this.handleInputFocus();
       let selectText = fnGetSelectInnerHTML();
       let inputValue = this.$refs.input.innerHTML;
-      let linkData = `<a href="${linkValue}">${linkText}</a>`;
+      let linkData = `<a href="${linkValue}" data-href="${linkValue}">${linkText}</a>`;
       inputValue = inputValue.replace(selectText, linkData);
 
       this.$refs.input.innerHTML = sanitizeHtml(inputValue);

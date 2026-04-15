@@ -395,7 +395,24 @@ export const repalceLink = (text) => {
     const safeEndChar = `[^${forbiddenChars}\\.,;:?!()\\[\\]{}]`;
 
     const regex = new RegExp(`(https?:\\/\\/[^${forbiddenChars}]*${safeEndChar})`, 'g'); // 匹配http或https开头的链接, 排除结尾标点
-    return text.replace(regex, '<a href="$1" target="_blank">$1</a>');
+    return text.replace(regex, '<a href="$1" data-href="$1" target="_blank">$1</a>');
+};
+
+/**
+ * 使用 URL 解析，仅放行 http: / https:；解析失败或其它协议返回空字符串
+ */
+export const getHttpHttpsHrefOrEmpty = (raw) => {
+    if (raw == null || raw === "") return "";
+    if (typeof raw !== "string") return "";
+    const s = raw.trim().replace(/<br>/gi, "").trim();
+    if (!s) return "";
+    try {
+        const u = new URL(s);
+        if (u.protocol !== "http:" && u.protocol !== "https:") return "";
+        return u.href;
+    } catch {
+        return "";
+    }
 };
 
 /**
@@ -408,7 +425,7 @@ export const repalceLinkNoPrefix = (text) => {
     const urlPattern = new RegExp(`([a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,6}(\\/[^${forbiddenChars}]*${safeEndChar}|\\/)?`, 'g');
 
     return text.replace(urlPattern, (url) => {
-        return `<a href="${`https://${url}`}" target="_blank" >${url}</a>`;
+        return `<a href="${`https://${url}`}" data-href="${`https://${url}`}" target="_blank" >${url}</a>`;
     });
 };
 
