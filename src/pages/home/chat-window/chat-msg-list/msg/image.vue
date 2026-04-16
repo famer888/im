@@ -54,7 +54,7 @@
     </div>
 </template>
 <script>
-import { remote, ipcRenderer } from "@/platform";
+import { remote, ipcRenderer, toLocalResourceUrl } from "@/platform";
 import Overlay from './overlay.vue';
 import progress from "@/utils/progress";
 
@@ -194,8 +194,8 @@ export default {
             let url = this.msgInfo.localThumbUrl  || this.msgInfo.local
             if(isMac) {
               url = this.macFixImagePath(url)
-            } else if (url && !url.startsWith('http') && !url.startsWith('local-resource://')) {
-              url = `local-resource://${url}`
+            } else {
+              url = toLocalResourceUrl(url)
             }
             return url
         },

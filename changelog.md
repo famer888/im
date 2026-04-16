@@ -4,6 +4,80 @@
 
 ---
 
+## 2026-04-16 — 通知窗口 HTML 注入防御 & `local-resource:` CSP 旁路修复
+
+> 修复通知窗口 (`notification.html`) 未对来自其他用户的消息内容做 HTML 净化直接拼接 innerHTML 的 XSS 漏洞；移除 `local-resource:` 协议的 `bypassCSP`，堵住 CSP 旁路。
+
+### 变更清单
+
+| # | 功能模块 | 涉及到的功能 | 用户操作路径 | 修改内容 |
+|---|---------|------------|------------|---------|
+| 41 | **通知窗口 — 用户输入净化** | 桌面通知弹窗中的消息渲染 | 收到新消息 → 弹出桌面通知 | `public/notification.html` 内联 `<script>`（~290 行）提取为 `public/notification-app.js`；新增 `escapeHtml()` 函数，对 `item.name`、`item.userName`、`item.id` 做 HTML 实体转义；`handleMsgContent()` → `textToEmojiImage()` 重写为先转义全文再替换表情标记 |
+| 42 | **通知窗口 — 头像 URL 校验** | 通知弹窗中的头像图片 | 收到新消息 → 弹出桌面通知 → 显示头像 | `public/notification-app.js`：新增 `safeSrc()` 函数，白名单校验头像 URL 协议（`./`、`local-resource:`、`app:`、`file:`、`http(s):`），拒绝 `javascript:` 等危险协议 |
+| 43 | **通知窗口 — 内联事件移除** | 通知弹窗头像加载失败处理 | 收到新消息 → 头像加载失败 | `public/notification.html`：移除 `<img onerror="this.style.display='none'">` 内联事件处理器（CSP `script-src 'self'` 下会被拦截） |
+| 44 | **通知窗口 CSP** | 通知窗口内容安全策略 | 收到新消息 → 弹出桌面通知 | `public/notification.html`：新增 `<meta http-equiv="Content-Security-Policy">` — `script-src 'self'`; `style-src 'self' 'unsafe-inline'`; `object-src 'none'`; `base-uri 'self'` 等 |
+| 45 | **`local-resource:` 协议 — 移除 `bypassCSP`** | 自定义协议安全策略 | 所有通过 `local-resource:` 加载的资源 | `src/background.js`：`protocol.registerSchemesAsPrivileged` 中 `local-resource:` 的 `privileges` 移除 `bypassCSP: true` |
+
+### 背景说明
+
+#### 通知窗口 XSS 风险
+
+- **直接拼接用户输入**：`item.name`（发送者昵称）、`item.userName`（群内用户名）、`item.content`（消息内容）通过模板字符串直接嵌入 HTML，攻击者可通过恶意昵称/消息注入 `<script>`、`<img onerror=...>`、`<iframe>` 等
+- **无 CSP 保护**：通知窗口此前无 Content-Security-Policy，即使注入了 `<script>` 也不会被浏览器拦截
+- **无 DOMPurify**：通知窗口是独立 HTML 页面，未引入 DOMPurify 库
+
+#### `local-resource:` bypassCSP 旁路
+
+- DOMPurify 的 `ALLOWED_URI_REGEXP` 白名单包含 `local-resource:` 协议
+- 若该协议的 `bypassCSP: true` 保留，攻击者可构造 `local-resource:` URL 引用恶意资源绕过 CSP
+
+#### 修复策略
+
+| 原问题 | 解决方案 |
+|--------|---------|
+| 通知窗口直接拼接用户输入为 HTML | 所有用户可控字段通过 `escapeHtml()` 转义；表情处理改为先转义再替换 |
+| 头像 URL 可注入 `javascript:` | 新增 `safeSrc()` 白名单校验 |
+| 内联 `onerror` 事件处理器 | 移除（CSP 会拦截，且头像加载失败无需特殊处理） |
+| 通知窗口无 CSP | 添加严格 CSP `<meta>` 标签，`script-src 'self'` 禁止内联脚本和 `on*` 事件 |
+| 内联 `<script>` 不兼容 CSP | 提取为外部文件 `notification-app.js` |
+| `local-resource:` 绕过 CSP | 移除协议注册中的 `bypassCSP: true` |
+
+---
+
+## 2026-04-16 — contextIsolation: true / nodeIntegration: false 全局迁移
+
+> 将所有 BrowserWindow 切换为 `contextIsolation: true` + `nodeIntegration: false`，渲染进程不再直接访问 Node.js API，改由 preload 脚本通过 `contextBridge` 桥接。
+
+### 变更清单
+
+| # | 功能模块 | 涉及文件 | 修改内容 |
+|---|---------|---------|---------|
+| 28 | **主窗口 webPreferences** | `src/background.js` | `nodeIntegration: false`, `contextIsolation: true`, 新增 `preload` 路径；`@electron/remote/main.enable()` 移至 `loadURL()` 之前 |
+| 29 | **通知窗口 webPreferences** | `src/notification/index.js` | 同上，新增 `notification-preload.js` |
+| 30 | **主窗口 preload 脚本** | `public/preload.js`（新增） | 通过 `contextBridge.exposeInMainWorld('electronAPI', ...)` 暴露 ipcRenderer、shell、clipboard、windowControl、fs、path、os、Buffer 等 API |
+| 31 | **通知窗口 preload** | `public/notification-preload.js`（新增） | 仅暴露 `ipcRenderer.send` / `ipcRenderer.on` |
+| 32 | **Webpack 配置** | `vue.config.js` | `target` 改为 `'web'`；添加 webpack alias 将 `electron`、`@electron/remote`、`file-system` 指向 shim 模块；node polyfill 配置 |
+| 33 | **平台抽象层** | `src/platform.js` | 完全重写，所有导出改为读取 `window.electronAPI`；`remote.getCurrentWindow()` 兼容层映射到 `windowControl` |
+| 34 | **Webpack shim 模块** | `src/shims/electron-renderer.js`、`electron-remote-renderer.js`、`file-system.js`（新增） | 为 webpack 提供 renderer 侧的模块替身 |
+| 35 | **渲染进程直接 Node 引用清理** | `src/utils/tools.js`、`publicCache.js`、`cacheDB.js`、`clipboard.js`、`fileTools.js`、`upload.js`、`trendsDomain/workTools.js`、`trendsDomain/tools.js`、`trendsAesKey.js`、`event/msg.js`、`database/index.js`、`platformHelper.js`、`debuggers/benchmark.js` | 移除 `require('fs')`/`require('path')`/`require('os')`/`import fs from 'fs'` 等直接 Node.js 引用，改为从 `@/platform` 导入 |
+| 36 | **直接 electron 引用清理** | `src/pages/home/chat-window/send/editor.vue`、`src/utils/widget/lockDomBeforeResize.js` | `import { clipboard/ipcRenderer } from 'electron'` 改为从 `@/platform` 导入 |
+| 37 | **process.platform 迁移** | `src/utils/base.js`、`src/event/common.js`、`src/config.js` | `process.platform` / `window.process.platform` 改为 `window.electronAPI.process.platform` |
+| 38 | **通知页面** | `public/notification.html` | `require('electron')` 改为 `window.electronAPI.ipcRenderer` |
+| 39 | **downloadImageToLocal** | `src/utils/fileTools.js` | `https.get` + `fs.createWriteStream` + `pipe` 改为调用 preload 的 `downloadFile()` 方法（stream 对象无法跨 contextBridge） |
+| 40 | **Buffer 迁移** | `src/platformHelper.js`、`src/utils/fileTools.js` | `Buffer.from()` 改为 `BufferUtil.from()`（通过 platform.js 代理 preload 的 Buffer 工具）；其余文件依赖 webpack 4 的 Buffer polyfill |
+
+### 设计决策
+
+| 问题 | 方案 |
+|------|------|
+| IPC 通道是否全部迁移到 preload function？ | 否。保持 `ipcRenderer.send/invoke/on` 桥接，已有的 IPC 通道名不变，渲染进程代码改动最小 |
+| `@electron/remote` 如何处理？ | 保留在 preload 脚本中使用；渲染进程通过 `windowControl` 代理（minimize / maximize / getMediaSourceId 等）；不直接暴露 remote 对象 |
+| fs / path / os 如何提供？ | preload 脚本中使用真实 Node.js 模块，通过 contextBridge 暴露子集 API；webpack target 切为 `web`，不再依赖 renderer 的 Node.js runtime |
+| Buffer 如何处理？ | 大量旧代码使用全局 `Buffer`，由 webpack 4 内置 `buffer` polyfill 覆盖；少量位置显式使用 preload 的 `BufferUtil` |
+| stream 对象（createWriteStream 等）如何跨 bridge？ | 不跨 bridge。`downloadImageToLocal` 改为调用 preload 封装的 `downloadFile` 方法，stream 操作全部在 preload 上下文内完成 |
+
+---
+
 ## 2026-04-16 — CSP 兼容修复与 CORS 去重
 
 > 修复 CSP 策略导致的编译错误和运行时报错，修复 CORS 响应头重复值问题。

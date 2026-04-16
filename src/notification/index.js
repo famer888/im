@@ -39,12 +39,11 @@ export const createNoticeWindow = async (mainWindow) => {
       frame: false,
       webPreferences: {
         scrollBounce: false,
-        nodeIntegration: true,
-        contextIsolation: false,
+        nodeIntegration: false,
+        contextIsolation: true,
+        preload: path.join(__dirname, isDevelopment ? './public/notification-preload.js' : './notification-preload.js'),
         nativeWindowOpen: true,
         webSecurity: true,
-        nodeIntegrationInWorker: true,
-        webviewTag: true,
       }
     });
     // 隐藏子窗口在任务栏上的显示

@@ -1,5 +1,4 @@
-import { require } from "@electron/remote";
-import { ipcRenderer } from "@/platform";
+import { ipcRenderer, os, path as platformPath } from "@/platform";
 import i18n from "@/assets/lang/i18n";
 
 // 事件
@@ -33,51 +32,47 @@ const filterSensitiveWords = (str) => {
 
 const getCachDirectory = ({ GroupID, UserID }) => {
     return new Promise((resolve) => {
-        let path = require("os").tmpdir();
-        const nodePath = require("path");
-        path = nodePath.join(
-            path,
+        let tmpPath = os.tmpdir();
+        tmpPath = platformPath.join(
+            tmpPath,
             `/68LocalStorage/${
                 GroupID ? "group-" + GroupID : "user-" + UserID
             }/`
         );
-        resolve(path);
+        resolve(tmpPath);
     });
 };
 
 const getUserDataDirectory = ({ GroupID, UserID, ChannelID }) => {
     return new Promise(async (resolve) => {
-        let path = "";
-        path = await ipcRenderer.invoke("get-user-data-path");
-        if (!path) {
-            path = require("os").tmpdir();
+        let dirPath = "";
+        dirPath = await ipcRenderer.invoke("get-user-data-path");
+        if (!dirPath) {
+            dirPath = os.tmpdir();
         }
         if (GroupID || UserID || ChannelID) {
-            const nodePath = require("path");
             const subDir = GroupID
                 ? "group-" + GroupID
                 : ChannelID
                   ? "channel-" + ChannelID
                   : "user-" + UserID;
-            path = nodePath.join(path, "Local Storage", subDir);
+            dirPath = platformPath.join(dirPath, "Local Storage", subDir);
         }
-        resolve(path);
+        resolve(dirPath);
     });
 };
 
 const getPublicCacheDirSync = () => {
-    let path = require("os").tmpdir();
-    const nodePath = require("path");
-    path = nodePath.join(path, `/68LocalStorage/pbc/`);
-    return path;
+    let tmpPath = os.tmpdir();
+    tmpPath = platformPath.join(tmpPath, `/68LocalStorage/pbc/`);
+    return tmpPath;
 };
 
 const getPublicCacheDir = () => {
     return new Promise((resolve) => {
-        let path = require("os").tmpdir();
-        const nodePath = require("path");
-        path = nodePath.join(path, `/68LocalStorage/pbc/`);
-        resolve(path);
+        let tmpPath = os.tmpdir();
+        tmpPath = platformPath.join(tmpPath, `/68LocalStorage/pbc/`);
+        resolve(tmpPath);
     });
 };
 

@@ -1,8 +1,7 @@
 import { getPublicCacheDir, getPublicCacheDirSync } from "./tools.js";
 import { checkDirectory, checkDirectorySync } from "./fileTools";
 import { encrypt, decrypt } from "@/api/base";
-const fs = require("fs");
-const nodePath = require("path");
+import { fs, path as nodePath } from "@/platform";
 
 const publicCachekey = "publicCache111222333";
 export const AES_KEY = process.env.VUE_APP_AES_KEY;

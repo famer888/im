@@ -93,7 +93,7 @@ function getByte(text) {
 }
 
 function aesEncode(data, key) {
-    const cipher = crypto.createCipheriv("aes-128-ecb", Buffer.from(key), null);
+    const cipher = crypto.createCipheriv("aes-128-ecb", Buffer.from(key), Buffer.alloc(0));
     let encrypted = cipher.update(data, "utf8", "hex");
     encrypted += cipher.final("hex");
     return Buffer.from(encrypted, "hex");

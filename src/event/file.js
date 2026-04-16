@@ -1,4 +1,4 @@
-import { remote, ipcRenderer } from "@/platform";
+import { remote, ipcRenderer, fs, toLocalResourceUrl } from "@/platform";
 
 // 工具
 import { createHash, getFileSuffix, enumMsgType } from "@/utils/base";
@@ -29,32 +29,29 @@ const handleDownloadFileDone = (_$, data) => {
     const { fileLocalPath, fileKey, chatType } = data;
     // console.log('下载成功 ----------》 26', data)
     if (fileKey) {
+        const fileData = fs.readFileSync(fileLocalPath);
         const myWorker = new Worker("/worker.js");
-        myWorker.postMessage({ filePath: fileLocalPath, fileKey });
-        myWorker.onmessage = () => {
-            // 类型
+        myWorker.postMessage({ fileData, fileKey });
+        myWorker.onmessage = (e) => {
+            const decrypted = new Uint8Array(e.data.decrypted);
+            fs.writeFileSync(fileLocalPath, decrypted);
+
             let checkFileType = "";
             if ([1, 9].includes(chatType)) {
-                // 图片
                 checkFileType = "image";
             }
 
-            // 可以检测的文件
             if (checkFileType !== "") {
-                // 检测文件正确
-                checkFileCorrect("local-resource://" + fileLocalPath).then((exists) => {
-                    // 更新文件信息
+                checkFileCorrect(toLocalResourceUrl(fileLocalPath)).then((exists) => {
                     fnDownloadFileInfoUpdate(
                         data,
                         exists ? null : "decryptionError"
                     );
                 });
             } else {
-                // 更新文件信息
                 fnDownloadFileInfoUpdate(data);
             }
 
-            // 终止
             myWorker.terminate();
         };
     } else {

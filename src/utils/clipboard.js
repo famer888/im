@@ -1,4 +1,4 @@
-import fs from 'fs'
+import { fs } from '@/platform';
 
 const createImage = (options) => {
     options = options || {};

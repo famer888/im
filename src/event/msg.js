@@ -1,8 +1,6 @@
-import { ipcRenderer, remote } from "@/platform";
+import { ipcRenderer, remote, fs, path } from "@/platform";
 import { Cache } from "@/cache";
 import i18n from "@/assets/lang/i18n";
-import fs from "fs";
-const path = require("path");
 
 // 工具
 import {

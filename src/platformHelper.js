@@ -1,6 +1,4 @@
-import { ipcRenderer } from "@/platform";
-import { remote } from "./platform";
-import { fs } from "./platform";
+import { ipcRenderer, remote, fs, BufferUtil } from "@/platform";
 import BDBase from "@/database/queue";
 import _ from "lodash";
 
@@ -57,7 +55,7 @@ export const outFileFun = (filePath, key, opt = { hideTip: false }) => {
             }
         }
 
-        const buffer = Buffer.from(JSON.stringify({ uid, history }));
+        const buffer = BufferUtil.from(JSON.stringify({ uid, history }));
         const decodeFile = (arrayBuffer, fileKey) => {
             if (!fileKey) return;
             return new Promise(async (resolve) => {
@@ -91,7 +89,7 @@ export async function inFileFun(file, key) {
         try {
             let FileBuf = await getBlob({ file });
             let arrbuf = _decrypt(new Int8Array(FileBuf), key);
-            let jsonObj = Buffer.from(arrbuf, "base64").toString();
+            let jsonObj = BufferUtil.toString(BufferUtil.from(arrbuf, "base64"));
             let obj = JSON.parse(jsonObj);
             resolve(obj);
         } catch (error) {

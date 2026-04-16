@@ -7,7 +7,7 @@
     <div class="content">
       <audio
         v-if="msgInfo.local"
-        :src="'local-resource://' + msgInfo.local"
+        :src="toLocalResourceUrl(msgInfo.local)"
         :controls="true"
       />
       <template v-else>
@@ -20,7 +20,7 @@
   </div>
 </template>
 <script>
-import { remote, ipcRenderer } from "@/platform";
+import { remote, ipcRenderer, toLocalResourceUrl } from "@/platform";
 
 // 工具
 import { getFileSuffix } from "@/utils/base";

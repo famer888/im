@@ -69,6 +69,10 @@ protocol.registerSchemesAsPrivileged([
         scheme: "app",
         privileges: { secure: true, standard: true },
     },
+    {
+        scheme: "local-resource",
+        privileges: { secure: true, supportFetchAPI: true, corsEnabled: true, stream: true },
+    },
 ]);
 
 // 监听主进程未捕获的同步异常
@@ -136,6 +140,48 @@ ipcMain.handle("set-user-data-path", (e, path) => {
 ipcMain.handle("get-working-dir", () => {
     return workingDir;
 });
+
+ipcMain.handle("get-ntp-time", () => {
+    const dgram = require('dgram');
+    const NTP_SERVERS = ["cn.pool.ntp.org", "time.google.com"];
+    const NTP_PORT = 123;
+    const NTP_TIMEOUT = 4000;
+
+    function queryNtp(server) {
+        return new Promise((resolve, reject) => {
+            const client = dgram.createSocket("udp4");
+            const ntpData = Buffer.alloc(48);
+            ntpData[0] = 0x1B;
+
+            const timeout = setTimeout(() => {
+                client.close();
+                reject(new Error("NTP timeout"));
+            }, NTP_TIMEOUT);
+
+            client.send(ntpData, 0, ntpData.length, NTP_PORT, server, (err) => {
+                if (err) { clearTimeout(timeout); client.close(); reject(err); }
+            });
+
+            client.on("message", (msg) => {
+                clearTimeout(timeout);
+                client.close();
+                const seconds = msg.readUInt32BE(40) - 2208988800;
+                const fraction = msg.readUInt32BE(44);
+                const ms = seconds * 1000 + ((fraction * 1000) / 0x100000000);
+                resolve(ms);
+            });
+
+            client.on("error", (err) => {
+                clearTimeout(timeout);
+                client.close();
+                reject(err);
+            });
+        });
+    }
+
+    return Promise.any(NTP_SERVERS.map(queryNtp)).catch(() => null);
+});
+
 
 function reloadWindows(type, details = {}) {
     try {
@@ -641,18 +687,13 @@ const setMainWin = async () => {
 
     let webPreferences = {
         scrollBounce: false,
-        nodeIntegration: true,
-        contextIsolation: false,
+        nodeIntegration: false,
+        contextIsolation: true,
+        preload: nodePath.join(__dirname, isDevelopment ? './public/preload.js' : './preload.js'),
         nativeWindowOpen: true,
         webSecurity: true,
-        nodeIntegrationInWorker: true,
         webviewTag: true,
-        backgroundThrottling: false, // 禁用渲染器节流，即使窗口在后台也保持正常运行
-        bypassCSP: true,
-        // session: ses,
-        // partition,
-        // 如果想打包之后的版本，不能打开调试控制台，请取消下面的注释
-        // devTools: !app.isPackaged,
+        backgroundThrottling: false,
     };
 
     registerLocalResourceProtocol();
@@ -685,6 +726,7 @@ const setMainWin = async () => {
 
     if (isWin) mainWindow.setMenu(null);
     mainWindow.center();
+    require("@electron/remote/main").enable(mainWindow.webContents);
     if (process.env.WEBPACK_DEV_SERVER_URL) {
         await mainWindow.loadURL(process.env.WEBPACK_DEV_SERVER_URL);
         // mainWindow.openDevTools({ mode: 'detach' });
@@ -693,7 +735,6 @@ const setMainWin = async () => {
             extraHeaders: "Access-Control-Allow-Origin: *",
         });
     }
-    require("@electron/remote/main").enable(mainWindow.webContents);
     mainWindow.webContents.on("did-finish-load", async (e) => {
         try {
             const win =
@@ -1221,9 +1262,11 @@ app.on("will-finish-launching", (e) => {
 function registerLocalResourceProtocol(ses) {
     let fun = protocol;
     if (ses) fun = ses.protocol;
-    fun.registerFileProtocol("local-resource", (request, callback) => {
-        const url = request.url.replace(/^local-resource:\/\//, "");
-        const decodedUrl = decodeURI(url);
+    const ok = fun.registerFileProtocol("local-resource", (request, callback) => {
+        let url = request.url.replace(/^local-resource:\/\//, "");
+        let decodedUrl = decodeURI(url).replace(/^file:\/\/\/?/, "");
+        if (/^\/[A-Za-z]:/.test(decodedUrl)) decodedUrl = decodedUrl.slice(1);
+        decodedUrl = nodePath.normalize(decodedUrl);
         try {
             return callback(decodedUrl);
         } catch (error) {
@@ -1233,6 +1276,7 @@ function registerLocalResourceProtocol(ses) {
             );
         }
     });
+    if (!ok) console.error("[registerLocalResourceProtocol] registration failed");
 }
 app.on("ready", () => {
     // [macOS] 启动前清理可能残留的 IndexedDB 锁文件

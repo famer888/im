@@ -2,7 +2,7 @@ import { Cache } from "@/cache";
 import { websocketClose } from "@/socket";
 import i18n from "@/assets/lang/i18n";
 import { Local, getEnvType } from "@/utils";
-import { remote } from "@/platform";
+import { remote, processInfo } from "@/platform";
 
 // api
 import { UpdateContacts, getChatSensitive } from "@/api/imBase";
@@ -732,7 +732,7 @@ const fnClientInfoGet = () => {
     language: languageIndex + 1, // 默认简体中文
     // plat: process.platform === "darwin" ? 3 : 4,
     plat: 4,
-    sysModel: process.platform === "darwin" ? "MAC" : "WINDOWS",
+    sysModel: (processInfo.platform || '') === "darwin" ? "MAC" : "WINDOWS",
   };
 };
 

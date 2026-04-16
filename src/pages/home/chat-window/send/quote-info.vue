@@ -13,7 +13,7 @@
         />
         <img
           v-else
-          :src="'local-resource://' + (msgInfo.localThumbUrl || msgInfo.local)"
+          :src="toLocalResourceUrl(msgInfo.localThumbUrl || msgInfo.local)"
         />
       </template>
       <img
@@ -53,6 +53,7 @@ import {
 // 控件
 import ComLableEle from "@/pages/home/com/lable-ele.vue";
 import { getFileIcon } from "@/utils/base";
+import { toLocalResourceUrl } from "@/platform";
 export default {
   components: {
     ComLableEle,

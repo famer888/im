@@ -58,6 +58,7 @@ import ComTextEmojiImage from "@/pages/home/com/text-emoji-image.vue";
 // 事件
 import eventMsg from "@/event/msg";
 import eventCommon from "@/event/common";
+import { toLocalResourceUrl } from "@/platform";
 
 export default {
   props: ["forwardMessageList", "chatContent"],
@@ -78,11 +79,7 @@ export default {
   methods: {
     getForwardImgSrc(info) {
       const localUrl = info.localThumbUrl || info.local
-      if(localUrl.includes('http')) {
-        return localUrl
-      } else {
-        return `local-resource://${localUrl}`
-      }
+      return toLocalResourceUrl(localUrl)
     },
     messageTypeToText(value) {
       return eventMsg.fnMsgTypeToText(value);

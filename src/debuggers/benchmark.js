@@ -346,8 +346,8 @@ class Benchmark {
 
 const getSystemInfo = () => {
   try {
-    const os = require('os')
-    const cpus = os.cpus()
+    const _os = (window.electronAPI && window.electronAPI.os) || {};
+    const cpus = _os.cpus ? _os.cpus() : [];
 
     return {
       cpu: cpus.length > 0 ? `${cpus[0].model} (${cpus.length}核)` : '未知',
@@ -363,28 +363,8 @@ let _diskTypeCache = null
 
 const getDiskType = () => {
   if (_diskTypeCache !== null) return _diskTypeCache
-
-  try {
-    const { execSync } = require('child_process')
-    const platform = process.platform
-
-    if (platform === 'win32') {
-      // Windows: 使用 PowerShell 获取磁盘类型
-      const result = execSync('powershell "Get-PhysicalDisk | Select-Object MediaType | ConvertTo-Json"', { encoding: 'utf8' })
-      const disks = JSON.parse(result)
-      const types = Array.isArray(disks) ? disks.map(d => d.MediaType) : [disks.MediaType]
-      _diskTypeCache = types.includes('SSD') ? 'SSD' : (types.includes('HDD') ? 'HDD' : types.join(','))
-    } else if (platform === 'darwin') {
-      // macOS
-      const result = execSync('system_profiler SPStorageDataType | grep "Medium Type"', { encoding: 'utf8' })
-      _diskTypeCache = result.includes('SSD') ? 'SSD' : 'HDD'
-    } else {
-      _diskTypeCache = '未知'
-    }
-    return _diskTypeCache
-  } catch (e) {
-    return '获取失败'
-  }
+  _diskTypeCache = '未知 (contextIsolation)'
+  return _diskTypeCache
 }
 
 const formatBytes = (bytes) => {
@@ -399,9 +379,10 @@ const formatBytes = (bytes) => {
 
 const getMemoryInfo = () => {
   try {
-    const os = require('os')
-    const totalMem = os.totalmem()
-    const freeMem = os.freemem()
+    const _os = (window.electronAPI && window.electronAPI.os) || {};
+    if (!_os.totalmem) return '不可用 (contextIsolation)';
+    const totalMem = _os.totalmem()
+    const freeMem = _os.freemem()
     const usedMem = totalMem - freeMem
     const usagePercent = ((usedMem / totalMem) * 100).toFixed(1)
 

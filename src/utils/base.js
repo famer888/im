@@ -548,7 +548,8 @@ export const enumMsgType = {
 };
 
 // 是否是苹果电脑
-export const isMac = process.platform === "darwin";
+export const isMac = (window.electronAPI && window.electronAPI.process && window.electronAPI.process.platform === "darwin")
+    || (typeof navigator === 'object' && /Macintosh/.test(navigator.userAgent));
 
 /**
  * 对象内的long 类型，转换成number 引用修改

@@ -12,7 +12,7 @@
         "
         src="@/assets/images/error/img_fail_icon.png"
       />
-      <img v-else :src="'local-resource://' + (msgInfo.localThumbUrl || msgInfo.local)" />
+      <img v-else :src="toLocalResourceUrl(msgInfo.localThumbUrl || msgInfo.local)" />
     </template>
     <img
       v-else-if="msgInfo && msgInfo.chatType === 7"
@@ -36,6 +36,7 @@
 <script>
 // 工具
 import { getFileIcon } from "@/utils/base";
+import { toLocalResourceUrl } from "@/platform";
 import {
   strReplaceEmojiImgLabel,
   splitHtmlStringToObjects,

@@ -54,7 +54,7 @@ export default class Config {
 
     static getWFCPlatform() {
         if (isElectron()) {
-            if (window.process && window.process.platform === "darwin") {
+            if (window.electronAPI && window.electronAPI.process && window.electronAPI.process.platform === "darwin") {
                 // osx
                 return 4;
             }

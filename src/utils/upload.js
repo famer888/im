@@ -30,7 +30,7 @@ import { enumMsgType } from "@/utils/base";
 
 const OSS = require("ali-oss");
 import i18n from "@/assets/lang/i18n";
-const fs = require("fs");
+import { fs } from "@/platform";
 
 export const getVideoPreviewLocal = async (videoFile, savePath) => {
     // 获取视频预览图

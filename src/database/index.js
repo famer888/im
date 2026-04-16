@@ -1,6 +1,6 @@
 import Dexie from "dexie";
 import { Cache } from "@/cache";
-import { fs } from "../platform";
+import { fs, ipcRenderer } from "../platform";
 
 // 工具
 import { Local } from "../utils";

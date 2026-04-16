@@ -62,9 +62,8 @@ function getBufferLength(list) {
 }
 
 self.addEventListener("message", (e) => {
-  let fs = require("fs");
-  let { filePath, fileKey } = e.data;
-  let arrayBuffer = fs.readFileSync(filePath);
+  let { fileData, fileKey } = e.data;
+  let arrayBuffer = new Uint8Array(fileData);
   let arrbuf = [];
   for (
     let i = 0, len = Math.floor(arrayBuffer.length / 102416) + 1;
@@ -77,8 +76,7 @@ self.addEventListener("message", (e) => {
     );
     arrbuf = ConcatInt8([arrbuf, newBuffer]);
   }
-  fs.writeFileSync(filePath, arrbuf);
 
-  self.postMessage("ok"); // 将接收到的数据直接返回
+  self.postMessage({ decrypted: arrbuf.buffer }, [arrbuf.buffer]);
   self.close();
 });

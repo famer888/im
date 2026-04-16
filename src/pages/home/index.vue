@@ -72,7 +72,6 @@ import { ipcRenderer } from "@/platform";
 import { Cache } from "@/cache";
 import { websocketCreate, setWsUrl } from "@/socket";
 import dayjs from "dayjs";
-import ntpClient from "ntp-client";
 
 // 工具
 import { textToEmojiText, setTimeD } from "@/utils/base";
@@ -811,43 +810,16 @@ export default {
         return list;
       }
     },
-    initNtpTime() {
-      // ipcRenderer.send('initNtpTime', {desc: '调用NTP-TIME', type: 0})
-      // cn.pool.ntp.org   time.google.com
-      // 写两个服务的目的是防止第一个服务没有拿到ntp时间，则去另外个服务获取
-      let isUpdate = false;
-
-      ntpClient.getNetworkTime(
-        "cn.pool.ntp.org",
-        ntpClient.defaultNtpPort,
-        (err, date) => {
-          if (!isUpdate) {
-            if (err) {
-              return;
-            }
-
-            isUpdate = true;
-            const localTime = new Date().getTime();
-            setTimeD(dayjs(date).valueOf() - localTime);
-          }
+    async initNtpTime() {
+      try {
+        const ntpMs = await ipcRenderer.invoke("get-ntp-time");
+        if (ntpMs != null) {
+          const localTime = Date.now();
+          setTimeD(ntpMs - localTime);
         }
-      );
-
-      ntpClient.getNetworkTime(
-        "time.google.com",
-        ntpClient.defaultNtpPort,
-        (err, date) => {
-          if (!isUpdate) {
-            if (err) {
-              return;
-            }
-
-            isUpdate = true;
-            const localTime = new Date().getTime();
-            setTimeD(dayjs(date).valueOf() - localTime);
-          }
-        }
-      );
+      } catch (e) {
+        // NTP sync failed silently
+      }
     },
     setGroups(groups) {
       this.groupList = groups || [];

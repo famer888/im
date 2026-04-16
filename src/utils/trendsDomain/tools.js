@@ -1,4 +1,4 @@
-const os = require("os");
+import { os } from "@/platform";
 
 export const isTestEnv = process.env.VUE_APP_PACKNAME === "ocs-im-new-test" 
 

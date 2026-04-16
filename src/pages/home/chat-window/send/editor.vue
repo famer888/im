@@ -98,8 +98,7 @@
   </div>
 </template>
 <script>
-import { clipboard } from "electron";
-import { isElectron, ipcRenderer } from "@/platform";
+import { isElectron, ipcRenderer, clipboard, toLocalResourceUrl } from "@/platform";
 // 控件
 import ComActiveIcon from "@/components/active-icon";
 
@@ -1154,7 +1153,7 @@ export default {
      * 获取文件
      */
     async getFile(url) {
-      const response = await fetch("local-resource://" + url);
+      const response = await fetch(toLocalResourceUrl(url));
       const blob = await response.blob();
       blob.lastModifiedDate = new Date();
       blob.name = url.slice(url.lastIndexOf("/") + 1);

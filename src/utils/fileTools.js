@@ -1,9 +1,5 @@
-import fs from "fs";
 const mime = require("mime-types");
-const path = require("path");
-const https = require('https');
-
-import { ipcRenderer } from "@/platform";
+import { ipcRenderer, fs, path, BufferUtil } from "@/platform";
 
 export const isNetworkImageUrl = (imageUrl) => {
     if(!imageUrl) return false
@@ -13,27 +9,11 @@ export const isNetworkImageUrl = (imageUrl) => {
 }
 
 export const downloadImageToLocal = async (imageUrl, savePath) => {
-      return new Promise((resolve, reject) => {
-          const { hostname, pathname } = new URL(imageUrl);
-          https.get({ hostname, path: pathname }, (res) => {
-            // 检查响应状态码
-            if (res.statusCode !== 200) {
-              return reject(new Error(`Failed to download image: ${res.statusCode}`));
-            }
-     
-            // 创建写入流
-            const fileStream = fs.createWriteStream(savePath);
-     
-            // 处理响应数据
-            res.pipe(fileStream);
-     
-            // 监听写入完成事件
-            fileStream.on('finish', () => resolve(savePath));
-     
-            // 监听错误事件
-            fileStream.on('error', (err) => reject(err));
-          }).on('error', (err) => reject(err));
-        });
+    const api = (typeof window !== 'undefined' && window.electronAPI) || {};
+    if (api.downloadFile) {
+        return api.downloadFile(imageUrl, savePath);
+    }
+    throw new Error('downloadFile not available');
 }
 
 export const exportBase64ImgToLocal = (base64Image, path) => {
@@ -45,7 +25,7 @@ export const exportBase64ImgToLocal = (base64Image, path) => {
                 ""
             );
             // 解码Base64字符串
-            let buffer = Buffer.from(base64Data, "base64");
+            let buffer = BufferUtil.from(base64Data, "base64");
             fs.writeFile(path, buffer, function (err) {
                 if (err) {
                     reject(err);
@@ -207,7 +187,7 @@ export const saveFileToDirectory = (file, directory, fileName) => {
                 const content = event.target.result;
 
                 // 将文件内容转换为Buffer对象
-                const data = Buffer.from(content);
+                const data = BufferUtil.from(content);
 
                 // 构建完整的文件路径（须用 join，避免 directory 无尾部分隔符时与 fileName 粘连，或混用 / 与 \）
                 let filePath = path.join(directory, fileName);

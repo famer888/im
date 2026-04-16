@@ -1,8 +1,6 @@
-const fs = require("fs");
-const nodePath = require("path");
 import { getCachDirectory } from "@/utils/tools";
 import { Local } from "@/utils";
-import { ipcRenderer } from "@/platform";
+import { ipcRenderer, fs, path as nodePath } from "@/platform";
 import { autoImportCache } from "@/platformHelper";
 
 const checkDirectory = (dirPath) => {
@@ -20,10 +18,17 @@ const checkDirectory = (dirPath) => {
 export const cacheDB = async (uid) => {
     let myWorker = new Worker("worker/cacheDB.js");
     let dbName = `${uid}-68-2.0.3`;
-    const { path, key, directoryPath } = await getCachPar(uid);
+    const { path: savePath, key, directoryPath } = await getCachPar(uid);
     await checkDirectory(directoryPath);
-    myWorker.postMessage({ dbName, params: { uid }, key, savePath: path });
+    myWorker.postMessage({ dbName, params: { uid }, key });
     myWorker.onmessage = (e) => {
+        try {
+            const { encrypted } = e.data;
+            const data = new Uint8Array(encrypted.buffer || encrypted);
+            fs.writeFileSync(savePath, data);
+        } catch (err) {
+            console.error('[cacheDB] write failed', err);
+        }
         setExportInfo(uid);
         ipcRenderer.send("cache-success", {});
         myWorker.terminate();

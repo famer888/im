@@ -17,10 +17,23 @@ module.exports = {
   },
   productionSourceMap: false,
   configureWebpack: {
-    // Webpack configuration applied to web builds and the electron renderer process
-    target: 'electron-renderer',
+    target: 'web',
+    node: {
+      __dirname: true,
+      __filename: true,
+      dgram: 'empty',
+      net: 'empty',
+      tls: 'empty',
+      dns: 'empty',
+      child_process: 'empty',
+    },
     resolve: {
-      mainFields: ['main', 'browser'],
+      mainFields: ['browser', 'module', 'main'],
+      alias: {
+        'electron': path.resolve(__dirname, 'src/shims/electron-renderer.js'),
+        '@electron/remote': path.resolve(__dirname, 'src/shims/electron-remote-renderer.js'),
+        'file-system': path.resolve(__dirname, 'src/shims/file-system.js'),
+      },
     },
   },
   pluginOptions: {
@@ -53,8 +66,8 @@ module.exports = {
       chainWebpackRendererProcess: (config) => {
         // Chain webpack config for electron renderer process only (won't be applied to web builds)
       },
-      // nodeIntegration: true,
-      contextIsolation: false,
+      nodeIntegration: false,
+      contextIsolation: true,
       webSecurity: true,
       // Use this to change the entrypoint of your app's main process
       // mainProcessFile: 'src/myBackgroundFile.js',

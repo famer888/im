@@ -3,7 +3,7 @@ import { reportErrorDomain } from "./manageReport";
 import { getDomainNumThreshold } from "./manageDomain";
 import { isWebSocketUrl } from "./tools";
 import { FairGuard } from "@/api/base/unit";
-const os = require("os");
+import { os } from "@/platform";
 
 // 获取域名列表中第一个正常的域名
 export const getDomainListFirstNormal = (urlList) => {

@@ -1,36 +1,70 @@
 // 平台相关代码，目前主要用来处理electron 和 浏览器之间不同
+// contextIsolation: true / nodeIntegration: false
+// 所有 Node.js / Electron API 通过 preload 脚本的 window.electronAPI 访问
+
+const api = (typeof window !== 'undefined' && window.electronAPI) || {};
 
 export function isElectron() {
-    // Renderer process
-    if (typeof window !== 'undefined' && typeof window.process === 'object' && window.process.type === 'renderer') {
-        return true;
-    }
-
-    // Main process
-    if (typeof process !== 'undefined' && typeof process.versions === 'object' && !!process.versions.electron) {
-        return true;
-    }
-
-    // Detect the user agent when the `nodeIntegration` option is set to true
     if (typeof navigator === 'object' && typeof navigator.userAgent === 'string' && navigator.userAgent.indexOf('Electron') >= 0) {
         return true;
     }
-
-    return false;
+    return !!api.process;
 }
 
-// pc
-export const remote = require('@electron/remote');
-export const ipcRenderer = require('electron').ipcRenderer;
-export const ipcMain = require('electron').ipcMain;
-export const shell = require('electron').shell;
-export const fs = require('file-system').fs;
-export const currentWindow = require('@electron/remote').getCurrentWindow();
-export const BrowserWindow = require('@electron/remote').BrowserWindow;
-export const AppPath = require('@electron/remote').app.getAppPath();
-export const desktopCapturer = require('electron').desktopCapturer;
-export const app = require('@electron/remote').app;
+// IPC
+export const ipcRenderer = api.ipcRenderer || {};
+
+// Shell
+export const shell = api.shell || {};
+
+// Clipboard
+export const clipboard = api.clipboard || {};
+
+// Window control (替代 @electron/remote 的 getCurrentWindow())
+export const windowControl = api.windowControl || {};
+
+// remote 兼容层 —— 仅提供 getCurrentWindow() 代理，其他功能已迁移
+export const remote = {
+    getCurrentWindow() {
+        return api.windowControl || {};
+    },
+};
+
+// App info
+export const app = api.app || {};
+export const AppPath = (api.app && api.app.getAppPath && api.app.getAppPath()) || '';
+
+// Desktop Capturer
+export const desktopCapturer = api.desktopCapturer || {};
+
+// File System
+export const fs = api.fs || {};
+
+// Path
+export const path = api.path || {};
+
+// OS
+export const os = api.os || {};
+
+// Buffer utilities
+export const BufferUtil = api.Buffer || {};
+
+// 兼容旧代码中 currentWindow 的使用
+export const currentWindow = api.windowControl || {};
+
+// Process info
+export const processInfo = api.process || {};
+
+// BrowserWindow 不再直接可用 —— 如需操作其他窗口请通过 IPC
+export const BrowserWindow = null;
+
+// Convert a local file path (or file:// URL) to a local-resource:// URL
+export function toLocalResourceUrl(filePath) {
+    if (!filePath) return filePath;
+    if (filePath.startsWith('http') || filePath.startsWith('local-resource://')) return filePath;
+    if (filePath.startsWith('file://')) return filePath.replace(/^file:\/\/\/?/, 'local-resource://');
+    return `local-resource://${filePath}`;
+}
 
 // for web
-
 export const PostMessageEventEmitter = null;

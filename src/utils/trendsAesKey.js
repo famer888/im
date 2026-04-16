@@ -6,7 +6,7 @@ import {
     getPublicCacheSync,
     getPublicCachePathSync,
 } from "./publicCache";
-const os = require("os");
+import { os } from "@/platform";
 
 export const NODE_ENV = process.env.VUE_APP_PACKNAME;
 

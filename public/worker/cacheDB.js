@@ -41,7 +41,6 @@ const _encrypt = (key, u8array) => {
   return CryptoJS.enc.u8array.stringify(encrypted.ciphertext);
 };
 
-const fs = require('fs');
 let db = null;
 const getTableAllData = (transaction, objectStoreName) => {
   return new Promise((resolve) => {
@@ -85,30 +84,16 @@ const openDB = (dbName) => {
   });
 };
 
-const saveDataToLoacl = (params, key, savePath) => {
-  var buffer = Buffer.from(JSON.stringify(params));
-  const decodeFile = (arrayBuffer, fileKey) => {
-    if (!fileKey) return;
-    return new Promise(async (resolve) => {
-      let arrbuf = _encrypt(fileKey, arrayBuffer);
-      fs.writeFileSync(savePath, arrbuf);
-      resolve(true);
-    });
-  };
-  decodeFile(buffer, key);
-};
-
 self.addEventListener('message', async (event) => {
-  let { dbName, params, key, savePath } = event.data;
+  let { dbName, params, key } = event.data;
   if (dbName) {
-    // console.time("cacheDb");
     await openDB(dbName);
     if (db) {
       const history = await getAllHistoryList(dbName);
       let datas = Object.assign({}, params, { history });
-      await saveDataToLoacl(datas, key, savePath);
-      // console.timeEnd("cacheDb");
-      self.postMessage(1);
+      const buffer = new TextEncoder().encode(JSON.stringify(datas));
+      const encrypted = key ? _encrypt(key, buffer) : buffer;
+      self.postMessage({ encrypted: encrypted });
     }
   }
 });

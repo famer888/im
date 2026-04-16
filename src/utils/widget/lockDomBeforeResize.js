@@ -1,4 +1,4 @@
-import { ipcRenderer } from "electron";
+import { ipcRenderer } from "@/platform";
 
 // 一般来说不推荐直接操作dom
 // 但这个二栏自适应突变宽度三栏自适应，宽度变化从长变短，突变过快会导致闪烁
