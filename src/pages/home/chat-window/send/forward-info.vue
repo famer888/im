@@ -81,7 +81,7 @@ export default {
       if(localUrl.includes('http')) {
         return localUrl
       } else {
-        return `file:///${localUrl}`
+        return `local-resource://${localUrl}`
       }
     },
     messageTypeToText(value) {

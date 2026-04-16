@@ -46,7 +46,7 @@ class MediaPlayerProcess {
         nodeIntegration: false,
         contextIsolation: true,
         preload: path.join(__dirname, isDevelopment ? './public/media/media-preload.js' : './media/media-preload.js'),
-        webSecurity: false,
+        webSecurity: true,
         backgroundThrottling: false,
         additionalArguments: [`--window-id=${WINDOW_ID}`],
       },

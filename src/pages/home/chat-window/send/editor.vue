@@ -1154,7 +1154,7 @@ export default {
      * 获取文件
      */
     async getFile(url) {
-      const response = await fetch("file://" + url);
+      const response = await fetch("local-resource://" + url);
       const blob = await response.blob();
       blob.lastModifiedDate = new Date();
       blob.name = url.slice(url.lastIndexOf("/") + 1);

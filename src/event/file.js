@@ -42,7 +42,7 @@ const handleDownloadFileDone = (_$, data) => {
             // 可以检测的文件
             if (checkFileType !== "") {
                 // 检测文件正确
-                checkFileCorrect("file://" + fileLocalPath).then((exists) => {
+                checkFileCorrect("local-resource://" + fileLocalPath).then((exists) => {
                     // 更新文件信息
                     fnDownloadFileInfoUpdate(
                         data,

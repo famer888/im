@@ -12,7 +12,7 @@
         "
         src="@/assets/images/error/img_fail_icon.png"
       />
-      <img v-else :src="'file://' + (msgInfo.localThumbUrl || msgInfo.local)" />
+      <img v-else :src="'local-resource://' + (msgInfo.localThumbUrl || msgInfo.local)" />
     </template>
     <img
       v-else-if="msgInfo && msgInfo.chatType === 7"

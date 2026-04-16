@@ -42,10 +42,9 @@ export const createNoticeWindow = async (mainWindow) => {
         nodeIntegration: true,
         contextIsolation: false,
         nativeWindowOpen: true,
-        webSecurity: false,
+        webSecurity: true,
         nodeIntegrationInWorker: true,
         webviewTag: true,
-        allowRunningInsecureContent: true,
       }
     });
     // 隐藏子窗口在任务栏上的显示

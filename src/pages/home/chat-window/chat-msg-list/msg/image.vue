@@ -173,29 +173,29 @@ export default {
             };
             progress.subscribe(this.taskId, this._onProgress);
         },
-        // 处理mac本地地址异常
         macFixImagePath(url) {
             url = url || '';
-            // 1. 处理 app://./ 协议：替换为 file:// 并修正路径
             if (url.startsWith('app://./')) {
                 const relativePath = url.replace('app://./', '');
-                const absolutePath = `/${relativePath}`; // 假设目标是根目录下的路径
-                return `file://${absolutePath}`;
+                const absolutePath = `/${relativePath}`;
+                return `local-resource://${absolutePath}`;
             }
-            // 2. 如果不是 file:// 开头，则自动添加 file://（适用于本地绝对路径）
-            else if (!url.startsWith('file://')) {
-                // 检查是否是绝对路径（如 /Users/... 或 C:\...）
+            else if (!url.startsWith('local-resource://') && !url.startsWith('file://')) {
                 if (url.startsWith('/')) {
-                    return `file://${url}`;
+                    return `local-resource://${url}`;
                 }
             }
-            // 3. 其他情况（如已经是 file:// 或 http://），直接返回
+            else if (url.startsWith('file://')) {
+                return url.replace(/^file:\/\//, 'local-resource://');
+            }
             return url;
         },
         getUrl() {
             let url = this.msgInfo.localThumbUrl  || this.msgInfo.local
             if(isMac) {
               url = this.macFixImagePath(url)
+            } else if (url && !url.startsWith('http') && !url.startsWith('local-resource://')) {
+              url = `local-resource://${url}`
             }
             return url
         },

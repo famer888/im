@@ -644,10 +644,9 @@ const setMainWin = async () => {
         nodeIntegration: true,
         contextIsolation: false,
         nativeWindowOpen: true,
-        webSecurity: false,
+        webSecurity: true,
         nodeIntegrationInWorker: true,
         webviewTag: true,
-        allowRunningInsecureContent: true,
         backgroundThrottling: false, // 禁用渲染器节流，即使窗口在后台也保持正常运行
         // session: ses,
         // partition,
@@ -1279,9 +1278,16 @@ app.on("ready", () => {
     });
     session.defaultSession.webRequest.onBeforeSendHeaders(
         (details, callback) => {
-            // 可根据实际需求，配置 Origin，默认置为空
-            // details.requestHeaders.Origin = '';
             callback({ cancel: false, requestHeaders: details.requestHeaders });
+        }
+    );
+    session.defaultSession.webRequest.onHeadersReceived(
+        (details, callback) => {
+            const headers = details.responseHeaders || {};
+            headers["Access-Control-Allow-Origin"] = ["*"];
+            headers["Access-Control-Allow-Headers"] = ["*"];
+            headers["Access-Control-Allow-Methods"] = ["*"];
+            callback({ responseHeaders: headers });
         }
     );
     try {

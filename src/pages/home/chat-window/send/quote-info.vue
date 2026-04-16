@@ -13,7 +13,7 @@
         />
         <img
           v-else
-          :src="'file://' + (msgInfo.localThumbUrl || msgInfo.local)"
+          :src="'local-resource://' + (msgInfo.localThumbUrl || msgInfo.local)"
         />
       </template>
       <img

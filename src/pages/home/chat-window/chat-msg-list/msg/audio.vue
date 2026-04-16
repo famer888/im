@@ -7,7 +7,7 @@
     <div class="content">
       <audio
         v-if="msgInfo.local"
-        :src="'file://' + msgInfo.local"
+        :src="'local-resource://' + msgInfo.local"
         :controls="true"
       />
       <template v-else>
