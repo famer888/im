@@ -67,7 +67,7 @@ app.on("child-process-gone", (event, details) => {
 protocol.registerSchemesAsPrivileged([
     {
         scheme: "app",
-        privileges: { secure: true, standard: true, bypassCSP: true },
+        privileges: { secure: true, standard: true },
     },
 ]);
 
@@ -648,6 +648,7 @@ const setMainWin = async () => {
         nodeIntegrationInWorker: true,
         webviewTag: true,
         backgroundThrottling: false, // 禁用渲染器节流，即使窗口在后台也保持正常运行
+        bypassCSP: true,
         // session: ses,
         // partition,
         // 如果想打包之后的版本，不能打开调试控制台，请取消下面的注释
@@ -1284,10 +1285,21 @@ app.on("ready", () => {
     session.defaultSession.webRequest.onHeadersReceived(
         (details, callback) => {
             const headers = details.responseHeaders || {};
-            const hasHeader = (name) => Object.keys(headers).some(k => k.toLowerCase() === name);
-            if (!hasHeader("access-control-allow-origin"))  headers["Access-Control-Allow-Origin"]  = ["*"];
-            if (!hasHeader("access-control-allow-headers")) headers["Access-Control-Allow-Headers"] = ["*"];
-            if (!hasHeader("access-control-allow-methods")) headers["Access-Control-Allow-Methods"] = ["*"];
+            const findKey = (name) => Object.keys(headers).find(k => k.toLowerCase() === name);
+
+            const acaoKey = findKey("access-control-allow-origin");
+            if (acaoKey) {
+                const values = headers[acaoKey].flatMap(v => v.split(",").map(s => s.trim())).filter(Boolean);
+                if (values.length > 1) {
+                    delete headers[acaoKey];
+                    headers["Access-Control-Allow-Origin"] = [values.find(v => v !== "*") || "*"];
+                }
+            } else {
+                headers["Access-Control-Allow-Origin"] = ["*"];
+            }
+
+            if (!findKey("access-control-allow-headers")) headers["Access-Control-Allow-Headers"] = ["*"];
+            if (!findKey("access-control-allow-methods")) headers["Access-Control-Allow-Methods"] = ["*"];
             callback({ responseHeaders: headers });
         }
     );

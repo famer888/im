@@ -13,14 +13,14 @@
   <img v-else-if="info.type === 'image'" :data-key="info.key" :src="info.src" />
   <a
     v-else-if="info.type === 'link'"
-    href="javascript:void(0)"
-    @click.stop="handleGoLink(info)"
+    href="#"
+    @click.prevent.stop="handleGoLink(info)"
     >{{ info.content }}</a
   >
   <a
     v-else-if="info.type === 'customLink'"
-    href="javascript:void(0)"
-    @click.stop="handleGoLink(info, true)"
+    href="#"
+    @click.prevent.stop="handleGoLink(info, true)"
     v-html="sanitizeHtml(info.content)"
     ></a>
   <br v-else />
