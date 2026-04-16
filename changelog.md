@@ -22,7 +22,10 @@
 | 10 | **发送栏 — 文件获取** | 编辑器中通过 fetch 读取本地文件 | 聊天窗口 → 粘贴/拖入本地文件 | `src/pages/.../send/editor.vue`：`fetch("file://"+url)` → `fetch("local-resource://"+url)` |
 | 11 | **文件事件 — 解密校验** | 文件下载解密后的正确性检测 | 接收文件消息 → 自动下载解密 → 校验文件完整性 | `src/event/file.js`：`checkFileCorrect("file://"+path)` → `checkFileCorrect("local-resource://"+path)` |
 | 12 | **HTML 内容净化** | 富文本/消息 HTML 的 URI 白名单 | 聊天窗口 → 接收/展示富文本消息 | `src/utils/sanitizeHtml.js`：DOMPurify URI 正则白名单新增 `local-resource:` 协议 |
-| 13 | **网络请求 CORS 兼容** | 所有 HTTP API 请求的跨域处理 | 应用中所有涉及服务端 API 调用的操作 | `src/background.js`：新增 `session.defaultSession.webRequest.onHeadersReceived` 处理器，为响应注入 `Access-Control-Allow-Origin/Headers/Methods: *`，替代原先由 `webSecurity: false` 提供的 CORS 豁免 |
+| 13 | **网络请求 CORS 兼容** | 所有 HTTP API 请求的跨域处理 | 应用中所有涉及服务端 API 调用的操作 | `src/background.js`：新增 `session.defaultSession.webRequest.onHeadersReceived` 处理器，仅在服务端响应未携带 CORS 头时注入 `Access-Control-Allow-Origin/Headers/Methods: *`，避免与服务端已有头重复导致 `*, *` 问题 |
+| 14 | **媒体播放器 — 本地文件加载** | 图片/视频在独立媒体窗口中的加载与展示 | 聊天中点击图片/视频 → 媒体播放器窗口显示内容 | `public/media/media.html`：`ensureFileOrRemoteUrl()` 将本地路径转为 `local-resource://` 而非 `file://`；已有 `file://` URL 也统一转换 |
+| 15 | **媒体播放器 — 路径解析** | "使用默认应用打开"、"另存为"功能的路径提取 | 媒体播放器窗口 → 点击"使用默认应用打开"或"另存为" | `public/media/media.html`：`fileUrlToLocalPath()` 新增 `local-resource://` 协议解析，并修复 Windows 路径前导多余斜杠问题（`/C:/path` → `C:/path`） |
+| 16 | **媒体播放器 — 路径显示** | 媒体窗口底部文件路径标签 | 媒体播放器窗口 → 查看底部文件路径 | `public/media/media.html`：`formatPathForDisplay()` 新增对 `local-resource://` 协议的识别 |
 
 ---
 

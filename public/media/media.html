@@ -102,27 +102,40 @@
     }
 
     /**
-     * 无 http(s)/file/blob/data 等协议时，将绝对本地路径转为 file URL（macOS/Linux 以 / 开头；Windows 盘符路径）。
-     * 已是 file / http / blob / data 的 URL（含 FILE:// 大小写）原样返回，避免重复加 file://。
+     * 无协议时，将绝对本地路径转为 local-resource URL；已有 file:// 的也统一转为 local-resource://。
+     * http(s)/blob/data 等原样返回。
      */
     function ensureFileOrRemoteUrl(src) {
       if (!src || typeof src !== 'string') return src;
       const s = src.trim();
       if (!s) return src;
-      if (/^(https?|file|blob|data):/i.test(s)) return s;
+      if (/^(https?|blob|data|local-resource):/i.test(s)) return s;
+      if (/^file:/i.test(s)) return s.replace(/^file:\/\//i, 'local-resource://');
       const normalized = s.replace(/\\/g, '/');
       if (/^[a-zA-Z]:\//.test(normalized)) {
-        return 'file:///' + encodeURI(normalized);
+        return 'local-resource:///' + encodeURI(normalized);
       }
       if (normalized.startsWith('/')) {
-        return 'file://' + encodeURI(normalized);
+        return 'local-resource://' + encodeURI(normalized);
       }
       return s;
     }
 
-    /** file: 大小写不敏感；适用于 macOS file:///… 与 Windows file:///C:/… */
+    /** file: / local-resource: 大小写不敏感；提取本地文件路径 */
     function fileUrlToLocalPath(src) {
-      if (!src || typeof src !== 'string' || !/^file:/i.test(src)) return src;
+      if (!src || typeof src !== 'string') return src;
+      if (/^local-resource:/i.test(src)) {
+        try {
+          let p = decodeURIComponent(src.replace(/^local-resource:\/\//i, ''));
+          if (/^\/[A-Za-z]:[\\/]/.test(p)) p = p.slice(1);
+          return p;
+        } catch (e) {
+          let p = src.replace(/^local-resource:\/\//i, '');
+          if (/^\/[A-Za-z]:[\\/]/.test(p)) p = p.slice(1);
+          return p;
+        }
+      }
+      if (!/^file:/i.test(src)) return src;
       try {
         const u = new URL(src);
         let p = decodeURIComponent(u.pathname.replace(/\+/g, ' '));
@@ -140,7 +153,7 @@
 
     function formatPathForDisplay(src) {
       if (!src) return '';
-      if (/^file:/i.test(src)) return fileUrlToLocalPath(src);
+      if (/^(file|local-resource):/i.test(src)) return fileUrlToLocalPath(src);
       return src;
     }
 

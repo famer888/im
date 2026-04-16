@@ -1284,9 +1284,10 @@ app.on("ready", () => {
     session.defaultSession.webRequest.onHeadersReceived(
         (details, callback) => {
             const headers = details.responseHeaders || {};
-            headers["Access-Control-Allow-Origin"] = ["*"];
-            headers["Access-Control-Allow-Headers"] = ["*"];
-            headers["Access-Control-Allow-Methods"] = ["*"];
+            const hasHeader = (name) => Object.keys(headers).some(k => k.toLowerCase() === name);
+            if (!hasHeader("access-control-allow-origin"))  headers["Access-Control-Allow-Origin"]  = ["*"];
+            if (!hasHeader("access-control-allow-headers")) headers["Access-Control-Allow-Headers"] = ["*"];
+            if (!hasHeader("access-control-allow-methods")) headers["Access-Control-Allow-Methods"] = ["*"];
             callback({ responseHeaders: headers });
         }
     );
