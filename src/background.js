@@ -1321,9 +1321,22 @@ app.on("ready", () => {
     screenshots.on("save", (e, { viewer }) => {
         console.log("capture", viewer);
     });
+    const headerInjectBlacklist = [
+        // e.g. "/some/path/to/skip"
+    ];
     session.defaultSession.webRequest.onBeforeSendHeaders(
         (details, callback) => {
-            callback({ cancel: false, requestHeaders: details.requestHeaders });
+            const headers = details.requestHeaders || {};
+            const urlPath = new URL(details.url).pathname;
+            if (!headerInjectBlacklist.some(p => urlPath.startsWith(p))) {
+                if (!headers["X-App-Version"]) {
+                    headers["X-App-Version"] = pkg.version;
+                }
+                if (!headers["X-Secret-Name"]) {
+                    headers["X-Secret-Name"] = process.env.VUE_APP_SECRET_NAME || "";
+                }
+            }
+            callback({ cancel: false, requestHeaders: headers });
         }
     );
     session.defaultSession.webRequest.onHeadersReceived(
