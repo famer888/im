@@ -25,6 +25,8 @@ import {
     fnChannelRelKeyGet,
 } from "@/utils/e2ee";
 import { getOssDomains } from "@/utils/trendsDomain/manageOssDownUpload";
+import { getDomainListAllNormal } from "@/utils/trendsDomain/workTools";
+import { reportErrorDomain } from "@/utils/trendsDomain/manageReport";
 
 import { enumMsgType } from "@/utils/base";
 
@@ -362,19 +364,39 @@ export const uploadFile = async (file, { chatType, fileKey, taskId }, suffix) =>
 
     // 优先使用动态域名上传
     let trendsOssDomains = await getOssDomains(9);
-    trendsOssDomains.push({domainUrl: ossData.ossEndpoint})
+    // 预检：先过滤掉明显不可用的 CNAME，避免直接交给 ali-oss 触发 CORS 预检失败
+    try {
+        trendsOssDomains = await getDomainListAllNormal(trendsOssDomains || [], {
+            objKey: "domainUrl",
+        });
+    } catch (e) {
+        trendsOssDomains = trendsOssDomains || [];
+    }
+    trendsOssDomains.push({ domainUrl: ossData.ossEndpoint });
+
     let res = {};
-    for(let i = 0; i<= trendsOssDomains.length; i++) {
+    for (let i = 0; i < trendsOssDomains.length; i++) {
         const item = trendsOssDomains[i];
+        if (!item?.domainUrl) continue;
         try {
-          if(!item?.domainUrl) continue;
-          const result = await ossUpload(keyData.fileId, encodeFile, item.domainUrl, taskId);
-          if(result) {
-            res = result;
-            break;
-          }
+            const result = await ossUpload(
+                keyData.fileId,
+                encodeFile,
+                item.domainUrl,
+                taskId
+            );
+            if (result) {
+                res = result;
+                break;
+            }
         } catch (error) {
-            console.error(error, '捕获上传异常 --1------------> 371')
+            // 记录失效的上传域名，交给域名池轮换/剔除
+            reportErrorDomain(item.domainUrl, {
+                errorDesc: `oss 上传异常:${error?.code || error?.message || error}`,
+                httpStatus: error?.status || 0,
+                moduleCode: "ossEndpoint",
+            });
+            console.error(error, "捕获上传异常 --1------------> 371");
         }
     }
 
@@ -423,9 +445,17 @@ const ossUpload = async (fileId, File, endpoint, taskId) => {
         cname: false,
     };
 
-    if(endpoint) {
-        ossOption.endpoint = endpoint;
+    if (endpoint) {
+        // 统一使用 https，避免 http 下的 CORS 预检被 CDN/反代吞掉
+        let normalized = String(endpoint).trim();
+        if (/^http:\/\//i.test(normalized)) {
+            normalized = normalized.replace(/^http:\/\//i, "https://");
+        } else if (!/^https?:\/\//i.test(normalized)) {
+            normalized = "https://" + normalized;
+        }
+        ossOption.endpoint = normalized;
         ossOption.cname = true;
+        ossOption.secure = true;
         delete ossOption.region;
     }
     // 创建 OSS 客户端实例

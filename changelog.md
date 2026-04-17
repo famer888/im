@@ -6,6 +6,51 @@
 
 ---
 
+## 2026-04-17 — OSS 上传 CORS 预检失败修复
+
+> 在 `webSecurity: true` 启用后，ali-oss SDK 的 `multipartUpload` 对自建 CNAME（如 `oss-cn-hongkong.clb77.zsae86.com`）发起的 `OPTIONS` 预检被源站返回非 2xx，浏览器报 `Response to preflight request doesn't pass access control check: It does not have HTTP ok status.`，导致消息中的图片/文件/视频/语音全部无法上传。无权限改动 OSS Bucket / CDN 配置，改为在 Electron 主进程按域名伪造 CORS 预检响应 + 渲染进程侧加防御。
+
+### 涉及功能（测试清单）
+
+| # | 用户操作路径 | 预期表现 | 涉及模块 |
+|---|------------|---------|---------|
+| 1 | 聊天窗口 → 发送图片消息 | 上传成功、对端可见，DevTools Network 中 `OPTIONS` 返回 200 | ali-oss 直传 + 主进程 CORS 伪造 |
+| 2 | 聊天窗口 → 发送视频/文件/语音 | 同上，任意类型附件均可上传 | ali-oss 直传 |
+| 3 | 聊天窗口 → 发送大文件触发分片上传 | 分片并发正常，进度条可达 95% | `ossUpload` multipart |
+| 4 | 动态域名池下发的 OSS CNAME 不可达 | 自动跳过坏节点并回退到 `ossEndpoint`，最终上传成功 | 上传路径预检 + 上报 |
+| 5 | 下发的 OSS endpoint 为 `http://` 前缀 | 客户端强制升为 `https://` 后再交给 ali-oss | endpoint 归一化 |
+| 6 | DevTools 查看非 OSS 域名请求 | CORS 行为保持原有策略，未被过度放开 | `onHeadersReceived` 命中范围 |
+
+### 变更详情
+
+| # | 功能模块 | 修改内容 |
+|---|---------|---------|
+| 48 | **主进程 CORS 预检伪造** | `src/background.js`：`onHeadersReceived` 引入 `ossCorsHostPattern` 命中 `*.aliyuncs.com` / `oss-*` / `*.zsae86.com` / `clbNN.*` 等 OSS 相关域名；命中后强制覆盖 `Access-Control-Allow-Origin/Methods/Headers/Expose-Headers/Max-Age`，显式列出 `Authorization` 与 `x-oss-*` 系列头（避开 `*` 不匹配凭据头的规范问题） |
+| 49 | **OPTIONS 状态行改写** | `src/background.js`：命中 OSS 且 `method === 'OPTIONS'`、状态码非 2xx 时，在 `callback` 中把 `statusLine` 改写为 `HTTP/1.1 200 OK`，绕过源站/CDN 未正确处理预检的问题 |
+| 50 | **非 OSS 请求行为隔离** | `src/background.js`：未命中 OSS 的请求保持原来的"仅在缺失时注入 + 多值去重"温和策略，避免全局过度放开 CORS |
+| 51 | **上传 endpoint 强制 HTTPS** | `src/utils/upload.js` `ossUpload`：将传入的 `endpoint` 归一化为 `https://`，并设置 `ossOption.secure = true`，防止下发的 `http://` CNAME 触发混合内容 / 预检异常 |
+| 52 | **上传域名连通性预检** | `src/utils/upload.js` `uploadFile`：在交给 ali-oss 之前，用 `getDomainListAllNormal(list, { objKey: "domainUrl" })` 先对动态 OSS CNAME 做一次 GET 探活，过滤掉明显不可达的节点 |
+| 53 | **上传失败域名上报** | `src/utils/upload.js` `uploadFile`：捕获 `ossUpload` 异常后调用 `reportErrorDomain(domainUrl, { moduleCode: "ossEndpoint", ... })`，接入已有的域名池轮换/剔除逻辑 |
+| 54 | **循环越界修复** | `src/utils/upload.js` `uploadFile`：for 循环 `i <= length` → `i < length`，消除多跑一次的隐患 |
+
+### 设计决策
+
+| 问题 | 方案 |
+|------|------|
+| 无 OSS Bucket 权限，改不了源站 CORS | 在主进程 `webRequest` 层按域名匹配伪造 200 响应，不动 `webSecurity: true`、不动渲染进程同源策略 |
+| `Access-Control-Allow-Headers: *` 不匹配 `Authorization` | 显式枚举 ali-oss SDK 会发的 `Authorization` / `x-oss-date` / `x-oss-user-agent` / `x-oss-security-token` 等 header |
+| 仅对预检改状态行，非预检保留真实状态 | 以 `details.method === 'OPTIONS'` 为条件，真正的 `PUT/POST` 分片仍能看到真实 4xx/5xx，不掩盖鉴权错误 |
+| 伪造范围边界 | 正则限定 4 类 OSS 相关域名后缀，后续若新增 CNAME 后缀需要同步扩充 `ossCorsHostPattern` |
+| 客户端防御 vs 服务端修复 | 客户端做兜底（归一化 + 预检 + 上报 + 伪造），但最终仍建议运维在 OSS Bucket / CNAME CDN 层正确配置 CORS，本次改动只为在当前无权限场景保住业务可用 |
+
+### 已知局限
+
+- 正则 `ossCorsHostPattern` 为 allow-list，若后端下发新的 CNAME 后缀（例如 `clb99.other.com`），需要同步更新，否则新节点不会被注入 CORS 头。
+- 主进程伪造仅作用于 Electron 壳，直接用浏览器访问 `http://localhost:8080` 调试 dev server 时不生效，此场景仍需依赖源站 CORS。
+- 对 DNS 解析失败 / TCP 连不上类错误，主进程无响应可改写，依赖客户端 `getDomainListAllNormal` 预检 + `reportErrorDomain` 轮换。
+
+---
+
 ## 2026-04-16 — Electron 安全加固全量变更
 
 > 一次性完成 `webSecurity: true`、CSP 策略、`contextIsolation` / `nodeIntegration` 迁移、通知窗口 XSS 防御及 HTTP 请求头注入，覆盖 Electron 渲染进程主要安全面。
