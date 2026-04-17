@@ -2,13 +2,17 @@
 
 > 目的：逐步消除 Electron 窗口中的安全隐患，恢复 Chromium 安全机制。
 >
-> **49 files changed, 1436 insertions(+), 979 deletions(-)**
+> **49 files changed, 1661 insertions(+), 1029 deletions(-)**（截至 2026-04-17）
 
 ---
 
 ## 2026-04-17 — OSS 上传 CORS 预检失败修复
 
 > 在 `webSecurity: true` 启用后，ali-oss SDK 的 `multipartUpload` 对自建 CNAME（如 `oss-cn-hongkong.clb77.zsae86.com`）发起的 `OPTIONS` 预检被源站返回非 2xx，浏览器报 `Response to preflight request doesn't pass access control check: It does not have HTTP ok status.`，导致消息中的图片/文件/视频/语音全部无法上传。无权限改动 OSS Bucket / CDN 配置，改为在 Electron 主进程按域名伪造 CORS 预检响应 + 渲染进程侧加防御。
+>
+> **本次增量：3 files changed, +225 insertions, +50 deletions**（累计自 `89bae9ad`：49 files / +1661 / -1029）
+>
+> 触及文件：`src/background.js`、`src/utils/upload.js`、`changelog.md`
 
 ### 涉及功能（测试清单）
 
