@@ -118,6 +118,16 @@ const fnDownloadFileInfoUpdate = (data, errorType) => {
     const type = data.groupId ? "group"
                               : data.channelId ? "channel" : "friend";
     const { customMsgId, fileLocalPath, isOpen, isDir, chatType, local, localThumbUrl, taskId, mediaSlotIndex } = data;
+    /** 入库展示路径：成功为 local-resource URL；解密/下载失败为错误标识（勿写磁盘路径，否则 UI 当图片地址） */
+    const pathForStore =
+        errorType === "decryptionError" || errorType === "downloadError"
+            ? errorType
+            : toLocalResourceUrl(fileLocalPath);
+    const thumbBase = localThumbUrl || local || fileLocalPath;
+    const thumbPathForStore =
+        errorType === "decryptionError" || errorType === "downloadError"
+            ? errorType
+            : toLocalResourceUrl(thumbBase);
     const percentVal = 100 + Number(Math.random().toFixed(6));
     const percent = taskId && !errorType ? { percent: percentVal } : {};
 
@@ -133,23 +143,23 @@ const fnDownloadFileInfoUpdate = (data, errorType) => {
     if (useSlot) {
         if (chatType === 3) {
             if ([".mp4", "webm", ".ogg"].includes((fileLocalPath || "").slice(-4).toLowerCase())) {
-                updated = { [`local_${slotIdx}`]: errorType || fileLocalPath, ...slotPercent };
+                updated = { [`local_${slotIdx}`]: pathForStore, ...slotPercent };
             } else {
                 updated = {
-                    [`thumb_${slotIdx}`]: errorType || localThumbUrl || local || fileLocalPath,
+                    [`thumb_${slotIdx}`]: thumbPathForStore,
                     ...slotPercent,
                 };
             }
         } else {
-            updated = { [`local_${slotIdx}`]: errorType || fileLocalPath, ...slotPercent };
+            updated = { [`local_${slotIdx}`]: pathForStore, ...slotPercent };
         }
     } else {
-        updated = { local: errorType || fileLocalPath, ...percent };
+        updated = { local: pathForStore, ...percent };
         if (chatType === 3) {
             if ([".mp4", "webm", ".ogg"].includes((fileLocalPath || '').slice(-4).toLowerCase())) {
-                updated = { local: fileLocalPath, ...percent };
+                updated = { local: pathForStore, ...percent };
             } else {
-                updated = { localThumbUrl: errorType || localThumbUrl || local || fileLocalPath, ...percent };
+                updated = { localThumbUrl: thumbPathForStore, ...percent };
             }
         }
     }
@@ -180,7 +190,7 @@ const fnDownloadFileInfoUpdate = (data, errorType) => {
     if (isOpen) {
         if (!isDir && [1, 3, 9].includes(chatType)) {
             window.mediaState && window.mediaState.send({
-                url: fileLocalPath,
+                url: toLocalResourceUrl(fileLocalPath),
                 mediaType: chatType,
                 width: data.width || 0,
                 height: data.height || 0,

@@ -59,11 +59,19 @@ export const processInfo = api.process || {};
 export const BrowserWindow = null;
 
 // Convert a local file path (or file:// URL) to a local-resource:// URL
+// Windows：反斜杠 + local-resource://C:\... 在 Chromium 中常导致 img/Image 无法完成加载；统一为 local-resource:///C:/...
 export function toLocalResourceUrl(filePath) {
     if (!filePath) return filePath;
     if (filePath.startsWith('http') || filePath.startsWith('local-resource://')) return filePath;
-    if (filePath.startsWith('file://')) return filePath.replace(/^file:\/\/\/?/, 'local-resource://');
-    return `local-resource://${filePath}`;
+    if (filePath.startsWith('file://')) {
+        const rest = filePath.replace(/^file:\/\/\/?/, '');
+        return toLocalResourceUrl(rest);
+    }
+    let p = String(filePath).replace(/\\/g, '/');
+    if (!p.startsWith('/') && /^[A-Za-z]:\//.test(p)) {
+        p = `/${p}`;
+    }
+    return `local-resource://${p}`;
 }
 
 // for web
