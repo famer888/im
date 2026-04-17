@@ -42,7 +42,7 @@ module.exports = {
       config.module.rule('vue').use('vue-loader').loader('vue-loader');
     },
     electronBuilder: {
-      externals: ['electron-screenshots'],
+      externals: ['electron-screenshots', '@electron/remote'],
       chainWebpackMainProcess: (config) => {
         // Chain webpack config for electron main process only
         config.module
