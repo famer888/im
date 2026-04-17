@@ -1,4 +1,4 @@
-import { remote, ipcRenderer, fs, toLocalResourceUrl } from "@/platform";
+import { remote, ipcRenderer, fs, toLocalResourceUrl, toFsPathFromDisplayUrl } from "@/platform";
 
 // 工具
 import { createHash, getFileSuffix, enumMsgType } from "@/utils/base";
@@ -442,8 +442,8 @@ const fnFileInfosGet = async (info) => {
     return {
         info: {
             chatType,
-            local: fileLocalPath,
-            localThumbUrl,
+            local: toLocalResourceUrl(fileLocalPath),
+            localThumbUrl: localThumbUrl ? toLocalResourceUrl(localThumbUrl) : null,
             width,
             height,
             fileName,
@@ -472,7 +472,7 @@ const fnOperatorFile = async ({ id, type, info, openDialog, isDir, taskId }, kee
         // 图片 / 视频 / GIF 统一走媒体窗 + fileFoldersOpen；转发时 content 常被收成纯 URL，不能走 openFile
         const isMediaType = [1, 3, 9].includes(info.chatType);
         if (!isMediaType && !hasSplit && !hasThumbSep) {
-            openFile(info.local, isDir);
+            openFile(toFsPathFromDisplayUrl(info.local), isDir);
             return;
         }
 

@@ -74,5 +74,36 @@ export function toLocalResourceUrl(filePath) {
     return `local-resource://${p}`;
 }
 
+/** 将 local-resource:// 或 file:// 还原为供 Node fs / shell 使用的磁盘路径 */
+export function toFsPathFromDisplayUrl(url) {
+    if (!url || typeof url !== 'string') return url;
+    if (/^https?:\/\//i.test(url)) return url;
+    let p = url;
+    if (/^local-resource:\/\//i.test(p)) {
+        p = p.replace(/^local-resource:\/\//i, '');
+    } else if (/^file:\/\//i.test(p)) {
+        p = p.replace(/^file:\/\/\/?/i, '');
+    } else {
+        return url;
+    }
+    try {
+        p = decodeURIComponent(p);
+    } catch (e) {
+        /* ignore */
+    }
+    if (
+        typeof process !== 'undefined' &&
+        process.platform === 'win32' &&
+        p.startsWith('/') &&
+        /^\/[A-Za-z]:[\\/]/.test(p)
+    ) {
+        p = p.slice(1);
+    }
+    if (typeof path.normalize === 'function') {
+        return path.normalize(p);
+    }
+    return p;
+}
+
 // for web
 export const PostMessageEventEmitter = null;

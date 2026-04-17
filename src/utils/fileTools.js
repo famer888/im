@@ -1,5 +1,5 @@
 const mime = require("mime-types");
-import { ipcRenderer, fs, path, BufferUtil } from "@/platform";
+import { ipcRenderer, fs, path, BufferUtil, toFsPathFromDisplayUrl } from "@/platform";
 
 export const isNetworkImageUrl = (imageUrl) => {
     if(!imageUrl) return false
@@ -250,12 +250,13 @@ export const getImageDimensions = (file) => {
 };
 
 export const getFileInfo = (filePath) => {
-    const data = fs.readFileSync(filePath);
+    const resolved = toFsPathFromDisplayUrl(filePath) || filePath;
+    const data = fs.readFileSync(resolved);
 
     // 获取 MIME 类型
-    const mimeType = mime.lookup(filePath);
+    const mimeType = mime.lookup(resolved);
 
-    return new File([data], path.basename(filePath), {
+    return new File([data], path.basename(resolved), {
         type: mimeType,
     });
 };

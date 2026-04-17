@@ -470,7 +470,8 @@ const openFileDialog = async (event, args) => {
 
             const oldpath =
                 chatType === 1
-                    ? local || app.getPath("downloads") + "/" + fileName
+                    ? (local ? localDisplayToFsPath(local) : "") ||
+                      app.getPath("downloads") + "/" + fileName
                     : app.getPath("downloads") + "/" + fileName;
             const { canceled, filePath } = await dialog.showSaveDialog(
                 mainWindow,
@@ -862,6 +863,33 @@ const setMainWin = async () => {
     });
 };
 
+/** local-resource:// / file:// → 主进程 fs 可用的磁盘路径 */
+function localDisplayToFsPath(local) {
+    if (!local || typeof local !== "string") return local;
+    if (/^https?:\/\//i.test(local)) return local;
+    let p = local;
+    if (/^local-resource:\/\//i.test(p)) {
+        p = p.replace(/^local-resource:\/\//i, "");
+    } else if (/^file:\/\//i.test(p)) {
+        p = p.replace(/^file:\/\/\/?/i, "");
+    } else {
+        return local;
+    }
+    try {
+        p = decodeURIComponent(p);
+    } catch (e) {
+        /* ignore */
+    }
+    if (
+        process.platform === "win32" &&
+        p.startsWith("/") &&
+        /^\/[A-Za-z]:[\\/]/.test(p)
+    ) {
+        p = p.slice(1);
+    }
+    return nodePath.normalize(p);
+}
+
 /**
  * 文件下载
  */
@@ -922,8 +950,10 @@ const handleFileDownload = (args) => {
     // 设置名称
     const name = fileName || getRandomFileName(chatType);
 
-    // 设置本地文件地址
-    const fileLocalPath = local || nodePath.join(dirPath, name);
+    // 设置本地文件地址（与渲染层 local-resource:// 展示 URL 对齐）
+    const fileLocalPath = local
+        ? localDisplayToFsPath(local)
+        : nodePath.join(dirPath, name);
 
     // 设置数据 下载成功后获取
     downloadFileMap.set(encodeURI(url), {
@@ -1112,7 +1142,8 @@ const createMainWindow = async () => {
         const { local, isDir, fileUrl, chatType } = args;
 
         if (local) {
-            fs.stat(local, (err) => {
+            const fsLocal = localDisplayToFsPath(local);
+            fs.stat(fsLocal, (err) => {
                 // 文件不存在 下载文件
                 if (err) {
                     // 下载文件
@@ -1128,7 +1159,7 @@ const createMainWindow = async () => {
                     MediaProcess.create(mainWindow);
                     MediaProcess.show();
                 } else {
-                    openFile(local, isDir);
+                    openFile(fsLocal, isDir);
                 }
             });
         } else if (fileUrl) {
