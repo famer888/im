@@ -376,10 +376,6 @@ export default {
           const t = info?.text;
           if (t == null || String(t) === "") break;
           input.focus();
-          // 添加 文本（须转义，避免当作 HTML 解析）
-          this.$refs.input.innerHTML += escapeHtml(
-            info.text == null ? "" : String(info.text)
-          );
           // 在失焦前光标处插入（如 text content @name|、@name| text content），非末尾追加
           this.handleInsertPlainTextAtCaret(String(t));
           this.handlePlaceholderVisibleSet();
@@ -523,7 +519,8 @@ export default {
         savedSelection = safeClone(after) || after;
       } catch {
         try {
-          input.innerHTML += s;
+          // 兜底分支使用 innerHTML 拼接，必须转义，避免被解析为 HTML
+          input.innerHTML += escapeHtml(s);
           this.handleMoveCursorToEnd();
           const sel = window.getSelection();
           if (sel.rangeCount > 0) {
