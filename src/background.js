@@ -31,6 +31,7 @@ import { runMacStartupCleanup, watchUserDataRemoval, stopWatchUserData } from "@
 import { initToggleSideBar } from "@/utils/toggleSideBar";
 import { logger, writeLog, writeCrashReport, initProcessLogger } from '@/utils/logger/process';
 import MediaProcess, { isMediaPlayerWindow } from "@/utils/media/MediaProcess";
+import { installCorsHandlers } from "@/utils/cors";
 
 app.on("gpu-process-crashed", (event, kill) => {
     // console.warn("app:gpu-process-crashed", event, kill);
@@ -1352,95 +1353,8 @@ app.on("ready", () => {
     screenshots.on("save", (e, { viewer }) => {
         console.log("capture", viewer);
     });
-    // 需要注入 CORS 的目标：阿里云 OSS（SDK 直传）+ 动态下发 CNAME
-    // 命中范围内的响应，即使源站 OPTIONS 返回 4xx/5xx，也会被伪造成 200 并补齐跨域头，
-    // 用来绕过 Bucket/CDN 上没配 CORS 的情况。
-    const ossCorsHostPattern = /(^|\.)aliyuncs\.com$|(^|\.)oss[-.][^/]+$|(^|\.)zsae86\.com$|(^|\.)clb\d+\./i;
-    const isOssLikeUrl = (url) => {
-        try {
-            const { hostname } = new URL(url);
-            return ossCorsHostPattern.test(hostname);
-        } catch (e) {
-            return false;
-        }
-    };
-    // ali-oss SDK 在预检里会声明的自定义头
-    const ossAllowHeaders = [
-        "Authorization",
-        "Content-Type",
-        "Content-MD5",
-        "Content-Length",
-        "Content-Disposition",
-        "Cache-Control",
-        "Origin",
-        "Accept",
-        "X-Requested-With",
-        "x-oss-date",
-        "x-oss-user-agent",
-        "x-oss-security-token",
-        "x-oss-content-sha256",
-        "x-oss-meta-*",
-        "x-oss-copy-source",
-        "x-oss-copy-source-range",
-        "x-oss-server-side-encryption",
-        "x-oss-object-acl",
-        "x-oss-storage-class",
-    ].join(", ");
-
-    session.defaultSession.webRequest.onHeadersReceived(
-        (details, callback) => {
-            const headers = details.responseHeaders || {};
-            const findKey = (name) => Object.keys(headers).find(k => k.toLowerCase() === name);
-
-            const ossHit = isOssLikeUrl(details.url);
-            const isPreflight = (details.method || "").toUpperCase() === "OPTIONS";
-
-            // OSS 域名走强制注入：清掉源站返回的 CORS 头，避免 “multiple values” / “不匹配” 冲突
-            if (ossHit) {
-                ["access-control-allow-origin",
-                 "access-control-allow-headers",
-                 "access-control-allow-methods",
-                 "access-control-allow-credentials",
-                 "access-control-expose-headers",
-                 "access-control-max-age"].forEach(name => {
-                    const k = findKey(name);
-                    if (k) delete headers[k];
-                });
-                headers["Access-Control-Allow-Origin"] = ["*"];
-                headers["Access-Control-Allow-Methods"] = ["GET, POST, PUT, DELETE, HEAD, OPTIONS, PATCH"];
-                headers["Access-Control-Allow-Headers"] = [ossAllowHeaders];
-                headers["Access-Control-Expose-Headers"] = ["ETag, x-oss-request-id, x-oss-version-id, Content-Length, Content-Type"];
-                headers["Access-Control-Max-Age"] = ["86400"];
-            } else {
-                // 非 OSS 请求保持原来的温和策略
-                const acaoKey = findKey("access-control-allow-origin");
-                if (acaoKey) {
-                    const values = headers[acaoKey].flatMap(v => v.split(",").map(s => s.trim())).filter(Boolean);
-                    if (values.length > 1) {
-                        delete headers[acaoKey];
-                        headers["Access-Control-Allow-Origin"] = [values.find(v => v !== "*") || "*"];
-                    }
-                } else {
-                    headers["Access-Control-Allow-Origin"] = ["*"];
-                }
-                if (!findKey("access-control-allow-headers")) headers["Access-Control-Allow-Headers"] = ["*"];
-                if (!findKey("access-control-allow-methods")) headers["Access-Control-Allow-Methods"] = ["*"];
-            }
-
-            // 关键一步：把命中 OSS 的 OPTIONS 预检，非 2xx 也改写成 200 OK，
-            // 否则浏览器会报 “Response to preflight request doesn't pass access control check:
-            // It does not have HTTP ok status.”
-            let statusLine = details.statusLine;
-            if (ossHit && isPreflight) {
-                const sc = details.statusCode || 0;
-                if (sc < 200 || sc >= 300) {
-                    statusLine = "HTTP/1.1 200 OK";
-                }
-            }
-
-            callback({ responseHeaders: headers, statusLine });
-        }
-    );
+    // 跨域处理（OSS 直传 + 动态 CNAME）统一在 utils/cors 里维护
+    installCorsHandlers(session.defaultSession);
     try {
         updateTray();
     } catch (e) {
