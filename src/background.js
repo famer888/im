@@ -1352,24 +1352,6 @@ app.on("ready", () => {
     screenshots.on("save", (e, { viewer }) => {
         console.log("capture", viewer);
     });
-    const headerInjectBlacklist = [
-        // e.g. "/some/path/to/skip"
-    ];
-    session.defaultSession.webRequest.onBeforeSendHeaders(
-        (details, callback) => {
-            const headers = details.requestHeaders || {};
-            const urlPath = new URL(details.url).pathname;
-            if (!headerInjectBlacklist.some(p => urlPath.startsWith(p))) {
-                if (!headers["X-App-Version"]) {
-                    headers["X-App-Version"] = pkg.version;
-                }
-                if (!headers["X-Secret-Name"]) {
-                    headers["X-Secret-Name"] = process.env.VUE_APP_SECRET_NAME || "";
-                }
-            }
-            callback({ cancel: false, requestHeaders: headers });
-        }
-    );
     // 需要注入 CORS 的目标：阿里云 OSS（SDK 直传）+ 动态下发 CNAME
     // 命中范围内的响应，即使源站 OPTIONS 返回 4xx/5xx，也会被伪造成 200 并补齐跨域头，
     // 用来绕过 Bucket/CDN 上没配 CORS 的情况。

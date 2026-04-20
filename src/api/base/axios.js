@@ -1,10 +1,22 @@
 import axios from "axios";
 import { Local } from "@/utils";
 import { sendErrToSentry } from "@/utils/sentry";
-import { baseUrl, FairGuard } from "./unit";
+import { baseUrl, FairGuard, getSignHeader } from "./unit";
 import eventCommon from "@/event/common.js";
 let baseURL = baseUrl() || process.env.VUE_APP_BASE_API;
 axios.defaults.baseURL = baseURL;
+
+// 全局注入签名头部：保留调用方传入的 headers，若 key 冲突则以调用方为准
+axios.interceptors.request.use((config) => {
+    try {
+        const signHeaders = getSignHeader() || {};
+        config.headers = { ...signHeaders, ...(config.headers || {}) };
+    } catch (e) {
+        // 拦截器异常不阻断请求
+    }
+    return config;
+});
+
 // 暫存：紀錄執行中的請求
 const pending = new Map();
 

@@ -191,7 +191,7 @@ const requestApi = async (opt) => {
         fetch(url, {
             method,
             body: array,
-            headers: { ...header, ...headers },
+            headers: { ...getSignHeader(), ...header, ...headers },
         })
             .then((response) => {
                 FairGuard.recieve(response);
