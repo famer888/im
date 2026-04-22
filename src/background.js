@@ -32,6 +32,7 @@ import { initToggleSideBar } from "@/utils/toggleSideBar";
 import { logger, writeLog, writeCrashReport, initProcessLogger } from '@/utils/logger/process';
 import MediaProcess, { isMediaPlayerWindow } from "@/utils/media/MediaProcess";
 import { installCorsHandlers } from "@/utils/cors";
+import { isDangerousFile } from "@/utils/minecheck";
 
 app.on("gpu-process-crashed", (event, kill) => {
     // console.warn("app:gpu-process-crashed", event, kill);
@@ -625,6 +626,43 @@ const downloadHandler = (event, item, webContents) => {
 
         item.once("done", (event, state) => {
            clearDownTimer(timerName)
+           
+           if (state === "completed") {
+               // Download completed, perform security check
+               try {
+                   const filePath = item.getSavePath();
+                   const fileName = data.fileName || nodePath.basename(filePath);
+                   
+                   // Perform enhanced security check
+                   if (isDangerousFile(filePath, fileName)) {
+                       // File is dangerous, move to dangerous folder
+                       const dangerousDir = nodePath.join(app.getPath('temp'), 'dangerous');
+                       if (!fs.existsSync(dangerousDir)) {
+                           fs.mkdirSync(dangerousDir, { recursive: true });
+                       }
+                       
+                       const dangerousFileName = fileName + '.dangerous';
+                       const dangerousPath = nodePath.join(dangerousDir, dangerousFileName);
+                       
+                       // Move file to dangerous folder
+                       fs.renameSync(filePath, dangerousPath);
+                       
+                       // Update the file path in data
+                       data.fileLocalPath = dangerousPath;
+                       data.isDangerous = true;
+                       
+                       console.log(`Dangerous file detected and moved: ${fileName} -> ${dangerousPath}`);
+                   }
+               } catch (error) {
+                   writeLog('app', 'error', '[downloadHandler] 安全检查失败', {
+                       fileName,
+                       filePath,
+                       error: error.message,
+                       createTime: Date.now()
+                   });
+               }
+           }
+           
             sendMain(
                 state === "completed"
                     ? "downloadFileDone"
@@ -891,6 +929,7 @@ function localDisplayToFsPath(local) {
     return nodePath.normalize(p);
 }
 
+
 /**
  * 文件下载
  */
@@ -951,17 +990,25 @@ const handleFileDownload = (args) => {
     // 设置名称
     let name = fileName || getRandomFileName(chatType);
 
-    // Check for dangerous file extensions and append .dangerous
+    // 初始检查：危险扩展名文件直接处理
     const dangerousExts = ['.exe','.bat','.cmd','.vbs','.js','.ps1','.scr','.pif','.msi','.com','.lnk','.wsf'];
-    const isDangerous = dangerousExts.some(ext => name.toLowerCase().endsWith(ext));
-    if (isDangerous) {
+    const hasDangerousExtension = dangerousExts.some(ext => name.toLowerCase().endsWith(ext));
+    
+    // 如果是危险扩展名，直接更改下载位置和添加.dangerous后缀
+    if (hasDangerousExtension) {
         name = name + '.dangerous';
+        
+        // 确保危险文件夹存在
+        const dangerousDir = nodePath.join(app.getPath('temp'), 'dangerous');
+        if (!fs.existsSync(dangerousDir)) {
+            fs.mkdirSync(dangerousDir, { recursive: true });
+        }
     }
     
     // 设置本地文件地址（与渲染层 local-resource:// 展示 URL 对齐）
     const fileLocalPath = local
         ? localDisplayToFsPath(local)
-        : isDangerous 
+        : hasDangerousExtension 
             ? nodePath.join(app.getPath('temp'), 'dangerous', name)
             : nodePath.join(dirPath, name);
 
