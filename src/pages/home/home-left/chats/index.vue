@@ -969,6 +969,10 @@ export default {
    height: 20px;
    overflow: hidden;
    span, div {
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    color: #999;
     font-size: 12px !important;
     line-height: 20px;
    }

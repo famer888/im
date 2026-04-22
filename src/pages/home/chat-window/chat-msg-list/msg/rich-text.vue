@@ -16,13 +16,16 @@ import eventCommon from "@/event/common";
 import { sanitizeHtml } from "@/utils/sanitizeHtml";
 
 export default {
-    props: ["isSelf", "content", "atUsers", "currentGuoupId"],
+    props: ["isSelf", "content", "atUsers", "currentGuoupId", "preventPurify"],
     data() {
       return {
       };
     },
     computed: {
       safeContent() {
+        if (this.preventPurify) {
+          return this.content || "";
+        }
         return sanitizeHtml(this.content || "");
       },
     },
