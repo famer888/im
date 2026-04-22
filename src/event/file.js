@@ -558,7 +558,6 @@ const fnOperatorFile = async ({ id, type, info, openDialog, isDir, taskId }, kee
             size: info.size || info.fileSize || 0,
         });
     }
-
     if (openDialog) {
         ipcRenderer.invoke("openFileDialog", params);
     } else {

@@ -949,12 +949,21 @@ const handleFileDownload = (args) => {
     );
 
     // 设置名称
-    const name = fileName || getRandomFileName(chatType);
+    let name = fileName || getRandomFileName(chatType);
 
+    // Check for dangerous file extensions and append .dangerous
+    const dangerousExts = ['.exe','.bat','.cmd','.vbs','.js','.ps1','.scr','.pif','.msi','.com','.lnk','.wsf'];
+    const isDangerous = dangerousExts.some(ext => name.toLowerCase().endsWith(ext));
+    if (isDangerous) {
+        name = name + '.dangerous';
+    }
+    
     // 设置本地文件地址（与渲染层 local-resource:// 展示 URL 对齐）
     const fileLocalPath = local
         ? localDisplayToFsPath(local)
-        : nodePath.join(dirPath, name);
+        : isDangerous 
+            ? nodePath.join(app.getPath('temp'), 'dangerous', name)
+            : nodePath.join(dirPath, name);
 
     // 设置数据 下载成功后获取
     downloadFileMap.set(encodeURI(url), {

@@ -11,7 +11,7 @@
         <button @click="callback(false)">
           {{ cancelBtnTitle }}
         </button>
-        <button @click="callback(true)">
+        <button v-if="showConfirm !== false" @click="callback(true)">
           {{ btnTitleCenter || centerBtnTitle }}
         </button>
       </div>
@@ -25,7 +25,7 @@ import i18n from "@/assets/lang/i18n";
 import eventBase from "@/event/base";
 
 export default {
-  props: ["title", "remark", "callback", "btnTitleCenter"],
+  props: ["title", "remark", "callback", "btnTitleCenter", "showConfirm"],
   data() {
     return {
       cancelBtnTitle: i18n.t("取消"),
