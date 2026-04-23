@@ -33,6 +33,7 @@ import { logger, writeLog, writeCrashReport, initProcessLogger } from '@/utils/l
 import MediaProcess, { isMediaPlayerWindow } from "@/utils/media/MediaProcess";
 import { installCorsHandlers } from "@/utils/cors";
 import { isDangerousFile } from "@/utils/minecheck";
+import Storage from "@/cache/storage";
 
 app.on("gpu-process-crashed", (event, kill) => {
     // console.warn("app:gpu-process-crashed", event, kill);
@@ -136,6 +137,8 @@ ipcMain.handle("get-user-data-path", () => {
 ipcMain.handle("set-user-data-path", (e, path) => {
     if (path) {
         userData = path;
+        // 设置Storage的保存根目录
+        Storage.setBase(userData);
     }
 });
 
@@ -1317,9 +1320,10 @@ app.dock && app.dock.setIcon(icon);
 
 
 if (!app.requestSingleInstanceLock()) {
-    console.log("获取到没有呢", baseIndex);
     userData = nodePath.join(userData, `/DATA_${baseIndex}/`);
     app.setPath("userData", userData);
+    // 设置Storage的保存根目录
+    Storage.setBase(userData);
 } else {
     console.log("这里是设置");
     setBaseIndex(1);
@@ -1369,6 +1373,10 @@ function registerLocalResourceProtocol(ses) {
 app.on("ready", () => {
     // [macOS] 启动前清理可能残留的 IndexedDB 锁文件
     runMacStartupCleanup();
+
+    // 注册Storage的IPC通道
+    Storage.register();
+    Storage.setBase(userData);
 
     createMainWindow();
 

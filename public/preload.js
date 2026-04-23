@@ -243,4 +243,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
     type: process.type,
     execPath: process.execPath,
   },
+
+  // ── Storage ──
+  storage: {
+    get: (tableName, key = 'data') => ipcRenderer.invoke('storage:get', { tableName, key }),
+    set: (tableName, value, key = 'data') => ipcRenderer.invoke('storage:set', { tableName, value, key }),
+    delete: (tableName, key = 'data') => ipcRenderer.invoke('storage:delete', { tableName, key }),
+    clear: (tableName) => ipcRenderer.invoke('storage:clear', { tableName }),
+  },
 });
