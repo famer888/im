@@ -1548,15 +1548,7 @@ export const fnFormartMsgParams = async ({ data, customMsgId, id, type }) => {
                 };
             }
 
-            // OneToOneMessage.content 为 bytes。此处必须写入 Uint8Array；若省略则 ...data 会带上编辑器里的字符串，
-            // protobuf 编码时会把 string 当作 base64 解码，抛出 invalid encoding，服务端也无法解析。
-            if (pc && params.webContent) {
-                params.content = params.webContent.content;
-            } else if (app && params.appContent) {
-                params.content = params.appContent.content;
-            } else if (params.myselfAppContent) {
-                params.content = params.myselfAppContent.content;
-            }
+            params.content = contentCode;
         }
     }
 
