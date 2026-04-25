@@ -21,46 +21,62 @@ const getStorage = () => {
     }
 };
 
-const report = (operation, tableName, key, res) => {
+const middleware = (operation, tableName, key, res) => {
     if (!res?.success && res?.error) {
         console.log(`Storage ${operation} [${tableName}] [${key}] [false] [${res.error}]`);
-    } 
-    else {
+    } else {
         console.log(`Storage ${operation} [${tableName}] [${key}] [true]`);
     }
+
+    if (operation === "get") {
+        if (!res || typeof res !== "object") {
+            return { success: false, data: [], error: "invalid IPC response" };
+        }
+        if (res.success) {
+            return Object.prototype.hasOwnProperty.call(res, "data")
+                ? { success: true, data: res.data }
+                : { success: true, data: [] };
+        }
+        return {
+            success: false,
+            data: Array.isArray(res.data) ? res.data : [],
+            error: res.error || "unknown error",
+        };
+    }
+
     return res?.data || res;
 };
 
 // 导出Storage对象，提供与原Storage类相同的方法
 const Storage = {
-    get: async (tableName, key = 'data') => {
+    get: async (tableName, key = "data") => {
         const storage = getStorage();
         if (!storage) {
-            return [];
+            return { success: false, data: [], error: "Storage API not available" };
         }
-        return storage.get(tableName, key).then(res => report('get', tableName, key, res));
+        return storage.get(tableName, key).then((res) => middleware("get", tableName, key, res));
     },
-    set: async (tableName, value, key = 'data') => {
+    set: async (tableName, value, key = "data") => {
         const storage = getStorage();
         if (!storage) {
-            return { success: false, error: 'Storage API not available' };
+            return { success: false, error: "Storage API not available" };
         }
-        return storage.set(tableName, value, key).then(res => report('set', tableName, key, res));
+        return storage.set(tableName, value, key).then((res) => middleware("set", tableName, key, res));
     },
-    delete: async (tableName, key = 'data') => {
+    delete: async (tableName, key = "data") => {
         const storage = getStorage();
         if (!storage) {
-            return { success: false, error: 'Storage API not available' };
+            return { success: false, error: "Storage API not available" };
         }
-        return storage.delete(tableName, key).then(res => report('delete', tableName, key, res));
+        return storage.delete(tableName, key).then((res) => middleware("delete", tableName, key, res));
     },
     clear: async (tableName) => {
         const storage = getStorage();
         if (!storage) {
-            return { success: false, error: 'Storage API not available' };
+            return { success: false, error: "Storage API not available" };
         }
-        return storage.clear(tableName).then(res => report('clear', tableName, 'all', res));
-    }
+        return storage.clear(tableName).then((res) => middleware("clear", tableName, "all", res));
+    },
 };
 
 export const initUserCachePath = (loginId) => {

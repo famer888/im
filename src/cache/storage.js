@@ -1,7 +1,3 @@
-// 1. 读取时, 如果无值，则返回空数组
-// 2. 写入时，如果无文件，则创建文件（如果electron-store自己没有实现的话）
-// 3. 写入时，如果值为undefined，则设置空数组
-
 import Store from 'electron-store';
 
 class Storage {
