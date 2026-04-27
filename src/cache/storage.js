@@ -55,20 +55,19 @@ class Storage {
    * Get value from storage
    * @param {string} tableName - table name (also used as store key)
    * @param {string} key - key within the table, defaults to 'data'
-   * @returns {Array} - returns empty array if no value found
+   * @returns {*} - returns undefined if key not present
    */
   get(tableName, key = 'data') {
     // Initialize store if not exists
     this.init(tableName);
-    
+
     const store = this.stores.get(tableName);
     if (!store) {
       console.warn(`Store '${tableName}' not found`);
-      return [];
+      return undefined;
     }
-    
-    const value = store.get(key);
-    return value !== undefined ? value : [];
+
+    return store.get(key);
   }
 
   /**
@@ -142,7 +141,7 @@ class Storage {
         return { success: true, data };
       } catch (error) {
         console.error('storage:get error:', error);
-        return { success: false, data: [], error: error.message };
+        return { success: false, data: undefined, error: error.message };
       }
     });
     

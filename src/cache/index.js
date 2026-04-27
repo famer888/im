@@ -4,11 +4,25 @@ import { ipcRenderer } from "@/platform";
 import { getPublicCacheSync, setPublicCache } from "@/utils/publicCache";
 
 const Cache = async (key, value) => {
-    let data = await ipcRenderer.invoke("getLocalFile", {
-        key,
-        value,
-    });
-    if (data) return JSON.parse(data);
+    if (!key) return;
+
+    try {
+        // 兼容旧签名：只传 key 时读取；value 为 null 时删除；其它情况写入
+        if (value === undefined) {
+            const res = await Storage.get(key);
+            return res?.success ? res.data : undefined;
+        }
+
+        if (value === null) {
+            await Storage.delete(key);
+            return;
+        }
+
+        await Storage.set(key, value);
+        return value;
+    } catch (error) {
+        console.warn(`Cache dispatch failed [${key}]`, error);
+    }
 };
 
 // 使用函数延迟获取electronAPI.storage，避免模块加载时未初始化的问题
@@ -30,16 +44,14 @@ const middleware = (operation, tableName, key, res) => {
 
     if (operation === "get") {
         if (!res || typeof res !== "object") {
-            return { success: false, data: [], error: "invalid IPC response" };
+            return { success: false, data: undefined, error: "invalid IPC response" };
         }
         if (res.success) {
-            return Object.prototype.hasOwnProperty.call(res, "data")
-                ? { success: true, data: res.data }
-                : { success: true, data: [] };
+            return { success: true, data: res.data };
         }
         return {
             success: false,
-            data: Array.isArray(res.data) ? res.data : [],
+            data: res.data,
             error: res.error || "unknown error",
         };
     }
@@ -52,7 +64,7 @@ const Storage = {
     get: async (tableName, key = "data") => {
         const storage = getStorage();
         if (!storage) {
-            return { success: false, data: [], error: "Storage API not available" };
+            return { success: false, data: undefined, error: "Storage API not available" };
         }
         return storage.get(tableName, key).then((res) => middleware("get", tableName, key, res));
     },
