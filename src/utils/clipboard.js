@@ -35,14 +35,7 @@ const convertToPng = (imgBlob) => {
     };
 };
 
-export const copyImg = async (url) => {
-    let src
-    if (url.indexOf('http') != -1) {
-        src = url
-    } else {
-        const res = await readLocalImg(url)
-        src = res
-    }
+export const copyImg = async (src) => {
     const img = await fetch(src);
     const imgBlob = await img.blob();
     const extension = src.split(".").pop();
