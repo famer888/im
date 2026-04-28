@@ -1,4 +1,5 @@
 import fs from "fs";
+import https from "https";
 import tmp from "tmp";
 import {
     app,
@@ -124,6 +125,9 @@ let isWin = !isOsx;
 let baseIndex = 0;
 let baseIndexList = [];
 let userData = app.getPath("userData");
+/** 启动后仅一次：下载示例 PDF 并打开媒体窗（调试用） */
+let startupPdfMediaOpened = false;
+let mediaProcessDestroyHooked = false;
 let imagesCacheDir = `${userData}/images`;
 let voicesCacheDir = `${userData}/voices`;
 let codeCacheDir = `${userData}/Code Cache`;
@@ -721,6 +725,96 @@ const sendMain = (channel, data, targetWindow = null) => {
   }
 };
 
+function downloadHttpsToFile(url, destPath) {
+    return new Promise((resolve, reject) => {
+        const fetchOnce = (currentUrl) => {
+            const file = fs.createWriteStream(destPath);
+            https
+                .get(currentUrl, (res) => {
+                    if (res.statusCode === 301 || res.statusCode === 302) {
+                        const loc = res.headers.location;
+                        file.close();
+                        try {
+                            fs.unlinkSync(destPath);
+                        } catch (_) {}
+                        if (!loc) {
+                            reject(new Error("redirect without location"));
+                            return;
+                        }
+                        fetchOnce(new URL(loc, currentUrl).href);
+                        return;
+                    }
+                    if (res.statusCode !== 200) {
+                        file.close();
+                        try {
+                            fs.unlinkSync(destPath);
+                        } catch (_) {}
+                        reject(new Error(`HTTP ${res.statusCode}`));
+                        return;
+                    }
+                    res.pipe(file);
+                    file.on("finish", () => {
+                        file.close((err) => (err ? reject(err) : resolve()));
+                    });
+                })
+                .on("error", (err) => {
+                    try {
+                        file.close();
+                        fs.unlinkSync(destPath);
+                    } catch (_) {}
+                    reject(err);
+                });
+        };
+        fetchOnce(url);
+    });
+}
+
+/** 示例 PDF 落盘到 userData/media-preview，与渲染层 local-resource 规则一致 */
+async function openStartupDebugPdfMediaWindow() {
+    if (startupPdfMediaOpened) return;
+    try {
+        const dir = nodePath.join(userData, "media-preview");
+        if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir, { recursive: true });
+        }
+        const dest = nodePath.join(dir, "_debug-sample.pdf");
+        const needDownload =
+            !fs.existsSync(dest) || fs.statSync(dest).size < 100;
+        if (needDownload) {
+            await downloadHttpsToFile(
+                "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+                dest
+            );
+        }
+        let p = String(dest).replace(/\\/g, "/");
+        if (!p.startsWith("/") && /^[A-Za-z]:\//.test(p)) {
+            p = `/${p}`;
+        }
+        const url = `local-resource://${p}`;
+        const state = {
+            url,
+            mediaType: 7,
+            width: 0,
+            height: 0,
+            cover: "",
+            fileName: "_debug-sample.pdf",
+        };
+        if (
+            !mediaProcessDestroyHooked &&
+            mainWindow &&
+            !mainWindow.isDestroyed()
+        ) {
+            mediaProcessDestroyHooked = true;
+            MediaProcess.destroyOnMainWindowClose(mainWindow);
+        }
+        MediaProcess.create(mainWindow, state);
+        MediaProcess.show();
+        startupPdfMediaOpened = true;
+    } catch (e) {
+        writeLog("crash-report", "warn", "[startup] sample pdf media window", e);
+    }
+}
+
 // {query, userId}
 const setMainWin = async () => {
     let mainWindowState = windowStateKeeper({
@@ -791,6 +885,11 @@ const setMainWin = async () => {
             win && win.setOpacity(1);
         } catch (ex) {
             // do nothing
+        }
+        try {
+            await openStartupDebugPdfMediaWindow();
+        } catch (_) {
+            /* ignore */
         }
     });
     mainWindow.webContents.on(
@@ -1215,7 +1314,7 @@ const createMainWindow = async () => {
                   percent: 100 + Math.random().toFixed(6),
                 });
                 // 图片/视频用媒体播放器打开（数据已通过 localStorage 传递）
-                if (!isDir && [1, 3, 9].includes(chatType)) {
+                if (!isDir && [1, 3, 7, 9].includes(chatType)) {
                     MediaProcess.create(mainWindow);
                     MediaProcess.show();
                 } else {

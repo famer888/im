@@ -43,6 +43,9 @@
   "main": "background.js",
   "dependencies": {
     "@electron/remote": "^2.0.1",
+    "@js-preview/docx": "^1.6.4",
+    "@js-preview/excel": "^1.7.14",
+    "@js-preview/pdf": "^2.0.10",
     "@sentry/browser": "^7.93.0",
     "@sentry/vue": "^7.64.0",
     "ali-oss": "^6.17.1",

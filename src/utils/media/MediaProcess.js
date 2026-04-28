@@ -23,10 +23,12 @@ class MediaPlayerProcess {
    * 获取或创建媒体播放器窗口（单例）
    * @param {Electron.BrowserWindow} [mainWindow] 主窗口，用于获取 x,y 定位
    */
-  create(mainWindow) {
+  create(mainWindow, initialPlayerState = null) {
     if (this.window && !this.window.isDestroyed()) {
       return this.window;
     }
+
+    this._initialPlayerState = initialPlayerState || null;
 
     this.window = new BrowserWindow({
       title: 'Media Player',
@@ -66,6 +68,19 @@ class MediaPlayerProcess {
     } catch (e) {
       this.window.center();
     }
+    this.window.webContents.once('did-finish-load', () => {
+      const state = this._initialPlayerState;
+      this._initialPlayerState = null;
+      if (!state || !this.window || this.window.isDestroyed()) return;
+      try {
+        const payload = JSON.stringify(state);
+        this.window.webContents.executeJavaScript(
+          `typeof window.__mediaApplyPlayerState==='function'&&window.__mediaApplyPlayerState(${payload});`
+        );
+      } catch (e) {
+        console.error('[MediaProcess] initialPlayerState', e);
+      }
+    });
     if (process.env.WEBPACK_DEV_SERVER_URL) {
       this.window.loadURL(process.env.WEBPACK_DEV_SERVER_URL + '/media/media.html');
     } else {

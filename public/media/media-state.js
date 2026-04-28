@@ -1,6 +1,7 @@
 const STORAGE_KEY = 'media_player_state';
 
-const MediaType = Object.freeze({ IMAGE: 1, VIDEO: 3 });
+/** 与 src/utils/base.js enumMsgType 一致：image 1、video 3、file 7 */
+const MediaType = Object.freeze({ IMAGE: 1, VIDEO: 3, FILE: 7 });
 
 const MediaAction = Object.freeze({ PLAY: 'play', PAUSE: 'pause', NEXT: 'next', PREV: 'prev' });
 

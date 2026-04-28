@@ -7,6 +7,8 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' local-resource: http: https: data: blob:; media-src 'self' local-resource: http: https: blob:; connect-src 'self' local-resource: http: https:; font-src 'self'; object-src 'none'; base-uri 'self'">
   <title>媒体</title>
   <link rel="stylesheet" href="css/plyr.min.css">
+  <link rel="stylesheet" href="css/js-preview-docx.css">
+  <link rel="stylesheet" href="css/js-preview-excel.css">
   <link rel="stylesheet" href="media.css">
 </head>
 
@@ -26,6 +28,12 @@
       <video id="video-player" preload="metadata"></video>
     </div>
   </div>
+  <div id="file-layer" class="media-layer">
+    <div id="file-name-label" class="file-name-label" aria-live="polite"></div>
+    <div id="file-preview-docx" class="file-preview-mount"></div>
+    <div id="file-preview-excel" class="file-preview-mount"></div>
+    <div id="file-preview-pdf" class="file-preview-mount"></div>
+  </div>
   <div id="media-file-path" class="media-file-path" aria-label="文件路径"></div>
   <div class="bottom-actions">
     <button id="rotate-btn" class="action-btn" title="Rotate"><svg viewBox="0 0 24 24" fill="none"><path d="M11.5 20.5C6.80558 20.5 3 16.6944 3 12C3 7.30558 6.80558 3.5 11.5 3.5C16.1944 3.5 20 7.30558 20 12C20 13.5433 19.5887 14.9905 18.8698 16.238M22.5 15L18.8698 16.238M17.1747 12.3832L18.5289 16.3542L18.8698 16.238" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
@@ -33,6 +41,9 @@
   </div>
   <script src="js/plyr.min.js"></script>
   <script src="js/wheel-zoom.min.js"></script>
+  <script src="js/js-preview-docx.umd.js"></script>
+  <script src="js/js-preview-excel.umd.js"></script>
+  <script src="js/js-preview-pdf.umd.js"></script>
   <script src="media-state.js"></script>
   <script src="media.js"></script>
 </body>

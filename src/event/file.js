@@ -188,7 +188,7 @@ const fnDownloadFileInfoUpdate = (data, errorType) => {
 
     // 打开文件
     if (isOpen) {
-        if (!isDir && [1, 3, 9].includes(chatType)) {
+        if (!isDir && [1, 3, 7, 9].includes(chatType)) {
             window.mediaState && window.mediaState.send({
                 url: toLocalResourceUrl(fileLocalPath),
                 mediaType: chatType,
@@ -470,7 +470,7 @@ const fnOperatorFile = async ({ id, type, info, openDialog, isDir, taskId }, kee
         const hasSplit = info.content.includes("||");
         const hasThumbSep = info.content.includes("*P");
         // 图片 / 视频 / GIF 统一走媒体窗 + fileFoldersOpen；转发时 content 常被收成纯 URL，不能走 openFile
-        const isMediaType = [1, 3, 9].includes(info.chatType);
+        const isMediaType = [1, 3, 7, 9].includes(info.chatType);
         if (!isMediaType && !hasSplit && !hasThumbSep) {
             openFile(toFsPathFromDisplayUrl(info.local), isDir);
             return;
@@ -546,7 +546,7 @@ const fnOperatorFile = async ({ id, type, info, openDialog, isDir, taskId }, kee
     }
 
     // 图片/视频：通过 localStorage 传递媒体信息给播放器
-    if (info.local && !isDir && [1, 3, 9].includes(info.chatType)) {
+    if (info.local && !isDir && [1, 3, 7, 9].includes(info.chatType)) {
         window.mediaState && window.mediaState.send({
             url: info.local,
             mediaType: info.chatType,

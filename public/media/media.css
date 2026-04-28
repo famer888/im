@@ -18,6 +18,10 @@ body { margin: 0; background: rgba(0,0,0,0.65); color: #fff; font-family: -apple
 .action-btn-text:hover svg { fill: #fff; }
 .media-layer { position: fixed; top: 0; left: 0; right: 0; bottom: 0; display: none; align-items: center; justify-content: center; }
 .media-layer.active { display: flex; }
+#file-layer { flex-direction: column; align-items: stretch; justify-content: flex-start; padding: 40px 16px 88px; box-sizing: border-box; width: 100%; overflow: auto; -webkit-overflow-scrolling: touch; }
+.file-name-label { flex-shrink: 0; font-size: 15px; color: rgba(255,255,255,0.9); text-align: center; word-break: break-all; width: 100%; line-height: 1.4; margin-bottom: 8px; }
+.file-preview-mount { flex: 1 1 auto; min-height: 200px; width: 100%; max-width: 100%; overflow: auto; background: rgba(0,0,0,0.35); border-radius: 8px; box-sizing: border-box; }
+.file-preview-mount.file-preview-hidden { display: none !important; }
 /* 以最长边（宽或高）占满容器，另一边按比例缩放。如：容器高1024，图片1800x3600 → 以1024高显示，宽=1800*(1024/3600) */
 #image-layer, #video-layer { overflow: hidden; }
 #img-wrap, #video-wrap { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }

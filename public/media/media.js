@@ -93,6 +93,27 @@ function setMediaFilePathLabel(src) {
   el.style.display = text ? '' : 'none';
 }
 
+/** 按路径/文件名后缀选择预览容器：pdf / excel / docx，缺省 docx */
+function filePreviewKindFromSrcAndName(src, fileName) {
+  const names = [];
+  if (fileName && typeof fileName === 'string') {
+    const base = fileName.split(/[/\\]/).pop();
+    if (base) names.push(base);
+  }
+  if (src && typeof src === 'string') {
+    const noQuery = src.split('?')[0];
+    const seg = noQuery.split(/[/\\]/).pop();
+    if (seg) names.push(seg);
+  }
+  for (let i = 0; i < names.length; i++) {
+    const lower = names[i].toLowerCase();
+    if (lower.endsWith('.pdf')) return 'pdf';
+    if (lower.endsWith('.xlsx') || lower.endsWith('.xls')) return 'excel';
+    if (lower.endsWith('.docx') || lower.endsWith('.doc')) return 'docx';
+  }
+  return 'docx';
+}
+
 /** 放大态下：位移超过此值视为 drag，不触发缩放回 1（图片与视频共用） */
 const MEDIA_TAP_MOVE_MAX_PX = 12;
 const MEDIA_TAP_TIME_MAX_MS = 500;
@@ -104,8 +125,77 @@ const mediaView = {
   _mediaType: '',
   _naturalWidth: 0,
   _naturalHeight: 0,
+  _filePreviewDocx: null,
+  _filePreviewExcel: null,
+  _filePreviewPdf: null,
   /** 视频 tap 复位后吞掉紧随的 click，避免误触播放/暂停 */
   _consumeNextVideoClick: false,
+
+  _destroyFilePreviewers() {
+    ['_filePreviewDocx', '_filePreviewExcel', '_filePreviewPdf'].forEach((key) => {
+      const inst = this[key];
+      if (inst && typeof inst.destroy === 'function') {
+        try {
+          inst.destroy();
+        } catch (e) {
+          console.warn('file preview destroy', e);
+        }
+      }
+      this[key] = null;
+    });
+    ['file-preview-docx', 'file-preview-excel', 'file-preview-pdf'].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.innerHTML = '';
+        el.classList.remove('file-preview-hidden');
+      }
+    });
+  },
+
+  /** chatType=file：仅展示并 init 与后缀匹配的预览容器 */
+  _setupFileJsPreviews(src, fileName) {
+    const elDocx = document.getElementById('file-preview-docx');
+    const elExcel = document.getElementById('file-preview-excel');
+    const elPdf = document.getElementById('file-preview-pdf');
+    if (!elDocx || !elExcel || !elPdf) return;
+    const JD = window.jsPreviewDocx;
+    const JE = window.jsPreviewExcel;
+    const JP = window.jsPreviewPdf;
+    if (!JD || !JE || !JP) {
+      console.warn('js-preview: UMD globals missing');
+      return;
+    }
+
+    const kind = filePreviewKindFromSrcAndName(src, fileName);
+    elDocx.classList.toggle('file-preview-hidden', kind !== 'docx');
+    elExcel.classList.toggle('file-preview-hidden', kind !== 'excel');
+    elPdf.classList.toggle('file-preview-hidden', kind !== 'pdf');
+
+    try {
+      if (kind === 'pdf') {
+        this._filePreviewPdf = JP.init(elPdf, {
+          onError(e) {
+            console.warn('js-preview-pdf', e);
+          }
+        });
+        if (this._filePreviewPdf && typeof this._filePreviewPdf.preview === 'function') {
+          this._filePreviewPdf.preview(src).catch((e) => console.warn('pdf preview', e));
+        }
+      } else if (kind === 'excel') {
+        this._filePreviewExcel = JE.init(elExcel);
+        if (this._filePreviewExcel && typeof this._filePreviewExcel.preview === 'function') {
+          this._filePreviewExcel.preview(src).catch((e) => console.warn('excel preview', e));
+        }
+      } else {
+        this._filePreviewDocx = JD.init(elDocx);
+        if (this._filePreviewDocx && typeof this._filePreviewDocx.preview === 'function') {
+          this._filePreviewDocx.preview(src).catch((e) => console.warn('docx preview', e));
+        }
+      }
+    } catch (e) {
+      console.warn('js-preview init', e);
+    }
+  },
 
   /** WZoom 在首次 init 时缓存了 viewport 尺寸，窗口拉伸/最大化后需重建，否则缩放的坐标焦点会偏移 */
   _syncImageZoomChrome(scale) {
@@ -159,7 +249,7 @@ const mediaView = {
     }
   },
 
-  init(src, mediaType, width, height, cover) {
+  init(src, mediaType, width, height, cover, fileName) {
     const resolvedSrc = ensureFileOrRemoteUrl(src);
     this._src = resolvedSrc;
     this._mediaType = mediaType;
@@ -168,18 +258,25 @@ const mediaView = {
     this._cover = cover || '';
     this._rotation = 0;
     setMediaFilePathLabel(resolvedSrc);
+    this._destroyFilePreviewers();
 
-    const typeLabel = mediaType === window.MediaType.VIDEO ? '视频' : '图片';
+    let typeLabel = '图片';
+    if (mediaType === window.MediaType.VIDEO) typeLabel = '视频';
+    else if (mediaType === window.MediaType.FILE) typeLabel = '文件';
     document.title = typeLabel;
     const labelEl = document.getElementById('media-type-label');
     if (labelEl) labelEl.textContent = typeLabel;
 
     const imageLayer = document.getElementById('image-layer');
     const videoLayer = document.getElementById('video-layer');
+    const fileLayer = document.getElementById('file-layer');
+    const fileNameLabel = document.getElementById('file-name-label');
 
     document.getElementById('rotate-btn').style.display = mediaType === window.MediaType.IMAGE ? '' : 'none';
 
     if (mediaType === window.MediaType.IMAGE) {
+      if (fileLayer) fileLayer.classList.remove('active');
+      if (fileNameLabel) fileNameLabel.textContent = '';
       imageLayer.classList.add('active');
       imageLayer.classList.remove('image-zoomed');
       videoLayer.classList.remove('active');
@@ -192,6 +289,8 @@ const mediaView = {
       if (height) img.setAttribute('data-height', height);
       this._rebuildWheelZoom();
     } else if (mediaType === window.MediaType.VIDEO) {
+      if (fileLayer) fileLayer.classList.remove('active');
+      if (fileNameLabel) fileNameLabel.textContent = '';
       videoLayer.classList.add('active');
       videoLayer.classList.remove('video-zoomed');
       imageLayer.classList.remove('active');
@@ -205,6 +304,22 @@ const mediaView = {
         videoPlayer.play();
         this._rebuildWheelZoom();
       });
+    } else if (mediaType === window.MediaType.FILE) {
+      if (this._wz) { this._wz.destroy(); this._wz = null; }
+      imageLayer.innerHTML = '';
+      imageLayer.classList.remove('active', 'image-zoomed');
+      videoLayer.classList.remove('active', 'video-zoomed');
+      if (fileLayer) fileLayer.classList.add('active');
+      const videoEl = document.getElementById('video-player');
+      if (videoEl) {
+        videoEl.pause();
+        videoEl.removeAttribute('poster');
+        videoEl.removeAttribute('src');
+        videoEl.load();
+      }
+      const displayName = (fileName && String(fileName).trim()) || (formatPathForDisplay(resolvedSrc).split(/[/\\]/).pop() || '');
+      if (fileNameLabel) fileNameLabel.textContent = displayName;
+      this._setupFileJsPreviews(resolvedSrc, fileName);
     }
   },
 
@@ -236,14 +351,24 @@ const mediaView = {
 document.getElementById('rotate-btn').addEventListener('click', () => mediaView.rotate());
 document.getElementById('open-default-app-btn').addEventListener('click', () => mediaView.openWithDefaultApp());
 
+function mediaTypeFromPayload(n) {
+  const v = Number(n);
+  if (v === window.MediaType.VIDEO) return window.MediaType.VIDEO;
+  if (v === window.MediaType.FILE) return window.MediaType.FILE;
+  return window.MediaType.IMAGE;
+}
+
 function handleMediaState(state) {
   if (!state || !state.url) return;
-  const mediaType = state.mediaType === 3 ? window.MediaType.VIDEO : window.MediaType.IMAGE;
-  mediaView.init(state.url, mediaType, state.width, state.height, state.cover);
+  const mediaType = mediaTypeFromPayload(state.mediaType);
+  mediaView.init(state.url, mediaType, state.width, state.height, state.cover, state.fileName);
 }
 
 handleMediaState(window.mediaState?.get());
 window.mediaState?.subscribe(handleMediaState);
+
+/** 主进程在 did-finish-load 后注入初始预览状态（localStorage 同页不同步时） */
+window.__mediaApplyPlayerState = handleMediaState;
 
 /** 媒体窗口「在前台、展示中」：可见且当前接收键盘焦点（主窗口在前台时本窗口不会收到 keydown） */
 function isMediaPresentationActive() {
