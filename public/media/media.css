@@ -16,6 +16,10 @@ body { margin: 0; background: rgba(0,0,0,0.65); color: #fff; font-family: -apple
 .action-btn-text svg { width: 16px; height: 16px; fill: #aaa; flex-shrink: 0; }
 .action-btn-text:hover { background: rgba(255,255,255,0.2); color: #fff; }
 .action-btn-text:hover svg { fill: #fff; }
+.action-btn-text.action-btn-text-on-light-doc { background: rgba(35, 51, 73, 0.72); color: #e7eef8; }
+.action-btn-text.action-btn-text-on-light-doc svg { fill: #e7eef8; }
+.action-btn-text.action-btn-text-on-light-doc:hover { background: rgba(35, 51, 73, 0.86); color: #fff; }
+.action-btn-text.action-btn-text-on-light-doc:hover svg { fill: #fff; }
 .media-layer { position: fixed; top: 0; left: 0; right: 0; bottom: 0; display: none; align-items: center; justify-content: center; }
 .media-layer.active { display: flex; }
 #file-layer { flex-direction: column; align-items: stretch; justify-content: flex-start; padding: 0; box-sizing: border-box; width: 100%; overflow: auto; -webkit-overflow-scrolling: touch; }

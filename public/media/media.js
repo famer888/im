@@ -7,6 +7,7 @@ function toggleMaximize() { window.electronAPI?.maximize?.(); isMaximized = !isM
 document.querySelector('.titlebar-btn.minimize').addEventListener('click', () => window.electronAPI?.minimize?.());
 document.querySelector('.titlebar-btn.maximize').addEventListener('click', toggleMaximize);
 document.querySelector('.titlebar-btn.close').addEventListener('click', () => window.electronAPI?.close?.());
+const openDefaultAppBtn = document.getElementById('open-default-app-btn');
 
 const videoPlayer = new Plyr('#video-player', {
   controls: ['play-large', 'play', 'progress', 'current-time', 'duration', 'mute', 'volume', 'fullscreen'],
@@ -114,6 +115,15 @@ function filePreviewKindFromSrcAndName(src, fileName) {
   return 'docx';
 }
 
+/** 文档/表格预览区域常为白底，按钮切换到深色主题提升对比度 */
+function setOpenDefaultAppBtnTheme(mediaType, filePreviewKind) {
+  if (!openDefaultAppBtn) return;
+  const useLightDocTheme =
+    mediaType === window.MediaType.FILE &&
+    (filePreviewKind === 'docx' || filePreviewKind === 'excel');
+  openDefaultAppBtn.classList.toggle('action-btn-text-on-light-doc', useLightDocTheme);
+}
+
 /** 放大态下：位移超过此值视为 drag，不触发缩放回 1（图片与视频共用） */
 const MEDIA_TAP_MOVE_MAX_PX = 12;
 const MEDIA_TAP_TIME_MAX_MS = 500;
@@ -167,6 +177,7 @@ const mediaView = {
     }
 
     const kind = filePreviewKindFromSrcAndName(src, fileName);
+    setOpenDefaultAppBtnTheme(window.MediaType.FILE, kind);
     elDocx.classList.toggle('file-preview-hidden', kind !== 'docx');
     elExcel.classList.toggle('file-preview-hidden', kind !== 'excel');
     elPdf.classList.toggle('file-preview-hidden', kind !== 'pdf');
@@ -275,6 +286,7 @@ const mediaView = {
     document.getElementById('rotate-btn').style.display = mediaType === window.MediaType.IMAGE ? '' : 'none';
 
     if (mediaType === window.MediaType.IMAGE) {
+      setOpenDefaultAppBtnTheme(mediaType, '');
       if (fileLayer) fileLayer.classList.remove('active');
       if (fileNameLabel) fileNameLabel.textContent = '';
       imageLayer.classList.add('active');
@@ -289,6 +301,7 @@ const mediaView = {
       if (height) img.setAttribute('data-height', height);
       this._rebuildWheelZoom();
     } else if (mediaType === window.MediaType.VIDEO) {
+      setOpenDefaultAppBtnTheme(mediaType, '');
       if (fileLayer) fileLayer.classList.remove('active');
       if (fileNameLabel) fileNameLabel.textContent = '';
       videoLayer.classList.add('active');
@@ -349,7 +362,7 @@ const mediaView = {
 };
 
 document.getElementById('rotate-btn').addEventListener('click', () => mediaView.rotate());
-document.getElementById('open-default-app-btn').addEventListener('click', () => mediaView.openWithDefaultApp());
+openDefaultAppBtn?.addEventListener('click', () => mediaView.openWithDefaultApp());
 
 function mediaTypeFromPayload(n) {
   const v = Number(n);
