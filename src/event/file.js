@@ -2,6 +2,7 @@ import { remote, ipcRenderer, fs, toLocalResourceUrl, toFsPathFromDisplayUrl } f
 
 // 工具
 import { createHash, getFileSuffix, enumMsgType } from "@/utils/base";
+import { shouldOpenInMediaPreview } from "@/utils/media";
 import { getImageDimensions, saveFileToDirectory } from "@/utils/fileTools";
 import { getUserDataDirectory } from "@/utils/tools";
 import {
@@ -188,7 +189,13 @@ const fnDownloadFileInfoUpdate = (data, errorType) => {
 
     // 打开文件
     if (isOpen) {
-        if (!isDir && [1, 3, 7, 9].includes(chatType)) {
+        const useMediaPreview = !isDir && shouldOpenInMediaPreview({
+            chatType,
+            fileName: data.fileName,
+            fileUrl: data.fileUrl || fileLocalPath,
+            local: fileLocalPath,
+        });
+        if (useMediaPreview) {
             window.mediaState && window.mediaState.send({
                 url: toLocalResourceUrl(fileLocalPath),
                 mediaType: chatType,
@@ -469,9 +476,14 @@ const fnOperatorFile = async ({ id, type, info, openDialog, isDir, taskId }, kee
     if (info.content) {
         const hasSplit = info.content.includes("||");
         const hasThumbSep = info.content.includes("*P");
-        // 图片 / 视频 / GIF 统一走媒体窗 + fileFoldersOpen；转发时 content 常被收成纯 URL，不能走 openFile
-        const isMediaType = [1, 3, 7, 9].includes(info.chatType);
-        if (!isMediaType && !hasSplit && !hasThumbSep) {
+        // 图片 / 视频 / GIF 固定走媒体窗；文件消息按扩展名命中可预览格式后走媒体窗
+        const canUseMediaPreview = shouldOpenInMediaPreview({
+            chatType: info.chatType,
+            fileName: info.fileName,
+            fileUrl: info.content || info.local,
+            local: info.local,
+        });
+        if (!canUseMediaPreview && !hasSplit && !hasThumbSep) {
             openFile(toFsPathFromDisplayUrl(info.local), isDir);
             return;
         }
@@ -546,7 +558,12 @@ const fnOperatorFile = async ({ id, type, info, openDialog, isDir, taskId }, kee
     }
 
     // 图片/视频：通过 localStorage 传递媒体信息给播放器
-    if (info.local && !isDir && [1, 3, 7, 9].includes(info.chatType)) {
+    if (info.local && !isDir && shouldOpenInMediaPreview({
+        chatType: info.chatType,
+        fileName: info.fileName,
+        fileUrl,
+        local: info.local,
+    })) {
         window.mediaState && window.mediaState.send({
             url: info.local,
             mediaType: info.chatType,

@@ -31,6 +31,7 @@ import { runMacStartupCleanup, watchUserDataRemoval, stopWatchUserData } from "@
 import { initToggleSideBar } from "@/utils/toggleSideBar";
 import { logger, writeLog, writeCrashReport, initProcessLogger } from '@/utils/logger/process';
 import MediaProcess, { isMediaPlayerWindow } from "@/utils/media/MediaProcess";
+import { shouldOpenInMediaPreview } from "@/utils/media";
 import { installCorsHandlers } from "@/utils/cors";
 import { isDangerousFile } from "@/utils/minecheck";
 import Storage from "@/cache/storage";
@@ -1237,8 +1238,16 @@ const createMainWindow = async () => {
                   taskId: args.taskId,
                   percent: 100 + Math.random().toFixed(6),
                 });
-                // 图片/视频用媒体播放器打开（数据已通过 localStorage 传递）
-                if (!isDir && [1, 3, 7, 9].includes(chatType)) {
+                // 图片/视频固定走媒体播放器；文件消息按扩展名命中可预览格式后走媒体播放器
+                if (
+                    !isDir &&
+                    shouldOpenInMediaPreview({
+                        chatType,
+                        fileName: args.fileName,
+                        fileUrl,
+                        local: fsLocal,
+                    })
+                ) {
                     MediaProcess.create(mainWindow);
                     MediaProcess.show();
                 } else {

@@ -4,6 +4,33 @@ export const MediaType = Object.freeze({
   FILE: 7,   // 文件（与 enumMsgType.file / 消息 chatType 一致）
 });
 
+const GIF_CHAT_TYPE = 9;
+const FILE_PREVIEW_EXTS = Object.freeze([".pdf", ".doc", ".docx", ".xls", ".xlsx"]);
+
+export const getFileExtension = (input = "") => {
+  if (!input || typeof input !== "string") return "";
+  const normalized = input.split("?")[0].split("#")[0].split(/[\\/]/).pop() || "";
+  const dotIndex = normalized.lastIndexOf(".");
+  if (dotIndex < 0) return "";
+  return normalized.slice(dotIndex).toLowerCase();
+};
+
+export const isFileMediaPreviewExt = (fileNameOrPath = "") => {
+  const ext = getFileExtension(fileNameOrPath);
+  return FILE_PREVIEW_EXTS.includes(ext);
+};
+
+export const shouldOpenInMediaPreview = ({ chatType, fileName, fileUrl, local } = {}) => {
+  const type = Number(chatType);
+  if ([MediaType.IMAGE, MediaType.VIDEO, GIF_CHAT_TYPE].includes(type)) return true;
+  if (type !== MediaType.FILE) return false;
+  return (
+    isFileMediaPreviewExt(fileName) ||
+    isFileMediaPreviewExt(fileUrl) ||
+    isFileMediaPreviewExt(local)
+  );
+};
+
 /**
  * @typedef {Object} MediaPayload
  * @property {'play'|'pause'|'next'|'prev'} action - 操作类型
