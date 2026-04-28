@@ -1,5 +1,4 @@
 import fs from "fs";
-import https from "https";
 import tmp from "tmp";
 import {
     app,
@@ -125,9 +124,6 @@ let isWin = !isOsx;
 let baseIndex = 0;
 let baseIndexList = [];
 let userData = app.getPath("userData");
-/** 启动后仅一次：下载示例 Office/PDF 并打开媒体窗（调试用） */
-let startupOfficeMediaOpened = false;
-let mediaProcessDestroyHooked = false;
 let imagesCacheDir = `${userData}/images`;
 let voicesCacheDir = `${userData}/voices`;
 let codeCacheDir = `${userData}/Code Cache`;
@@ -750,125 +746,6 @@ const sendMain = (channel, data, targetWindow = null) => {
   }
 };
 
-function downloadHttpsToFile(url, destPath) {
-    return new Promise((resolve, reject) => {
-        const fetchOnce = (currentUrl) => {
-            const file = fs.createWriteStream(destPath);
-            https
-                .get(currentUrl, (res) => {
-                    if (res.statusCode === 301 || res.statusCode === 302) {
-                        const loc = res.headers.location;
-                        file.close();
-                        try {
-                            fs.unlinkSync(destPath);
-                        } catch (_) {}
-                        if (!loc) {
-                            reject(new Error("redirect without location"));
-                            return;
-                        }
-                        fetchOnce(new URL(loc, currentUrl).href);
-                        return;
-                    }
-                    if (res.statusCode !== 200) {
-                        file.close();
-                        try {
-                            fs.unlinkSync(destPath);
-                        } catch (_) {}
-                        reject(new Error(`HTTP ${res.statusCode}`));
-                        return;
-                    }
-                    res.pipe(file);
-                    file.on("finish", () => {
-                        file.close((err) => (err ? reject(err) : resolve()));
-                    });
-                })
-                .on("error", (err) => {
-                    try {
-                        file.close();
-                        fs.unlinkSync(destPath);
-                    } catch (_) {}
-                    reject(err);
-                });
-        };
-        fetchOnce(url);
-    });
-}
-
-/** 本地绝对路径转换为 local-resource:// URL（与 registerLocalResourceProtocol 一致） */
-function fsPathToLocalResourceUrl(absPath) {
-    let p = String(absPath || "").replace(/\\/g, "/");
-    if (!p) return "";
-    if (!p.startsWith("/") && /^[A-Za-z]:\//.test(p)) {
-        p = `/${p}`;
-    }
-    return `local-resource://${p}`;
-}
-
-/** 启动示例文件落盘到 userData/media-preview（pdf/docx/xlsx） */
-async function ensureStartupDebugPreviewFiles() {
-    const dir = nodePath.join(userData, "media-preview");
-    if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
-    }
-    const samples = [
-        {
-            key: "pdf",
-            fileName: "_debug-sample.pdf",
-            url: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
-        },
-        {
-            key: "word",
-            fileName: "_debug-sample.docx",
-            url: "https://raw.githubusercontent.com/aspsnippets/test/master/Sample.docx",
-        },
-        {
-            key: "excel",
-            fileName: "_debug-sample.xlsx",
-            url: "https://raw.githubusercontent.com/aspsnippets/test/master/Sample.xlsx",
-        },
-    ];
-    const localFiles = {};
-    for (const item of samples) {
-        const dest = nodePath.join(dir, item.fileName);
-        const needDownload = !fs.existsSync(dest) || fs.statSync(dest).size < 100;
-        if (needDownload) {
-            await downloadHttpsToFile(item.url, dest);
-        }
-        localFiles[item.key] = dest;
-    }
-    return localFiles;
-}
-
-/** 启动后自动打开 PDF 预览窗口，同时本地准备好 Word/Excel 预览样例 */
-async function openStartupDebugOfficeMediaWindow() {
-    if (startupOfficeMediaOpened) return;
-    try {
-        const files = await ensureStartupDebugPreviewFiles();
-        const url = fsPathToLocalResourceUrl(files.pdf);
-        const state = {
-            url,
-            mediaType: 7,
-            width: 0,
-            height: 0,
-            cover: "",
-            fileName: "_debug-sample.pdf",
-        };
-        if (
-            !mediaProcessDestroyHooked &&
-            mainWindow &&
-            !mainWindow.isDestroyed()
-        ) {
-            mediaProcessDestroyHooked = true;
-            MediaProcess.destroyOnMainWindowClose(mainWindow);
-        }
-        MediaProcess.create(mainWindow, state);
-        MediaProcess.show();
-        startupOfficeMediaOpened = true;
-    } catch (e) {
-        writeLog("crash-report", "warn", "[startup] sample office media window", e);
-    }
-}
-
 // {query, userId}
 const setMainWin = async () => {
     let mainWindowState = windowStateKeeper({
@@ -883,7 +760,7 @@ const setMainWin = async () => {
         preload: nodePath.join(__dirname, isDevelopment ? './public/preload.js' : './preload.js'),
         nativeWindowOpen: true,
         webSecurity: true,
-        webviewTag: true,
+        webviewTag: false,
         backgroundThrottling: false,
     };
 
@@ -892,8 +769,6 @@ const setMainWin = async () => {
     if (!process.env.WEBPACK_DEV_SERVER_URL) {
         createProtocol("app");
     }
-
-    // MediaProcess.create();
 
     mainWindow = new BrowserWindow({
         x: mainWindowState.x,
@@ -939,11 +814,6 @@ const setMainWin = async () => {
             win && win.setOpacity(1);
         } catch (ex) {
             // do nothing
-        }
-        try {
-            await openStartupDebugOfficeMediaWindow();
-        } catch (_) {
-            /* ignore */
         }
     });
     mainWindow.webContents.on(

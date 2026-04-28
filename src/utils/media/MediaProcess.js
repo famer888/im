@@ -59,11 +59,9 @@ class MediaPlayerProcess {
     try {
       if (mainWindow && !mainWindow.isDestroyed()) {
         const { x, y } = mainWindow.getBounds();
-        // this.window.maximize();
         this.window.setPosition(x, y);
       } else {
         this.window.center();
-        // this.window.maximize();
       }
     } catch (e) {
       this.window.center();
