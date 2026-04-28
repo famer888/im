@@ -839,19 +839,19 @@ async function ensureStartupDebugPreviewFiles() {
     return localFiles;
 }
 
-/** 启动后自动打开 Excel 预览窗口，同时本地准备好 Word/PDF 预览样例 */
+/** 启动后自动打开 PDF 预览窗口，同时本地准备好 Word/Excel 预览样例 */
 async function openStartupDebugOfficeMediaWindow() {
     if (startupOfficeMediaOpened) return;
     try {
         const files = await ensureStartupDebugPreviewFiles();
-        const url = fsPathToLocalResourceUrl(files.excel);
+        const url = fsPathToLocalResourceUrl(files.pdf);
         const state = {
             url,
             mediaType: 7,
             width: 0,
             height: 0,
             cover: "",
-            fileName: "_debug-sample.xlsx",
+            fileName: "_debug-sample.pdf",
         };
         if (
             !mediaProcessDestroyHooked &&
