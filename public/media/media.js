@@ -120,7 +120,7 @@ function setOpenDefaultAppBtnTheme(mediaType, filePreviewKind) {
   if (!openDefaultAppBtn) return;
   const useLightDocTheme =
     mediaType === window.MediaType.FILE &&
-    (filePreviewKind === 'docx' || filePreviewKind === 'excel');
+    (filePreviewKind === 'docx' || filePreviewKind === 'excel' || filePreviewKind === 'pdf');
   openDefaultAppBtn.classList.toggle('action-btn-text-on-light-doc', useLightDocTheme);
 }
 
