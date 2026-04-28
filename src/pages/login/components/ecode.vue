@@ -3,6 +3,7 @@
     <div class="lastBox">
       <img
         :src="lastLoginInfo.icon || require('@/assets/images/logo/logo.png')"
+        @error="handleLastIconError"
         @click="networkCheckVisible = true"
       />
       <div v-if="lastLoginInfo.name">{{ lastLoginInfo.name }}</div>
@@ -249,6 +250,12 @@ export default {
       setTimeout(() => {
         this.handleGetQrCodeUrl();
       }, 500);
+    },
+    handleLastIconError(event) {
+      if (event && event.target) {
+        event.target.onerror = null;
+        event.target.src = require("@/assets/images/logo/logo.png");
+      }
     },
     /**
      * 是否登录获取

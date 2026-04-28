@@ -62,9 +62,17 @@ export default {
 
     if (!location.href.includes("login")) {
       Cache("login-account-list").then(async (res) => {
+        const loginRedirectConditions = {
+          hasCachedAccountList: !!(res && res.length > 0),
+          matchedCurrentSourceId: false,
+          checkedReusableAccountOnFirstLaunch: false,
+          hasReusableAccount: false,
+        };
+
         // 如果有旧的登录信息
         if (res && res.length > 0) {
           const info = res.find((item) => item.sourceId === sourceId);
+          loginRedirectConditions.matchedCurrentSourceId = !!info;
 
           if (info) {
             this.$router.push("/home?loginId=" + info.id);
@@ -76,12 +84,14 @@ export default {
             !location.href.includes("home") &&
             !location.href.includes("login")
           ) {
+            loginRedirectConditions.checkedReusableAccountOnFirstLaunch = true;
             const availableAccounts = res.filter(
               (item) =>
                 !sourceIdList.includes(item.sourceId) &&
                 item.sessionId &&
                 item.sessionId !== ""
             );
+            loginRedirectConditions.hasReusableAccount = availableAccounts.length > 0;
 
             // 如果存在可用的账户
             if (availableAccounts.length > 0) {
@@ -112,6 +122,16 @@ export default {
           }
         }
 
+        const loginRedirectBranch = !loginRedirectConditions.hasCachedAccountList
+          ? "no_cached_account_list"
+          : loginRedirectConditions.checkedReusableAccountOnFirstLaunch
+            ? "cached_accounts_but_no_match_or_reusable_account"
+            : "cached_accounts_but_skip_reusable_check";
+        console.$collect("[App mounted] redirect to /login", {
+          branch: loginRedirectBranch,
+          sourceId,
+          ...loginRedirectConditions,
+        });
         this.$router.push({ path: "/login" });
       });
     }

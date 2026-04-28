@@ -46,6 +46,7 @@ export default {
     }
   },
   methods: {
+    toLocalResourceUrl,
     /**
      * 下载文件
      */

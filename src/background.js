@@ -477,11 +477,19 @@ const openFileDialog = async (event, args) => {
             } = args;
             const url = trendsFileUrl || fileUrl;
 
-            const oldpath =
-                chatType === 1
-                    ? (local ? localDisplayToFsPath(local) : "") ||
-                      app.getPath("downloads") + "/" + fileName
-                    : app.getPath("downloads") + "/" + fileName;
+            // 已下载并解密好的本地文件路径（如有），优先用它做"另存为"
+            // 避免走 webContents.downloadURL 重新拉 OSS：
+            // 1) OSS 签名 URL 过期会 downloadFailed；2) 失败重试在 handleFileDownload
+            //    里会把 fileLocalPath 覆盖回原始 local 路径，导致用户选择的目录里
+            //    什么也没产生（静默失败）；3) success 路径会被 fnDownloadFileInfoUpdate
+            //    把消息 local 字段改写到另存为目录，污染消息库。
+            const localFsPath = local ? localDisplayToFsPath(local) : "";
+            const hasLocalFile =
+                !!localFsPath &&
+                !/^https?:\/\//i.test(localFsPath) &&
+                fs.existsSync(localFsPath);
+
+            const oldpath = app.getPath("downloads") + "/" + fileName;
             const { canceled, filePath } = await dialog.showSaveDialog(
                 mainWindow,
                 {
@@ -491,19 +499,33 @@ const openFileDialog = async (event, args) => {
                 }
             );
 
-            if (!canceled) {
-                downloadFileMap.set(encodeURI(url), {
-                    ...args,
-                    fileLocalPath: filePath,
-                });
+            if (canceled || !filePath) return;
 
-                const windows = BrowserWindow.getAllWindows();
-                windows.forEach((w) => {
-                    if (w.getMediaSourceId() === windowId) {
-                        w.webContents.downloadURL(url);
-                    }
-                });
+            if (hasLocalFile) {
+                try {
+                    fs.copyFileSync(localFsPath, filePath);
+                    return;
+                } catch (copyErr) {
+                    writeLog(
+                        "app",
+                        "error",
+                        `[openFileDialog] copy local failed: ${(copyErr && copyErr.message) || ""}`
+                    );
+                    // 拷贝失败再回退到下载流程
+                }
             }
+
+            downloadFileMap.set(encodeURI(url), {
+                ...args,
+                fileLocalPath: filePath,
+            });
+
+            const windows = BrowserWindow.getAllWindows();
+            windows.forEach((w) => {
+                if (w.getMediaSourceId() === windowId) {
+                    w.webContents.downloadURL(url);
+                }
+            });
         } catch (error) {
             //
         }
@@ -598,7 +620,10 @@ const downloadHandler = (event, item, webContents) => {
    let data = {};
    let timerName = "";
     try {
-         data = downloadFileMap.get(item.getURL());
+        const itemUrl = item.getURL();
+        // set 用的是 encodeURI(url)，item.getURL() 视 URL 是否含未编码字符可能与之不一致，
+        // 这里两种 key 都尝试一次。
+        data = downloadFileMap.get(itemUrl) || downloadFileMap.get(encodeURI(itemUrl));
 
         if (!data) {
             let defalutPath = nodePath.join(userData, `/Local Storage/bad`);
