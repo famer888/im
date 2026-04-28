@@ -125,8 +125,8 @@ let isWin = !isOsx;
 let baseIndex = 0;
 let baseIndexList = [];
 let userData = app.getPath("userData");
-/** 启动后仅一次：下载示例 PDF 并打开媒体窗（调试用） */
-let startupPdfMediaOpened = false;
+/** 启动后仅一次：下载示例 Office/PDF 并打开媒体窗（调试用） */
+let startupOfficeMediaOpened = false;
 let mediaProcessDestroyHooked = false;
 let imagesCacheDir = `${userData}/images`;
 let voicesCacheDir = `${userData}/voices`;
@@ -794,35 +794,64 @@ function downloadHttpsToFile(url, destPath) {
     });
 }
 
-/** 示例 PDF 落盘到 userData/media-preview，与渲染层 local-resource 规则一致 */
-async function openStartupDebugPdfMediaWindow() {
-    if (startupPdfMediaOpened) return;
-    try {
-        const dir = nodePath.join(userData, "media-preview");
-        if (!fs.existsSync(dir)) {
-            fs.mkdirSync(dir, { recursive: true });
-        }
-        const dest = nodePath.join(dir, "_debug-sample.pdf");
-        const needDownload =
-            !fs.existsSync(dest) || fs.statSync(dest).size < 100;
+/** 本地绝对路径转换为 local-resource:// URL（与 registerLocalResourceProtocol 一致） */
+function fsPathToLocalResourceUrl(absPath) {
+    let p = String(absPath || "").replace(/\\/g, "/");
+    if (!p) return "";
+    if (!p.startsWith("/") && /^[A-Za-z]:\//.test(p)) {
+        p = `/${p}`;
+    }
+    return `local-resource://${p}`;
+}
+
+/** 启动示例文件落盘到 userData/media-preview（pdf/docx/xlsx） */
+async function ensureStartupDebugPreviewFiles() {
+    const dir = nodePath.join(userData, "media-preview");
+    if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+    }
+    const samples = [
+        {
+            key: "pdf",
+            fileName: "_debug-sample.pdf",
+            url: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+        },
+        {
+            key: "word",
+            fileName: "_debug-sample.docx",
+            url: "https://raw.githubusercontent.com/aspsnippets/test/master/Sample.docx",
+        },
+        {
+            key: "excel",
+            fileName: "_debug-sample.xlsx",
+            url: "https://raw.githubusercontent.com/aspsnippets/test/master/Sample.xlsx",
+        },
+    ];
+    const localFiles = {};
+    for (const item of samples) {
+        const dest = nodePath.join(dir, item.fileName);
+        const needDownload = !fs.existsSync(dest) || fs.statSync(dest).size < 100;
         if (needDownload) {
-            await downloadHttpsToFile(
-                "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
-                dest
-            );
+            await downloadHttpsToFile(item.url, dest);
         }
-        let p = String(dest).replace(/\\/g, "/");
-        if (!p.startsWith("/") && /^[A-Za-z]:\//.test(p)) {
-            p = `/${p}`;
-        }
-        const url = `local-resource://${p}`;
+        localFiles[item.key] = dest;
+    }
+    return localFiles;
+}
+
+/** 启动后自动打开 Excel 预览窗口，同时本地准备好 Word/PDF 预览样例 */
+async function openStartupDebugOfficeMediaWindow() {
+    if (startupOfficeMediaOpened) return;
+    try {
+        const files = await ensureStartupDebugPreviewFiles();
+        const url = fsPathToLocalResourceUrl(files.excel);
         const state = {
             url,
             mediaType: 7,
             width: 0,
             height: 0,
             cover: "",
-            fileName: "_debug-sample.pdf",
+            fileName: "_debug-sample.xlsx",
         };
         if (
             !mediaProcessDestroyHooked &&
@@ -834,9 +863,9 @@ async function openStartupDebugPdfMediaWindow() {
         }
         MediaProcess.create(mainWindow, state);
         MediaProcess.show();
-        startupPdfMediaOpened = true;
+        startupOfficeMediaOpened = true;
     } catch (e) {
-        writeLog("crash-report", "warn", "[startup] sample pdf media window", e);
+        writeLog("crash-report", "warn", "[startup] sample office media window", e);
     }
 }
 
@@ -912,7 +941,7 @@ const setMainWin = async () => {
             // do nothing
         }
         try {
-            await openStartupDebugPdfMediaWindow();
+            await openStartupDebugOfficeMediaWindow();
         } catch (_) {
             /* ignore */
         }
