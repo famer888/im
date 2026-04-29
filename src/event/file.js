@@ -211,6 +211,33 @@ const handleDownloadFileFailed = (_$, data) => {
 /**
  * 下载文件信息更新
  */
+/** 下载落盘路径是否像视频文件（用于 chatType 3 写 local 还是 thumb） */
+const VIDEO_FILE_EXTS = [
+    ".mp4",
+    ".webm",
+    ".ogg",
+    ".ogv",
+    ".mov",
+    ".m4v",
+    ".mkv",
+    ".avi",
+    ".wmv",
+    ".flv",
+    ".mpeg",
+    ".mpg",
+    ".3gp",
+    ".ts",
+    ".m2ts",
+    ".f4v",
+];
+const isVideoFileLocalPath = (fileLocalPath) => {
+    if (!fileLocalPath || typeof fileLocalPath !== "string") {
+        return false;
+    }
+    const base = fileLocalPath.split(/[?#]/)[0].toLowerCase();
+    return VIDEO_FILE_EXTS.some((ext) => base.endsWith(ext));
+};
+
 const fnDownloadFileInfoUpdate = async (data, errorType) => {
     const id = data.groupId || data.channelId || data.userId;
     const type = data.groupId ? "group"
@@ -251,7 +278,7 @@ const fnDownloadFileInfoUpdate = async (data, errorType) => {
     let updated;
     if (useSlot) {
         if (chatType === 3) {
-            if ([".mp4", "webm", ".ogg"].includes((fileLocalPath || "").slice(-4).toLowerCase())) {
+            if (isVideoFileLocalPath(fileLocalPath)) {
                 updated = { [`local_${slotIdx}`]: pathForStore, ...slotPercent };
             } else {
                 updated = {
@@ -265,12 +292,24 @@ const fnDownloadFileInfoUpdate = async (data, errorType) => {
     } else {
         updated = { local: pathForStore, ...percent };
         if (chatType === 3) {
-            if ([".mp4", "webm", ".ogg"].includes((fileLocalPath || '').slice(-4).toLowerCase())) {
+            if (isVideoFileLocalPath(fileLocalPath)) {
                 updated = { local: pathForStore, ...percent };
             } else {
                 updated = { localThumbUrl: thumbPathForStore, ...percent };
             }
         }
+    }
+
+    if (errorType === "downloadError") {
+        const meta = {
+            customMsgId,
+            mediaSlotIndex,
+            slotIdx,
+            msgId: data.msgId,
+            url: String(data.trendsFileUrl || data.fileUrl || "").slice(0, 120),
+        };
+        console.log("download error", meta);
+        console.$collect && console.$collect("download error", meta);
     }
 
     if (await shouldSkipStaleErrorUpdate({ id, type, data, updated, errorType })) {
@@ -661,7 +700,6 @@ const fnOperatorFile = async ({ id, type, info, openDialog, isDir, taskId }, kee
     // });
 
     if(!info.local) {
-        // 优先使用动态域名
         // 优先使用动态域名
         params.trendsFileUrl = await getOssFirstNormalUrl(fileUrl, 0, 0);
     }
