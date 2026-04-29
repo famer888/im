@@ -16,9 +16,9 @@
             <!-- <slot name="timeStatus" v-if="!hasError"></slot> -->
             <Overlay :loading="loading" :duration="msgInfo.duration" :percent="percent" :status="status" :isVideo="msgInfo.chatType === 3" @click="handleOpenFile" />
             <template v-if="msgInfo.local || msgInfo.localThumbUrl">
-                <i v-if="handleErrorTipsGet()">
+                <div class="picture-container" v-if="handleErrorTipsGet()">
                     <!-- {{ handleErrorTipsGet() }} -->
-                </i>
+                </div>
                 <div class="picture-container" v-else>
                     <!-- <img
                         v-if="msgInfo.chatType === 3"
@@ -229,10 +229,11 @@ export default {
                     const packets = Array.isArray(data)
                         ? data.map((message) => message.data).filter(Boolean)
                         : [data];
-                    const item = packets
+                    const matchedUpdates = packets
                         .flatMap((packet) => packet.list || [])
-                        .find((info) => info.customMsgId === customMsgId);
-                    const updated = item?.updated || {};
+                        .filter((info) => info.customMsgId === customMsgId)
+                        .map((info) => info.updated || {});
+                    const updated = matchedUpdates.find((value) => value[slotKey] || value.localThumbUrl) || {};
                     const updatedThumb = updated[slotKey] || updated.localThumbUrl;
 
                     if (!updatedThumb) {
@@ -243,7 +244,9 @@ export default {
                     this.downloadInFlight = false;
                     this.clearDownloadInFlightTimer();
                     this.$nextTick(() => {
-                        setTimeout(() => this.retryImageAfterDownload([updatedThumb]), 0);
+                        setTimeout(() => {
+                            this.retryImageAfterDownload([updatedThumb]);
+                        }, 0);
                     });
                 }
             );
