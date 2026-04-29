@@ -14,6 +14,7 @@ import { getClientTokenData } from "./manageToken";
 import { getCurrentTimestamp13Digits, throttle } from "./tools";
 import { getDomainListApi } from "@/api/imDomain";
 import { updateDomainAlarm } from "./manageDomainUpdate";
+import { ipcRenderer } from "@/platform";
 
 export const domainPoolAddData = (domains) => {
     const { domainDtoList = [], getTime = 0 } = getPublicCacheSync("domainList") || {}
@@ -82,6 +83,33 @@ export const getTrendsDomainPool = async (opts) => {
     return domainLists
 }
 
+const hasDevArg = (arg) => {
+    try {
+        const args = JSON.parse(process.env.VUE_APP_RUN_ARGS || "[]");
+        return Array.isArray(args) && args.includes(arg);
+    } catch (error) {
+        return false;
+    }
+}
+
+const syncDomainListSnapshot = (res, moduleCode) => {
+    if (!hasDevArg("domains")) return;
+    if (!ipcRenderer || typeof ipcRenderer.invoke !== "function") return;
+
+    ipcRenderer.invoke("save-list-domain-snapshot", {
+        response: res || {},
+        moduleCode,
+    }).then(result => {
+        if (result?.success) {
+            console.log(`[domains] listDomain snapshot saved: ${result.filePath}`);
+        } else {
+            console.warn("[domains] listDomain snapshot save failed", result?.error);
+        }
+    }).catch(error => {
+        console.warn("[domains] listDomain snapshot save failed", error);
+    });
+}
+
 export const getDomainListByApi = throttle(
     (opts) => {
         const { moduleCode = "" } = opts || {};
@@ -105,6 +133,7 @@ export const getDomainListByApi = throttle(
             }
             
             getDomainListApi(pra).then(res => {
+                syncDomainListSnapshot(res, moduleCode)
                 resolve(res)
             })
         })

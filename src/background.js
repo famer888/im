@@ -196,6 +196,32 @@ ipcMain.handle("get-working-dir", () => {
     return workingDir;
 });
 
+ipcMain.handle("save-list-domain-snapshot", (event, payload = {}) => {
+    const projectRoot = process.env.OCS_PROJECT_ROOT || app.getAppPath();
+    const filePath = nodePath.join(projectRoot, "scripts", "domains.json");
+
+    try {
+        const response = payload.response && typeof payload.response === "object"
+            ? payload.response
+            : {};
+
+        fs.writeFileSync(
+            filePath,
+            JSON.stringify(response, null, 2),
+            { encoding: "utf8" }
+        );
+
+        return { success: true, filePath };
+    } catch (error) {
+        console.warn("[domains] listDomain snapshot save failed", error);
+        return {
+            success: false,
+            error: error && error.message ? error.message : String(error),
+            filePath,
+        };
+    }
+});
+
 ipcMain.handle("get-ntp-time", () => {
     const dgram = require('dgram');
     const NTP_SERVERS = ["cn.pool.ntp.org", "time.google.com"];
