@@ -129,8 +129,62 @@ let mainWindowIsFocused = true;
 let downTimers = {};
 let powerBlockerId = null; // 电源阻止器ID
 
+const getDownloadRequestId = (args = {}) => {
+    return args.downloadRequestId || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+};
+
+const getDownloadTimerName = (data = {}) => {
+    if (data.downloadRequestId) {
+        return data.downloadRequestId;
+    }
+    return [
+        data.groupId || data.channelId || data.userId || "unknown",
+        data.msgId || "unknown",
+        data.mediaSlotIndex !== undefined && data.mediaSlotIndex !== null ? data.mediaSlotIndex : "single",
+        data.fileUrl || data.trendsFileUrl || "",
+    ].join("_");
+};
+
+const getDownloadUrlKey = (url) => {
+    try {
+        return encodeURI(decodeURI(url));
+    } catch (e) {
+        return encodeURI(url);
+    }
+};
+
+const enqueueDownloadContext = (url, data) => {
+    const key = getDownloadUrlKey(url);
+    const queue = downloadFileMap.get(key) || [];
+    queue.push(data);
+    downloadFileMap.set(key, queue);
+};
+
+const dequeueDownloadContext = (url) => {
+    const key = getDownloadUrlKey(url);
+    const queue = downloadFileMap.get(key);
+    if (!queue || queue.length === 0) {
+        return null;
+    }
+    const data = queue.shift();
+    if (queue.length === 0) {
+        downloadFileMap.delete(key);
+    } else {
+        downloadFileMap.set(key, queue);
+    }
+    return data;
+};
+
 ipcMain.handle("get-user-data-path", () => {
     return userData;
+});
+ipcMain.handle("local-file-exists", (e, local) => {
+    try {
+        const fsLocal = localDisplayToFsPath(local);
+        return !!fsLocal && !/^https?:\/\//i.test(fsLocal) && fs.existsSync(fsLocal);
+    } catch (err) {
+        return false;
+    }
 });
 ipcMain.handle("set-user-data-path", (e, path) => {
     if (path) {
@@ -507,9 +561,11 @@ const openFileDialog = async (event, args) => {
                 }
             }
 
-            downloadFileMap.set(encodeURI(url), {
+            enqueueDownloadContext(url, {
                 ...args,
+                downloadRequestId: getDownloadRequestId(args),
                 fileLocalPath: filePath,
+                skipMsgUpdate: true,
             });
 
             const windows = BrowserWindow.getAllWindows();
@@ -601,8 +657,8 @@ const clearDownTimer = (timerName) => {
     const timer = downTimers[timerName];
     if(timer) {
         clearTimeout(timer);
-        downTimers[timerName] = null;
     }
+    delete downTimers[timerName];
 }
 
 /**
@@ -613,16 +669,14 @@ const downloadHandler = (event, item, webContents) => {
    let timerName = "";
     try {
         const itemUrl = item.getURL();
-        // set 用的是 encodeURI(url)，item.getURL() 视 URL 是否含未编码字符可能与之不一致，
-        // 这里两种 key 都尝试一次。
-        data = downloadFileMap.get(itemUrl) || downloadFileMap.get(encodeURI(itemUrl));
+        data = dequeueDownloadContext(itemUrl);
 
         if (!data) {
             let defalutPath = nodePath.join(userData, `/Local Storage/bad`);
             item.setSavePath(defalutPath);
             return;
         }
-        timerName = `${data.groupId || data.channelId || data.userId }_${data.msgId}`
+        timerName = getDownloadTimerName(data);
         item.setSavePath(data.fileLocalPath);
         // 只有传入 taskId 时才监听下载进度
         if (data.taskId) {
@@ -656,7 +710,6 @@ const downloadHandler = (event, item, webContents) => {
                     : "downloadFileFailed",
                 data
             );
-            downloadFileMap.delete(item.getURL());
         });
     } catch (error) {
         console.log("downloadHandler-error-", error);
@@ -719,7 +772,7 @@ const setMainWin = async () => {
         preload: nodePath.join(__dirname, isDevelopment ? './public/preload.js' : './preload.js'),
         nativeWindowOpen: true,
         webSecurity: true,
-        webviewTag: true,
+        webviewTag: false,
         backgroundThrottling: false,
     };
 
@@ -937,15 +990,20 @@ const handleFileDownload = (args) => {
     } = args;
     // [dl-trace] 主进程仅见 userId/groupId/channelId，无 session.type 字段
     const url = trendsFileUrl || fileUrl;
+    const downloadRequestId = getDownloadRequestId(args);
+    const requestArgs = {
+        ...args,
+        downloadRequestId,
+    };
 
 
     // 处理下载超时
     if(timeout) {
-        const timerName = `${groupId || channelId || userId }_${msgId}`
+        const timerName = getDownloadTimerName(requestArgs);
         downTimers[timerName] = setTimeout(() => {
             sendMain(
                 "downloadFileFailed",
-                args,
+                requestArgs,
             );
         }, timeout)
     }
@@ -982,8 +1040,8 @@ const handleFileDownload = (args) => {
         : nodePath.join(dirPath, name);
 
     // 设置数据 下载成功后获取
-    downloadFileMap.set(encodeURI(url), {
-        ...args,
+    enqueueDownloadContext(url, {
+        ...requestArgs,
         fileLocalPath,
         isOpen,
     });
