@@ -28,6 +28,7 @@
                     /> -->
                     <img
                         v-if="displayUrl"
+                        :key="imageRenderKey"
                         :src="displayUrl"
                         class="picture"
                         @error="handleImageError"
@@ -65,6 +66,7 @@ import { getOssFirstNormalUrl } from "@/utils/trendsDomain/manageOssDownUpload";
 // 事件
 import eventFile from "@/event/file";
 import eventCommon from "@/event/common";
+import eventBase from "@/event/base";
 
 export default {
     props: ["msgInfo", "chatContent", "externalPendding"],
@@ -141,11 +143,13 @@ export default {
             percent: this.msgInfo?.percent ?? task?.percent ?? 0,
             loading: (this.msgInfo?.percent ?? 0) >= 100 ? false : task?.loading ?? false,
             downloadInFlight: false,
+            imageRenderKey: 0,
             _progressTaskId: task?.taskId || null,
             downloadInFlightTimer: null,
         };
     },
     async created() {
+        this.bindVideoThumbPropertyUpdate();
         if (this.externalPendding) {
             await this.externalPendding;
         }
@@ -174,6 +178,9 @@ export default {
             progress.unsubscribe(this._progressTaskId, this._onProgress);
         }
         this.clearDownloadInFlightTimer();
+        if (this._videoThumbUpdateMonitorKey) {
+            eventBase.fnCommunicationMonitoring(this._videoThumbUpdateMonitorKey, null);
+        }
     },
     watch: {
       ['msgInfo.percent'](value) {
@@ -182,6 +189,7 @@ export default {
           this.percent = value;
           this.downloadInFlight = false;
           this.clearDownloadInFlightTimer();
+          this.retryImageAfterDownload();
         }
       },
       ['msgInfo.local']() {
@@ -204,6 +212,42 @@ export default {
       },
     },
     methods: {
+        bindVideoThumbPropertyUpdate() {
+            if (this.msgInfo?.chatType !== 3) {
+                return;
+            }
+            const { customMsgId, MsgID, mediaSlotIndex } = this.msgInfo || {};
+            const slotKey =
+                mediaSlotIndex !== undefined && mediaSlotIndex !== null && mediaSlotIndex !== ""
+                    ? `thumb_${mediaSlotIndex}`
+                    : "localThumbUrl";
+            this._videoThumbUpdateMonitorKey = `videoThumbUpdate-${customMsgId || MsgID}-${mediaSlotIndex ?? "single"}-${this._uid}`;
+            eventBase.fnCommunicationMonitoring(
+                this._videoThumbUpdateMonitorKey,
+                ["msgListPropertyUpdate"],
+                (data = {}) => {
+                    const packets = Array.isArray(data)
+                        ? data.map((message) => message.data).filter(Boolean)
+                        : [data];
+                    const item = packets
+                        .flatMap((packet) => packet.list || [])
+                        .find((info) => info.customMsgId === customMsgId);
+                    const updated = item?.updated || {};
+                    const updatedThumb = updated[slotKey] || updated.localThumbUrl;
+
+                    if (!updatedThumb) {
+                        return;
+                    }
+
+                    this.loading = false;
+                    this.downloadInFlight = false;
+                    this.clearDownloadInFlightTimer();
+                    this.$nextTick(() => {
+                        setTimeout(() => this.retryImageAfterDownload([updatedThumb]), 0);
+                    });
+                }
+            );
+        },
         /**
          * 初始化进度条监听
          */
@@ -224,6 +268,7 @@ export default {
                     this.loading = false;
                     this.downloadInFlight = false;
                     this.clearDownloadInFlightTimer();
+                    this.retryImageAfterDownload();
                     progress.complete(this.msgInfo);
                 }
             };
@@ -283,6 +328,14 @@ export default {
         },
         getUrl() {
             return this.displayUrl;
+        },
+        retryImageAfterDownload(extraValues = []) {
+            const values = [this.msgInfo?.localThumbUrl, this.msgInfo?.local, ...extraValues].filter(Boolean);
+            if (values.length) {
+                this.failedLocalValues = this.failedLocalValues.filter((value) => !values.includes(value));
+            }
+            // 同一路径重下后 local 字段不会变，强制重挂 img 触发 Chromium 重新读文件。
+            this.imageRenderKey += 1;
         },
         async hasLoadableLocalImage() {
             const urls = this.getLocalCandidates().map((value) => this.getDisplayUrl(value)).filter(Boolean);
@@ -418,7 +471,8 @@ export default {
                 return false;
             }
 
-            if ([1, 9].includes(chatType)) {
+            const isPreviewDownload = [1, 9].includes(chatType);
+            if (isPreviewDownload) {
                 this.initProgressBar();
             }
 
@@ -448,7 +502,7 @@ export default {
                 isOpen: false,
                 timeout: 5000,
                 fileSize: this.msgInfo.size || this.msgInfo.fileSize || 0,
-                taskId: [1, 9].includes(chatType) ? this.taskId : null,
+                taskId: isPreviewDownload ? this.taskId : null,
                 downloadRequestId,
             };
             eventFile.fnMediaDownloadRequestRegister(downloadParams);
