@@ -30,3 +30,5 @@ release
 .npmrc
 output/*
 src/build-time.json
+# 测试用大视频，勿提交（> GitHub 100MB 限制）
+public/media/test.mp4
