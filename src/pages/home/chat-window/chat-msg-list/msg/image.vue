@@ -16,9 +16,9 @@
             <!-- <slot name="timeStatus" v-if="!hasError"></slot> -->
             <Overlay :loading="loading" :duration="msgInfo.duration" :percent="percent" :status="status" :isVideo="msgInfo.chatType === 3" @click="handleOpenFile" />
             <template v-if="msgInfo.local || msgInfo.localThumbUrl">
-                <i v-if="handleErrorTipsGet()">
+                <div class="picture-container" v-if="handleErrorTipsGet()">
                     <!-- {{ handleErrorTipsGet() }} -->
-                </i>
+                </div>
                 <div class="picture-container" v-else>
                     <!-- <img
                         v-if="msgInfo.chatType === 3"
@@ -27,13 +27,12 @@
                         @click="handleOpenFile"
                     /> -->
                     <img
-                        :src="
-                          getUrl()
-                        "
-                        :key="loading"
+                        v-if="displayUrl"
+                        :key="imageRenderKey"
+                        :src="displayUrl"
                         class="picture"
-                        @error="handleFileDownload()"
-                        @load="isSuccess = true"
+                        @error="handleImageError"
+                        @load="handleImageLoad"
                         @click="handleOpenFile"
                     />
                     <!-- <img
@@ -60,12 +59,14 @@ import progress from "@/utils/progress";
 
 // 工具
 import { getFileSuffix, isMac, stripChatContentMetaSuffix } from "@/utils/base";
+import { checkImageLoad, checkLocalFileExists, isErrorLocalValue } from "@/utils/fileTools";
 import { getFileOssUrls, getNewFileDownUrl } from "@/utils/trendsDomain/manageOssDownUpload";
 import { getOssFirstNormalUrl } from "@/utils/trendsDomain/manageOssDownUpload";
 
 // 事件
 import eventFile from "@/event/file";
 import eventCommon from "@/event/common";
+import eventBase from "@/event/base";
 
 export default {
     props: ["msgInfo", "chatContent", "externalPendding"],
@@ -74,7 +75,7 @@ export default {
     },
     computed: {
         containerStyle() {
-            if (this.getUrl()) {
+            if (this.displayUrl) {
                 return {
                     minWidth: 'unset',
                 };
@@ -98,7 +99,13 @@ export default {
          */
         status() {
             const { local, localThumbUrl } = this.msgInfo;
-            return local || localThumbUrl;
+            if (isErrorLocalValue(local) && !this.isUsableLocalValue(localThumbUrl)) {
+                return local;
+            }
+            if (isErrorLocalValue(localThumbUrl) && !this.isUsableLocalValue(local)) {
+                return localThumbUrl;
+            }
+            return null;
         },
         /**
          * 是否有错误状态
@@ -106,7 +113,24 @@ export default {
         hasError() {
             return ['downloadError', 'decryptionError'].includes(this.status);
         },
-
+        localCandidates() {
+            const { local, localThumbUrl, chatType } = this.msgInfo || {};
+            const candidates = [];
+            if (localThumbUrl) {
+                candidates.push(localThumbUrl);
+            }
+            if (local && chatType !== 3) {
+                candidates.push(local);
+            }
+            return [...new Set(candidates)].filter((value) => {
+                return this.isUsableLocalValue(value) && !this.failedLocalValues.includes(value);
+            });
+        },
+        displayUrl() {
+            return this.localCandidates
+                .map((value) => this.getDisplayUrl(value))
+                .find(Boolean) || "";
+        },
     },
     data() {
         const task = progress.getTask(this.msgInfo);
@@ -115,16 +139,21 @@ export default {
             imgSrc: "",
             isSuccess: true,
             localSrc: "",
+            failedLocalValues: [],
             percent: this.msgInfo?.percent ?? task?.percent ?? 0,
             loading: (this.msgInfo?.percent ?? 0) >= 100 ? false : task?.loading ?? false,
+            downloadInFlight: false,
+            imageRenderKey: 0,
+            _progressTaskId: task?.taskId || null,
+            downloadInFlightTimer: null,
         };
     },
     async created() {
-        const { local, localThumbUrl } = this.msgInfo;
-        const hadLocal = !!(local || localThumbUrl);
+        this.bindVideoThumbPropertyUpdate();
         if (this.externalPendding) {
             await this.externalPendding;
         }
+        const hadLocal = this.hasLocalValue();
         let started = false;
         if (!hadLocal) {
             // 无 local 时视频仍有 isVideo 遮罩；图/动图需显式 loading，否则网格里空白
@@ -145,8 +174,12 @@ export default {
     },
     beforeDestroy() {
         // 移除监听，避免内存泄漏
-        if (this._onProgress) {
-            progress.unsubscribe(this.taskId, this._onProgress);
+        if (this._onProgress && this._progressTaskId) {
+            progress.unsubscribe(this._progressTaskId, this._onProgress);
+        }
+        this.clearDownloadInFlightTimer();
+        if (this._videoThumbUpdateMonitorKey) {
+            eventBase.fnCommunicationMonitoring(this._videoThumbUpdateMonitorKey, null);
         }
     },
     watch: {
@@ -154,24 +187,108 @@ export default {
         if (value >= 100) {
           this.loading = false;
           this.percent = value;
+          this.downloadInFlight = false;
+          this.clearDownloadInFlightTimer();
+          this.retryImageAfterDownload();
         }
-      }
+      },
+      ['msgInfo.local']() {
+        if (this.hasLocalValue()) {
+            this.downloadInFlight = false;
+            this.clearDownloadInFlightTimer();
+        }
+      },
+      ['msgInfo.localThumbUrl']() {
+        if (this.hasLocalValue()) {
+            this.downloadInFlight = false;
+            this.clearDownloadInFlightTimer();
+        }
+      },
+      status(value) {
+        if (value) {
+            this.downloadInFlight = false;
+            this.clearDownloadInFlightTimer();
+        }
+      },
     },
     methods: {
+        bindVideoThumbPropertyUpdate() {
+            if (this.msgInfo?.chatType !== 3) {
+                return;
+            }
+            const { customMsgId, MsgID, mediaSlotIndex } = this.msgInfo || {};
+            const slotKey =
+                mediaSlotIndex !== undefined && mediaSlotIndex !== null && mediaSlotIndex !== ""
+                    ? `thumb_${mediaSlotIndex}`
+                    : "localThumbUrl";
+            this._videoThumbUpdateMonitorKey = `videoThumbUpdate-${customMsgId || MsgID}-${mediaSlotIndex ?? "single"}-${this._uid}`;
+            eventBase.fnCommunicationMonitoring(
+                this._videoThumbUpdateMonitorKey,
+                ["msgListPropertyUpdate"],
+                (data = {}) => {
+                    const packets = Array.isArray(data)
+                        ? data.map((message) => message.data).filter(Boolean)
+                        : [data];
+                    const matchedUpdates = packets
+                        .flatMap((packet) => packet.list || [])
+                        .filter((info) => info.customMsgId === customMsgId)
+                        .map((info) => info.updated || {});
+                    const updated = matchedUpdates.find((value) => value[slotKey] || value.localThumbUrl) || {};
+                    const updatedThumb = updated[slotKey] || updated.localThumbUrl;
+
+                    if (!updatedThumb) {
+                        return;
+                    }
+
+                    this.loading = false;
+                    this.downloadInFlight = false;
+                    this.clearDownloadInFlightTimer();
+                    this.$nextTick(() => {
+                        setTimeout(() => {
+                            this.retryImageAfterDownload([updatedThumb]);
+                        }, 0);
+                    });
+                }
+            );
+        },
         /**
          * 初始化进度条监听
          */
         initProgressBar() {
             progress.init(this.msgInfo);
+            const nextTaskId = progress.getTask(this.msgInfo)?.taskId;
+            if (!nextTaskId) {
+                return;
+            }
+            if (this._onProgress && this._progressTaskId) {
+                progress.unsubscribe(this._progressTaskId, this._onProgress);
+            }
+            this._progressTaskId = nextTaskId;
             this._onProgress = (percent) => {
                 this.loading = true;
                 this.percent = percent;
                 if (this.percent >= 100) {
                     this.loading = false;
+                    this.downloadInFlight = false;
+                    this.clearDownloadInFlightTimer();
+                    this.retryImageAfterDownload();
                     progress.complete(this.msgInfo);
                 }
             };
-            progress.subscribe(this.taskId, this._onProgress);
+            progress.subscribe(nextTaskId, this._onProgress);
+        },
+        clearDownloadInFlightTimer() {
+            if (this.downloadInFlightTimer) {
+                clearTimeout(this.downloadInFlightTimer);
+                this.downloadInFlightTimer = null;
+            }
+        },
+        startDownloadInFlightTimer() {
+            this.clearDownloadInFlightTimer();
+            this.downloadInFlightTimer = setTimeout(() => {
+                this.downloadInFlight = false;
+                this.downloadInFlightTimer = null;
+            }, 50000);
         },
         macFixImagePath(url) {
             url = url || '';
@@ -190,14 +307,74 @@ export default {
             }
             return url;
         },
-        getUrl() {
-            let url = this.msgInfo.localThumbUrl  || this.msgInfo.local
-            if(isMac) {
-              url = this.macFixImagePath(url)
-            } else {
-              url = toLocalResourceUrl(url)
+        hasLocalValue() {
+            const { local, localThumbUrl } = this.msgInfo || {};
+            return !!(this.isUsableLocalValue(local) || this.isUsableLocalValue(localThumbUrl));
+        },
+        isUsableLocalValue(value) {
+            return !!value && !isErrorLocalValue(value);
+        },
+        getDisplayUrl(value) {
+            if (!this.isUsableLocalValue(value)) {
+                return "";
             }
-            return url
+            if(isMac) {
+              return this.macFixImagePath(value)
+            }
+            return toLocalResourceUrl(value)
+        },
+        getLocalCandidates() {
+            return this.localCandidates;
+        },
+        getCurrentLocalValue() {
+            return this.getLocalCandidates()[0] || "";
+        },
+        getUrl() {
+            return this.displayUrl;
+        },
+        retryImageAfterDownload(extraValues = []) {
+            const values = [this.msgInfo?.localThumbUrl, this.msgInfo?.local, ...extraValues].filter(Boolean);
+            if (values.length) {
+                this.failedLocalValues = this.failedLocalValues.filter((value) => !values.includes(value));
+            }
+            // 同一路径重下后 local 字段不会变，强制重挂 img 触发 Chromium 重新读文件。
+            this.imageRenderKey += 1;
+        },
+        async hasLoadableLocalImage() {
+            const urls = this.getLocalCandidates().map((value) => this.getDisplayUrl(value)).filter(Boolean);
+            for (const url of urls) {
+                if (!(await checkLocalFileExists(url))) {
+                    continue;
+                }
+                if (await checkImageLoad(url)) {
+                    return true;
+                }
+            }
+            return false;
+        },
+        handleImageLoad() {
+            this.isSuccess = true;
+            this.loading = false;
+            this.downloadInFlight = false;
+            this.clearDownloadInFlightTimer();
+        },
+        async handleImageError() {
+            this.isSuccess = false;
+            if (this.hasError || this.loading) {
+                return false;
+            }
+            const failedValue = this.getCurrentLocalValue();
+            if (failedValue && !this.failedLocalValues.includes(failedValue)) {
+                this.failedLocalValues = [...this.failedLocalValues, failedValue];
+            }
+            if (await this.hasLoadableLocalImage()) {
+                this.loading = false;
+                return false;
+            }
+            if (this.hasError || this.loading) {
+                return false;
+            }
+            return this.handleFileDownload("image-error");
         },
         // 本地文件不存在了，重新触发下载
         retriggerDownloadWhenFailed() {
@@ -231,6 +408,11 @@ export default {
                 this.imgSrc = require("@/assets/images/file/icon_fail_picture_big.png");
                 return false;
             }
+            if (this.downloadInFlight) {
+                return false;
+            }
+            this.downloadInFlight = true;
+            this.startDownloadInFlightTimer();
             const loginId = eventCommon.fnCommonInfoRU({
                 getId: "loginId",
             });
@@ -248,6 +430,11 @@ export default {
             }
             if (!fileUrl && this.msgInfo.thumbUrl) {
                 fileUrl = stripChatContentMetaSuffix(this.msgInfo.thumbUrl);
+            }
+            if (!fileUrl) {
+                this.downloadInFlight = false;
+                this.clearDownloadInFlightTimer();
+                return false;
             }
 
             // 如果是不需要解密的图片，直接用网图
@@ -278,13 +465,22 @@ export default {
             const fileName = fileUrl.slice(fileUrl.lastIndexOf("/") + 1) + suffix;
 
             // 优先使用动态域名
-            const trendsFileUrl = await getOssFirstNormalUrl(fileUrl)
+            let trendsFileUrl = "";
+            try {
+                trendsFileUrl = await getOssFirstNormalUrl(fileUrl);
+            } catch (e) {
+                this.downloadInFlight = false;
+                this.clearDownloadInFlightTimer();
+                return false;
+            }
 
-            if ([1, 9].includes(chatType)) {
+            const isPreviewDownload = [1, 9].includes(chatType);
+            if (isPreviewDownload) {
                 this.initProgressBar();
             }
 
-            ipcRenderer.send("fileDownload", {
+            const downloadRequestId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+            const downloadParams = {
                 fileUrl,
                 trendsFileUrl,
                 fileName,
@@ -309,16 +505,19 @@ export default {
                 isOpen: false,
                 timeout: 5000,
                 fileSize: this.msgInfo.size || this.msgInfo.fileSize || 0,
-                taskId: [1, 9].includes(chatType) ? this.taskId : null,
-            });
+                taskId: isPreviewDownload ? this.taskId : null,
+                downloadRequestId,
+            };
+            eventFile.fnMediaDownloadRequestRegister(downloadParams);
+            ipcRenderer.send("fileDownload", downloadParams);
             return true;
         },
         /**
          * 错误提示获取
          */
         handleErrorTipsGet() {
-            const { local, localThumbUrl, chatType } = this.msgInfo;
-            const fileUrl = local || localThumbUrl;
+            const { chatType } = this.msgInfo;
+            const fileUrl = this.status;
 
             // 错误类型也是记录在地址上
             switch (fileUrl) {

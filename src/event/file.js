@@ -2,7 +2,7 @@ import { remote, ipcRenderer, fs, toLocalResourceUrl, toFsPathFromDisplayUrl } f
 
 // 工具
 import { createHash, getFileSuffix, enumMsgType } from "@/utils/base";
-import { getImageDimensions, saveFileToDirectory } from "@/utils/fileTools";
+import { checkLocalFileExists, getImageDimensions, saveFileToDirectory } from "@/utils/fileTools";
 import { getUserDataDirectory } from "@/utils/tools";
 import {
     checkFileSize,
@@ -21,6 +21,104 @@ import eventCommon from "./common";
 import progress from "@/utils/progress";
 
 //////////////////  下载解密
+
+const FILE_ERROR_TYPES = ["downloadError", "decryptionError"];
+const latestMediaDownloadRequests = new Map();
+
+const isFileErrorValue = (value) => FILE_ERROR_TYPES.includes(value);
+
+const isImageLocalKey = (key, chatType) => {
+    return key === "localThumbUrl" ||
+        key.startsWith("thumb_") ||
+        [1, 9].includes(chatType);
+};
+
+const isSuccessfulLocalValue = async (value, { shouldDecodeImage = false } = {}) => {
+    if (!value || typeof value !== "string" || isFileErrorValue(value) || /^https?:\/\//i.test(value)) {
+        return false;
+    }
+    try {
+        const exists = await checkLocalFileExists(value);
+        if (!exists) {
+            return false;
+        }
+        return shouldDecodeImage ? checkFileCorrect(value) : true;
+    } catch (e) {
+        return false;
+    }
+};
+
+const getCounterpartLocalKey = (key) => {
+    if (key === "local") return "localThumbUrl";
+    if (key === "localThumbUrl") return "local";
+    if (key.startsWith("local_")) return key.replace("local_", "thumb_");
+    if (key.startsWith("thumb_")) return key.replace("thumb_", "local_");
+    return null;
+};
+
+const getMediaDownloadRequestKey = (data = {}) => {
+    const id = data.groupId || data.channelId || data.userId || "";
+    const type = data.groupId ? "group" : data.channelId ? "channel" : "friend";
+    const slot = data.mediaSlotIndex !== undefined && data.mediaSlotIndex !== null
+        ? data.mediaSlotIndex
+        : "single";
+    return `${type}:${id}:${data.customMsgId || data.msgId || ""}:${slot}`;
+};
+
+const fnMediaDownloadRequestRegister = (data = {}) => {
+    if (!data.downloadRequestId) {
+        return;
+    }
+    latestMediaDownloadRequests.set(getMediaDownloadRequestKey(data), data.downloadRequestId);
+};
+
+const isLatestMediaDownloadRequest = (data = {}) => {
+    if (!data.downloadRequestId) {
+        return true;
+    }
+    const latest = latestMediaDownloadRequests.get(getMediaDownloadRequestKey(data));
+    return !latest || latest === data.downloadRequestId;
+};
+
+const shouldSkipStaleErrorUpdate = async ({ id, type, data, updated, errorType }) => {
+    if (!isFileErrorValue(errorType) || !data?.msgId || !window.$db?.getMsgInfoForMsgId) {
+        return false;
+    }
+
+    let current = null;
+    try {
+        current = await window.$db.getMsgInfoForMsgId({
+            id,
+            type,
+            msgId: data.msgId,
+        });
+    } catch (e) {
+        current = null;
+    }
+
+    if (!current) {
+        return false;
+    }
+
+    for (const key of Object.keys(updated)) {
+        if (!isFileErrorValue(updated[key])) {
+            continue;
+        }
+        const counterpartKey = getCounterpartLocalKey(key);
+        if (await isSuccessfulLocalValue(current[key], { shouldDecodeImage: isImageLocalKey(key, data.chatType) })) {
+            return true;
+        }
+        if (
+            counterpartKey &&
+            await isSuccessfulLocalValue(current[counterpartKey], {
+                shouldDecodeImage: isImageLocalKey(counterpartKey, data.chatType),
+            })
+        ) {
+            return true;
+        }
+    }
+    return false;
+};
 
 /**
  * 下载成功
@@ -105,7 +203,7 @@ const handleDownloadFileFailed = (_$, data) => {
             ipcRenderer.send("fileDownload", data)
         }else {
             // console.error('下载文件失败-结束-', url)
-            fnDownloadFileInfoUpdate(data, "downloadError");
+            await fnDownloadFileInfoUpdate(data, "downloadError");
         }
     }, 100);
 };
@@ -113,11 +211,49 @@ const handleDownloadFileFailed = (_$, data) => {
 /**
  * 下载文件信息更新
  */
-const fnDownloadFileInfoUpdate = (data, errorType) => {
+/** 下载落盘路径是否像视频文件（用于 chatType 3 写 local 还是 thumb） */
+const VIDEO_FILE_EXTS = [
+    ".mp4",
+    ".webm",
+    ".ogg",
+    ".ogv",
+    ".mov",
+    ".m4v",
+    ".mkv",
+    ".avi",
+    ".wmv",
+    ".flv",
+    ".mpeg",
+    ".mpg",
+    ".3gp",
+    ".ts",
+    ".m2ts",
+    ".f4v",
+];
+const isVideoFileLocalPath = (fileLocalPath) => {
+    if (!fileLocalPath || typeof fileLocalPath !== "string") {
+        return false;
+    }
+    const base = fileLocalPath.split(/[?#]/)[0].toLowerCase();
+    return VIDEO_FILE_EXTS.some((ext) => base.endsWith(ext));
+};
+
+const fnDownloadFileInfoUpdate = async (data, errorType) => {
     const id = data.groupId || data.channelId || data.userId;
     const type = data.groupId ? "group"
                               : data.channelId ? "channel" : "friend";
     const { customMsgId, fileLocalPath, isOpen, isDir, chatType, local, localThumbUrl, taskId, mediaSlotIndex } = data;
+    if (data.skipMsgUpdate) {
+        progress.complete(data);
+        if (data.downloadRequestId) {
+            latestMediaDownloadRequests.delete(getMediaDownloadRequestKey(data));
+        }
+        return false;
+    }
+    if (!isLatestMediaDownloadRequest(data)) {
+        progress.complete(data);
+        return false;
+    }
     /** 入库展示路径：成功为 local-resource URL；解密/下载失败为错误标识（勿写磁盘路径，否则 UI 当图片地址） */
     const pathForStore =
         errorType === "decryptionError" || errorType === "downloadError"
@@ -142,7 +278,7 @@ const fnDownloadFileInfoUpdate = (data, errorType) => {
     let updated;
     if (useSlot) {
         if (chatType === 3) {
-            if ([".mp4", "webm", ".ogg"].includes((fileLocalPath || "").slice(-4).toLowerCase())) {
+            if (isVideoFileLocalPath(fileLocalPath)) {
                 updated = { [`local_${slotIdx}`]: pathForStore, ...slotPercent };
             } else {
                 updated = {
@@ -156,12 +292,32 @@ const fnDownloadFileInfoUpdate = (data, errorType) => {
     } else {
         updated = { local: pathForStore, ...percent };
         if (chatType === 3) {
-            if ([".mp4", "webm", ".ogg"].includes((fileLocalPath || '').slice(-4).toLowerCase())) {
+            if (isVideoFileLocalPath(fileLocalPath)) {
                 updated = { local: pathForStore, ...percent };
             } else {
                 updated = { localThumbUrl: thumbPathForStore, ...percent };
             }
         }
+    }
+
+    if (errorType === "downloadError") {
+        const meta = {
+            customMsgId,
+            mediaSlotIndex,
+            slotIdx,
+            msgId: data.msgId,
+            url: String(data.trendsFileUrl || data.fileUrl || "").slice(0, 120),
+        };
+        console.log("download error", meta);
+        console.$collect && console.$collect("download error", meta);
+    }
+
+    if (await shouldSkipStaleErrorUpdate({ id, type, data, updated, errorType })) {
+        progress.complete(data);
+        if (data.downloadRequestId) {
+            latestMediaDownloadRequests.delete(getMediaDownloadRequestKey(data));
+        }
+        return false;
     }
 
     const params = {
@@ -176,9 +332,12 @@ const fnDownloadFileInfoUpdate = (data, errorType) => {
     };
 
     // 修改消息属性
-    window.$db.updateMsgProperty(params);
+    await window.$db.updateMsgProperty(params);
 
     progress.complete(data);
+    if (data.downloadRequestId) {
+        latestMediaDownloadRequests.delete(getMediaDownloadRequestKey(data));
+    }
 
     // 通讯
     eventBase.fnCommunicationSendMsg({
@@ -204,6 +363,7 @@ const fnDownloadFileInfoUpdate = (data, errorType) => {
             openFile(fileLocalPath, isDir);
         }
     }
+    return true;
 };
 
 /**
@@ -541,7 +701,6 @@ const fnOperatorFile = async ({ id, type, info, openDialog, isDir, taskId }, kee
 
     if(!info.local) {
         // 优先使用动态域名
-        // 优先使用动态域名
         params.trendsFileUrl = await getOssFirstNormalUrl(fileUrl, 0, 0);
     }
 
@@ -571,5 +730,6 @@ export default {
     fnFileUploadInfoGet,
     fnFileInfosGet,
     fnOperatorFile,
-    fnDownloadFileInfoUpdate
+    fnDownloadFileInfoUpdate,
+    fnMediaDownloadRequestRegister
 };

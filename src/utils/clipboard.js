@@ -40,7 +40,7 @@ export const copyImg = async (src) => {
     const imgBlob = await img.blob();
     const extension = src.split(".").pop();
     const supportedToBeConverted = ["jpeg", "jpg", "gif"];
-    if (supportedToBeConverted.indexOf(extension.toLowerCase())) {
+    if (supportedToBeConverted.includes(extension.toLowerCase())) {
         return convertToPng(imgBlob);
     } else if (extension.toLowerCase() === "png") {
         return copyToClipboard(imgBlob);

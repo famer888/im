@@ -1,5 +1,6 @@
 import {
     pollingUpdateDomainPool,
+    updatePreloadedDomainList,
     updateTrendsDomain,
 } from "./manageDomainUpdate";
 import { getFirstNormalDomain } from "./manageDomain";
@@ -29,6 +30,7 @@ export const initDomain = async () => {
     pollingUpdateDomainPool();
     pollingCheckErrorDomain();
     pollingBatchReport();
+    await updatePreloadedDomainList();
     await updateToken();
     await updateTrendsDomain();
     await getOssDomain()
