@@ -62,21 +62,30 @@ function getBufferLength(list) {
 }
 
 self.addEventListener("message", (e) => {
-  let { fileData, fileKey } = e.data;
-  let arrayBuffer = new Uint8Array(fileData);
-  let arrbuf = [];
-  for (
-    let i = 0, len = Math.floor(arrayBuffer.length / 102416) + 1;
-    i < len;
-    i++
-  ) {
-    let newBuffer = _decrypt(
-      arrayBuffer.slice(i * 102416, (i + 1) * 102416),
-      fileKey
-    );
-    arrbuf = ConcatInt8([arrbuf, newBuffer]);
-  }
+  try {
+    let { fileData, fileKey } = e.data;
+    let arrayBuffer = new Uint8Array(fileData);
+    let arrbuf = [];
+    for (
+      let i = 0, len = Math.floor(arrayBuffer.length / 102416) + 1;
+      i < len;
+      i++
+    ) {
+      let newBuffer = _decrypt(
+        arrayBuffer.slice(i * 102416, (i + 1) * 102416),
+        fileKey
+      );
+      arrbuf = ConcatInt8([arrbuf, newBuffer]);
+    }
 
-  self.postMessage({ decrypted: arrbuf.buffer }, [arrbuf.buffer]);
+    self.postMessage({ decrypted: arrbuf.buffer }, [arrbuf.buffer]);
+  } catch (error) {
+    self.postMessage({
+      error: {
+        message: error && error.message ? error.message : String(error),
+        name: error && error.name,
+      },
+    });
+  }
   self.close();
 });

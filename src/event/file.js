@@ -80,6 +80,18 @@ const isLatestMediaDownloadRequest = (data = {}) => {
     return !latest || latest === data.downloadRequestId;
 };
 
+const getErrorMessage = (error) => {
+    if (!error) return "";
+    if (typeof error === "string") return error;
+    return error.message || error.reason || String(error);
+};
+
+const markDecryptionFailed = (data, reason, detail = {}) => {
+    data.decryptionErrorReason = reason;
+    data.decryptionErrorDetail = detail;
+    return fnDownloadFileInfoUpdate(data, "decryptionError");
+};
+
 const shouldSkipStaleErrorUpdate = async ({ id, type, data, updated, errorType }) => {
     if (!isFileErrorValue(errorType) || !data?.msgId || !window.$db?.getMsgInfoForMsgId) {
         return false;
@@ -127,12 +139,59 @@ const handleDownloadFileDone = (_$, data) => {
     const { fileLocalPath, fileKey, chatType } = data;
     // console.log('下载成功 ----------》 26', data)
     if (fileKey) {
-        const fileData = fs.readFileSync(fileLocalPath);
+        let fileData;
+        try {
+            fileData = fs.readFileSync(fileLocalPath);
+        } catch (error) {
+            markDecryptionFailed(data, "readFileFailed", {
+                error: getErrorMessage(error),
+                fileLocalPath,
+            });
+            return;
+        }
+
         const myWorker = new Worker("/worker.js");
-        myWorker.postMessage({ fileData, fileKey });
+        let settled = false;
+        const finishWorker = () => {
+            try {
+                myWorker.terminate();
+            } catch (e) {
+                // ignore terminate errors
+            }
+        };
+        const fail = (reason, detail = {}) => {
+            if (settled) return;
+            settled = true;
+            finishWorker();
+            markDecryptionFailed(data, reason, detail);
+        };
+
         myWorker.onmessage = (e) => {
-            const decrypted = new Uint8Array(e.data.decrypted);
-            fs.writeFileSync(fileLocalPath, decrypted);
+            if (settled) return;
+            const workerError = e.data && e.data.error;
+            if (workerError) {
+                fail("workerDecryptFailed", workerError);
+                return;
+            }
+
+            let decrypted;
+            try {
+                if (!e.data || !e.data.decrypted || e.data.decrypted.byteLength === 0) {
+                    fail("decryptResultEmpty", {
+                        fileLocalPath,
+                        fileSize: fileData.length,
+                    });
+                    return;
+                }
+                decrypted = new Uint8Array(e.data.decrypted);
+                fs.writeFileSync(fileLocalPath, decrypted);
+            } catch (error) {
+                fail("writeDecryptedFileFailed", {
+                    error: getErrorMessage(error),
+                    fileLocalPath,
+                });
+                return;
+            }
 
             let checkFileType = "";
             if ([1, 9].includes(chatType)) {
@@ -141,17 +200,41 @@ const handleDownloadFileDone = (_$, data) => {
 
             if (checkFileType !== "") {
                 checkFileCorrect(toLocalResourceUrl(fileLocalPath)).then((exists) => {
-                    fnDownloadFileInfoUpdate(
-                        data,
-                        exists ? null : "decryptionError"
-                    );
+                    if (settled) return;
+                    settled = true;
+                    if (exists) {
+                        fnDownloadFileInfoUpdate(data);
+                    } else {
+                        markDecryptionFailed(data, "imageDecodeFailed", {
+                            fileLocalPath,
+                            decryptedSize: decrypted.length,
+                        });
+                    }
                 });
             } else {
+                settled = true;
                 fnDownloadFileInfoUpdate(data);
             }
 
-            myWorker.terminate();
+            finishWorker();
         };
+        myWorker.onerror = (error) => {
+            error.preventDefault && error.preventDefault();
+            fail("workerRuntimeError", {
+                error: getErrorMessage(error),
+                filename: error.filename,
+                lineno: error.lineno,
+                colno: error.colno,
+            });
+        };
+        try {
+            myWorker.postMessage({ fileData, fileKey });
+        } catch (error) {
+            fail("postWorkerMessageFailed", {
+                error: getErrorMessage(error),
+                fileLocalPath,
+            });
+        }
     } else {
         setTimeout(() => {
             // 更新文件信息
@@ -306,10 +389,23 @@ const fnDownloadFileInfoUpdate = async (data, errorType) => {
             mediaSlotIndex,
             slotIdx,
             msgId: data.msgId,
-            url: String(data.trendsFileUrl || data.fileUrl || "").slice(0, 120),
+            url: String(data.actualDownloadUrl || data.trendsFileUrl || data.fileUrl || "").slice(0, 120),
         };
         console.log("download error", meta);
         console.$collect && console.$collect("download error", meta);
+    }
+
+    if (errorType === "decryptionError") {
+        const meta = {
+            customMsgId,
+            mediaSlotIndex,
+            slotIdx,
+            msgId: data.msgId,
+            reason: data.decryptionErrorReason || "unknown",
+            detail: data.decryptionErrorDetail,
+        };
+        console.log("decryption error", meta);
+        console.$collectError && console.$collectError("decryption error", meta);
     }
 
     if (await shouldSkipStaleErrorUpdate({ id, type, data, updated, errorType })) {

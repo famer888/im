@@ -730,6 +730,16 @@ const downloadHandler = (event, item, webContents) => {
 
         item.once("done", (event, state) => {
            clearDownTimer(timerName)
+            if (state !== "completed") {
+                writeLog("app", "error", "[download error]", {
+                    url: data.actualDownloadUrl || data.trendsFileUrl || data.fileUrl || item.getURL(),
+                    fileUrl: data.fileUrl,
+                    trendsFileUrl: data.trendsFileUrl,
+                    msgId: data.msgId,
+                    downloadRequestId: data.downloadRequestId,
+                    state,
+                });
+            }
             sendMain(
                 state === "completed"
                     ? "downloadFileDone"
@@ -1020,6 +1030,7 @@ const handleFileDownload = (args) => {
     const requestArgs = {
         ...args,
         downloadRequestId,
+        actualDownloadUrl: url,
     };
 
 
