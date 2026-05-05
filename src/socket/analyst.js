@@ -2,6 +2,7 @@ import Vue from "vue";
 import i18n from "@/assets/lang/i18n";
 import { benchmark } from "@/debuggers";
 import { getPublicCacheSync } from "@/utils/publicCache";
+import { ipcRenderer } from "@/platform";
 
 /**
  * Analyst：数据层 + UI（render 挂载，无 .vue 文件）
@@ -24,10 +25,11 @@ import { getPublicCacheSync } from "@/utils/publicCache";
 
 /** WSS 短时探测最多条数（isLogin·预埋 + 域名池 webSession + 最近尝试，顺序去重后截断） */
 const WS_PROBE_MAX_URLS = 20;
+const NETWORK_SUMMARY_MAX_LINES = 30;
 
 // 所有选择器挂在根节点 id 下，避免污染全局样式（一行压缩）
 const ANALYST_STYLE_ONE_LINE =
-    "#js-analyst-ui-root{display:inline-flex;align-items:center;flex-shrink:0}#js-analyst-ui-root.analyst-root--portal{display:block;position:fixed;left:0;top:0;width:0;height:0;overflow:visible;z-index:10049;margin:0;padding:0;border:0}#js-analyst-ui-root .analyst-trigger{border:0;background:transparent;font-size:12px;padding:0 8px;cursor:pointer;color:#666;line-height:32px;white-space:nowrap}#js-analyst-ui-root .analyst-trigger:hover{text-decoration:underline;color:#333}#js-analyst-ui-root .analyst-mask{position:fixed;inset:0;z-index:10050;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center}#js-analyst-ui-root .analyst-panel{position:relative;width:min(420px,92vw);max-height:min(72vh,560px);overflow:hidden;display:flex;flex-direction:column;border-radius:8px;background:#1e1e1e;color:#d0d0d0;box-shadow:0 8px 32px rgba(0,0,0,.55)}#js-analyst-ui-root .analyst-head{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.08)}#js-analyst-ui-root .analyst-title{font-size:14px;font-weight:600}#js-analyst-ui-root .analyst-close{border:0;background:transparent;font-size:22px;line-height:1;cursor:pointer;color:inherit;opacity:.7;padding:0 4px}#js-analyst-ui-root .analyst-close:hover{opacity:1}#js-analyst-ui-root .analyst-body{padding:10px 14px 14px;overflow-y:auto;flex:1;min-height:0}#js-analyst-ui-root .analyst-body.analyst-body--with-copy{padding-bottom:52px}#js-analyst-ui-root .analyst-loading{font-size:12px;margin:0 0 10px;display:flex;align-items:center;gap:8px;opacity:.85}#js-analyst-ui-root .spin{width:12px;height:12px;border:2px solid rgba(255,255,255,.2);border-top-color:#ccc;border-radius:50%;animation:js-analyst-spin .7s linear infinite}@keyframes js-analyst-spin{to{transform:rotate(360deg)}}#js-analyst-ui-root .analyst-list{list-style:none;margin:0;padding:0}#js-analyst-ui-root .analyst-item{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06)}#js-analyst-ui-root .analyst-item:last-child{border-bottom:none}#js-analyst-ui-root .analyst-icon{flex-shrink:0;width:18px;text-align:center;font-size:13px;line-height:1.4}#js-analyst-ui-root .analyst-icon.ok{color:#5cdb7a}#js-analyst-ui-root .analyst-icon.fail{color:#ff6b6b}#js-analyst-ui-root .analyst-icon.pending{color:#888}#js-analyst-ui-root .analyst-row-title{font-size:13px;font-weight:500;color:#fff}#js-analyst-ui-root .analyst-sub{margin:4px 0 0;padding:0 0 0 12px;list-style:disc;font-size:11px;line-height:1.45;color:#9a9a9a}#js-analyst-ui-root .analyst-copy-fab{position:absolute;right:12px;bottom:12px;z-index:2;padding:8px 14px;font-size:12px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:#2d2d2d;color:#e8e8e8;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.45);white-space:nowrap}#js-analyst-ui-root .analyst-copy-fab:hover{background:#383838;border-color:rgba(255,255,255,.22)}#js-analyst-ui-root .analyst-copy-fab:active{transform:translateY(1px)}";
+    "#js-analyst-ui-root{display:inline-flex;align-items:center;flex-shrink:0}#js-analyst-ui-root.analyst-root--portal{display:block;position:fixed;left:0;top:0;width:0;height:0;overflow:visible;z-index:10049;margin:0;padding:0;border:0}#js-analyst-ui-root .analyst-trigger{border:0;background:transparent;font-size:12px;padding:0 8px;cursor:pointer;color:#666;line-height:32px;white-space:nowrap}#js-analyst-ui-root .analyst-trigger:hover{text-decoration:underline;color:#333}#js-analyst-ui-root .analyst-mask{position:fixed;inset:0;z-index:10050;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center}#js-analyst-ui-root .analyst-panel{position:relative;width:min(420px,92vw);max-height:min(72vh,560px);overflow:hidden;display:flex;flex-direction:column;border-radius:8px;background:#1e1e1e;color:#d0d0d0;box-shadow:0 8px 32px rgba(0,0,0,.55)}#js-analyst-ui-root .analyst-head{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.08)}#js-analyst-ui-root .analyst-title{font-size:14px;font-weight:600}#js-analyst-ui-root .analyst-close{border:0;background:transparent;font-size:22px;line-height:1;cursor:pointer;color:inherit;opacity:.7;padding:0 4px}#js-analyst-ui-root .analyst-close:hover{opacity:1}#js-analyst-ui-root .analyst-body{padding:10px 14px 14px;overflow-y:auto;flex:1;min-height:0}#js-analyst-ui-root .analyst-body.analyst-body--with-copy{padding-bottom:52px}#js-analyst-ui-root .analyst-body.analyst-body--with-actions{padding-bottom:62px}#js-analyst-ui-root .analyst-loading{font-size:12px;margin:0 0 10px;display:flex;align-items:center;gap:8px;opacity:.85}#js-analyst-ui-root .spin{width:12px;height:12px;border:2px solid rgba(255,255,255,.2);border-top-color:#ccc;border-radius:50%;animation:js-analyst-spin .7s linear infinite}@keyframes js-analyst-spin{to{transform:rotate(360deg)}}#js-analyst-ui-root .analyst-list{list-style:none;margin:0;padding:0}#js-analyst-ui-root .analyst-item{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06)}#js-analyst-ui-root .analyst-item:last-child{border-bottom:none}#js-analyst-ui-root .analyst-icon{flex-shrink:0;width:18px;text-align:center;font-size:13px;line-height:1.4}#js-analyst-ui-root .analyst-icon.ok{color:#5cdb7a}#js-analyst-ui-root .analyst-icon.fail{color:#ff6b6b}#js-analyst-ui-root .analyst-icon.pending{color:#888}#js-analyst-ui-root .analyst-row-title{font-size:13px;font-weight:500;color:#fff}#js-analyst-ui-root .analyst-sub{margin:4px 0 0;padding:0 0 0 12px;list-style:disc;font-size:11px;line-height:1.45;color:#9a9a9a}#js-analyst-ui-root .analyst-copy-fab{position:absolute;right:12px;bottom:12px;z-index:2;padding:8px 14px;font-size:12px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:#2d2d2d;color:#e8e8e8;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.45);white-space:nowrap}#js-analyst-ui-root .analyst-copy-fab:hover{background:#383838;border-color:rgba(255,255,255,.22)}#js-analyst-ui-root .analyst-copy-fab:active{transform:translateY(1px)}#js-analyst-ui-root .analyst-actions-fab{position:absolute;right:12px;bottom:12px;left:12px;z-index:2;display:flex;justify-content:flex-end;gap:8px;pointer-events:none}#js-analyst-ui-root .analyst-action-btn{pointer-events:auto;padding:8px 10px;font-size:12px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:#2d2d2d;color:#e8e8e8;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.45);white-space:nowrap}#js-analyst-ui-root .analyst-action-btn:hover{background:#383838;border-color:rgba(255,255,255,.22)}#js-analyst-ui-root .analyst-action-btn:disabled{cursor:not-allowed;opacity:.55}#js-analyst-ui-root .analyst-action-btn.danger{border-color:rgba(255,107,107,.35);color:#ffb0b0}";
 
 let _styleInjected = false;
 
@@ -113,10 +115,10 @@ class Analyst {
         reconnectSourceHits: { login: 0, domainPool: 0, fallback: 0, session: 0 },
         /** isLogin 成功时下发的 urls.session（早于首页 setWsUrl / websocketCreate） */
         isLoginSessionLast: /** @type {null | { time: number, sessionUrl: string }} */ (null),
-        lastClose: /** @type {null | { time: number, code?: number, reason: string, wasClean?: boolean }} */ (
+        lastClose: /** @type {null | { time: number, code?: number, reason: string, wasClean?: boolean, url?: string, readyState?: number, attempt?: number, aliveDuration?: number, unexpected?: boolean, netDetail?: string[], netDetailAt?: number, netDetailLoading?: boolean }} */ (
             null
         ),
-        lastError: /** @type {null | { time: number }} */ (null),
+        lastError: /** @type {null | { time: number, url?: string, readyState?: number, attempt?: number, aliveDuration?: number }} */ (null),
         /** ④ api/v4/listDomain 最近一次打点 */
         listDomainLast: /** @type {null | { time: number, success: boolean, source: string, message: string, total: null | number, webSessionCount: null | number }} */ (
             null
@@ -132,6 +134,13 @@ class Analyst {
         wsProbeLast: /** @type {null | { time: number, results: { url: string, ok: boolean, reason: string }[] }} */ (null),
         /** ⑦ 外网探测 */
         healthCheckLast: /** @type {null | { time: number, lines: string[] }} */ (null),
+        networkLogHistory: [],
+        runtimeNetLog: /** @type {null | { start?: unknown, stop?: unknown }} */ (null),
+        networkSnapshotStart: /** @type {null | unknown} */ (null),
+        networkSnapshotEnd: /** @type {null | unknown} */ (null),
+        networkSnapshotDiff: [],
+        recoveringNetwork: false,
+        recoveryLastResult: /** @type {null | { time: number, result: unknown }} */ (null),
         diagnostics: [],
         runningDiagnostics: false,
     };
@@ -161,6 +170,8 @@ class Analyst {
                     panelOpen: false,
                     diagnostics: [],
                     runningDiagnostics: false,
+                    recoveringNetwork: false,
+                    recoveryLastResult: null,
                     _unsub: null,
                     copyHint: "",
                     _copyHintTimer: null,
@@ -171,6 +182,8 @@ class Analyst {
                     this.panelOpen = snap.panelOpen;
                     this.diagnostics = snap.diagnostics || [];
                     this.runningDiagnostics = snap.runningDiagnostics;
+                    this.recoveringNetwork = snap.recoveringNetwork;
+                    this.recoveryLastResult = snap.recoveryLastResult;
                 });
             },
             beforeDestroy() {
@@ -210,12 +223,19 @@ class Analyst {
                         t._copyHintTimer = null;
                     }, 2200);
                 },
+                handleRecoverNetwork() {
+                    service.recoverNetwork();
+                },
+                handleRestartApp() {
+                    service.restartAppForNetwork();
+                },
             },
             render(h) {
                 const t = this;
                 const p = t.panelOpen;
                 const d = t.diagnostics;
                 const r = t.runningDiagnostics;
+                const recovering = t.recoveringNetwork;
                 const b = [
                     r
                         ? h("p", { class: "analyst-loading" }, [
@@ -276,7 +296,7 @@ class Analyst {
                     );
                 }
                 if (p) {
-                    const showCopyFab = !r && d.length;
+                    const showActions = true;
                     const panelChildren = [
                         h("header", { class: "analyst-head" }, [
                             h("span", { class: "analyst-title" }, t.$t("网络诊断")),
@@ -295,27 +315,64 @@ class Analyst {
                             {
                                 class: {
                                     "analyst-body": true,
-                                    "analyst-body--with-copy": showCopyFab,
+                                    "analyst-body--with-actions": showActions,
                                 },
                             },
                             b
                         ),
                     ];
-                    if (showCopyFab) {
+                    if (showActions) {
                         panelChildren.push(
                             h(
-                                "button",
-                                {
-                                    class: "analyst-copy-fab",
-                                    attrs: { type: "button" },
-                                    on: {
-                                        click(e) {
-                                            e.stopPropagation();
-                                            t.handleCopyReport();
+                                "div",
+                                { class: "analyst-actions-fab" },
+                                [
+                                    h(
+                                        "button",
+                                        {
+                                            class: "analyst-action-btn",
+                                            attrs: { type: "button", disabled: !d.length },
+                                            on: {
+                                                click(e) {
+                                                    e.stopPropagation();
+                                                    t.handleCopyReport();
+                                                },
+                                            },
                                         },
-                                    },
-                                },
-                                t.copyHint || t.$t("复制诊断报告")
+                                        t.copyHint || t.$t("复制诊断报告")
+                                    ),
+                                    h(
+                                        "button",
+                                        {
+                                            class: "analyst-action-btn",
+                                            attrs: {
+                                                type: "button",
+                                                disabled: recovering || r,
+                                            },
+                                            on: {
+                                                click(e) {
+                                                    e.stopPropagation();
+                                                    t.handleRecoverNetwork();
+                                                },
+                                            },
+                                        },
+                                        recovering ? t.$t("网络修复中") + "..." : t.$t("尝试网络修复")
+                                    ),
+                                    h(
+                                        "button",
+                                        {
+                                            class: "analyst-action-btn danger",
+                                            attrs: { type: "button", disabled: recovering },
+                                            on: {
+                                                click(e) {
+                                                    e.stopPropagation();
+                                                    t.handleRestartApp();
+                                                },
+                                            },
+                                        },
+                                        t.$t("重启应用")
+                                    ),
+                                ]
                             )
                         );
                     }
@@ -429,6 +486,13 @@ class Analyst {
             domainPoolSnapshot: this.state.domainPoolSnapshot,
             wsProbeLast: this.state.wsProbeLast,
             healthCheckLast: this.state.healthCheckLast,
+            networkLogHistory: this.state.networkLogHistory.slice(),
+            runtimeNetLog: this.state.runtimeNetLog,
+            networkSnapshotStart: this.state.networkSnapshotStart,
+            networkSnapshotEnd: this.state.networkSnapshotEnd,
+            networkSnapshotDiff: this.state.networkSnapshotDiff.slice(),
+            recoveringNetwork: this.state.recoveringNetwork,
+            recoveryLastResult: this.state.recoveryLastResult,
             reconnectCount5m: benchmark.getReconnectCount(),
             navigatorOnline: typeof navigator !== "undefined" ? navigator.onLine : true,
             diagnostics: this.state.diagnostics.slice(),
@@ -742,19 +806,74 @@ class Analyst {
 
     /**
      * @param {CloseEvent} [ev]
+     * @param {{ url?: string, readyState?: number, attempt?: number, aliveDuration?: number, unexpected?: boolean }} [ctx]
      */
-    onSocketClose(ev) {
+    onSocketClose(ev, ctx = {}) {
+        const prev = this.state.lastClose;
         this.state.lastClose = {
             time: Date.now(),
             code: ev?.code,
             reason: (ev && ev.reason) || "",
             wasClean: ev?.wasClean,
+            url: ctx.url || "",
+            readyState: ctx.readyState,
+            attempt: ctx.attempt,
+            aliveDuration: ctx.aliveDuration || 0,
+            unexpected: !!ctx.unexpected,
+            netDetail: prev && prev.netDetail ? prev.netDetail : null,
+            netDetailAt: prev && prev.netDetailAt ? prev.netDetailAt : 0,
+        };
+        this.notify();
+        // 触发主进程补全：仅在"真正建立过的连接被断"且节流间隔到的情况下
+        if (ctx.unexpected) this.requestNetDetailForLastClose();
+    }
+
+    /**
+     * @param {{ url?: string, readyState?: number, attempt?: number, aliveDuration?: number }} [ctx]
+     */
+    onSocketError(ctx = {}) {
+        this.state.lastError = {
+            time: Date.now(),
+            url: ctx.url || "",
+            readyState: ctx.readyState,
+            attempt: ctx.attempt,
+            aliveDuration: ctx.aliveDuration || 0,
         };
         this.notify();
     }
 
-    onSocketError() {
-        this.state.lastError = { time: Date.now() };
+    /**
+     * 1006 等无 reason 关闭时，向主进程拉一段 netLog 中匹配 host 的 socket 错误事件回填。
+     * 节流：最少间隔 NET_DETAIL_THROTTLE_MS；运行中诊断时不抢占。
+     */
+    async requestNetDetailForLastClose() {
+        if (this.state.runningDiagnostics) return;
+        if (!this.state.lastClose) return;
+        const lc = this.state.lastClose;
+        if (lc.netDetailLoading) return;
+        const NET_DETAIL_THROTTLE_MS = 30 * 1000;
+        if (lc.netDetailAt && Date.now() - lc.netDetailAt < NET_DETAIL_THROTTLE_MS) return;
+        const wsUrl = lc.url || this._getEffectiveWsUrl();
+        if (!wsUrl) return;
+        this.state.lastClose = { ...lc, netDetailLoading: true };
+        this.notify();
+        let res = null;
+        try {
+            res = await this._ipcInvoke("network-log:tail-socket-errors", {
+                wsUrl,
+                sinceMs: 60 * 1000,
+            });
+        } catch (e) {
+            res = { ok: false, message: e.message || String(e), lines: [] };
+        }
+        const cur = this.state.lastClose;
+        if (!cur) return;
+        this.state.lastClose = {
+            ...cur,
+            netDetail: (res && Array.isArray(res.lines) && res.lines.length) ? res.lines : null,
+            netDetailAt: Date.now(),
+            netDetailLoading: false,
+        };
         this.notify();
     }
 
@@ -767,11 +886,294 @@ class Analyst {
         }
     }
 
+    _formatBytes(size) {
+        if (size == null || Number.isNaN(Number(size))) return "—";
+        const n = Number(size);
+        if (n < 1024) return `${n} B`;
+        if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+        return `${(n / 1024 / 1024).toFixed(1)} MB`;
+    }
+
+    async _ipcInvoke(channel, payload) {
+        if (!ipcRenderer || typeof ipcRenderer.invoke !== "function") {
+            return { ok: false, message: "ipcRenderer.invoke 不可用" };
+        }
+        return ipcRenderer.invoke(channel, payload);
+    }
+
+    _getEffectiveWsUrl() {
+        return (
+            this._ensureWsUrl(this.state.lastAttemptUrl) ||
+            this._ensureWsUrl(this.state.sessionWsUrl) ||
+            ""
+        );
+    }
+
+    _formatNetworkSummary(summary) {
+        if (!summary) return ["暂无常驻网络日志"];
+        const lines = (summary.lines || []).filter(Boolean);
+        if (!lines.length) return ["暂无可展示的网络事件摘要"];
+        if (lines.length <= NETWORK_SUMMARY_MAX_LINES) return lines;
+        const kept = lines.slice(0, NETWORK_SUMMARY_MAX_LINES);
+        kept.push(`… 其余 ${lines.length - NETWORK_SUMMARY_MAX_LINES} 行已省略`);
+        return kept;
+    }
+
+    _formatRuntimeStart(res) {
+        if (!res || !res.ok) return [`[捕获启动]: 失败 - ${(res && res.message) || "unknown"}`];
+        return [];
+    }
+
+    _formatRuntimeStop(res) {
+        if (!res || !res.ok) return [`[捕获停止]: 失败 - ${(res && res.message) || "unknown"}`];
+        return [];
+    }
+
+    _formatRuntimeNetlogSummary(res) {
+        const summary = res && res.summary;
+        if (!summary) return [];
+        if (!summary.ok) {
+            return summary.lines && summary.lines.length
+                ? ["runtime-network 解析失败:", ...summary.lines]
+                : ["runtime-network 解析失败"];
+        }
+        return Array.isArray(summary.lines) ? summary.lines : [];
+    }
+
+    _formatSnapshotBrief(label, snapshot) {
+        if (!snapshot) return [`[${label}快照]: 无`];
+        const dns = snapshot.dns || {};
+        const dnsLine =
+            dns.addresses && dns.addresses.length ? dns.addresses.join(", ") : dns.message || "—";
+        const proxyLine = this._hasSystemProxy(snapshot) ? "有" : "无";
+        return [
+            `[${label}在线]: ${snapshot.online}`,
+            `[${label}DNS]: ${dnsLine}`,
+            `[${label}系统代理]: ${proxyLine}`,
+        ];
+    }
+
+    _formatSnapshot(snapshot) {
+        if (!snapshot) return ["无快照"];
+        const dns = snapshot.dns || {};
+        const interfaces = snapshot.interfaces || [];
+        const vpn = snapshot.vpnSuspicion || {};
+        const addresses = dns.addresses && dns.addresses.length ? dns.addresses.join(", ") : "—";
+        const proxyValue = this._hasSystemProxy(snapshot) ? "有" : "无";
+        const vpnSuspected = !!vpn.suspected;
+        const vpnReasons =
+            vpnSuspected && Array.isArray(vpn.reasons) && vpn.reasons.length
+                ? vpn.reasons.slice(0, 3).join(" | ")
+                : "";
+        return [
+            `时间: ${this._formatTime(snapshot.time)}`,
+            `Electron online: ${snapshot.online}`,
+            `WSS host: ${snapshot.host || "—"}`,
+            `DNS(${dns.source || "none"}): ${addresses}`,
+            `系统代理: ${proxyValue}`,
+            `网卡: ${interfaces.length} 个`,
+            `疑似 VPN/隧道网卡: ${vpnSuspected ? "有" : "无"}`,
+            vpnReasons ? `疑似依据: ${vpnReasons}` : "",
+        ];
+    }
+
+    _hasSystemProxy(snapshot) {
+        const proxy = (snapshot && snapshot.proxy) || {};
+        if (!proxy.ok) return false;
+        const value = String(proxy.value || "").trim().toUpperCase();
+        return !!value && value !== "DIRECT";
+    }
+
+    _formatVpnSuspicion(snapshot) {
+        if (!snapshot) {
+            return { status: "pending", children: ["网络快照缺失"] };
+        }
+        const vpn = snapshot.vpnSuspicion || {};
+        const suspected = !!vpn.suspected;
+        const signals = vpn.signals || {};
+        const reasons = Array.isArray(vpn.reasons) ? vpn.reasons : [];
+        const score = vpn.score != null ? vpn.score : "—";
+        const flag = (b) => (b ? "✓" : "✕");
+        const sigText = `网卡${flag(signals.interface)}/代理${flag(signals.systemProxy)}/路由${flag(signals.route)}/目标${flag(signals.target)}`;
+        const head = `${suspected ? "有" : "无"} · ${vpn.level || "low"} · score=${score} · ${sigText}`;
+        const reasonTail = reasons.length ? ` · 依据: ${reasons.slice(0, 3).join(" | ")}` : "";
+        return {
+            status: suspected ? "fail" : "ok",
+            children: [head + reasonTail],
+        };
+    }
+
+    async _ensureSnapshotForVpn() {
+        const existing = this.state.networkSnapshotEnd || this.state.networkSnapshotStart;
+        if (existing) return existing;
+        try {
+            const res = await this._ipcInvoke("network-env:snapshot", {
+                wsUrl: this._getEffectiveWsUrl(),
+            });
+            const snapshot = res && res.ok ? res.snapshot : null;
+            if (snapshot) {
+                this.state.networkSnapshotEnd = this.state.networkSnapshotEnd || snapshot;
+                this.state.networkSnapshotStart = this.state.networkSnapshotStart || snapshot;
+            }
+            return snapshot;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    _snapshotSignature(snapshot) {
+        if (!snapshot) return {};
+        const dns = snapshot.dns || {};
+        const interfaces = snapshot.interfaces || [];
+        const vpn = snapshot.vpnSuspicion || {};
+        const vpnValue = vpn.suspected ? "有" : "无";
+        return {
+            online: String(snapshot.online),
+            dns: (dns.addresses || []).slice().sort().join(", ") || dns.message || "—",
+            systemProxy: this._hasSystemProxy(snapshot) ? "有" : "无",
+            interfaceCount: String(interfaces.length || 0),
+            vpnLike: vpnValue,
+        };
+    }
+
+    _diffNetworkSnapshots(before, after) {
+        if (!before || !after) return ["[网络快照]: — -> —"];
+        const a = this._snapshotSignature(before);
+        const b = this._snapshotSignature(after);
+        const fields = [
+            ["在线状态", "online"],
+            ["DNS解析", "dns"],
+            ["系统代理", "systemProxy"],
+            ["网卡数量", "interfaceCount"],
+            ["疑似VPN/隧道网卡", "vpnLike"],
+        ];
+        const out = [];
+        for (let i = 0; i < fields.length; i++) {
+            const [name, key] = fields[i];
+            const beforeValue = a[key] == null || a[key] === "" ? "—" : String(a[key]);
+            const afterValue = b[key] == null || b[key] === "" ? "—" : String(b[key]);
+            out.push(`[${name}]: ${beforeValue} -> ${afterValue}`);
+        }
+        return out;
+    }
+
+    _collectWsFailureRawLines() {
+        const lines = [];
+        const lc = this.state.lastClose;
+        const le = this.state.lastError;
+        const probe = this.state.wsProbeLast?.results || [];
+        if (lc) {
+            lines.push(`[Socket close code]: ${lc.code ?? "—"}`);
+            lines.push(`[Socket close reason]: ${lc.reason || "—"}`);
+            lines.push(`[Socket close wasClean]: ${lc.wasClean == null ? "—" : String(lc.wasClean)}`);
+            lines.push(`[Socket close time]: ${this._formatTime(lc.time)}`);
+            if (lc.url) lines.push(`[Socket close url]: ${lc.url}`);
+            if (lc.aliveDuration != null) {
+                lines.push(
+                    `[Socket close aliveDuration]: ${
+                        lc.aliveDuration > 0 ? `${(lc.aliveDuration / 1000).toFixed(1)}s` : "未建立"
+                    }`
+                );
+            }
+            if (lc.attempt != null) lines.push(`[Socket close attempt]: ${lc.attempt}`);
+            if (lc.netDetail && lc.netDetail.length) {
+                lines.push("[Socket netLog 补全]:");
+                for (let i = 0; i < Math.min(lc.netDetail.length, 8); i++) {
+                    lines.push(`  ${lc.netDetail[i]}`);
+                }
+            }
+        }
+        if (probe.length) {
+            lines.push(`[短探测样本数]: ${probe.length}`);
+            for (let i = 0; i < Math.min(probe.length, 5); i++) {
+                const item = probe[i];
+                lines.push(`[probe ${i + 1}]: ${item.ok ? "ok" : "fail"} | ${item.url} | ${item.reason}`);
+            }
+        }
+        if (le) {
+            lines.push(`[Socket error time]: ${this._formatTime(le.time)}`);
+            if (le.url) lines.push(`[Socket error url]: ${le.url}`);
+            if (le.readyState != null) lines.push(`[Socket error readyState]: ${le.readyState}`);
+        }
+        if (!lines.length) {
+            lines.push("[原始错误]: 本轮未捕获到明确错误字段");
+        }
+        return lines;
+    }
+
+    _formatRefreshResult(result) {
+        if (!result) return ["无修复结果"];
+        const steps = Array.isArray(result.steps) ? result.steps : [];
+        const lines = [
+            `时间: ${this._formatTime(result.time || Date.now())}`,
+            `整体结果: ${result.ok ? "已执行" : "未完成"}`,
+        ];
+        for (let i = 0; i < steps.length; i++) {
+            const step = steps[i];
+            lines.push(
+                `${step.ok ? "✓" : "✕"} ${step.name}: ${
+                    step.skipped ? "不支持" : step.message || "ok"
+                }`
+            );
+        }
+        if (result.message) lines.push(`说明: ${result.message}`);
+        return lines;
+    }
+
+    async _rebuildWebSocketAfterRefresh() {
+        await new Promise((resolve) => setTimeout(resolve, 600));
+        try {
+            const mod = await import("./index");
+            if (mod && typeof mod.websocketCreate === "function") {
+                mod.websocketCreate(this._getEffectiveWsUrl());
+                return true;
+            }
+        } catch (e) {
+            console.warn("[Analyst] rebuild websocket after refresh failed", e);
+        }
+        return false;
+    }
+
+    async recoverNetwork() {
+        if (this.state.recoveringNetwork || this.state.runningDiagnostics) return;
+        this.state.recoveringNetwork = true;
+        this.notify();
+        try {
+            const result = await this._ipcInvoke("network-env:refresh");
+            const rebuilt = await this._rebuildWebSocketAfterRefresh();
+            this.state.recoveryLastResult = {
+                time: Date.now(),
+                result: {
+                    ...result,
+                    rebuilt,
+                },
+            };
+        } catch (e) {
+            this.state.recoveryLastResult = {
+                time: Date.now(),
+                result: { ok: false, message: e.message || String(e), steps: [] },
+            };
+        } finally {
+            this.state.recoveringNetwork = false;
+            this.notify();
+        }
+        await this.runDiagnostics({ reason: "after-recovery" });
+    }
+
+    async restartAppForNetwork() {
+        const ok =
+            typeof window === "undefined" ||
+            window.confirm("重启应用会关闭当前窗口并重新打开，是否继续？");
+        if (!ok) return;
+        await this._ipcInvoke("app:restart-for-network");
+    }
+
     /**
      * 供 UI 逐步展示；可多次调用，会重置列表
+     * @param {{ reason?: string }} [options]
      * @returns {Promise<void>}
      */
-    async runDiagnostics() {
+    async runDiagnostics(options = {}) {
         if (this.state.runningDiagnostics) return;
         this.state.runningDiagnostics = true;
         this.state.diagnostics = [];
@@ -779,6 +1181,12 @@ class Analyst {
 
         const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
         const items = [];
+        const traceId = `diag-${Date.now()}`;
+        let runtimeNetLogStarted = false;
+        let runtimeNetLogStopped = false;
+        let networkSummary = null;
+        let logsRes = null;
+        let i = -1;
 
         const setItem = (index, patch) => {
             items[index] = { ...items[index], ...patch };
@@ -800,9 +1208,51 @@ class Analyst {
         };
 
         try {
+            logsRes = await this._ipcInvoke("network-log:list", { resume: false });
+            networkSummary = logsRes && logsRes.ok ? logsRes.summary : null;
+            this.state.networkLogHistory = networkSummary ? [networkSummary] : [];
+
+            const startLogRes = await this._ipcInvoke("network-log:start-runtime", {
+                loginId: "anonymous",
+                wsUrl: this._getEffectiveWsUrl(),
+                traceId,
+            });
+            runtimeNetLogStarted = !!(startLogRes && startLogRes.ok);
+            this.state.runtimeNetLog = { start: startLogRes };
+            const startSnapRes = await this._ipcInvoke("network-env:snapshot", {
+                wsUrl: this._getEffectiveWsUrl(),
+            });
+            const startSnapshot = startSnapRes && startSnapRes.ok ? startSnapRes.snapshot : null;
+            this.state.networkSnapshotStart = startSnapshot;
+
+            if (this.state.recoveryLastResult) {
+                i = addRunning("network-recovery-last", "最近一次网络修复");
+                await sleep(20);
+                const rr = this.state.recoveryLastResult.result || {};
+                const kids = this._formatRefreshResult(rr);
+                if (rr.rebuilt != null) {
+                    kids.push(`Socket 重建: ${rr.rebuilt ? "已触发" : "未触发"}`);
+                }
+                setItem(i, {
+                    status: rr.ok ? "ok" : "fail",
+                    children: kids,
+                });
+            }
+
             this.refreshDomainPoolSnapshot();
 
-            let i = addRunning("health", "网络：onLine + 外网探测");
+            i = addRunning("ws-probe", "WSS候选短时探测");
+            await this._runWsProbeBatch();
+            const pr = this.state.wsProbeLast?.results || [];
+            const okn = pr.filter((r) => r.ok).length;
+            setItem(i, {
+                status: pr.length ? (okn > 0 ? "ok" : "fail") : "pending",
+                children: pr.length
+                    ? pr.map((r) => `${r.ok ? "✓" : "✕"} ${r.url} — ${r.reason}`)
+                    : ["无候选 URL"],
+            });
+
+            i = addRunning("health", "网络：onLine + 外网探测");
             await this._runHealthProbes();
             const hl = this.state.healthCheckLast?.lines || [];
             const navBad = hl[0] && hl[0].includes("false");
@@ -906,36 +1356,108 @@ class Analyst {
             await sleep(40);
             const lc = this.state.lastClose;
             if (lc) {
-                setItem(i, {
-                    status: "ok",
-                    children: [
-                        `时间: ${this._formatTime(lc.time)}`,
-                        `code: ${lc.code ?? "—"}`,
-                        `reason: ${lc.reason || "—"}`,
-                    ],
-                });
+                const closeKids = [
+                    `时间: ${this._formatTime(lc.time)}`,
+                    `code: ${lc.code ?? "—"}`,
+                    `reason: ${lc.reason || "—"}`,
+                    lc.url ? `URL: ${lc.url}` : "",
+                    lc.aliveDuration != null
+                        ? `存活时长: ${lc.aliveDuration > 0 ? `${(lc.aliveDuration / 1000).toFixed(1)}s` : "未建立"}`
+                        : "",
+                    lc.attempt != null ? `连接尝试: 第 ${lc.attempt} 次` : "",
+                    lc.readyState != null ? `关闭时 readyState: ${lc.readyState}` : "",
+                    lc.unexpected ? "判定: 已建立后被断 (unexpected)" : "",
+                ].filter(Boolean);
+                if (lc.netDetailLoading) {
+                    closeKids.push("[netLog 补全]: 拉取中…");
+                } else if (lc.netDetail && lc.netDetail.length) {
+                    closeKids.push("[netLog 补全 (renderer 缺失字段由 main 补)]:");
+                    for (let li = 0; li < Math.min(lc.netDetail.length, 12); li++) {
+                        closeKids.push(`  ${lc.netDetail[li]}`);
+                    }
+                } else if (lc.netDetailAt) {
+                    closeKids.push("[netLog 补全]: 命中范围内无 socket 错误事件");
+                }
+                setItem(i, { status: "ok", children: closeKids });
+                // 若本次 close 还没拿过 netDetail，主动补一次（节流内会自然忽略）
+                if (lc.unexpected && !lc.netDetailAt && !lc.netDetailLoading) {
+                    this.requestNetDetailForLastClose().catch(() => {});
+                }
             } else {
                 setItem(i, { status: "pending", children: ["尚无关闭记录"] });
             }
-
-            i = addRunning("ws-probe", "WSS候选短时探测");
-            await this._runWsProbeBatch();
-            const pr = this.state.wsProbeLast?.results || [];
-            const okn = pr.filter((r) => r.ok).length;
-            setItem(i, {
-                status: pr.length ? (okn > 0 ? "ok" : "fail") : "pending",
-                children: pr.length
-                    ? pr.map((r) => `${r.ok ? "✓" : "✕"} ${r.url} — ${r.reason}`)
-                    : ["无候选 URL"],
-            });
 
             i = addRunning("last-err", "最近一次 Socket error");
             await sleep(20);
             const le = this.state.lastError;
             setItem(i, {
                 status: le ? "fail" : "ok",
-                children: le ? [`时间: ${this._formatTime(le.time)}`] : ["无"],
+                children: le
+                    ? [
+                          `时间: ${this._formatTime(le.time)}`,
+                          le.url ? `URL: ${le.url}` : "",
+                          le.aliveDuration != null
+                              ? `存活时长: ${le.aliveDuration > 0 ? `${(le.aliveDuration / 1000).toFixed(1)}s` : "未建立"}`
+                              : "",
+                          le.attempt != null ? `连接尝试: 第 ${le.attempt} 次` : "",
+                          le.readyState != null ? `触发时 readyState: ${le.readyState}` : "",
+                      ].filter(Boolean)
+                    : ["无"],
             });
+
+            const endSnapRes = await this._ipcInvoke("network-env:snapshot", {
+                wsUrl: this._getEffectiveWsUrl(),
+            });
+            const endSnapshot = endSnapRes && endSnapRes.ok ? endSnapRes.snapshot : null;
+            this.state.networkSnapshotEnd = endSnapshot;
+            const diff = this._diffNetworkSnapshots(this.state.networkSnapshotStart, this.state.networkSnapshotEnd);
+            this.state.networkSnapshotDiff = diff;
+
+            i = addRunning("network-history-summary", "常驻网络日志摘要");
+            setItem(i, {
+                status: networkSummary && networkSummary.ok ? "ok" : "pending",
+                children:
+                    logsRes && logsRes.ok
+                        ? this._formatNetworkSummary(networkSummary)
+                        : [`读取失败: ${(logsRes && logsRes.message) || "ipc unavailable"}`],
+            });
+
+            i = addRunning("runtime-network-capture", "本次诊断网络捕获");
+            if (runtimeNetLogStarted && !runtimeNetLogStopped) {
+                const stopLogRes = await this._ipcInvoke("network-log:stop-runtime");
+                runtimeNetLogStopped = true;
+                this.state.runtimeNetLog = {
+                    ...(this.state.runtimeNetLog || {}),
+                    stop: stopLogRes,
+                };
+                setItem(i, {
+                    status: stopLogRes && stopLogRes.ok ? "ok" : "fail",
+                    children: [
+                        ...this._formatRuntimeStart(startLogRes),
+                        ...this._formatRuntimeStop(stopLogRes),
+                        ...this._formatRuntimeNetlogSummary(stopLogRes),
+                        ...diff,
+                        "[WS原始错误/事件]:",
+                        ...this._collectWsFailureRawLines(),
+                    ],
+                });
+            } else {
+                setItem(i, {
+                    status: "pending",
+                    children: [
+                        ...this._formatRuntimeStart(startLogRes),
+                        ...diff,
+                        "[WS原始错误/事件]:",
+                        ...this._collectWsFailureRawLines(),
+                    ],
+                });
+            }
+
+            i = addRunning("vpn-suspect", "疑似VPN/隧道网卡");
+            await sleep(20);
+            const vpnSnapshot = await this._ensureSnapshotForVpn();
+            const vpnResult = this._formatVpnSuspicion(vpnSnapshot);
+            setItem(i, vpnResult);
         } catch (e) {
             console.warn("[Analyst] runDiagnostics error", e);
             const msg =
@@ -964,6 +1486,17 @@ class Analyst {
                 console.warn("[Analyst] runDiagnostics recovery error", e2);
             }
         } finally {
+            if (runtimeNetLogStarted && !runtimeNetLogStopped) {
+                try {
+                    const stopLogRes = await this._ipcInvoke("network-log:stop-runtime");
+                    this.state.runtimeNetLog = {
+                        ...(this.state.runtimeNetLog || {}),
+                        stop: stopLogRes,
+                    };
+                } catch (e) {
+                    console.warn("[Analyst] stop runtime netLog error", e);
+                }
+            }
             this.state.runningDiagnostics = false;
             this.notify();
         }

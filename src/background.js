@@ -32,6 +32,7 @@ import { initToggleSideBar } from "@/utils/toggleSideBar";
 import { logger, writeLog, writeCrashReport, initProcessLogger } from '@/utils/logger/process';
 import MediaProcess, { isMediaPlayerWindow } from "@/utils/media/MediaProcess";
 import { installCorsHandlers } from "@/utils/cors";
+import { initNetworkDiagnostics } from "@/debugger/netlog";
 
 app.on("gpu-process-crashed", (event, kill) => {
     // console.warn("app:gpu-process-crashed", event, kill);
@@ -1441,6 +1442,7 @@ app.on("ready", () => {
     // 'prevent-display-sleep' - 阻止显示器睡眠
     powerBlockerId = powerSaveBlocker.start('prevent-app-suspension');
     initProcessLogger();
+    initNetworkDiagnostics();
     logger.info('应用启动');
 
     screenshots = new Screenshots();

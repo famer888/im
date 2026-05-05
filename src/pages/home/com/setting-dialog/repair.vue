@@ -19,12 +19,19 @@
         <button @click="handleReset()">重置</button>
       </dd>
     </dl>
+    <dl>
+      <dt></dt>
+      <dd>
+        <button @click="openNetworkDiagnostics()">{{ $t("网络诊断") }}</button>
+      </dd>
+    </dl>
   </div>
 </template>
 <script>
 import { ipcRenderer } from "@/platform";
 import eventCommon from "@/event/common";
 import { getPublicCacheSync } from "@/utils/publicCache";
+import analyst from "@/socket/analyst";
 const packName = process.env.VUE_APP_PACKNAME;
 import { copyText } from "@/utils/clipboard";
 import {
@@ -92,6 +99,13 @@ export default {
         copyText(publicCachePath);
         window.$toast(this.$t("复制成功"));
       }
+    },
+    openNetworkDiagnostics() {
+      const root =
+        typeof document !== "undefined" && document.getElementById("app");
+      if (root) analyst.mountTrigger(root, { showTrigger: false });
+      analyst.openPanel();
+      this.$nextTick(() => analyst.runDiagnostics());
     },
     async handleRepair(type) {
        const loginId = eventCommon.fnCommonInfoRU({
