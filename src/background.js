@@ -1457,10 +1457,11 @@ if (!app.requestSingleInstanceLock()) {
     console.log("这里是设置");
     setBaseIndex(1);
 
-    getLocalFile({
-        key: "source-id-list",
-        value: [],
-    });
+    // source-id-list 已迁到新 Storage，主进程也需要走同一后端，
+    // 否则渲染进程读到的是另一份从未被清理的累积数据，
+    // 会导致 App.vue 的"保留登录态进入主界面"回退分支失效。
+    Storage.setBase(userData);
+    Storage.set("source-id-list", []);
 }
 
 app.on("second-instance", (event, argv) => {
@@ -1563,22 +1564,26 @@ app.on("window-all-closed", () => {
 });
 
 app.on("before-quit", async (event) => {
-    const data = await getLocalFile({ key: "source-id-list" });
-    if (data) {
-        const primaryWin =
-            mainWindow && !mainWindow.isDestroyed()
-                ? mainWindow
-                : BrowserWindow.getAllWindows().find(
-                      (w) => !w.isDestroyed() && !isMediaPlayerWindow(w)
-                  );
-        if (primaryWin) {
-            await getLocalFile({
-                key: "source-id-list",
-                value: JSON.parse(data).filter(
-                    (id) => id !== primaryWin.getMediaSourceId()
-                ),
-            });
+    // 与渲染进程统一走新 Storage，避免 source-id-list 写在两个不同后端、
+    // 退出清理形同虚设导致列表无限累积。
+    try {
+        const data = Storage.get("source-id-list");
+        if (Array.isArray(data) && data.length > 0) {
+            const primaryWin =
+                mainWindow && !mainWindow.isDestroyed()
+                    ? mainWindow
+                    : BrowserWindow.getAllWindows().find(
+                          (w) => !w.isDestroyed() && !isMediaPlayerWindow(w)
+                      );
+            if (primaryWin) {
+                Storage.set(
+                    "source-id-list",
+                    data.filter((id) => id !== primaryWin.getMediaSourceId())
+                );
+            }
         }
+    } catch (e) {
+        console.warn("[before-quit] cleanup source-id-list failed:", e);
     }
 
     // 停止电源阻止器
