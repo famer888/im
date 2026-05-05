@@ -9,7 +9,9 @@
         <input
           :value="searchText"
           ref="search"
-          :placeholder="addAction ? '搜索手机号/ID/群别名' : placeholder || $t('搜索')"
+          :placeholder="
+            addAction ? $t('搜索手机号/ID/群别名') : placeholder || $t('搜索')
+          "
           type="text"
           @input="handleChange"
           @focus="(e) => $emit('focus', e)"
