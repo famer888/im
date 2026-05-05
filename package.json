@@ -11,7 +11,7 @@
   },
   "scripts": {
     "package": "node scripts/generate-build-time.js && node scripts/validate.js && node scripts/del.js ./marswrapper.node && node scripts/copy-proto.js && node scripts/run-with-darwin-python.js -- vue-cli-service electron:build",
-    "dev:prod": "node scripts/generate-build-time.js && node scripts/validate.js && node scripts/del.js ./marswrapper.node && node scripts/copy-proto.js && vue-cli-service electron:serve --disable-background-timer-throttling --mode prod",
+    "dev:prod": "node scripts/run-dev.js prod",
     "dev:test": "node scripts/generate-build-time.js && node scripts/validate.js && node scripts/del.js ./marswrapper.node && node scripts/copy-proto.js && vue-cli-service electron:serve --disable-background-timer-throttling --mode development",
     "dev:uat": "node scripts/generate-build-time.js && node scripts/validate.js && node scripts/del.js ./marswrapper.node && node scripts/copy-proto.js && vue-cli-service electron:serve --disable-background-timer-throttling --mode uattest",
     "validate": "node scripts/validate.js",

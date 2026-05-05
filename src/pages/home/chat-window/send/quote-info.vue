@@ -67,6 +67,7 @@ export default {
   },
   methods: {
     getFileIcon,
+    toLocalResourceUrl,
     /**
      * 关闭
      */

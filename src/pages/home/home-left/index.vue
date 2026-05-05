@@ -30,13 +30,13 @@
           :archiveIdStrList="archiveIdStrList"
           :unreadCount="unreadCount"
           :archiveListShow="archiveListShow"
-          :placeholder="addAction && navType === 1 ? '搜索手机号/ID/群别名' : $t('搜索')"
+          :placeholder="addAction && navType === 1 ? $t('搜索手机号/ID/群别名') : $t('搜索')"
           @onChange="(value) => (searchText = value)"
           @handleBack="handleBack"
           key="all-search"
         >
           <template #right v-if="navType === 1">
-            <span class="add-cancel" v-if="addAction" @click="addAction = false">取消</span>
+            <span class="add-cancel" v-if="addAction" @click="addAction = false">{{ $t("取消") }}</span>
             <img class="add-btn" v-else @click="addAction = true" src="@/assets/images/headNav/add_blue.png" />
           </template>
         </ComSearch>

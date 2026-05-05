@@ -29,6 +29,11 @@ let isContact = false;
 // 心跳检测
 let timerHeart = null;
 
+// 上一次 onopen 时间，用于计算 aliveDuration（区分"建立后被断"与"始终连不上"）
+let lastOpenAt = 0;
+// 当前会话的 ws 连接尝试编号，便于补全聚合
+let connectAttempt = 0;
+
 export const websocketCreate = (url) => {
     // 如果已有 WebSocket 连接，先清除旧的事件监听器
     if (webSocket) {
@@ -46,6 +51,8 @@ export const websocketCreate = (url) => {
     }
 
     isContact = true;
+    connectAttempt++;
+    lastOpenAt = 0;
 
     analyst.onWsConnecting(url || wsUrl);
 
@@ -69,7 +76,12 @@ export const websocketCreate = (url) => {
 };
 
 const onError = (ev) => {
-    analyst.onSocketError();
+    analyst.onSocketError({
+        url: (webSocket && webSocket.url) || wsUrl,
+        readyState: webSocket ? webSocket.readyState : null,
+        attempt: connectAttempt,
+        aliveDuration: lastOpenAt ? Date.now() - lastOpenAt : 0,
+    });
     console.log("websocket ===> 错误重连");
     reconnect(wsUrl);
     sendErrToSentry(2, ev);
@@ -77,7 +89,15 @@ const onError = (ev) => {
 
 const onClose = (event) => {
     if (isContact) {
-        analyst.onSocketClose(event);
+        const aliveDuration = lastOpenAt ? Date.now() - lastOpenAt : 0;
+        analyst.onSocketClose(event, {
+            url: (webSocket && webSocket.url) || wsUrl,
+            readyState: webSocket ? webSocket.readyState : null,
+            attempt: connectAttempt,
+            aliveDuration,
+            // 真正建立过且非主动关闭时才向主进程拉补全（避免重连风暴里反复 stop/start netLog）
+            unexpected: aliveDuration > 0,
+        });
         console.log("websocket ===> 关闭重连" + wsUrl);
         reconnect(wsUrl);
     }
@@ -85,6 +105,7 @@ const onClose = (event) => {
 
 const onOpen = () => {
     webSocket.binaryType = "arraybuffer";
+    lastOpenAt = Date.now();
     CReqChatLogin();
     clearTimeout(timerLoginoutTip);
     timerLoginoutTip = null;

@@ -8,6 +8,24 @@ export const isNetworkImageUrl = (imageUrl) => {
     return networkProtocolPattern.test(imageUrl);
 }
 
+export const isErrorLocalValue = (value) => {
+    return ["downloadError", "decryptionError"].includes(value);
+}
+
+export const checkLocalFileExists = async (url) => {
+    if (!url || typeof url !== "string" || isErrorLocalValue(url) || isNetworkImageUrl(url)) {
+        return false;
+    }
+    try {
+        if (ipcRenderer && typeof ipcRenderer.invoke === "function") {
+            return !!(await ipcRenderer.invoke("local-file-exists", url));
+        }
+    } catch (e) {
+        //
+    }
+    return false;
+}
+
 export const downloadImageToLocal = async (imageUrl, savePath) => {
     const api = (typeof window !== 'undefined' && window.electronAPI) || {};
     if (api.downloadFile) {

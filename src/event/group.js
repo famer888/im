@@ -152,9 +152,9 @@ const fnGroupEventGuard = async (data, loginId) => {
             data.groupReqEventMsgDto[0]?.commonMsgDto?.groupBaseInfo?.groupId
         );
 
-        // 获取事件类型和发起人ID
+        // 获取事件类型和退群/被踢成员ID
         let groupReqType = null; // 退群/解散群事件类型
-        let exitEventFromUid = null; // 发起人ID
+        let exitMemberUid = null; // 退群/被踢成员ID
 
         // 检查是否为6踢出群(groupReqType 6)groupReqType groupReqType 13）事件
         const exitOrDismissEvent = data.groupReqEventMsgDto.find((item) => [6, 7, 13].includes(item.groupReqType));
@@ -165,7 +165,11 @@ const fnGroupEventGuard = async (data, loginId) => {
         }
 
         groupReqType = exitOrDismissEvent.groupReqType;
-        exitEventFromUid = Number(exitOrDismissEvent.commonMsgDto.fromUid);
+        exitMemberUid = Number(
+            exitOrDismissEvent.groupMember?.[0]?.user?.uid ||
+            exitOrDismissEvent.fromUid ||
+            exitOrDismissEvent.commonMsgDto?.fromUid
+        );
 
         // 检查是否存在群事件执行ID（表示群在本地有记录）
         const hasEventRecord =
@@ -203,13 +207,12 @@ const fnGroupEventGuard = async (data, loginId) => {
         if (groupReqType === 13) {
             // 群解散事件：无论谁解散，都删除会话列表
             shouldDeleteChat = true;
-        } else if (groupReqType === 7 && exitEventFromUid === loginId) {
+        } else if (groupReqType === 7 && exitMemberUid === loginId) {
             // 主动退群事件：判断是否是自己
             shouldDeleteChat = true;
         } else if (groupReqType === 6) {
             // 被踢出群事件：被踢的人在 groupMember 中，fromUid 是管理员
-            const kickedUid = Number(exitOrDismissEvent.groupMember?.[0]?.user?.uid);
-            if (kickedUid === loginId) {
+            if (exitMemberUid === loginId) {
                 shouldDeleteChat = true;
             }
         }
@@ -1286,8 +1289,9 @@ const fnGroupMsgEvent = async (data, loginId) => {
         }
         case 7: {
             // 退群
+            const exitUid = Number(groupMember?.[0]?.user?.uid || fromUid);
             // 如果退群的是自己
-            if (Number(fromUid) === loginId) {
+            if (exitUid === loginId) {
                 fnGroupClear(info.groupId);
                 info.type = "exit";
             } else {
@@ -1299,7 +1303,7 @@ const fnGroupMsgEvent = async (data, loginId) => {
 
                 const memberInfo =
                     groupMemberList.find(
-                        (item) => item.id === Number(fromUid)
+                        (item) => item.id === exitUid
                     ) || {};
 
                 info.type = "memberExit";
@@ -1317,11 +1321,11 @@ const fnGroupMsgEvent = async (data, loginId) => {
                                 ? `${
                                       memberInfo.name || memberInfo.nickName
                                   } 退出群聊`
-                                : `会员id ${fromUid} 退出群聊`;
+                                : `会员id ${exitUid} 退出群聊`;
                     }
                 }
                 let memberList = groupMemberList.filter(
-                    (item) => item.id !== Number(fromUid)
+                    (item) => item.id !== exitUid
                 );
                 info.memberCount = memberList.length;
                 // 更新到列表

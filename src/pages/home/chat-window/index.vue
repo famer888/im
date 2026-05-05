@@ -1273,9 +1273,18 @@ export default {
       if ([0, 50, 51, 52, 16].includes(chatType)) {
         // 将at的真实昵称替换为备注
         if(atUsers?.length && content.includes("@")) {
-          atUsers.forEach(item => {
-            content = content.replace(item.nickName, item.name)
-          })
+          const usersWithRemark = atUsers.filter(item => item.name && item.nickName);
+          if (usersWithRemark.length > 0) {
+            const escapeRegExp = (str) => String(str).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const nameMap = {};
+            usersWithRemark.forEach(item => { nameMap[item.nickName] = item.name; });
+            usersWithRemark.sort((a, b) => b.nickName.length - a.nickName.length);
+            const pattern = usersWithRemark.map(item => escapeRegExp(item.nickName)).join('|');
+            const reg = new RegExp(`@(${pattern})(?=$|[\\s@])`, 'g');
+            content = content.replace(reg, (match, nickName) => {
+              return '@' + (nameMap[nickName] || nickName);
+            });
+          }
         }
         copyText(textToEmojiText(content));
       } else if (chatType === 1) {
