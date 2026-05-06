@@ -204,12 +204,16 @@ export default {
       this.handleEventHandling
     );
 
+    // contextIsolation 下 removeListener 无法匹配跨桥 proxy wrapper，Home 多次 mount 会让 listener 累加，
+    // 同一事件会触发回调多次（fnLoginout/notificationReply 非幂等）；进 mount 前先清，beforeDestroy 也清。
+    ipcRenderer.removeAllListeners("eventLogout");
     ipcRenderer.on("eventLogout", (e, args) => {
       // console.log(args, 148888);
       // 退出程序并注销必须登出
       eventCommon.fnLoginout();
     });
 
+    ipcRenderer.removeAllListeners("notificationReply");
     ipcRenderer.on("notificationReply", (e, args) => {
       console.log("notificationReply-2-", args)
       notificationReply(args)
@@ -231,6 +235,9 @@ export default {
     eventFile.fnMonitorDownloadFileDone(false);
     // 移除监听 下载进度
     progress.uninstall();
+    // 与 mounted 中的 ipcRenderer.on 配对，contextIsolation 下统一用 removeAllListeners 清干净
+    ipcRenderer.removeAllListeners("eventLogout");
+    ipcRenderer.removeAllListeners("notificationReply");
 
     // 移除监听 移除通信事件的监听机制
     document.removeEventListener("keydown", this.handleKeydown);

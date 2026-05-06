@@ -17,10 +17,15 @@ import eventCommon from "@/event/common";
 export default {
   mounted() {
     // 导出完成后进行登出
+    // contextIsolation 下 removeListener 无法匹配跨桥 proxy wrapper，该组件随 home 多次 mount 会累加 listener
+    ipcRenderer.removeAllListeners("cache-db-success");
     ipcRenderer.on("cache-db-success", (e, args) => {
       // 登出
       eventCommon.fnLoginout(args);
     });
+  },
+  beforeDestroy() {
+    ipcRenderer.removeAllListeners("cache-db-success");
   },
   methods: {
     /**

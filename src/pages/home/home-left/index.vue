@@ -2140,6 +2140,8 @@ export default {
   },
   created() {
     // 监听点击通知
+    // contextIsolation 下 removeListener 无法匹配跨桥 proxy wrapper，组件随 home 多次 mount 会累加 listener
+    ipcRenderer.removeAllListeners("notification-clicked");
     ipcRenderer.on("notification-clicked", (e, data) => {
       const chatInfo = this.chats.find((item) => item.id === data.id);
       // 通讯
@@ -2259,6 +2261,9 @@ export default {
     // 移除鼠标监听
     document.removeEventListener("mousemove", this.hanldeMousemove);
     document.removeEventListener("mouseup", this.hanldeMouseup);
+
+    // 与 created 中的 ipcRenderer.on 配对清理
+    ipcRenderer.removeAllListeners("notification-clicked");
   },
 };
 </script>

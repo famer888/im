@@ -27,11 +27,14 @@ export default {
     }
   },
   async mounted() {
-    // 监听主进程错误报告，打印到 console
+    // contextIsolation 下 removeListener 无法匹配跨桥 proxy wrapper；
+    // App 通常仅 mount 一次，但 HMR / 热重载会累加，统一用 removeAllListeners 兜底。
+    ipcRenderer.removeAllListeners("main-error-log");
     ipcRenderer.on("main-error-log", (e, data) => {
       console.error("[主进程错误]", data?.type, data?.message, data?.args, data?.stack);
     });
 
+    ipcRenderer.removeAllListeners("visibilitychange");
     ipcRenderer.on("visibilitychange", (e, windowShowState) => {
       Local("windowShowState", windowShowState);
     });
@@ -140,6 +143,7 @@ export default {
     // 初始化 设备的设置信息
     eventCommon.fnConfigInit();
 
+    ipcRenderer.removeAllListeners("file-out-download");
     ipcRenderer.on("file-out-download", (e, args) => {
       let { filePath, key } = args;
       outFileFun(filePath, key);
