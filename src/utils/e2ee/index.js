@@ -890,6 +890,9 @@ export const fnMsgDecryption = async ({
             } catch (err) {
                 console.$collectE2ee('fileKey解密失败', _e2eeState({ error: err.message }));
                 console.error("fileKey 解密失败", optsStr,attachmentKey, relKey);
+                // 与同函数其他 catch 保持一致：解密失败必须中止派发，否则 fileKey=null 透传到 image.vue
+                // 会让加密体当成 plaintext 显示，触发"图片文件解密失败"
+                return {};
             }
         }
     } else {

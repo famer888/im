@@ -22,6 +22,9 @@ export const setPublicCache = async (key, data) => {
     });
 };
 
+// TODO(public-cache-race): 全文件 read-modify-write 无锁，多实例并发写会丢失对方的修改（lost-update）。
+// 当前 aesKeyData 不参与（TRENDS_AES_KEY=false），domainList 等共享键写入频次低，未观察到事实损害。
+// 彻底修需引入文件锁（proper-lockfile / fs-ext）或迁移到 sqlite / per-key 文件，按需评估。
 export const setPublicCacheSync = (key, data) => {
     try {
         let cacheObj = getPublicCacheSync() || {};
