@@ -15,6 +15,7 @@ import {
 import { initHeader } from "./request";
 import { webSocketSend } from "@/socket";
 import { FairGuard } from "@/api/base/unit";
+import oneToOneSendDiag from "@/debuggers/oneToOneSendDiag";
 /**
  * 用户发送私聊消息
  * uint32  UserID = 1;                                    // 发送用户ID
@@ -33,6 +34,7 @@ export function CReqChatSendPrivate(data, flag) {
     const rb = initHeader(buffer, 10101, flag);
     console.log("发出推送-10101-", flag);
     webSocketSend(rb);
+    try { oneToOneSendDiag.complete(flag); } catch (e) { /* 诊断不可影响业务 */ }
 }
 
 export function ReceiveServerToClient(id) {

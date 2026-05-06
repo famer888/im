@@ -20,6 +20,7 @@ import {
 import { ConcatInt8 } from "@/socket/api/request";
 import { ReceiveKeyPairMessage } from "@/socket/api/message";
 import { setUpdateKeyPairSource, consumeUpdateKeyPairDesc } from "@/utils/e2ee/keypairTracer";
+import oneToOneSendDiag from "@/debuggers/oneToOneSendDiag";
 
 import {
     SystemObj,
@@ -307,6 +308,7 @@ export const fnFriendRelKeyGet = async ({
     source,
     isSelf,
     senderKeyVersion,
+    _diagTaskId,
 }) => {
     // 登录的id
     const loginId = eventCommon.fnCommonInfoRU({ getId: "loginId" });
@@ -361,6 +363,18 @@ export const fnFriendRelKeyGet = async ({
 
     // 旧的密钥信息
     const keyInfos = friendKeyObjs[id] || {};
+
+    // [诊断] 入口快照（仅发送路径）
+    if (_diagTaskId && msgEncryptionVersion === -1) {
+        try {
+            oneToOneSendDiag.markEntry(_diagTaskId, {
+                privateKey,
+                ownKeyVersion: accountConfig.keyVersion,
+                cacheKeys: Object.keys(keyInfos),
+                apiSupplementFlagSet: friendKeyApiSupplemented.has(id),
+            });
+        } catch (e) {}
+    }
 
     // 使用的密钥信息
     let keyInfosActive = null;
@@ -428,6 +442,17 @@ export const fnFriendRelKeyGet = async ({
         && (!keyInfosActive.appKeyPair || !keyInfosActive.webKeyPair)
         && !friendKeyApiSupplemented.has(id);
 
+    // [诊断] needsApiSupplement 决策（无论是否真的调 API 都记一次）
+    const _diagWillCallApi = (!keyInfosActive || needsApiSupplement) && (!isSelf || msgEncryptionVersion === -1);
+    if (_diagTaskId && msgEncryptionVersion === -1) {
+        try {
+            oneToOneSendDiag.markDecision(_diagTaskId, {
+                needsApiSupplement: !!needsApiSupplement,
+                apiCalled: !!_diagWillCallApi,
+            });
+        } catch (e) {}
+    }
+
     // 如果指定版本的密钥不存在，或发送时缓存不完整，则需要api获取
     if ((!keyInfosActive || needsApiSupplement) && (!isSelf || msgEncryptionVersion === -1)) {
         if (needsApiSupplement) {
@@ -454,6 +479,16 @@ export const fnFriendRelKeyGet = async ({
 
             const appKeyVersion = _.get(appKeyPair, "keyVersion");
             const pcKeyVersion = _.get(webKeyPair, "keyVersion");
+
+            // [诊断] API 返回结果
+            if (_diagTaskId && msgEncryptionVersion === -1) {
+                try {
+                    oneToOneSendDiag.markDecision(_diagTaskId, {
+                        apiAppKeyVersion: appKeyVersion,
+                        apiPcKeyVersion: pcKeyVersion,
+                    });
+                } catch (e) {}
+            }
 
             // 如果
             if (appKeyVersion || pcKeyVersion) {
@@ -537,6 +572,28 @@ export const fnFriendRelKeyGet = async ({
                     relKey: secret(privateKey, appKeyPair.publicKey).toUpperCase(),
                     keyVersion: appKeyPair.keyVersion,
                 };
+            }
+
+            // [诊断] relKey 生成完毕，记录所有密钥对与 relKey 摘要
+            if (_diagTaskId) {
+                try {
+                    oneToOneSendDiag.markKey(_diagTaskId, {
+                        privateKey,
+                        ownKeyVersion: accountConfig.keyVersion,
+                        appKeyPair: (appKeyPair && appKeyPair.publicKey)
+                            ? { publicKey: appKeyPair.publicKey, keyVersion: appKeyPair.keyVersion }
+                            : null,
+                        webKeyPair: (webKeyPair && webKeyPair.publicKey)
+                            ? { publicKey: webKeyPair.publicKey, keyVersion: webKeyPair.keyVersion }
+                            : null,
+                        appKeyPairOwn: (appKeyPairOwn && appKeyPairOwn.publicKey)
+                            ? { publicKey: appKeyPairOwn.publicKey, keyVersion: appKeyPairOwn.keyVersion }
+                            : null,
+                        relKeyApp: data.app ? data.app.relKey : null,
+                        relKeyPc: data.pc ? data.pc.relKey : null,
+                        relKeyAppOwn: data.appOwn ? data.appOwn.relKey : null,
+                    });
+                } catch (e) {}
             }
 
             return data;
@@ -1466,6 +1523,7 @@ export const fnFormartMsgParams = async ({ data, customMsgId, id, type }) => {
                 msgEncryptionVersion: -1,
                 source: 1,
                 isSelf: true,
+                _diagTaskId: customMsgId,
             });
 
             if (!data) {
@@ -1477,6 +1535,8 @@ export const fnFormartMsgParams = async ({ data, customMsgId, id, type }) => {
                 });
                 window.$toast(i18n.t("密钥异常，发送消息失败"));
                 benchmark.markFailed(customMsgId, 'fnFriendRelKeyGet');
+                try { oneToOneSendDiag.markRelKeyNull(customMsgId); } catch (e) {}
+                try { oneToOneSendDiag.cancel(customMsgId, 'REL_KEY_NULL'); } catch (e) {}
                 return;
             }
 
@@ -1552,6 +1612,18 @@ export const fnFormartMsgParams = async ({ data, customMsgId, id, type }) => {
             }
 
             params.content = contentCode;
+
+            // [诊断] 最终 OneToOneMessage 各字段（仅 friend 路径）
+            if (type === 'friend') {
+                try {
+                    oneToOneSendDiag.markFinal(customMsgId, {
+                        outerVersion: params.version,
+                        appContent: params.appContent || null,
+                        webContent: params.webContent || null,
+                        myselfAppContent: params.myselfAppContent || null,
+                    });
+                } catch (e) {}
+            }
         }
     }
 

@@ -7,6 +7,7 @@ import { strIsSafe } from "@/utils/base";
 // 事件
 import eventCommon from "@/event/common";
 import benchmark from "@/debuggers/benchmark";
+import oneToOneSendDiag from "@/debuggers/oneToOneSendDiag";
 
 export const sendMessage = async (params, flag) => {
     console.log('sendMessage--', params, flag)
@@ -95,6 +96,15 @@ setInterval(() => {
                 }
             });
         } else {
+            try {
+                oneToOneSendDiag.start({
+                    taskId: flag,
+                    id: info.receiveUid,
+                    raw: info.text || info.content,
+                    msgType: info.msgType,
+                    chatType: info.chatType,
+                });
+            } catch (e) { /* 诊断不可影响业务 */ }
             fnFormartMsgParams({
                 data: info,
                 customMsgId: flag,
@@ -107,6 +117,7 @@ setInterval(() => {
                 } else {
                     // benchmark: 消息参数格式化失败（私聊）
                     benchmark.markFailed(flag, 'fnFormartMsgParams_friend');
+                    try { oneToOneSendDiag.cancel(flag, 'PARAM_BUILD_FAILED'); } catch (e) {}
                 }
             });
         }
