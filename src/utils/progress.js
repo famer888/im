@@ -7,11 +7,14 @@ class ProgressManager {
   // key: taskId, value: Set<callback>
   subscribers = new Map();
   install() {
+    // contextIsolation 下 ipcRenderer.removeListener 无法匹配跨桥 proxy wrapper（每次跨桥生成新 proxy），
+    // 会导致 home mount 多次后 listener 累加；用 removeAllListeners 按 channel 兜底清理。
+    ipcRenderer.removeAllListeners("downloadProgress");
     ipcRenderer.on("downloadProgress", this.update);
     eventBase.fnCommunicationMonitoring("upload-progress", ["upload-progress"], (data) => this.update(null, data));
   }
   uninstall() {
-    ipcRenderer.removeListener("downloadProgress", this.update);
+    ipcRenderer.removeAllListeners("downloadProgress");
     eventBase.fnCommunicationMonitoring("upload-progress", null);
   }
   taskIdFromMessage(message) {

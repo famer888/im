@@ -164,7 +164,7 @@ const enqueueDownloadContext = (url, data) => {
     downloadFileMap.set(key, queue);
 };
 
-const dequeueDownloadContext = (url) => {
+const _dequeueByUrl = (url) => {
     const key = getDownloadUrlKey(url);
     const queue = downloadFileMap.get(key);
     if (!queue || queue.length === 0) {
@@ -177,6 +177,18 @@ const dequeueDownloadContext = (url) => {
         downloadFileMap.set(key, queue);
     }
     return data;
+};
+
+// will-download 时 item.getURL() 在 302 redirect 后是最终 URL，与 enqueue 时初始 URL 不一致；
+// urlChain[0] 才是渲染端发起下载时用的初始 URL。优先用初始 URL 取，取不到再 fallback 到当前 URL，
+// 既修复 redirect 场景的 dequeue MISS（"图片已过期"），也避免 map 残留泄漏。
+const dequeueDownloadContext = (url, urlChain = []) => {
+    const initialUrl = (Array.isArray(urlChain) && urlChain.length > 0) ? urlChain[0] : "";
+    if (initialUrl && initialUrl !== url) {
+        const data = _dequeueByUrl(initialUrl);
+        if (data) return data;
+    }
+    return _dequeueByUrl(url);
 };
 
 ipcMain.handle("get-user-data-path", () => {
@@ -701,7 +713,11 @@ const downloadHandler = (event, item, webContents) => {
    let timerName = "";
     try {
         const itemUrl = item.getURL();
-        data = dequeueDownloadContext(itemUrl);
+        let itemUrlChain = [];
+        try {
+            itemUrlChain = (typeof item.getURLChain === "function") ? item.getURLChain() : [];
+        } catch (_e) { itemUrlChain = []; }
+        data = dequeueDownloadContext(itemUrl, itemUrlChain);
 
         if (!data) {
             let defalutPath = nodePath.join(userData, `/Local Storage/bad`);

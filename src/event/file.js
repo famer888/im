@@ -26,6 +26,24 @@ import progress from "@/utils/progress";
 const FILE_ERROR_TYPES = ["downloadError", "decryptionError"];
 const latestMediaDownloadRequests = new Map();
 
+// contextIsolation 下 ipcRenderer.removeListener 无法移除跨桥 proxy wrapper（每次跨桥生成新 proxy），
+// 导致 listener 单调累加；同一个 downloadFileDone 事件会触发多次 handleDownloadFileDone，
+// 多次 writeFileSync 同一路径会与 checkFileCorrect 的 img 探针发生 truncate 竞态 → 解密误判失败。
+// 用 downloadRequestId 做单次幂等保护：固定上限 LRU，纯同步无定时器，常数内存。
+const _PROCESSED_REQ_MAX = 500;
+const _processedDownloadRequestIds = new Set();
+const _markRequestProcessed = (reqId) => {
+    if (!reqId) return false;
+    if (_processedDownloadRequestIds.has(reqId)) return true;
+    _processedDownloadRequestIds.add(reqId);
+    if (_processedDownloadRequestIds.size > _PROCESSED_REQ_MAX) {
+        // Set 保留插入顺序，淘汰最早进入的 reqId
+        const oldest = _processedDownloadRequestIds.values().next().value;
+        _processedDownloadRequestIds.delete(oldest);
+    }
+    return false;
+};
+
 const isFileErrorValue = (value) => FILE_ERROR_TYPES.includes(value);
 
 const isImageLocalKey = (key, chatType) => {
@@ -139,6 +157,9 @@ const shouldSkipStaleErrorUpdate = async ({ id, type, data, updated, errorType }
 const handleDownloadFileDone = (_$, data) => {
     const { fileLocalPath, fileKey, chatType } = data;
     // console.log('下载成功 ----------》 26', data)
+    if (_markRequestProcessed(data && data.downloadRequestId)) {
+        return;
+    }
     if (fileKey) {
         let fileData;
         try {
@@ -473,15 +494,13 @@ const fnDownloadFileInfoUpdate = async (data, errorType) => {
  * 监听下载成功
  */
 const fnMonitorDownloadFileDone = (isMonitor) => {
+    // contextIsolation 下 removeListener 无法匹配跨桥 proxy wrapper，会导致 listener 累加；
+    // removeAllListeners 按 channel 操作不需要匹配函数，能干净清掉所有累加的 listener。
+    ipcRenderer.removeAllListeners("downloadFileDone");
+    ipcRenderer.removeAllListeners("downloadFileFailed");
     if (isMonitor) {
         ipcRenderer.on("downloadFileDone", handleDownloadFileDone);
         ipcRenderer.on("downloadFileFailed", handleDownloadFileFailed);
-    } else {
-        ipcRenderer.removeListener("downloadFileDone", handleDownloadFileDone);
-        ipcRenderer.removeListener(
-            "downloadFileFailed",
-            handleDownloadFileFailed
-        );
     }
 };
 

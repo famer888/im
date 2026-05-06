@@ -67,10 +67,13 @@ export const userSelectSavePath = (fileName, options) => {
                 key,
                 ...options,
             });
+            // contextIsolation 下 removeListener 无法匹配跨桥 proxy wrapper，listener 每次调用都会累加；
+            // 用 removeAllListeners 兜底清旧 listener，触发后再清一次防止下一次调用残留。
+            ipcRenderer.removeAllListeners("select-dir-callback");
             const callback = (e, args) => {
+                ipcRenderer.removeAllListeners("select-dir-callback");
                 resolve(args);
             };
-            ipcRenderer.removeListener("select-dir-callback", callback);
             ipcRenderer.on("select-dir-callback", callback);
         } catch (err) {
             reject(err);

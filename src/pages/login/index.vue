@@ -33,9 +33,14 @@ export default {
     });
   },
   created() {
+    // contextIsolation 下 removeListener 无法匹配跨桥 proxy wrapper，登录页面多次 mount 会累加 listener
+    ipcRenderer.removeAllListeners("cache-db");
     ipcRenderer.on("cache-db", (e, args) => {
       ipcRenderer.send("cache-no-login", {});
     });
+  },
+  beforeDestroy() {
+    ipcRenderer.removeAllListeners("cache-db");
   },
   methods: {
     close() {
