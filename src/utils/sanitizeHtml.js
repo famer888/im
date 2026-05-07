@@ -40,13 +40,56 @@ const RICH_HTML_CONFIG = {
     "template",
     "svg",
     "math",
+    // CSS 注入/UI 重叠（clickjacking）防护
+    "style",
   ],
+  // srcset 解析存在浏览器/版本差异，禁掉避免 src 白名单被绕过
+  FORBID_ATTR: ["srcset"],
+};
+
+/**
+ * customLink 渲染专用：仅允许文本 + 表情 <img>（与编辑器表情产物一致）。
+ * 用在 lable-ele.vue 的 customLink 分支，避免通过自定义链接夹带其它资源标签。
+ */
+const CUSTOM_LINK_CONFIG = {
+  ALLOWED_TAGS: ["img", "br", "span"],
+  ALLOWED_ATTR: ["src", "data-key", "class", "alt"],
+  ALLOWED_URI_REGEXP: RICH_HTML_ALLOWED_URI,
+  FORBID_ATTR: ["srcset", "style", "onload", "onerror", "onclick"],
+  KEEP_CONTENT: true,
 };
 
 export function sanitizeHtml(dirty) {
   if (dirty == null || dirty === "") return "";
   const s = typeof dirty === "string" ? dirty : String(dirty);
   return DOMPurify.sanitize(s, RICH_HTML_CONFIG);
+}
+
+/**
+ * customLink 内容专用净化：仅保留文本与表情图。
+ */
+export function sanitizeCustomLinkHtml(dirty) {
+  if (dirty == null || dirty === "") return "";
+  const s = typeof dirty === "string" ? dirty : String(dirty);
+  return DOMPurify.sanitize(s, CUSTOM_LINK_CONFIG);
+}
+
+/**
+ * 资源标签 src 协议白名单。用于 v-bind:src 直接绑定的场景（不走 sanitizeHtml）。
+ * 与 public/notification-app.js 中 safeSrc 口径对齐：
+ *   - app:/local-resource:/file: 本地资源
+ *   - http(s): 远端资源
+ *   - blob: 内存资源
+ *   - 相对路径（./xxx 或 /xxx）
+ */
+export function safeSrc(url) {
+  if (typeof url !== "string") return "";
+  const s = url.trim();
+  if (!s) return "";
+  if (/^(?:app:|local-resource:|file:|blob:)/i.test(s)) return s;
+  if (/^https?:\/\//i.test(s)) return s;
+  if (/^\.?\.?\//.test(s)) return s; // ./xxx, ../xxx, /xxx
+  return "";
 }
 
 export function escapeHtml(text) {

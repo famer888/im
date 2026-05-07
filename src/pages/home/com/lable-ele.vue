@@ -10,7 +10,11 @@
   <span v-else-if="info.type === 'text'">{{
     isNotification ? info.content : filterSensitiveWords(info.content)
   }}</span>
-  <img v-else-if="info.type === 'image'" :data-key="info.key" :src="info.src" />
+  <img
+    v-else-if="info.type === 'image' && safeSrc(info.src)"
+    :data-key="info.key"
+    :src="safeSrc(info.src)"
+  />
   <a
     v-else-if="info.type === 'link'"
     href="#"
@@ -21,7 +25,7 @@
     v-else-if="info.type === 'customLink'"
     href="#"
     @click.prevent.stop="handleGoLink(info, true)"
-    v-html="sanitizeHtml(info.content)"
+    v-html="sanitizeCustomLinkHtml(info.content)"
     ></a>
   <br v-else />
 </template>
@@ -29,7 +33,7 @@
 import { filterSensitiveWords } from "@/utils/tools";
 import { isChannelLink } from "@/api/imChannel.js";
 import { completionUrl } from "@/utils/base";
-import { sanitizeHtml } from "@/utils/sanitizeHtml";
+import { sanitizeCustomLinkHtml, safeSrc } from "@/utils/sanitizeHtml";
 
 // 事件
 import eventBase from "@/event/base";
@@ -42,7 +46,8 @@ export default {
   name: "lebleEle",
   props: ["info", "isNotification", "currentChatId"],
   methods: {
-    sanitizeHtml,
+    sanitizeCustomLinkHtml,
+    safeSrc,
     filterSensitiveWords,
     /**
      * 跳转频道聊天窗

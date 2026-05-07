@@ -383,6 +383,20 @@ export const replaceString = (str, searchChar, replaceChar) => {
 };
 
 /**
+ * 把任意字符串里的 HTML 元字符转义成实体，避免拼到 attribute 里被解析。
+ * 注意：与 utils/sanitizeHtml.js 中的 escapeHtml 行为保持一致，本文件为避免循环依赖此处独立维护。
+ */
+const escapeHtmlAttr = (text) => {
+    if (text == null) return "";
+    return String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+};
+
+/**
  * 替换链接
  */
 export const repalceLink = (text) => {
@@ -395,7 +409,11 @@ export const repalceLink = (text) => {
     const safeEndChar = `[^${forbiddenChars}\\.,;:?!()\\[\\]{}]`;
 
     const regex = new RegExp(`(https?:\\/\\/[^${forbiddenChars}]*${safeEndChar})`, 'g'); // 匹配http或https开头的链接, 排除结尾标点
-    return text.replace(regex, '<a href="$1" data-href="$1" target="_blank">$1</a>');
+    return text.replace(regex, (url) => {
+        const safe = escapeHtmlAttr(url);
+        // target=_blank 必须配 rel="noopener noreferrer"，避免 window.opener 反向劫持
+        return `<a href="${safe}" data-href="${safe}" target="_blank" rel="noopener noreferrer">${safe}</a>`;
+    });
 };
 
 /**
@@ -425,23 +443,54 @@ export const repalceLinkNoPrefix = (text) => {
     const urlPattern = new RegExp(`([a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,6}(\\/[^${forbiddenChars}]*${safeEndChar}|\\/)?`, 'g');
 
     return text.replace(urlPattern, (url) => {
-        return `<a href="${`https://${url}`}" data-href="${`https://${url}`}" target="_blank" >${url}</a>`;
+        const href = `https://${url}`;
+        const safeHref = escapeHtmlAttr(href);
+        const safeText = escapeHtmlAttr(url);
+        return `<a href="${safeHref}" data-href="${safeHref}" target="_blank" rel="noopener noreferrer">${safeText}</a>`;
     });
 };
+
+/**
+ * 资源标签 / 脚本注入 vector 黑名单。
+ *
+ * 设计原则：
+ *   1) 兼容已有判定（eval(/child_process/.exec/atob(）。
+ *   2) 增加资源标签场景下常见的 vector：
+ *      - 危险 HTML 标签（script/iframe/object/embed/svg/math/body/link/meta/base/form/style/template）
+ *      - 危险协议（javascript:/vbscript:/data:text/html）
+ *      - 标签上的内联事件处理器（on\w+= 必须出现在 < 与 > 之间，避免误伤纯文本）
+ *   3) 不伤合法消息：纯文本里的 `<` `>` 比较符号、`function`、网址、表情等保持放行。
+ *
+ *  注意：这只是发送侧的深度防御兜底，渲染侧仍然以 sanitizeHtml.js 的 DOMPurify 配置为准。
+ */
+const RESOURCE_TAG_DANGEROUS_TAGS =
+    /<\s*\/?\s*(?:script|iframe|object|embed|svg|math|body|link|meta|base|form|style|template)\b/i;
+const RESOURCE_TAG_DANGEROUS_PROTOCOL =
+    /(?:javascript|vbscript)\s*:|data\s*:\s*text\s*\/\s*html/i;
+const RESOURCE_TAG_INLINE_HANDLER = /<[^>]*\son\w+\s*=/i;
 
 export const strIsSafe = (str) => {
     if (typeof str !== "string") {
         return true;
     }
 
-    const strNew = str.replace(/\s*/g, "");
+    // 1) 旧关键字（保留行为，避免回归）
+    const compact = str.replace(/\s*/g, "");
+    if (
+        compact.includes("eval(") ||
+        compact.includes("child_process") ||
+        compact.includes(".exec") ||
+        compact.includes("atob(")
+    ) {
+        return false;
+    }
 
-    return (
-        !strNew.includes("eval(") &&
-        !strNew.includes("child_process") &&
-        !strNew.includes(".exec") &&
-        !strNew.includes("atob(")
-    );
+    // 2) 资源标签 XSS vector
+    if (RESOURCE_TAG_DANGEROUS_TAGS.test(str)) return false;
+    if (RESOURCE_TAG_DANGEROUS_PROTOCOL.test(str)) return false;
+    if (RESOURCE_TAG_INLINE_HANDLER.test(str)) return false;
+
+    return true;
 };
 
 /**
