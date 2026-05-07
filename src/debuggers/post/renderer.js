@@ -40,10 +40,11 @@ export const uploadPackagedLog = async ({ loginId, onProgress }) => {
 
     const keyData = await getUploadUrl({
       attachType: 4,
-      attachWorkspaceType: 1,
+      attachWorkspaceType: 0,
       fileSize: file.size,
       suffix,
     });
+    console.log('>>>', keyData);
     if (!keyData || !keyData.fileId) {
       return {
         success: false,
