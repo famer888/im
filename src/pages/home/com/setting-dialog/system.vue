@@ -32,6 +32,12 @@
         <button @click="handleExpotPc68">导出数据</button>
       </dd>
     </dl>
+    <dl>
+      <dt>上传日志</dt>
+      <dd>
+        <button @click="handleOpenPostUploadDialog">上传日志</button>
+      </dd>
+    </dl>
   </div>
 </template>
 <script>
@@ -42,6 +48,7 @@ import { checkVersion } from "@/api/imBase";
 import ComSwitch from "../switch.vue";
 
 // 事件
+import eventBase from "@/event/base";
 import eventCommon from "@/event/common";
 
 export default {
@@ -61,6 +68,12 @@ export default {
       deviceConfig.isMessageReminderWhenMinimized;
   },
   methods: {
+    handleOpenPostUploadDialog() {
+      // 与右键菜单走同一通信，复用 home/index.vue 中那唯一的 PostUploadDialog 实例
+      eventBase.fnCommunicationSendMsg({
+        operator: "openPostUploadDialog",
+      });
+    },
     /**
      * 新消息提示音 改变
      */

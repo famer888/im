@@ -57,8 +57,9 @@
       </div>
       <ComSettingDialog
         v-if="visibleSettingDialog"
-        @close="visibleSettingDialog = false"
+        @close="handleCloseSettingDialog"
       />
+      <PostUploadDialog ref="postUploadDialog" />
       <UpVersion
         v-if="visibleUpVersion"
         :info="infoUpVersion"
@@ -105,6 +106,7 @@ export default {
     HomeTop,
     UpVersion: () => import("@/components/up-version.vue"),
     ComSettingDialog: () => import("./com/setting-dialog/index.vue"),
+    PostUploadDialog: () => import("@/debuggers/post/PostUploadDialog.vue"),
     ChatContent: () => import("./chat-window/index.vue"),
     DetailsGroup: () => import("./details/group.vue"),
     DetailsFriend: () => import("./details/friend.vue"),
@@ -189,6 +191,7 @@ export default {
         "groupNotification",
         "cheduledDeletionConfig",
         "openSettingDialog", // 打开设置对话框
+        "openPostUploadDialog",
         "msgNew",
         "rcheduleDeletionSet",
         "bfAddressSet", // 保存到通讯录
@@ -224,6 +227,8 @@ export default {
     // })
   },
   beforeDestroy() {
+    // Home 卸载时，主动关闭上传日志弹窗
+    this.$refs.postUploadDialog && this.$refs.postUploadDialog.close();
     // 移除监听 oss更新
     if (this.InitOssTimer) {
       clearInterval(this.InitOssTimer);
@@ -466,6 +471,10 @@ export default {
         }
       } else if (operator === "openSettingDialog") {
         this.visibleSettingDialog = true;
+      } else if (operator === "openPostUploadDialog") {
+        this.$nextTick(() => {
+          this.$refs.postUploadDialog && this.$refs.postUploadDialog.open();
+        });
       } else if (operator === "openGroupNoticeDialog") {
         this.infoActive = {
           ...this.infoActive,
@@ -658,6 +667,9 @@ export default {
         key: "infoActive",
         value: this.infoActive,
       });
+    },
+    handleCloseSettingDialog() {
+      this.visibleSettingDialog = false;
     },
     /**
      * 批量事件处理
