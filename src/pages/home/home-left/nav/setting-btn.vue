@@ -3,6 +3,7 @@
     <span @click="handleOpenMenu"> {{ $t("设置") }}</span>
     <vue-context ref="menu" :lazy="true">
       <li @click="handleOpenSettingDialog">{{ $t("系统设置") }}</li>
+      <li @click="handleOpenPostUploadDialog">上传日志</li>
       <li @click="handleExit">{{ $t("退出登录") }}</li>
     </vue-context>
   </div>
@@ -57,6 +58,11 @@ export default {
     handleOpenSettingDialog() {
       eventBase.fnCommunicationSendMsg({
         operator: "openSettingDialog",
+      });
+    },
+    handleOpenPostUploadDialog() {
+      eventBase.fnCommunicationSendMsg({
+        operator: "openPostUploadDialog",
       });
     },
   },

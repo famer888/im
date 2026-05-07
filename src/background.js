@@ -33,9 +33,10 @@ import { logger, writeLog, writeCrashReport, initProcessLogger } from '@/utils/l
 import MediaProcess, { isMediaPlayerWindow } from "@/utils/media/MediaProcess";
 import { shouldOpenInMediaPreview } from "@/utils/media";
 import { installCorsHandlers } from "@/utils/cors";
-import { initNetworkDiagnostics } from "@/debugger/netlog";
 import { isDangerousFile } from "@/utils/minecheck";
 import Storage from "@/cache/storage";
+import { initNetworkDiagnostics } from "@/debuggers/netlog";
+import { initPostLogUploadIpc } from "@/debuggers/post/main";
 
 app.on("gpu-process-crashed", (event, kill) => {
     // console.warn("app:gpu-process-crashed", event, kill);
@@ -132,6 +133,8 @@ let codeCacheDir = `${userData}/Code Cache`;
 let mainWindowIsFocused = true;
 let downTimers = {};
 let powerBlockerId = null; // 电源阻止器ID
+
+initPostLogUploadIpc();
 
 const getDownloadRequestId = (args = {}) => {
     return args.downloadRequestId || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -418,7 +421,7 @@ function updateTray(unread = 0) {
                     updateTray(0);
                     mainWindow.show();
                 });
-                tray.setToolTip("【ocs 版本1.6.9】");
+                tray.setToolTip("【ocs 版本1.6.9-1】");
             }
 
             if (isOsx) {

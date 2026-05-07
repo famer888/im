@@ -21,7 +21,7 @@
     </dl>
     <h3>{{ $t("关于我们") }}</h3>
     <dl>
-      <dt>{{ $t("版本信息") }} v1.6.9</dt>
+      <dt>{{ $t("版本信息") }} v1.6.9-1</dt>
       <dd>
         <button @click="handleVisionUpdate">{{ $t("版本更新") }}</button>
       </dd>
@@ -30,6 +30,12 @@
       <dt>ocs导出</dt>
       <dd>
         <button @click="handleExpotPc68">导出数据</button>
+      </dd>
+    </dl>
+    <dl>
+      <dt>上传日志</dt>
+      <dd>
+        <button @click="handleOpenPostUploadDialog">上传日志</button>
       </dd>
     </dl>
   </div>
@@ -42,6 +48,7 @@ import { checkVersion } from "@/api/imBase";
 import ComSwitch from "../switch.vue";
 
 // 事件
+import eventBase from "@/event/base";
 import eventCommon from "@/event/common";
 
 export default {
@@ -61,6 +68,12 @@ export default {
       deviceConfig.isMessageReminderWhenMinimized;
   },
   methods: {
+    handleOpenPostUploadDialog() {
+      // 与右键菜单走同一通信，复用 home/index.vue 中那唯一的 PostUploadDialog 实例
+      eventBase.fnCommunicationSendMsg({
+        operator: "openPostUploadDialog",
+      });
+    },
     /**
      * 新消息提示音 改变
      */
