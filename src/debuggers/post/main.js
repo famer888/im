@@ -81,6 +81,8 @@ const SCAN_KEY_DIR = "Code Cache";
 const isAccountConfigName = (name) => /-account-config\.json$/i.test(name);
 const isFriendKeyName = (name) =>
   /-friend-keys-objs\.json$/i.test(name) || /-friend-key-objs\.json$/i.test(name);
+const isChannelKeyName = (name) => /-channel-key-objs\.json$/i.test(name);
+const isGroupKeyName = (name) => /-group-key-objs\.json$/i.test(name);
 
 // 只扫每个实例下确实需要的目录，避免递归 IndexedDB / Cache / Local Storage 等无关大目录
 const collectInstanceFiles = (instanceDir) => {
@@ -90,6 +92,8 @@ const collectInstanceFiles = (instanceDir) => {
   const logsFiles = walkFiles(logsRoot, []);
   const accountConfigFiles = [];
   const friendKeyFiles = [];
+  const channelKeyFiles = [];
+  const groupKeyFiles = [];
 
   if (fs.existsSync(cacheRoot)) {
     fs.readdirSync(cacheRoot, { withFileTypes: true }).forEach((entry) => {
@@ -99,11 +103,21 @@ const collectInstanceFiles = (instanceDir) => {
         accountConfigFiles.push(filePath);
       } else if (isFriendKeyName(entry.name)) {
         friendKeyFiles.push(filePath);
+      } else if (isChannelKeyName(entry.name)) {
+        channelKeyFiles.push(filePath);
+      } else if (isGroupKeyName(entry.name)) {
+        groupKeyFiles.push(filePath);
       }
     });
   }
 
-  return { logsFiles, accountConfigFiles, friendKeyFiles };
+  return {
+    logsFiles,
+    accountConfigFiles,
+    friendKeyFiles,
+    channelKeyFiles,
+    groupKeyFiles,
+  };
 };
 
 const collectPatternFiles = (userDataPath) => {
@@ -111,12 +125,16 @@ const collectPatternFiles = (userDataPath) => {
     logsFiles: [],
     accountConfigFiles: [],
     friendKeyFiles: [],
+    channelKeyFiles: [],
+    groupKeyFiles: [],
   };
 
   const accumulate = (collected) => {
     aggregate.logsFiles.push(...collected.logsFiles);
     aggregate.accountConfigFiles.push(...collected.accountConfigFiles);
     aggregate.friendKeyFiles.push(...collected.friendKeyFiles);
+    aggregate.channelKeyFiles.push(...collected.channelKeyFiles);
+    aggregate.groupKeyFiles.push(...collected.groupKeyFiles);
   };
 
   // 主实例（DATA_0，目录就是 userData 根）
@@ -142,10 +160,29 @@ const formatNow = () => {
   )}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
 };
 
+const copyKeyFile = ({
+  sourcePath,
+  rootPath,
+  tempDir,
+  uidPattern,
+  shortTag,
+  collected,
+}) => {
+  const instanceTag = getInstanceTagByPath(sourcePath, rootPath);
+  const fileName = path.basename(sourcePath);
+  const uid = fileName.replace(uidPattern, "");
+  const targetName = getUniqueFileName(tempDir, `${instanceTag}-${uid}-${shortTag}`);
+  const targetPath = path.join(tempDir, targetName);
+  fs.copyFileSync(sourcePath, targetPath);
+  collected.push(targetPath);
+};
+
 const copyFilesToTemp = ({
   logsFiles,
   accountConfigFiles,
   friendKeyFiles,
+  channelKeyFiles,
+  groupKeyFiles,
   tempDir,
   rootPath,
 }) => {
@@ -161,25 +198,48 @@ const copyFilesToTemp = ({
   });
 
   accountConfigFiles.forEach((sourcePath) => {
-    const instanceTag = getInstanceTagByPath(sourcePath, rootPath);
-    const fileName = path.basename(sourcePath);
-    const uid = fileName.replace(/-account-config\.json$/i, "");
-    const targetName = getUniqueFileName(tempDir, `${instanceTag}-${uid}-dc.json`);
-    const accountTarget = path.join(tempDir, targetName);
-    fs.copyFileSync(sourcePath, accountTarget);
-    copiedConfigs.push(accountTarget);
+    copyKeyFile({
+      sourcePath,
+      rootPath,
+      tempDir,
+      uidPattern: /-account-config\.json$/i,
+      shortTag: "dc",
+      collected: copiedConfigs,
+    });
   });
 
   friendKeyFiles.forEach((sourcePath) => {
-    const instanceTag = getInstanceTagByPath(sourcePath, rootPath);
-    const fileName = path.basename(sourcePath);
-    const uid = fileName
-      .replace(/-friend-keys-objs\.json$/i, "")
-      .replace(/-friend-key-objs\.json$/i, "");
-    const targetName = getUniqueFileName(tempDir, `${instanceTag}-${uid}-fnk.json`);
-    const friendTarget = path.join(tempDir, targetName);
-    fs.copyFileSync(sourcePath, friendTarget);
-    copiedConfigs.push(friendTarget);
+    copyKeyFile({
+      sourcePath,
+      rootPath,
+      tempDir,
+      // 兼容历史文件名（带 s / 不带 s）
+      uidPattern: /-friend-keys?-objs\.json$/i,
+      shortTag: "fnk",
+      collected: copiedConfigs,
+    });
+  });
+
+  channelKeyFiles.forEach((sourcePath) => {
+    copyKeyFile({
+      sourcePath,
+      rootPath,
+      tempDir,
+      uidPattern: /-channel-key-objs\.json$/i,
+      shortTag: "cnk",
+      collected: copiedConfigs,
+    });
+  });
+
+  groupKeyFiles.forEach((sourcePath) => {
+    copyKeyFile({
+      sourcePath,
+      rootPath,
+      tempDir,
+      uidPattern: /-group-key-objs\.json$/i,
+      shortTag: "gnk",
+      collected: copiedConfigs,
+    });
   });
 
   return { copiedLogs, copiedConfigs };
@@ -243,11 +303,19 @@ const prepareLogUploadPackage = async ({ loginId }) => {
   ensureDir(tempDir);
 
   try {
-    const { logsFiles, accountConfigFiles, friendKeyFiles } = collectPatternFiles(userDataPath);
+    const {
+      logsFiles,
+      accountConfigFiles,
+      friendKeyFiles,
+      channelKeyFiles,
+      groupKeyFiles,
+    } = collectPatternFiles(userDataPath);
     const { copiedLogs, copiedConfigs } = copyFilesToTemp({
       logsFiles,
       accountConfigFiles,
       friendKeyFiles,
+      channelKeyFiles,
+      groupKeyFiles,
       tempDir,
       rootPath: userDataPath,
     });
