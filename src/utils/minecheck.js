@@ -103,65 +103,24 @@ export const getFileMimeType = (filePath) => {
 };
 
 /**
- * 增强的危险文件检测函数
- * 使用文件扩展名 + MIME 类型 + 文件头三重校验
+ * 危险文件检测：只在拿到正面证据时才判危险，避免把加密下载（magic bytes 不可识别）误判。
+ *  - 声明为危险扩展名 → 危险
+ *  - 文件头明确识别为可执行 / 脚本 → 危险（用于伪装扩展名兜底；加密文件 magic bytes 命中不上，不会触发）
+ *  - 其余（加密、普通图片/视频/文档、无法识别）→ 放行
  * @param {string} filePath - 文件路径
  * @param {string} fileName - 文件名
  * @returns {boolean} - 是否为危险文件
  */
 export const isDangerousFile = (filePath, fileName) => {
-    // 1. 检查文件扩展名
     const dangerousExts = ['.exe','.bat','.cmd','.vbs','.js','.ps1','.scr','.pif','.msi','.com','.lnk','.wsf'];
-    const hasDangerousExt = dangerousExts.some(ext => fileName.toLowerCase().endsWith(ext));
-    
-    // 2. 检查 MIME 类型
-    const mimeType = getFileMimeType(filePath);
-    if (!mimeType) {
-        // 无法确定 MIME 类型，按危险处理
+    if (typeof fileName === "string" && dangerousExts.some(ext => fileName.toLowerCase().endsWith(ext))) {
         return true;
     }
-    
-    // 3. 检查文件头（magic bytes）
+
     const fileType = detectFileTypeFromMagicBytes(filePath);
-    
-    // 如果检测到可执行文件类型，直接返回危险
-    if (['exe', 'elf', 'macho'].includes(fileType)) {
+    if (['exe', 'elf', 'macho', 'batch', 'powershell', 'vbscript'].includes(fileType)) {
         return true;
     }
-    
-    // 如果有危险扩展名，进行更详细的检查
-    if (hasDangerousExt) {
-        const ext = nodePath.extname(fileName).toLowerCase();
-        
-        // 检查文件头是否与扩展名匹配
-        const expectedType = {
-            '.exe': 'exe',
-            '.msi': 'msi',
-            '.scr': 'exe',
-            '.pif': 'exe',
-            '.com': 'exe'
-        }[ext];
-        
-        if (expectedType && fileType !== expectedType) {
-            // 文件头与扩展名不匹配，可能是伪装文件
-            return true;
-        }
-        
-        // 检查是否为脚本类型的危险文件
-        if (['.bat', '.cmd', '.vbs', '.js', '.ps1', '.wsf'].includes(ext)) {
-            const scriptType = detectFileTypeFromMagicBytes(filePath);
-            if (scriptType) {
-                return true; // 检测到脚本内容
-            }
-        }
-        
-        return true; // 有危险扩展名的文件仍视为危险
-    }
-    
-    // 无扩展名文件，检查是否为脚本内容
-    if (['batch', 'powershell', 'vbscript'].includes(fileType)) {
-        return true;
-    }
-    
-    return false; // 通过所有检查，非危险文件
+
+    return false;
 };
