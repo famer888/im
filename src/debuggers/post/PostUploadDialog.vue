@@ -115,7 +115,7 @@ export default {
 
 .dialogCard {
   width: 460px;
-  min-height: 260px;
+  min-height: 240px;
   background: #fff;
   border-radius: 8px;
   padding: 20px 20px 72px;

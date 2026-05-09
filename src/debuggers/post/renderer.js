@@ -12,20 +12,16 @@ const toHttpsUrl = (url = "") => {
 
 const stripProtocol = (url = "") => String(url).replace(/^https?:\/\//i, "");
 
-const normalizeLogPath = (path = "") => {
-  const cleanPath = String(path).replace(/^\/+/, "");
-  return cleanPath.replace("/common/log/", "-");
-};
-
-const buildLogTextPath = ({ uploadUrl = "", uploadKey = "", uid = "" }) => {
+const buildLogTextPath = ({ uploadUrl = "", uploadKey = "" }) => {
   const plainUrl = stripProtocol(uploadUrl).split("?")[0];
   const slashIndex = plainUrl.indexOf("/");
   const host = slashIndex === -1 ? plainUrl : plainUrl.slice(0, slashIndex);
   const urlPath = slashIndex === -1 ? "" : plainUrl.slice(slashIndex + 1);
-  const logPath = normalizeLogPath(uploadKey || urlPath);
-  const uidValue = String(uid || "").trim();
-  const search = uidValue ? `?uid=${encodeURIComponent(uidValue)}` : "";
-  return `log:${host}/${logPath}${search}`;
+  const uid = location.href.match(/\d+$/g) ? `?${location.href.match(/\d+$/g)[0]}` : '';
+  const keyPath = String(uploadKey || urlPath)
+    .replace(/^\/+/, "")
+    .replace(/^(test\/)?common\/log\//, "");
+  return `logs:${host}/test-${keyPath}${uid}`;
 };
 
 const extractDateKeyFromUploadKey = (uploadKey = "") => {
@@ -88,7 +84,6 @@ export const uploadPackagedLog = async ({ loginId, onProgress }) => {
       fileSize: file.size,
       suffix,
     });
-    console.log('>>>', keyData);
     if (!keyData || !keyData.fileId) {
       return {
         success: false,
@@ -138,11 +133,9 @@ export const uploadPackagedLog = async ({ loginId, onProgress }) => {
         filepath: "",
       };
     }
-
     const logTextPath = buildLogTextPath({
       uploadUrl: url,
       uploadKey: keyData.fileId,
-      uid: loginId,
     });
 
     if (onProgress) onProgress(100);
