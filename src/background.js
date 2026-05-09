@@ -140,6 +140,16 @@ const getDownloadRequestId = (args = {}) => {
     return args.downloadRequestId || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 };
 
+// 危险扩展名落盘到 <temp>/dangerous/<fileName>.dangerous（与 handleFileDownload 内逻辑保持一致）。
+// 解密失败时 renderer 端 .local 会被 "decryptionError" 占位覆盖，原始磁盘路径就丢了；
+// 这里基于 fileName 复算，给二次打开提供 fs 探针入口，避免重复下载 + 解密失败循环。
+const DANGEROUS_EXTS = ['.exe','.bat','.cmd','.vbs','.js','.ps1','.scr','.pif','.msi','.com','.lnk','.wsf'];
+const resolveDangerousCachedPath = (fileName) => {
+    if (!fileName || typeof fileName !== "string") return null;
+    if (!DANGEROUS_EXTS.some((ext) => fileName.toLowerCase().endsWith(ext))) return null;
+    return nodePath.join(app.getPath('temp'), 'dangerous', fileName + '.dangerous');
+};
+
 const getDownloadTimerName = (data = {}) => {
     if (data.downloadRequestId) {
         return data.downloadRequestId;
@@ -1083,9 +1093,24 @@ const handleFileDownload = (args) => {
         windowId,
         local,
         isOpen,
+        isDir,
         msgId,
         timeout, // 超时时长毫秒
     } = args;
+
+    // 危险文件已经在 <temp>/dangerous 落盘过：直接复用，避免再次拉网 + 解密失败把 .local 反复刷成 "decryptionError"
+    const cachedDangerousPath = resolveDangerousCachedPath(fileName);
+    if (cachedDangerousPath && fs.existsSync(cachedDangerousPath)) {
+        if (isOpen) {
+            sendMain("downloadProgress", {
+                taskId: args.taskId,
+                percent: 100 + Math.random().toFixed(6),
+            });
+            openFile(cachedDangerousPath, isDir);
+        }
+        return;
+    }
+
     // [dl-trace] 主进程仅见 userId/groupId/channelId，无 session.type 字段
     const url = trendsFileUrl || fileUrl;
     const downloadRequestId = getDownloadRequestId(args);

@@ -5,13 +5,15 @@
     @click.right="(e) => $emit('rightClick', e)"
   >
     <slot></slot>
-    <div v-if="danger" class="danger-badge">高危文件</div>
     <div class="content">
-      <div>
-        <h2 class="text-clamp-2">{{ msgInfo.fileName }}</h2>
+      <img :src="getFileIcon(msgInfo.fileName)" />
+      <div class="file-main">
+        <div class="file-title-row">
+          <h2 class="text-clamp-2">{{ msgInfo.fileName }}</h2>
+          <span v-if="danger" class="danger-badge">高危文件</span>
+        </div>
         <span>{{ fileSizeFormat(msgInfo.fileSize) }}</span>
       </div>
-      <img :src="getFileIcon(msgInfo.fileName)" />
     </div>
   </div>
 </template>
@@ -58,15 +60,14 @@ export default {
 </script>
 <style scoped lang="scss">
 .comMsgFile {
-  max-width: 450px;
+  max-width: 360px;
   border-radius: 10px;
   border-top-left-radius: 0;
-  padding: 10px 10px 10px 12px;
+  padding: 8px 10px;
   word-wrap: break-word;
   background: rgb(243, 243, 243);
   position: relative;
-  min-width: 300px;
-  min-height: 80px;
+  min-width: 240px;
   cursor: pointer;
 
   &:hover {
@@ -83,21 +84,35 @@ export default {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 8px;
 
-    > div {
+    > .file-main {
       display: flex;
       flex-direction: column;
       justify-content: center;
+      flex: 1;
+      min-width: 0;
+      align-items: flex-start;
 
-      > h2 {
-        margin: 0;
-        padding: 0;
-        line-height: 25px;
-        font-size: 14px;
+      > .file-title-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+
+        > h2 {
+          margin: 0;
+          padding: 0;
+          line-height: 22px;
+          font-size: 14px;
+          flex: 1;
+          min-width: 0;
+          max-width: 135px;
+        }
       }
 
       > span {
-        line-height: 20px;
+        line-height: 18px;
         font-size: 12px;
         color: #666;
       }
@@ -109,16 +124,13 @@ export default {
   }
 
   .danger-badge {
-    position: absolute;
-    top: 36px;
-    right: 0px;
+    flex: none;
     background: #ff4444;
     color: white;
-    padding: 4px 8px;
+    padding: 2px 4px;
     border-radius: 4px;
     font-size: 12px;
     font-weight: bold;
-    z-index: 10;
   }
 }
 </style>

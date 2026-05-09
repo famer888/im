@@ -46,6 +46,15 @@ const _markRequestProcessed = (reqId) => {
 
 const isFileErrorValue = (value) => FILE_ERROR_TYPES.includes(value);
 
+// 与 background.js 中 DANGEROUS_EXTS 保持一致；危险文件落盘到 <temp>/dangerous 后 .local 会被 "decryptionError" 占位，
+// 仅这种情况下重置 .local 才能复用主进程的危险文件缓存命中路径。
+const DANGEROUS_FILE_EXTS = ['.exe','.bat','.cmd','.vbs','.js','.ps1','.scr','.pif','.msi','.com','.lnk','.wsf'];
+const isDangerousFileName = (name) => {
+    if (!name || typeof name !== "string") return false;
+    const lower = name.toLowerCase();
+    return DANGEROUS_FILE_EXTS.some((ext) => lower.endsWith(ext));
+};
+
 const isImageLocalKey = (key, chatType) => {
     return key === "localThumbUrl" ||
         key.startsWith("thumb_") ||
@@ -740,6 +749,18 @@ const fnFileInfosGet = async (info) => {
  * 操作文件
  */
 const fnOperatorFile = async ({ id, type, info, openDialog, isDir, taskId }, keepOriginName) => {
+    // 仅对危险扩展名文件归零 .local：之前下载/解密失败时它会被写成 "decryptionError" 占位符，
+    // 不归零的话二次打开会把它当成磁盘路径+下载 URL 送给 IPC，让 fs.stat 失败、savePath 非法。
+    // 非危险文件保持原占位符以维持现有 UI/错误语义。
+    if (
+        info &&
+        typeof info.local === "string" &&
+        isFileErrorValue(info.local) &&
+        isDangerousFileName(info.fileName)
+    ) {
+        info = { ...info, local: null };
+    }
+
     // 文件路径
     let fileUrl = info.local || "";
 
