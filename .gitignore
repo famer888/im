@@ -30,3 +30,6 @@ release
 .npmrc
 output/*
 src/build-time.json
+
+# Local test media (too large for GitHub)
+public/media/test.mp4
