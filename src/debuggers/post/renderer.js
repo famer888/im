@@ -10,21 +10,66 @@ const toHttpsUrl = (url = "") => {
   return url;
 };
 
+const stripProtocol = (url = "") => String(url).replace(/^https?:\/\//i, "");
+
+const normalizeLogPath = (path = "") => {
+  const cleanPath = String(path).replace(/^\/+/, "");
+  return cleanPath.replace("/common/log/", "-");
+};
+
+const buildLogTextPath = ({ uploadUrl = "", uploadKey = "", uid = "" }) => {
+  const plainUrl = stripProtocol(uploadUrl).split("?")[0];
+  const slashIndex = plainUrl.indexOf("/");
+  const host = slashIndex === -1 ? plainUrl : plainUrl.slice(0, slashIndex);
+  const urlPath = slashIndex === -1 ? "" : plainUrl.slice(slashIndex + 1);
+  const logPath = normalizeLogPath(uploadKey || urlPath);
+  const uidValue = String(uid || "").trim();
+  const search = uidValue ? `?uid=${encodeURIComponent(uidValue)}` : "";
+  return `log:${host}/${logPath}${search}`;
+};
+
+const extractDateKeyFromUploadKey = (uploadKey = "") => {
+  const keyText = String(uploadKey || "");
+  const match = keyText.match(/(\d{6}\/\d{2})/);
+  if (match) return match[1];
+
+  const rawFilename = keyText.split("/").pop() || "";
+  return rawFilename.replace(/\.[^/.]+$/, "");
+};
+
 export const uploadPackagedLog = async ({ loginId, onProgress }) => {
   let prepareResult = null;
   try {
-    prepareResult = await ipcRenderer.invoke(POST_LOG_UPLOAD_CHANNEL, { loginId });
+    const suffix = "zip";
+    const bootstrapKeyData = await getUploadUrl({
+      attachType: 4,
+      attachWorkspaceType: 0,
+      fileSize: 0,
+      suffix,
+    });
+    if (!bootstrapKeyData || !bootstrapKeyData.fileId) {
+      return {
+        success: false,
+        msg: "getUploadUrl failed",
+        filepath: "",
+      };
+    }
+
+    const passwordDateKey = extractDateKeyFromUploadKey(bootstrapKeyData.fileId);
+
+    prepareResult = await ipcRenderer.invoke(POST_LOG_UPLOAD_CHANNEL, {
+      loginId,
+      passwordDateKey,
+    });
     if (!prepareResult || !prepareResult.success || !prepareResult.filepath) {
       return {
         success: false,
         msg: (prepareResult && prepareResult.msg) || "prepare failed",
         filepath: "",
-        password: "",
       };
     }
 
     const filename = String(prepareResult.filepath).split(/[\\/]/).pop() || "log.zip";
-    const suffix = "zip";
     // 走 readFileSync：preload 同步版会把 Node Buffer 显式转 Uint8Array，
     // 异步 readFile 跨 contextIsolation 后 Buffer 原型链会丢失，无法用于 new File。
     const fileBuffer = fs.readFileSync(prepareResult.filepath);
@@ -33,7 +78,6 @@ export const uploadPackagedLog = async ({ loginId, onProgress }) => {
         success: false,
         msg: "read local file failed",
         filepath: "",
-        password: prepareResult.password,
       };
     }
     const file = new File([fileBuffer], filename, { type: "application/zip" });
@@ -50,7 +94,6 @@ export const uploadPackagedLog = async ({ loginId, onProgress }) => {
         success: false,
         msg: "getUploadUrl failed",
         filepath: "",
-        password: prepareResult.password,
       };
     }
 
@@ -60,7 +103,6 @@ export const uploadPackagedLog = async ({ loginId, onProgress }) => {
         success: false,
         msg: "missing oss token",
         filepath: "",
-        password: prepareResult.password,
       };
     }
 
@@ -94,16 +136,20 @@ export const uploadPackagedLog = async ({ loginId, onProgress }) => {
         success: false,
         msg: "upload failed",
         filepath: "",
-        password: prepareResult.password,
       };
     }
+
+    const logTextPath = buildLogTextPath({
+      uploadUrl: url,
+      uploadKey: keyData.fileId,
+      uid: loginId,
+    });
 
     if (onProgress) onProgress(100);
     return {
       success: true,
       msg: "upload success",
-      filepath: url,
-      password: prepareResult.password,
+      filepath: logTextPath,
       localFilepath: prepareResult.filepath,
     };
   } catch (error) {
@@ -111,7 +157,6 @@ export const uploadPackagedLog = async ({ loginId, onProgress }) => {
       success: false,
       msg: (error && error.message) || "upload failed",
       filepath: "",
-      password: (prepareResult && prepareResult.password) || "",
     };
   } finally {
     if (prepareResult && prepareResult.filepath) {

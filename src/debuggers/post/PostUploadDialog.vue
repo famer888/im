@@ -13,9 +13,6 @@
 
       <div class="result">
         <p><span>上传地址：</span>{{ result.filepath }}</p>
-        <p><span>压缩密码：</span>{{ result.password }}</p>
-        <p><span>上传uid：</span>{{ result.uploadUid }}</p>
-        <p><span>上传时间：</span>{{ result.uploadTime }}</p>
       </div>
 
       <div class="actionBar">
@@ -42,9 +39,6 @@ export default {
       errorMsg: "",
       result: {
         filepath: "",
-        password: "",
-        uploadUid: "",
-        uploadTime: "",
       },
     };
   },
@@ -77,9 +71,6 @@ export default {
       this.errorMsg = "";
       this.result = {
         filepath: "",
-        password: "",
-        uploadUid: "",
-        uploadTime: "",
       };
 
       const res = await uploadPackagedLog({
@@ -97,13 +88,10 @@ export default {
 
       this.result = {
         filepath: res.filepath,
-        password: res.password,
-        uploadUid: String(loginId),
-        uploadTime: String(Date.now()),
       };
     },
     handleCopyResult() {
-      const text = `上传地址：${this.result.filepath || ""}\n压缩密码：${this.result.password || ""}\n上传uid：${this.result.uploadUid || ""}\n上传时间：${this.result.uploadTime || ""}`;
+      const text = `上传地址：${this.result.filepath || ""}`;
       copyText(text);
       window.$toast("已复制到剪贴板");
     },

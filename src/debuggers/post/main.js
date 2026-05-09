@@ -160,6 +160,12 @@ const formatNow = () => {
   )}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
 };
 
+const getDateMd5Password = (dateKey = "") => {
+  const input = String(dateKey || "").trim();
+  if (!input) return "";
+  return crypto.createHash("md5").update(input, "utf8").digest("hex").slice(0, 10);
+};
+
 const copyKeyFile = ({
   sourcePath,
   rootPath,
@@ -286,7 +292,7 @@ const safeRemoveTempDir = (dirPath) => {
   }
 };
 
-const prepareLogUploadPackage = async ({ loginId }) => {
+const prepareLogUploadPackage = async ({ loginId, passwordDateKey }) => {
   if (!loginId) {
     return {
       success: false,
@@ -297,9 +303,10 @@ const prepareLogUploadPackage = async ({ loginId }) => {
   }
 
   const userDataPath = getUserDataRoot();
-  // 8 字节 hex = 64 bit 熵，避免 OSS URL 泄露后被快速离线爆破
-  const password = crypto.randomBytes(8).toString("hex");
-  const tempDir = path.join(os.tmpdir(), password);
+  // 按需求：压缩密码改为“getUploadUrl 日期键（如 202601/30）的 md5”
+  const password = getDateMd5Password(passwordDateKey);
+  // 临时目录仍保持随机，避免同一天多次上传发生目录冲突
+  const tempDir = path.join(os.tmpdir(), `post-log-upload-${crypto.randomBytes(8).toString("hex")}`);
   ensureDir(tempDir);
 
   try {
@@ -358,6 +365,7 @@ export const initPostLogUploadIpc = () => {
     try {
       return await prepareLogUploadPackage({
         loginId: payload.loginId,
+        passwordDateKey: payload.passwordDateKey,
       });
     } catch (error) {
       writeLog("app", "error", "[post-log-upload] prepare failed", {
