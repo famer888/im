@@ -93,6 +93,13 @@ module.exports = {
         // 修改appId是，需要同时修改backgroud.js里面设置的appUserModelId，设置见：app.setAppUserModelId(xxx)
         appId: 'cn.otc.chat',
         compression: 'normal',
+        // 把所有原生模块 .node 从 app.asar 中解出到 app.asar.unpacked/
+        // 原因：VirboxProtector 必须对文件系统上的 PE/ELF/Mach-O 操作，asar 内的文件无法加壳。
+        // Electron 运行时会自动从 app.asar.unpacked 解析 .node，业务代码无需改动。
+        asarUnpack: ['**/*.node'],
+        // 加壳钩子：在 win-unpacked / mac.app / linux-unpacked 生成后、签名/打安装包之前对关键二进制加壳。
+        // 仅在环境变量 VIRBOX_PROTECT=1 且 env ∈ {test,uat,prod} 时实际执行；详见脚本注释。
+        afterPack: './scripts/virbox-protect.js',
         artifactName: '${productName}-${version}-${os}-${arch}.${ext}',
         protocols: {
           name: 'wf-deep-linking',
