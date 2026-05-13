@@ -431,7 +431,7 @@ function updateTray(unread = 0) {
                     updateTray(0);
                     mainWindow.show();
                 });
-                tray.setToolTip("【ocs 版本1.6.9-1】");
+                tray.setToolTip("【ocs 版本1.7.0】");
             }
 
             if (isOsx) {

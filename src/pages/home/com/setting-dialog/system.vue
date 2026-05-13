@@ -21,7 +21,7 @@
     </dl>
     <h3>{{ $t("关于我们") }}</h3>
     <dl>
-      <dt>{{ $t("版本信息") }} v1.6.9-1</dt>
+      <dt>{{ $t("版本信息") }} v1.7.0</dt>
       <dd>
         <button @click="handleVisionUpdate">{{ $t("版本更新") }}</button>
       </dd>
@@ -104,7 +104,7 @@ export default {
      */
     handleVisionUpdate() {
       checkVersion().then((res) => {
-        if (res && res.version === Number("1.6.9".replace(/\./, ""))) {
+        if (res && res.version === Number("1.7.0".replace(/\./, ""))) {
           window.$toast(i18n.t("已是最新版本"));
           return;
         }
