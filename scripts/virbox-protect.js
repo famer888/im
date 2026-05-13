@@ -74,17 +74,15 @@ function resolveDsCli(plat) {
 //   - 'ds-res'   资源文件 DS 加密（dsprotector_con -c <main.ssp>）
 //
 // 路径占位符 <PRODUCT> 会被替换为 context.packager.appInfo.productFilename
+// 注：marswrapper.node 不在此处单独加壳。
+// 它留在 app.asar 内部，随 ds-res 步骤对整个 asar 的 DS 加密一起被保护，
+// 运行时由 DS-shell 主 exe 解密 asar 后，Electron 内置的 asar→native module 抽取逻辑负责加载。
 const TARGETS = {
     win32: [
         {
             type: "shell-ds",
             file: "<PRODUCT>.exe",
             ssp: "protect/win/app.ssp",
-        },
-        {
-            type: "shell",
-            file: "resources/app.asar.unpacked/marswrapper.node",
-            ssp: "protect/win/marswrapper.ssp",
         },
         {
             type: "ds-res",
@@ -100,26 +98,14 @@ const TARGETS = {
             ssp: "protect/mac/app.ssp",
         },
         {
-            type: "shell",
-            file: "<PRODUCT>.app/Contents/Resources/app.asar.unpacked/marswrapper.node",
-            ssp: "protect/mac/marswrapper.ssp",
-        },
-        {
             type: "ds-res",
             file: "<PRODUCT>.app/Contents/Resources/app.asar",
             ssp: "protect/mac/app.ssp",
         },
     ],
     linux: [
-        // linux 一般没有可加壳的主二进制（electron 主 ELF 由 framework 提供），
-        // 这里只保护 .node 和 asar
-        {
-            type: "shell",
-            file: "resources/app.asar.unpacked/marswrapper.node",
-            ssp: "protect/linux/marswrapper.ssp",
-        },
-        // 如果 linux 也要做 DS asar，需要额外一个 protect/linux/app.ssp，对应 linux 主 ELF 已加壳的 .ssp
-        // 实际操作中 linux 用户量少，可暂时不做 DS asar，按需打开下面这块
+        // Electron 主 ELF 由 framework 提供，不建议加壳；asar DS 加密需要 Linux 版 Virbox + 已加壳的 ELF .ssp。
+        // 默认 linux 不做加壳；如需启用，自行生成 protect/linux/app.ssp 并取消下面注释。
         // {
         //     type: "ds-res",
         //     file: "resources/app.asar",

@@ -14,8 +14,11 @@
 | 目标文件 | 工具 | .ssp 模板 | .ssp 内 DS 选项 |
 |---|---|---|---|
 | `<productFilename>.exe` (Win) / `<productFilename>` (Mac 主二进制) | `virboxprotector_con` | `protect/win/app.ssp` / `protect/mac/app.ssp` | **必须开 + 设密码** |
-| `marswrapper.node` | `virboxprotector_con` | `protect/{win,mac,linux}/marswrapper.ssp` | **不要开**（DS 只针对资源文件，不针对原生模块） |
-| `app.asar`（资源文件 DS 加密） | `dsprotector_con` | 复用主程序的 `app.ssp`（用 `-c` 传入） | 同上，从主程序 .ssp 读取 DS 密钥 |
+| `app.asar`（资源文件 DS 加密，**包含里面所有的 .node 原生模块**） | `dsprotector_con` | 复用主程序的 `app.ssp`（用 `-c` 传入） | 从主程序 .ssp 读取 DS 密钥 |
+
+> `marswrapper.node` 等原生模块**留在 `app.asar` 内部**，不再单独 shell 加壳。运行时由 DS 加壳的主 exe 解密 asar 后，Electron 内置的 "asar → native module 抽取" 逻辑负责把 .node 解到临时目录再 dlopen，整个过程对业务代码透明。
+>
+> 不再用 `asarUnpack` 把 .node 抽出来，是因为：(a) DS 已经覆盖到 asar 内部全部文件，单独 shell 加壳收益有限；(b) 函数级代码加密对 IM 高频 napi 调用容易踩性能坑；(c) 少一个加壳目标，发布流程更稳。
 
 ## 目录结构
 
@@ -23,14 +26,14 @@
 protect/
 ├── README.md              本文件
 ├── win/
-│   ├── app.ssp            主程序加壳工程（必须开 DS + 密码）
-│   └── marswrapper.ssp    marswrapper.node 加壳工程（不开 DS）
+│   └── app.ssp            主程序加壳工程（必须开 DS + 密码）
 ├── mac/
-│   ├── app.ssp
-│   └── marswrapper.ssp
+│   └── app.ssp
 └── linux/
-    └── marswrapper.ssp    Linux 默认只加壳 .node；如要 asar DS，自行加 app.ssp 并改脚本
+    └── (空)               Linux 默认不加壳；如要 asar DS，自行加 app.ssp 并取消脚本里 linux 项的注释
 ```
+
+> 旧版本生成的 `protect/win/marswrapper.ssp` 等文件已不再被脚本使用，可保留备用或直接删除；脚本运行时不会去读取它们。
 
 ---
 
@@ -62,23 +65,10 @@ npm run cross-package-win:test
 5. 菜单"保存配置" → 保存为 `protect/win/app.ssp`。
 6. **不要点"立即保护"** —— 我们只要 .ssp 模板，实际加壳由 CI 跑 CLI 完成。
 
-### 生成 `protect/win/marswrapper.ssp`（marswrapper.node，不开 DS）
-
-1. 新建工程，拖入 `dist/win-unpacked/resources/app.asar.unpacked/marswrapper.node`。
-   - 如果 unpacked 目录不存在，先确认 `vue.config.js` 里 `builderOptions.asarUnpack` 包含 `**/*.node`，再重新打一次包。
-2. 勾选保护选项（推荐对 .node 的方案）：
-   - 压缩
-   - 调试器检测
-   - 完整性校验
-   - **代码加密**（对 .node 这类原生模块收益高）
-   - **代码虚拟化**：只对核心导出函数开（整体 VM 启动慢）
-3. **DS 选项保持关闭** —— DS 是给资源文件用的，对 .node 没有意义。
-4. 保存为 `protect/win/marswrapper.ssp`。
-
 ### macOS / Linux 同理
 
-- `protect/mac/app.ssp` / `protect/mac/marswrapper.ssp`：流程相同，注意是 Mach-O 不是 PE。
-- `protect/linux/marswrapper.ssp`：linux 一般不加壳主二进制（Electron framework ELF），只保护 .node。
+- `protect/mac/app.ssp`：流程相同，注意目标是 Mach-O 主二进制 `<App>.app/Contents/MacOS/<productFilename>`。
+- Linux 默认不加壳；如要支持，需要在 Linux 主机上用 Linux 版 Virbox Protector 生成 `protect/linux/app.ssp`，并在 `scripts/virbox-protect.js` 里取消 linux 段的注释。
 
 完成后把 `protect/` 全部提交到 git。
 
@@ -99,10 +89,9 @@ npm run cross-package-win:test:protected
 ```
 [virbox][win32][test] [shell-ds] sidecar ocs-im-new-test.exe.ssp ← .../protect/win/app.ssp
 [virbox][win32][test] [shell-ds] vbp dist/win-unpacked/ocs-im-new-test.exe
-[virbox][win32][test] [shell]    sidecar marswrapper.node.ssp   ← .../protect/win/marswrapper.ssp
-[virbox][win32][test] [shell]    vbp dist/win-unpacked/resources/app.asar.unpacked/marswrapper.node
 [virbox][win32][test] [ds-res]   resources/app.asar (using ssp: protect/win/app.ssp)
-[virbox][win32][test] done. 3/3 targets protected.
+[virbox][win32][test] sanityCheckPackage skipped (app.asar is DS-encrypted ...)
+[virbox][win32][test] done. 2/2 targets protected.
 ```
 
 装出来的 setup 安装 → 启动 → 登录 → 收发消息 → 历史记录全过，DS 路线就跑通了。
