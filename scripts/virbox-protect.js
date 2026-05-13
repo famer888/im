@@ -116,11 +116,28 @@ const TARGETS = {
 
 const PROTECT_ENVS = new Set(["test", "uat", "prod"]);
 
-function envFromProductName(name) {
-    if (!name) return "unknown";
-    if (name.endsWith("-test")) return "test";
-    if (name.endsWith("-uat")) return "uat";
-    if (name === "ocs-im") return "prod"; // 见 .env.production
+/**
+ * 识别当前构建属于哪个发布环境（test / uat / prod / dev）。
+ *
+ * 优先级：
+ *   1. process.env.VUE_APP_ENV（由 vue-cli-service 从 .env.{mode} 加载，最权威）
+ *   2. packname 后缀兜底（兼容旧命名 / 无 .env 的纯 electron-builder 调用）
+ *
+ * 注意：不再依赖具体 packname 字符串（如 "ocs-im"），因为产品名 .env.production 里随时可能改。
+ */
+function detectEnv(context) {
+    const vueEnv = (process.env.VUE_APP_ENV || "").trim().toLowerCase();
+    if (vueEnv === "test" || vueEnv === "uat" || vueEnv === "prod") {
+        return vueEnv;
+    }
+    const packName =
+        (context.packager &&
+            context.packager.config &&
+            context.packager.config.extraMetadata &&
+            context.packager.config.extraMetadata.name) ||
+        "";
+    if (packName.endsWith("-test")) return "test";
+    if (packName.endsWith("-uat")) return "uat";
     return "dev";
 }
 
@@ -129,9 +146,7 @@ function envFromProductName(name) {
 exports.default = async function afterPack(context) {
     const plat = context.electronPlatformName;
     const productFilename = context.packager.appInfo.productFilename;
-    const packName =
-        context.packager.config.extraMetadata && context.packager.config.extraMetadata.name;
-    const env = envFromProductName(packName);
+    const env = detectEnv(context);
     const soft = process.env.VIRBOX_PROTECT_SOFT === "1";
     const on = process.env.VIRBOX_PROTECT === "1";
 
