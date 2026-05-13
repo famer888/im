@@ -20,7 +20,7 @@ export function otherSave(message) {
 // 导出历史记录
 export function outFile(key) {
     ipcRenderer.invoke("outFile", {
-        fileName: "ocs历史记录导出文件",
+        fileName: "97历史记录导出文件",
         key,
     });
 }

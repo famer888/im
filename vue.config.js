@@ -91,7 +91,7 @@ module.exports = {
           name: process.env.VUE_APP_PACKNAME,
         },
         // 修改appId是，需要同时修改backgroud.js里面设置的appUserModelId，设置见：app.setAppUserModelId(xxx)
-        appId: 'cn.otc.chat',
+        appId: 'cn.97.chat',
         compression: 'normal',
         artifactName: '${productName}-${version}-${os}-${arch}.${ext}',
         protocols: {
@@ -139,7 +139,7 @@ module.exports = {
           deleteAppDataOnUninstall: true,
           perMachine: false,
           createDesktopShortcut: true,
-          shortcutName: 'ocs-im',
+          shortcutName: '97-im',
         },
       },
     },
