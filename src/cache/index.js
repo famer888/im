@@ -39,7 +39,7 @@ const middleware = (operation, tableName, key, res) => {
     if (!res?.success && res?.error) {
         console.log(`Storage ${operation} [${tableName}] [${key}] [false] [${res.error}]`);
     } else {
-        console.log(`Storage ${operation} [${tableName}] [${key}] [true]`);
+        // console.log(`Storage ${operation} [${tableName}] [${key}] [true]`);
     }
 
     if (operation === "get") {
