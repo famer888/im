@@ -25,7 +25,7 @@ import eventCheduledCeletion from "@/event/cheduled-deletion";
 // 完善  删除聊天记录   撤回、 删除等功能
 
 const pageSize = 80;
-export const afterfix = "-68-2.0.3";
+export const afterfix = "-55-2.0.3";
 
 const handleTableNameGet = (id, type) => {
   let typeName = "message";
