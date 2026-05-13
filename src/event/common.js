@@ -721,7 +721,7 @@ const fnClientInfoGet = () => {
   const languageIndex = ["en", "zh", "zh-tw", "vi", "pt"].indexOf(
     deviceConfig.language || "zh"
   );
-  const version= "1.6.9"
+  const version= "1.7.0"
   const appVer = version.replaceAll(".", "");
   const buildTime = (buildTimeConfig && buildTimeConfig.buildTime) || "";
   return {
