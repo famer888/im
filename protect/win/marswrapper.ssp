@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ssprotect>
+	<base_info>
+		<app>Virbox Protector 3</app>
+		<version>3.5.6.22633</version>
+	</base_info>
+	<option>
+		<import>0</import>
+		<zip>0</zip>
+		<memory_check>0</memory_check>
+		<encrypt>0</encrypt>
+		<anti_debugging>0</anti_debugging>
+		<obj_name_obfuscate>0</obj_name_obfuscate>
+		<vm_detection>0</vm_detection>
+		<harware_stack_protection_compatible>0</harware_stack_protection_compatible>
+	</option>
+	<file>
+		<path>protected\marswrapper.node</path>
+	</file>
+	<sign>
+		<sns>0</sns>
+		<snk_path></snk_path>
+	</sign>
+	<plugin>
+		<ds enable="1">
+			<x86 file="ds_windows_x86.dll"></x86>
+			<x64 file="ds_windows_x64.dll"></x64>
+			<option>
+				<pwd type="password">D9D7C05B896110CE83CA40C5D589CDD0</pwd>
+			</option>
+		</ds>
+	</plugin>
+	<function>
+		<SENSENODEFUNC1 type="function" name="SENSE003ecd60">
+			<flags>0</flags>
+		</SENSENODEFUNC1>
+	</function>
+</ssprotect>

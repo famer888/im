@@ -804,17 +804,8 @@
     {
       "areaId": 8,
       "domainType": 0,
-      "domainUrl": "https://openchat-loginv2.aifeizhuangshi.top",
-      "id": 2561,
-      "moduleCode": "login_v2",
-      "moduleId": 40,
-      "paramType": 0
-    },
-    {
-      "areaId": 8,
-      "domainType": 0,
-      "domainUrl": "https://openchat-loginv2.fanpingguli.top",
-      "id": 2562,
+      "domainUrl": "https://openchat-loginv2.uorme.xyz",
+      "id": 3075,
       "moduleCode": "login_v2",
       "moduleId": 40,
       "paramType": 0
@@ -878,6 +869,15 @@
       "domainType": 0,
       "domainUrl": "https://openchat-loginv2.ddsvr2022.xyz",
       "id": 2234,
+      "moduleCode": "login_v2",
+      "moduleId": 40,
+      "paramType": 0
+    },
+    {
+      "areaId": 8,
+      "domainType": 0,
+      "domainUrl": "https://openchat-loginv2.spike0101.xyz",
+      "id": 3067,
       "moduleCode": "login_v2",
       "moduleId": 40,
       "paramType": 0
@@ -1290,7 +1290,7 @@
     {
       "areaId": 8,
       "domainType": 0,
-      "domainUrl": "https://www.xych123.top",
+      "domainUrl": "https://www.wujiayong.top",
       "id": 3008,
       "moduleCode": "groupGameThirdH5",
       "moduleId": 47,
