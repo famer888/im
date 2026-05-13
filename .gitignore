@@ -30,3 +30,9 @@ release
 .npmrc
 output/*
 src/build-time.json
+
+# VirboxProtector 临时/备份产物（.ssp 入库，但 IDE 生成的临时文件不入库）
+protect/**/*.ssp.bak
+protect/**/*.protected
+protect/**/*.log
+protect/**/.cache/

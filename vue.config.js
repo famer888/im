@@ -93,6 +93,11 @@ module.exports = {
         // 修改appId是，需要同时修改backgroud.js里面设置的appUserModelId，设置见：app.setAppUserModelId(xxx)
         appId: 'cn.55.chat',
         compression: 'normal',
+        // 加壳钩子：在 win-unpacked / mac.app / linux-unpacked 生成后、签名/打安装包之前对关键二进制加壳。
+        // 仅在环境变量 VIRBOX_PROTECT=1 且 env ∈ {test,uat,prod} 时实际执行；详见脚本注释。
+        // 当前 DS 路线下 .node 留在 app.asar 内部，随整个 asar 一起被 dsprotector_con 加密保护，
+        // 不再单独 shell 加壳；因此不需要 asarUnpack。
+        afterPack: './scripts/virbox-protect.js',
         artifactName: '${productName}-${version}-${os}-${arch}.${ext}',
         protocols: {
           name: 'wf-deep-linking',
