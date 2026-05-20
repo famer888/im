@@ -74,6 +74,9 @@ export const GroupParam = $root.GroupParam = (() => {
      * @property {boolean|null} [bfAll] GroupParam bfAll
      * @property {boolean|null} [bfGroupReadCancel] GroupParam bfGroupReadCancel
      * @property {number|null} [groupMsgCancelTime] GroupParam groupMsgCancelTime
+     * @property {string|null} [remark] GroupParam remark
+     * @property {boolean|null} [bfJoinNotice] GroupParam bfJoinNotice
+     * @property {number|null} [isEncryption] GroupParam isEncryption
      */
 
     /**
@@ -212,6 +215,30 @@ export const GroupParam = $root.GroupParam = (() => {
     GroupParam.prototype.groupMsgCancelTime = 0;
 
     /**
+     * GroupParam remark.
+     * @member {string} remark
+     * @memberof GroupParam
+     * @instance
+     */
+    GroupParam.prototype.remark = "";
+
+    /**
+     * GroupParam bfJoinNotice.
+     * @member {boolean} bfJoinNotice
+     * @memberof GroupParam
+     * @instance
+     */
+    GroupParam.prototype.bfJoinNotice = false;
+
+    /**
+     * GroupParam isEncryption.
+     * @member {number} isEncryption
+     * @memberof GroupParam
+     * @instance
+     */
+    GroupParam.prototype.isEncryption = 0;
+
+    /**
      * Creates a new GroupParam instance using the specified properties.
      * @function create
      * @memberof GroupParam
@@ -265,6 +292,12 @@ export const GroupParam = $root.GroupParam = (() => {
             writer.uint32(/* id 14, wireType 0 =*/112).bool(message.bfGroupReadCancel);
         if (message.groupMsgCancelTime != null && Object.hasOwnProperty.call(message, "groupMsgCancelTime"))
             writer.uint32(/* id 15, wireType 0 =*/120).int32(message.groupMsgCancelTime);
+        if (message.remark != null && Object.hasOwnProperty.call(message, "remark"))
+            writer.uint32(/* id 16, wireType 2 =*/130).string(message.remark);
+        if (message.bfJoinNotice != null && Object.hasOwnProperty.call(message, "bfJoinNotice"))
+            writer.uint32(/* id 17, wireType 0 =*/136).bool(message.bfJoinNotice);
+        if (message.isEncryption != null && Object.hasOwnProperty.call(message, "isEncryption"))
+            writer.uint32(/* id 18, wireType 0 =*/144).int32(message.isEncryption);
         return writer;
     };
 
@@ -361,6 +394,18 @@ export const GroupParam = $root.GroupParam = (() => {
                     message.groupMsgCancelTime = reader.int32();
                     break;
                 }
+            case 16: {
+                    message.remark = reader.string();
+                    break;
+                }
+            case 17: {
+                    message.bfJoinNotice = reader.bool();
+                    break;
+                }
+            case 18: {
+                    message.isEncryption = reader.int32();
+                    break;
+                }
             default:
                 reader.skipType(tag & 7);
                 break;
@@ -441,6 +486,15 @@ export const GroupParam = $root.GroupParam = (() => {
         if (message.groupMsgCancelTime != null && message.hasOwnProperty("groupMsgCancelTime"))
             if (!$util.isInteger(message.groupMsgCancelTime))
                 return "groupMsgCancelTime: integer expected";
+        if (message.remark != null && message.hasOwnProperty("remark"))
+            if (!$util.isString(message.remark))
+                return "remark: string expected";
+        if (message.bfJoinNotice != null && message.hasOwnProperty("bfJoinNotice"))
+            if (typeof message.bfJoinNotice !== "boolean")
+                return "bfJoinNotice: boolean expected";
+        if (message.isEncryption != null && message.hasOwnProperty("isEncryption"))
+            if (!$util.isInteger(message.isEncryption))
+                return "isEncryption: integer expected";
         return null;
     };
 
@@ -493,6 +547,12 @@ export const GroupParam = $root.GroupParam = (() => {
             message.bfGroupReadCancel = Boolean(object.bfGroupReadCancel);
         if (object.groupMsgCancelTime != null)
             message.groupMsgCancelTime = object.groupMsgCancelTime | 0;
+        if (object.remark != null)
+            message.remark = String(object.remark);
+        if (object.bfJoinNotice != null)
+            message.bfJoinNotice = Boolean(object.bfJoinNotice);
+        if (object.isEncryption != null)
+            message.isEncryption = object.isEncryption | 0;
         return message;
     };
 
@@ -529,6 +589,9 @@ export const GroupParam = $root.GroupParam = (() => {
             object.bfAll = false;
             object.bfGroupReadCancel = false;
             object.groupMsgCancelTime = 0;
+            object.remark = "";
+            object.bfJoinNotice = false;
+            object.isEncryption = 0;
         }
         if (message.groupId != null && message.hasOwnProperty("groupId"))
             if (typeof message.groupId === "number")
@@ -563,6 +626,12 @@ export const GroupParam = $root.GroupParam = (() => {
             object.bfGroupReadCancel = message.bfGroupReadCancel;
         if (message.groupMsgCancelTime != null && message.hasOwnProperty("groupMsgCancelTime"))
             object.groupMsgCancelTime = message.groupMsgCancelTime;
+        if (message.remark != null && message.hasOwnProperty("remark"))
+            object.remark = message.remark;
+        if (message.bfJoinNotice != null && message.hasOwnProperty("bfJoinNotice"))
+            object.bfJoinNotice = message.bfJoinNotice;
+        if (message.isEncryption != null && message.hasOwnProperty("isEncryption"))
+            object.isEncryption = message.isEncryption;
         return object;
     };
 
@@ -2805,6 +2874,7 @@ export const GroupCreateReq = $root.GroupCreateReq = (() => {
      * @property {Array.<number|Long>|null} [members] GroupCreateReq members
      * @property {string|null} [groupName] GroupCreateReq groupName
      * @property {string|null} [pic] GroupCreateReq pic
+     * @property {number|null} [isEncryption] GroupCreateReq isEncryption
      */
 
     /**
@@ -2856,6 +2926,14 @@ export const GroupCreateReq = $root.GroupCreateReq = (() => {
     GroupCreateReq.prototype.pic = "";
 
     /**
+     * GroupCreateReq isEncryption.
+     * @member {number} isEncryption
+     * @memberof GroupCreateReq
+     * @instance
+     */
+    GroupCreateReq.prototype.isEncryption = 0;
+
+    /**
      * Creates a new GroupCreateReq instance using the specified properties.
      * @function create
      * @memberof GroupCreateReq
@@ -2891,6 +2969,8 @@ export const GroupCreateReq = $root.GroupCreateReq = (() => {
             writer.uint32(/* id 3, wireType 2 =*/26).string(message.groupName);
         if (message.pic != null && Object.hasOwnProperty.call(message, "pic"))
             writer.uint32(/* id 4, wireType 2 =*/34).string(message.pic);
+        if (message.isEncryption != null && Object.hasOwnProperty.call(message, "isEncryption"))
+            writer.uint32(/* id 5, wireType 0 =*/40).int32(message.isEncryption);
         return writer;
     };
 
@@ -2950,6 +3030,10 @@ export const GroupCreateReq = $root.GroupCreateReq = (() => {
                     message.pic = reader.string();
                     break;
                 }
+            case 5: {
+                    message.isEncryption = reader.int32();
+                    break;
+                }
             default:
                 reader.skipType(tag & 7);
                 break;
@@ -3003,6 +3087,9 @@ export const GroupCreateReq = $root.GroupCreateReq = (() => {
         if (message.pic != null && message.hasOwnProperty("pic"))
             if (!$util.isString(message.pic))
                 return "pic: string expected";
+        if (message.isEncryption != null && message.hasOwnProperty("isEncryption"))
+            if (!$util.isInteger(message.isEncryption))
+                return "isEncryption: integer expected";
         return null;
     };
 
@@ -3041,6 +3128,8 @@ export const GroupCreateReq = $root.GroupCreateReq = (() => {
             message.groupName = String(object.groupName);
         if (object.pic != null)
             message.pic = String(object.pic);
+        if (object.isEncryption != null)
+            message.isEncryption = object.isEncryption | 0;
         return message;
     };
 
@@ -3063,6 +3152,7 @@ export const GroupCreateReq = $root.GroupCreateReq = (() => {
             object.clientInfo = null;
             object.groupName = "";
             object.pic = "";
+            object.isEncryption = 0;
         }
         if (message.clientInfo != null && message.hasOwnProperty("clientInfo"))
             object.clientInfo = $root.ClientInfo.toObject(message.clientInfo, options);
@@ -3078,6 +3168,8 @@ export const GroupCreateReq = $root.GroupCreateReq = (() => {
             object.groupName = message.groupName;
         if (message.pic != null && message.hasOwnProperty("pic"))
             object.pic = message.pic;
+        if (message.isEncryption != null && message.hasOwnProperty("isEncryption"))
+            object.isEncryption = message.isEncryption;
         return object;
     };
 
@@ -31564,6 +31656,7 @@ export const EmoticonBase = $root.EmoticonBase = (() => {
      * @property {string|null} [emoticonUrl] EmoticonBase emoticonUrl
      * @property {number|null} [height] EmoticonBase height
      * @property {number|null} [width] EmoticonBase width
+     * @property {number|null} [isEncryption] EmoticonBase isEncryption
      */
 
     /**
@@ -31614,6 +31707,14 @@ export const EmoticonBase = $root.EmoticonBase = (() => {
     EmoticonBase.prototype.width = 0;
 
     /**
+     * EmoticonBase isEncryption.
+     * @member {number} isEncryption
+     * @memberof EmoticonBase
+     * @instance
+     */
+    EmoticonBase.prototype.isEncryption = 0;
+
+    /**
      * Creates a new EmoticonBase instance using the specified properties.
      * @function create
      * @memberof EmoticonBase
@@ -31645,6 +31746,8 @@ export const EmoticonBase = $root.EmoticonBase = (() => {
             writer.uint32(/* id 3, wireType 0 =*/24).int32(message.height);
         if (message.width != null && Object.hasOwnProperty.call(message, "width"))
             writer.uint32(/* id 4, wireType 0 =*/32).int32(message.width);
+        if (message.isEncryption != null && Object.hasOwnProperty.call(message, "isEncryption"))
+            writer.uint32(/* id 5, wireType 0 =*/40).int32(message.isEncryption);
         return writer;
     };
 
@@ -31697,6 +31800,10 @@ export const EmoticonBase = $root.EmoticonBase = (() => {
                     message.width = reader.int32();
                     break;
                 }
+            case 5: {
+                    message.isEncryption = reader.int32();
+                    break;
+                }
             default:
                 reader.skipType(tag & 7);
                 break;
@@ -31744,6 +31851,9 @@ export const EmoticonBase = $root.EmoticonBase = (() => {
         if (message.width != null && message.hasOwnProperty("width"))
             if (!$util.isInteger(message.width))
                 return "width: integer expected";
+        if (message.isEncryption != null && message.hasOwnProperty("isEncryption"))
+            if (!$util.isInteger(message.isEncryption))
+                return "isEncryption: integer expected";
         return null;
     };
 
@@ -31774,6 +31884,8 @@ export const EmoticonBase = $root.EmoticonBase = (() => {
             message.height = object.height | 0;
         if (object.width != null)
             message.width = object.width | 0;
+        if (object.isEncryption != null)
+            message.isEncryption = object.isEncryption | 0;
         return message;
     };
 
@@ -31799,6 +31911,7 @@ export const EmoticonBase = $root.EmoticonBase = (() => {
             object.emoticonUrl = "";
             object.height = 0;
             object.width = 0;
+            object.isEncryption = 0;
         }
         if (message.emoticonId != null && message.hasOwnProperty("emoticonId"))
             if (typeof message.emoticonId === "number")
@@ -31811,6 +31924,8 @@ export const EmoticonBase = $root.EmoticonBase = (() => {
             object.height = message.height;
         if (message.width != null && message.hasOwnProperty("width"))
             object.width = message.width;
+        if (message.isEncryption != null && message.hasOwnProperty("isEncryption"))
+            object.isEncryption = message.isEncryption;
         return object;
     };
 

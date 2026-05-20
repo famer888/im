@@ -11551,6 +11551,7 @@ export const EmoticonBase = $root.EmoticonBase = (() => {
      * @property {string|null} [emoticonUrl] EmoticonBase emoticonUrl
      * @property {number|null} [height] EmoticonBase height
      * @property {number|null} [width] EmoticonBase width
+     * @property {number|null} [isEncryption] EmoticonBase isEncryption
      */
 
     /**
@@ -11601,6 +11602,14 @@ export const EmoticonBase = $root.EmoticonBase = (() => {
     EmoticonBase.prototype.width = 0;
 
     /**
+     * EmoticonBase isEncryption.
+     * @member {number} isEncryption
+     * @memberof EmoticonBase
+     * @instance
+     */
+    EmoticonBase.prototype.isEncryption = 0;
+
+    /**
      * Creates a new EmoticonBase instance using the specified properties.
      * @function create
      * @memberof EmoticonBase
@@ -11632,6 +11641,8 @@ export const EmoticonBase = $root.EmoticonBase = (() => {
             writer.uint32(/* id 3, wireType 0 =*/24).int32(message.height);
         if (message.width != null && Object.hasOwnProperty.call(message, "width"))
             writer.uint32(/* id 4, wireType 0 =*/32).int32(message.width);
+        if (message.isEncryption != null && Object.hasOwnProperty.call(message, "isEncryption"))
+            writer.uint32(/* id 5, wireType 0 =*/40).int32(message.isEncryption);
         return writer;
     };
 
@@ -11684,6 +11695,10 @@ export const EmoticonBase = $root.EmoticonBase = (() => {
                     message.width = reader.int32();
                     break;
                 }
+            case 5: {
+                    message.isEncryption = reader.int32();
+                    break;
+                }
             default:
                 reader.skipType(tag & 7);
                 break;
@@ -11731,6 +11746,9 @@ export const EmoticonBase = $root.EmoticonBase = (() => {
         if (message.width != null && message.hasOwnProperty("width"))
             if (!$util.isInteger(message.width))
                 return "width: integer expected";
+        if (message.isEncryption != null && message.hasOwnProperty("isEncryption"))
+            if (!$util.isInteger(message.isEncryption))
+                return "isEncryption: integer expected";
         return null;
     };
 
@@ -11761,6 +11779,8 @@ export const EmoticonBase = $root.EmoticonBase = (() => {
             message.height = object.height | 0;
         if (object.width != null)
             message.width = object.width | 0;
+        if (object.isEncryption != null)
+            message.isEncryption = object.isEncryption | 0;
         return message;
     };
 
@@ -11786,6 +11806,7 @@ export const EmoticonBase = $root.EmoticonBase = (() => {
             object.emoticonUrl = "";
             object.height = 0;
             object.width = 0;
+            object.isEncryption = 0;
         }
         if (message.emoticonId != null && message.hasOwnProperty("emoticonId"))
             if (typeof message.emoticonId === "number")
@@ -11798,6 +11819,8 @@ export const EmoticonBase = $root.EmoticonBase = (() => {
             object.height = message.height;
         if (message.width != null && message.hasOwnProperty("width"))
             object.width = message.width;
+        if (message.isEncryption != null && message.hasOwnProperty("isEncryption"))
+            object.isEncryption = message.isEncryption;
         return object;
     };
 

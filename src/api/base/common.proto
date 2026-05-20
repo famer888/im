@@ -435,6 +435,7 @@ message EmoticonBase {
     string  emoticonUrl     = 2;//链接
     int32   height          = 3;//高
     int32   width           = 4;//宽
+    int32   isEncryption    = 5; // 头像是否加密，0:旧版本，1：已加密，2：未加密
 }
 
 // 币-链网络

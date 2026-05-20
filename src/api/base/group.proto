@@ -96,10 +96,13 @@ message GroupParam {
     string          pic             = 9; // 群图标
     bool            joinFriend      = 10; // 是否禁止加好友
     bool            shutup          = 11; // 是否禁言   add v1.1.0
-    string          notice          = 12; // 群简介内容  add v1.1.0
-    bool            bfAll     = 13; // 群简介是否通知所有人  add v1.1.0
+    string          notice          = 12; // 群公告内容  add v1.1.0
+    bool            bfAll     = 13; // 群公告是否通知所有人  add v1.1.0
     bool            bfGroupReadCancel    = 14;  //群阅后即焚 add v1.3.0
     int32           groupMsgCancelTime   = 15;  //群消息销毁时间[秒] add v1.3.0
+    string          remark    = 16; // 群简介
+    bool            bfJoinNotice  = 17; // 进群通知
+    int32           isEncryption  = 18; // 头像是否加密，0:旧版本，1：已加密，2：未加密
 }
 
 // 群基本信息
@@ -175,6 +178,7 @@ message GroupCreateReq {
     repeated int64 members        = 2; // 群成员UID列表（不包含群主）
     string          groupName     = 3; // 群名称(必需) v1.2.0
     string          pic           = 4; // 群头像 v.1.2.0
+    int32           isEncryption  = 5; // 头像是否加密，0:旧版本，1：已加密，2：未加密
 }
 
 // 创建群响应

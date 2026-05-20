@@ -95,6 +95,7 @@ message UserParam {
     int32           language       = 7; //多语言设置值    add v1.2.0
     ClearTimeType   clearTime      = 8; // 清楚账号时间设置值 v1.3.0
     string          identify       = 9; // 68号
+    int32           isEncryption   = 10; // 头像是否加密，0:旧版本，1：已加密，2：未加密
 }
 
 // 创建批量归档请求 [bizUrl/user/createArchive]
