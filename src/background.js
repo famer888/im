@@ -622,12 +622,30 @@ const openFileDialog = async (event, args) => {
                 }
             }
 
-            enqueueDownloadContext(url, {
+            const requestArgs = {
                 ...args,
                 downloadRequestId: getDownloadRequestId(args),
                 fileLocalPath: filePath,
                 skipMsgUpdate: true,
-            });
+            };
+
+            // 过期资源守卫：URL 路径里携带的日期（chat/pic/YYYYMM/DD）若已超过本地阈值天数，
+            // 直接判定下载失败，避免对已过期 OSS 资源发起真实请求。
+            const expireCheck = isExpiredDatedDownloadUrl(url);
+            if (expireCheck.expired) {
+                writeLog("app", "warn", "[openFileDialog] 命中过期资源守卫，跳过下载", {
+                    url,
+                    matchedUrl: expireCheck.matchedUrl,
+                    diffDays: expireCheck.diffDays,
+                    thresholdDays: EXPIRED_DATED_URL_THRESHOLD_DAYS,
+                    msgId: requestArgs.msgId,
+                    downloadRequestId: requestArgs.downloadRequestId,
+                });
+                sendMain("downloadFileFailed", { ...requestArgs, expired: true, reason: "url_dated_expired" });
+                return;
+            }
+
+            enqueueDownloadContext(url, requestArgs);
 
             const windows = BrowserWindow.getAllWindows();
             windows.forEach((w) => {
@@ -722,6 +740,40 @@ const clearDownTimer = (timerName) => {
     delete downTimers[timerName];
 }
 
+// chat/pic/YYYYMM/DD/... 形式的 OSS 资源在服务端默认 4 天后即失效，
+// 若按本地时间已超过阈值，直接判定为过期，不再向 OSS 真正发请求。
+const EXPIRED_DATED_URL_PATTERN = /\/chat\/pic\/(\d{4})(\d{2})\/(\d{2})(?:\/|$|\?)/i;
+const EXPIRED_DATED_URL_THRESHOLD_DAYS = 4;
+const isExpiredDatedDownloadUrl = (url, urlChain = []) => {
+    const candidates = [];
+    if (typeof url === "string" && url) candidates.push(url);
+    if (Array.isArray(urlChain)) {
+        for (const u of urlChain) {
+            if (typeof u === "string" && u && !candidates.includes(u)) {
+                candidates.push(u);
+            }
+        }
+    }
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    for (const candidate of candidates) {
+        const m = candidate.match(EXPIRED_DATED_URL_PATTERN);
+        if (!m) continue;
+        const year = Number(m[1]);
+        const month = Number(m[2]);
+        const day = Number(m[3]);
+        if (!year || !month || month < 1 || month > 12 || !day || day < 1 || day > 31) continue;
+        const urlDate = new Date(year, month - 1, day);
+        if (Number.isNaN(urlDate.getTime())) continue;
+        // 防御未来日期：仅在本地日期严格晚于 URL 日期且差值超过阈值时拦截
+        const diffDays = Math.floor((todayStart - urlDate.getTime()) / 86400000);
+        if (diffDays > EXPIRED_DATED_URL_THRESHOLD_DAYS) {
+            return { expired: true, matchedUrl: candidate, diffDays };
+        }
+    }
+    return { expired: false };
+};
+
 /**
  * 下载处理
  */
@@ -741,6 +793,26 @@ const downloadHandler = (event, item, webContents) => {
             item.setSavePath(defalutPath);
             return;
         }
+
+        // 过期资源守卫：URL 路径里携带的日期（chat/pic/YYYYMM/DD）若超过本地 4 天，
+        // 直接取消下载并通知前端失败，避免对已过期 OSS 资源浪费一次真实请求。
+        const expireCheck = isExpiredDatedDownloadUrl(itemUrl, itemUrlChain);
+        if (expireCheck.expired) {
+            writeLog("app", "warn", "[downloadHandler] 命中过期资源守卫，直接判定下载失败", {
+                url: itemUrl,
+                matchedUrl: expireCheck.matchedUrl,
+                diffDays: expireCheck.diffDays,
+                thresholdDays: EXPIRED_DATED_URL_THRESHOLD_DAYS,
+                msgId: data.msgId,
+                downloadRequestId: data.downloadRequestId,
+                fileUrl: data.fileUrl,
+                trendsFileUrl: data.trendsFileUrl,
+            });
+            try { item.cancel(); } catch (_) {}
+            sendMain("downloadFileFailed", { ...data, expired: true, reason: "url_dated_expired" });
+            return;
+        }
+
         timerName = getDownloadTimerName(data);
         item.setSavePath(data.fileLocalPath);
         // 只有传入 taskId 时才监听下载进度
@@ -1133,6 +1205,21 @@ const handleFileDownload = (args) => {
         actualDownloadUrl: url,
     };
 
+    // 过期资源守卫：URL 路径里携带的日期（chat/pic/YYYYMM/DD）若已超过本地阈值天数，
+    // 直接判定下载失败，连超时定时器和 downloadURL 都不再下发。
+    const expireCheck = isExpiredDatedDownloadUrl(url);
+    if (expireCheck.expired) {
+        writeLog("app", "warn", "[handleFileDownload] 命中过期资源守卫，跳过下载", {
+            url,
+            matchedUrl: expireCheck.matchedUrl,
+            diffDays: expireCheck.diffDays,
+            thresholdDays: EXPIRED_DATED_URL_THRESHOLD_DAYS,
+            msgId,
+            downloadRequestId,
+        });
+        sendMain("downloadFileFailed", { ...requestArgs, expired: true, reason: "url_dated_expired" });
+        return;
+    }
 
     // 处理下载超时
     if(timeout) {

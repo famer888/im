@@ -95,14 +95,14 @@ const broadcastStatus = (snap) => {
     try { _mainWindow.webContents.send(Channels.status, snap); } catch (_) {}
 };
 
-const handleResolveIpc = ({ scope, resourceKey, url, encryptKey }) => {
+const handleResolveIpc = ({ scope, resourceKey, url, encryptKey, candidateUrls }) => {
     if (!scope || !resourceKey) {
         return { state: STATE.IDLE, taskId: null, error: { code: 'badRequest' }, resourcePath: null };
     }
     const { sm } = taskRegistry.acquire({ scope, resourceKey });
     sm.subscribe(broadcastStatus); // Set 内函数引用相同自动去重
     // 异步驱动 pipeline；不阻塞 invoke 的返回（renderer 拿到 snapshot 后立即可订阅 status）
-    drivePipeline({ scope, resourceKey, url, encryptKey }).catch((e) => {
+    drivePipeline({ scope, resourceKey, url, encryptKey, candidateUrls }).catch((e) => {
         // 错误已在 pipeline 内派发到状态机；此处仅吞掉 unhandled rejection
         // 写日志便于排查（保持低噪声：只在 main 进程 stderr 上一行）
         console.warn('[NativeImage node] pipeline rejected', (e && e.code) || (e && e.message) || e);
@@ -131,6 +131,11 @@ const handleProtocolRequest = async (request, callback) => {
     };
 
     try {
+        // 这里刻意不传 candidateUrls：customUrl 协议本身不携带备选列表，且时序上 ipc.resolve
+        // 一定先于 streamProtocol（NativeImage.vue 是先 await ipc.resolve 拿到 snap 再 rerender
+        // 出 <img src="native-image://...">），ipc.resolve 路径已经把 candidateUrls 算进 inflight，
+        // 此处 drivePipeline 第一行的 peek(inflight) 必然命中复用，不会真的拿 [url] 单候选重跑。
+        // 若极端时序倒置（理论上不会），退化为单候选 [url] 也安全 —— 跟未接入两段式的派生行为一致。
         const resultPath = await drivePipeline({ scope, resourceKey, url, encryptKey });
         const stream = fs.createReadStream(resultPath);
         stream.on('close', releaseOnce);
@@ -158,7 +163,7 @@ const handleProtocolRequest = async (request, callback) => {
  * 真正驱动状态机走完一次。同 key 在飞复用：返回 inflight Promise。
  * @returns {Promise<string>} resultPath
  */
-const drivePipeline = async ({ scope, resourceKey, url, encryptKey }) => {
+const drivePipeline = async ({ scope, resourceKey, url, encryptKey, candidateUrls }) => {
     const existing = taskRegistry.peek({ scope, resourceKey });
     if (existing && existing.inflight) return existing.inflight;
 
@@ -179,32 +184,76 @@ const drivePipeline = async ({ scope, resourceKey, url, encryptKey }) => {
             return cached;
         }
 
-        // 解析最终 URL（§8.1 动态域名 host 替换）
-        let finalUrl = url;
-        if (_domainAdapter && _domainAdapter.pick) {
-            try { finalUrl = await _domainAdapter.pick(url); } catch (_) { finalUrl = url; }
+        // 构造按优先级排序的候选 url 列表（design.md §8.1 两段式）：
+        //   1) renderer 传入 candidateUrls（Avatar：[原 url, ossDefaultUrl 重写后 url]）
+        //   2) 缺省 → [url] 单候选；保持与未接入派生（Picture/Poster 等）的行为兼容
+        //   3) _domainAdapter 注入时（trendsDomain 池升级，§8.2 [预留]）由 adapter.pick
+        //      在循环内对每个候选再次按 attempt 重写 host —— candidate × pick 两层，向前兼容
+        // 这里只做"非空 + 去重 + 字符串"的最小清洗，不解析 URL，不限制长度。
+        const rawCandidates = (Array.isArray(candidateUrls) && candidateUrls.length ? candidateUrls : [url])
+            .filter((u) => typeof u === 'string' && u.length > 0);
+        const seenUrls = new Set();
+        const candidates = [];
+        for (const u of rawCandidates) {
+            if (!seenUrls.has(u)) {
+                seenUrls.add(u);
+                candidates.push(u);
+            }
+        }
+        if (candidates.length === 0) {
+            // 兜底：renderer 传了奇怪输入；不下载，直接 dispatch downloadError 终态便于排查
+            const err = { code: ERROR_CODE.HTTP_FAIL, detail: { stage: 'pre-fetch', message: 'no candidate url' }, at: Date.now() };
+            sm.dispatch(EVENT.START_FETCH, { url });
+            sm.dispatch(EVENT.HTTP_FAIL, { error: err });
+            throw err;
         }
 
-        sm.dispatch(EVENT.START_FETCH, { url: finalUrl });
+        // 状态机层面这次"取数据"只发生一次：START_FETCH 用候选 0 上报，循环内不再 dispatch
+        // 中间错误。两段式失败后整体只 dispatch 一次最终 HTTP_4XX / HTTP_FAIL，对外观察者
+        // 看到的是 "downloading → ready" 或 "downloading → 终态错误"，不会闪烁。
+        sm.dispatch(EVENT.START_FETCH, { url: candidates[0] });
 
         let dl;
-        try {
-            dl = await download(finalUrl, {
-                cancelToken, // downloader 内会装上 abort 回调到 cancelToken.abort
-                timeoutMs: 20000,
-            });
-        } catch (err) {
-            const code = err && err.code;
-            if (code === ERROR_CODE.HTTP_404 || code === ERROR_CODE.HTTP_410 ||
-                code === ERROR_CODE.HTTP_403 || code === ERROR_CODE.HTTP_4XX_OTHER) {
-                sm.dispatch(EVENT.HTTP_4XX, { error: err });
-            } else {
-                sm.dispatch(EVENT.HTTP_FAIL, { error: err });
+        let lastErr;
+        for (let attempt = 0; attempt < candidates.length; attempt++) {
+            let finalUrl = candidates[attempt];
+            // 预留：_domainAdapter 注入时在每个候选上再做 host 重写（§8.2）；
+            // 本期 _domainAdapter 默认 null，下面这段是 no-op。
+            if (_domainAdapter && _domainAdapter.pick) {
+                try { finalUrl = await _domainAdapter.pick(finalUrl, { attempt, failedHosts: candidates.slice(0, attempt).map(hostOf) }); }
+                catch (_) { finalUrl = candidates[attempt]; }
+            }
+            try {
+                dl = await download(finalUrl, {
+                    cancelToken, // downloader 内会装上 abort 回调到 cancelToken.abort
+                    timeoutMs: 20000,
+                });
+                lastErr = null;
+                break;
+            } catch (err) {
+                lastErr = err;
+                const code = err && err.code;
+                // 显式取消：立刻终止重试链，由后面统一 dispatch 处理（这里抛给外层 catch 都行，
+                // 但为了行为对称统一在循环外 dispatch）。
+                if (code === ERROR_CODE.ABORT) break;
+                // 上报（§8.2 [预留]）：本期 _domainAdapter 默认 null，no-op
                 if (_domainAdapter && _domainAdapter.report) {
                     try { _domainAdapter.report(hostOf(finalUrl), { reason: code, statusCode: undefined }); } catch (_) {}
                 }
+                // 还有下一个候选 → 继续循环；耗尽 → 跳出去 dispatch 最终错误
             }
-            throw err;
+        }
+
+        if (!dl) {
+            // 所有候选都失败：派出最后一次错误终态
+            const code = lastErr && lastErr.code;
+            if (code === ERROR_CODE.HTTP_404 || code === ERROR_CODE.HTTP_410 ||
+                code === ERROR_CODE.HTTP_403 || code === ERROR_CODE.HTTP_4XX_OTHER) {
+                sm.dispatch(EVENT.HTTP_4XX, { error: lastErr });
+            } else {
+                sm.dispatch(EVENT.HTTP_FAIL, { error: lastErr });
+            }
+            throw lastErr;
         }
 
         // 加密：headerCheck → decrypt

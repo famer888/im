@@ -1,7 +1,8 @@
 <template>
     <NativeImage
         v-if="hasRealSrc"
-        :url="rewrittenSrc"
+        :url="src"
+        :candidate-urls="candidateUrls"
         :encrypt-key="encryptKey"
         :scope="scopeObj"
         :decrypted="false"
@@ -40,7 +41,14 @@
 // 行为差异（与旧 ComImage 对齐 §3.2）：
 //   - 无 loading / 无 failure UI；resolving / *Error 一律走 fallback 链
 //     直接挂到 <img> 或 TextAvatar，不报红
-//   - 动态域名仅做"用 ossDefaultUrl 替换 host"；轮换/降权/上报为 §8.2 [预留]
+//   - 动态域名两段式（§8.1）：buildAvatarCandidates 算出 [原 url, ossDefaultUrl 重写后 url]
+//     作为 candidateUrls 透传给 NativeImage → ipc.resolve → main 端 drivePipeline；
+//     pipeline 在 fetch 阶段按顺序失败循环，全部失败才 dispatch 错误终态。状态机和
+//     fallback 链对中间错误无感知，对齐旧 image.vue 的 loadUrl → loadErr 行为，但
+//     去掉旧版硬编码 r22/r33.zhenyoumei.top 的特例，交由 wouldRewrite 自动判定。
+//   - 轮换 / 降权 / 上报仍是 §8.2 [预留]，未来 trendsDomain 池接入只需在 main 端
+//     注入 _domainAdapter，candidateUrls 数组退化为单元素（renderer 不再算第二段），
+//     adapter 在 fetch 循环内按 attempt 重写 host。
 //   - 默认 encryptKey = process.env.VUE_APP_HEAD_AES_KEY：业务现状是新老头像并存
 //     （早期上传的走 AES-128-ECB 加密、近期上传的灰度成明文），所以这里**默认下发 key**，
 //     由 node 端 headerCheck 在 §5.4 阶段按文件头实测决定走"解密"还是"跳过解密直 commit"
@@ -57,7 +65,7 @@ import groupIcon from '@/assets/images/logo/default_group_icon.png';
 import friendIcon from '@/assets/images/logo/logo-58.png';
 import channelIcon from '@/assets/images/logo/channel-notice.webp';
 import { makeStateEntry, makeUrl, makeAsset, makeComponent } from './core/fallback';
-import { rewriteHost } from './core/domain';
+import { buildAvatarCandidates } from './core/domain';
 import { SCOPE_KIND, STATE } from './core/constants';
 import { copyToClipboard } from '@/utils/base';
 import eventCommon from '@/event/common';
@@ -110,11 +118,11 @@ export default {
         scopeObj() {
             return { kind: SCOPE_KIND.AVATAR, id: this.uid || 0, sub: this.type };
         },
-        // 动态域名只做"用 ossDefaultUrl 替换 host"（design.md §8.1）。
-        // 本期在 renderer 端完成重写：避免 main 端再读 eventCommon；
-        // 重写不影响 resourceKey（见下），同一头像在 host rotation 后仍命中本地缓存。
-        rewrittenSrc() {
-            return rewriteHost(this.src, eventCommon);
+        // 两段式 candidateUrls（design.md §8.1）。
+        // [原 url] 或 [原 url, ossDefaultUrl 重写后 url]。
+        // 不影响 resourceKey（见下），同一头像在 host rotation 后仍命中本地缓存。
+        candidateUrls() {
+            return buildAvatarCandidates(this.src, eventCommon);
         },
         resourceKey() {
             // resourceKey 必须稳定（design.md §4.1），不能让 OSS 签名 query 每次都 cache miss

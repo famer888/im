@@ -24,6 +24,13 @@ export default {
     name: 'NativeImage',
     props: {
         url:            { type: String, default: '' },
+        // 主 url 以外的按优先级排序备选 url 列表（design.md §8.1 两段式）。
+        // 派生组件（Avatar / Picture / Poster）通过这里把"原域名 + ossDefaultUrl 重写后"
+        // 等候选透传给 main 端 drivePipeline，由 main 在 fetch 阶段按顺序失败循环，
+        // 整体只 dispatch 一次最终结果（success / 终态错误）—— 状态机和 fallback 链
+        // 对中间错误无感知，避免视觉抖动。
+        // 默认空数组 = 仅尝试 url 一次（兼容当前 Picture/Poster 等还未接入的派生）。
+        candidateUrls:  { type: Array, default: () => [] },
         encryptKey:     { type: String, default: '' },
         decrypted:      { type: Boolean, default: false },
         scope:          { type: Object, required: true }, // { kind, id, sub? }
@@ -120,6 +127,9 @@ export default {
                     scope: acquired.scope,
                     resourceKey: acquired.resourceKey,
                     url: this.url,
+                    // 把 props.candidateUrls 整体透传给 main 端 pipeline；本组件不感知
+                    // 数组语义（"主 url + 备选"），只负责传递。详见 §8.1。
+                    candidateUrls: Array.isArray(this.candidateUrls) ? this.candidateUrls : [],
                     encryptKey: this.decrypted ? null : (this.encryptKey || null),
                 });
                 if (!snap) return;

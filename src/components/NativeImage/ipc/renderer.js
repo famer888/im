@@ -46,10 +46,14 @@ const ensureBound = () => {
  * 显式 resolve：拿到 taskId + 当前 snapshot。
  * 大多数派生不需要主动 invoke，挂到 <img :src> 上即可触发 main 流水线。
  * 仅当组件想在挂 <img> 之前先拿 taskId 做 hydrate 时调用。
+ *
+ * candidateUrls（可选）：派生组件给出的按优先级排序的备选 url 列表（含 url 本身或不含均可，
+ * main 端去重、按数组顺序失败循环 fetch）。当前 Avatar 走两段式（§8.1）传 [src, rewriteHost(src)]；
+ * 留空 / 不传时 main 端等价于 [url] 单次尝试。
  */
-export const resolve = async ({ scope, resourceKey, url, encryptKey } = {}) => {
+export const resolve = async ({ scope, resourceKey, url, encryptKey, candidateUrls } = {}) => {
     ensureBound();
-    return ipcRenderer.invoke?.(Channels.resolve, { scope, resourceKey, url, encryptKey });
+    return ipcRenderer.invoke?.(Channels.resolve, { scope, resourceKey, url, encryptKey, candidateUrls });
 };
 
 /**

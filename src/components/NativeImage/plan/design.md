@@ -14,7 +14,7 @@
 - 派生 `Avatar` 组件，替换现有 `ComImage`。
   - 文件落到独立的 `images/avatar/` 目录。
   - 无 loading、无 failure UI，任何失败一律 fallback 到 `<TextAvatar>` / 群组 / 频道默认 icon。
-  - 动态域名：仅做"用 `ossDefaultUrl` 替换 host"，不做轮换/降权。
+  - 动态域名两段式（§8.1）：renderer 算出 `candidateUrls = [原 url, ossDefaultUrl 重写后 url]`，main 端 pipeline 在 fetch 阶段按顺序失败循环，全部失败才 dispatch 错误终态；状态机与 fallback 链对中间错误无感知，对齐旧 `image.vue` 的 `loadUrl → loadErr` 行为。不做轮换/降权。
 - 新建 `src/components/NativeImage/node/`，承接重写后的下载+解密流程（脱离 `webContents.downloadURL`，可拿到 HTTP 状态码）。
 - 引入新的 custom URL pattern（替代 `local-resource://`，用于触发并消费 NativeImage 链路）。
 - 状态机最小子集：`idle → resolving → downloading → decrypting → ready | expired | downloadError | decryptError`，通过 `taskId` 守卫消除 `description` 末尾 Q1/Q2 两类已知 bug。
@@ -672,12 +672,62 @@ UNSUBSCRIBE    // 订阅者减一但还有人在听（不触发 CANCEL）
 
 ## 8. 动态域名
 
-### 8.1 本期范围
+### 8.1 本期范围（两段式 candidateUrls，对齐旧 `image.vue` 双段语义）
+
+#### 接口
+
 - `core/domain.js` 暴露：
   ```text
-  rewriteHost(originalUrl) // 只把 host 替换为 ossDefaultUrl，逻辑与 manageOssDownUpload.getOssFirstNormalUrl 等价
+  rewriteHost(originalUrl, eventCommon) → string
+    // 只把 host 替换为 ossDefaultUrl，逻辑与 manageOssDownUpload.getOssFirstNormalUrl 等价
+  wouldRewrite(originalUrl, eventCommon) → boolean
+    // 原 url 的 host 是否与 ossDefaultUrl 的 host 不同（仅 host，忽略 protocol/port/path）
+  buildAvatarCandidates(originalUrl, eventCommon) → string[]
+    // 不需要重写 → [原 url]；需要 → [原 url, rewriteHost(原 url)]
   ```
-- 调用时机：`pipeline.resolve` 入口先 `rewriteHost(desc.url)`，得到的新 URL 用于 `downloader.fetch`。
+
+- `ipc.resolve` 接口扩展：可选字段 `candidateUrls?: string[]`，由派生组件经 NativeImage 透传。
+
+- main 端 `drivePipeline` fetch 阶段：
+  ```text
+  candidates = uniq(candidateUrls ?? [url])            // 去重 + 非空
+  dispatch START_FETCH(url=candidates[0])             // 状态机只看见一次"开始取数据"
+  for attempt in 0..candidates.length:                 // 失败循环
+    finalUrl = _domainAdapter?.pick(candidates[attempt], { attempt, failedHosts }) ?? candidates[attempt]
+    try { dl = download(finalUrl); break }
+    catch (err): if err.code === ABORT then break; _domainAdapter?.report(host(finalUrl), err)
+  if !dl:                                              // 全部候选耗尽
+    dispatch (HTTP_4XX | HTTP_FAIL)(err=lastErr)       // 单次终态错误，对外只有一帧
+  ```
+
+#### 派生组件接入（Avatar）
+
+- `Avatar.vue` 通过 `buildAvatarCandidates(src, eventCommon)` 算 `candidateUrls`，传给
+  `<NativeImage :url="src" :candidate-urls="candidateUrls">`。`NativeImage` 仅透传，不感知数组语义。
+
+#### 关键不变量
+- **状态机层"一次取数据 = 一次 dispatch 终态"**：两段式失败循环在 `downloading` 内部完成，
+  期间不会进入 `expired` / `downloadError` 中间态再切回 `downloading`；因此 `fallback` 链
+  保留原"`downloadError` / `expired` → default icon"映射即可，不需要 attempt 感知 / 动态切换，
+  避免视觉上"闪默认 icon 再切回真图"。
+- **状态机不变量 §7 不变**：原文不变，§7 转移表不需要新增"重试事件"。
+- **resourceKey 全程不变**：两段式不影响本地结果目录缓存命中。
+- **inflight 合并行为不变**：同 `(scope, resourceKey)` 的并发 `acquire` 仍走同一 inflight；
+  `handleProtocolRequest` 路径不传 candidateUrls 但永远命中 ipc.resolve 已建好的 inflight。
+
+#### 与旧 `image.vue` 行为对齐
+
+| 旧 image.vue | 本期 NativeImage | 备注 |
+|---|---|---|
+| `loadUrl`：r22/r33 → oss，其它原域名 | `candidates[0]` = 原 url（无硬编码 r22/r33） | 由 `wouldRewrite` 自动判定 |
+| `loadErr`：失败后 `getOssFirstNormalUrl` 重试一次 | `candidates[1]` = `rewriteHost(src)` | 由 main 端 pipeline 循环驱动 |
+| 不再失败 → `<img>` 显示默认 icon | 错误终态 → fallback 链命中 default icon | §6 |
+
+去掉了硬编码 `r22/r33.zhenyoumei.top` 的特例：替换条件改为 host 比较，业务侧任何"原 host !== oss host"的 url 都会自动落入两段式。
+
+### 8.2 预留
+- 轮换 / 降权 / 上报（description #1）：main 端注入 `_domainAdapter`，`pick(originalUrl, { attempt, failedHosts, channelType }) → newUrl` 在上面循环内逐 candidate 重写 host，候选数组可由 renderer 退化为单元素 `[src]`，由 adapter 接管多 host 池；`report(host, reason)` 在每个 candidate 失败时调一次。
+- 失败重试外层减数（description #19）：在 candidate 耗尽后由 `smPlugins` 注册 `ext:retrying`，间隔/计数衰减后重新走整套 candidates，复用本节循环，不破坏状态机不变量。
 
 ### 8.2 预留
 - 轮换 / 降权 / 上报（description #1）接口先定义：
