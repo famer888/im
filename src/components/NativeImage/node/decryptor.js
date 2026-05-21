@@ -1,13 +1,67 @@
 // 解密器（design.md §5.3）
 //
-// 当前实现：主进程内 Node `crypto` 直接解密，无 child_process 池。
-// 选型理由（与 design.md §5.3 提示对齐）：
-//   - 本期 Avatar 单文件普遍 < 200KB，单次 CPU 占用通常 < 50ms；
-//   - 进程内同步解密 ≪ pool fork 冷启动 + IPC round-trip 成本；
-//   - design.md §14 风险 #4 已经允许"性能不达标时切 NativeAesAdapter / WasmAesAdapter"，
-//     当前实现满足 base 接口（DecryptAdapter，§12.5），未来切实现不动 base 流水线。
+// ─── 当前实现：主进程内 Node `crypto` 同步解密 ─────────────────────────────
+// `fs.promises.readFile` → 同步 `_decryptBlock` × N → `Buffer.concat` →
+// `fs.promises.writeFile`。无 worker、无流式、无并发限流。
 //
-// 与发送侧（public/worker.js）的协议必须 1:1 对齐（design.md §5.4.1）：
+// 适用场景：现网 Avatar 单文件 <200KB，单次 CPU ~4ms，主线程阻塞可忽略；
+// 配合 §5.7 in-flight 合并，同屏 30–50 张头像的初次加载用户感知不到。
+//
+// ─── 已知不足（[TODO] 后续实现，当前未在本 PR 范围） ──────────────────────
+// 1. 大文件 OOM：`readFile` 把整文件读进 V8 Buffer，加上 `Buffer.concat` 再
+//    分配一份 plain。1GB 视频瞬时占用 2–3GB 堆，必超 Electron 默认
+//    `max-old-space-size`（~2GB）抛 `Cannot create a Buffer larger than ...`。
+// 2. 同步阻塞 main loop：Avatar 单张 ~7ms（4ms AES + 2ms concat + 1ms cipher
+//    构造），100 并发可累计 ~700ms 冻结，期间 IPC handler / `native-image://`
+//    protocol / 其他窗口全部排队。当前未观察到是因为 concurrency.schedule 按
+//    (kind, id) 串行已经天然限了同一头像的多次触发，且现网头像普遍 <50KB；
+//    一旦业务侧出现"100 张 + 单张偶发偏大"组合，立即放大。
+//    [缓解] 解块循环已加 `await yieldToLoop()`（setImmediate），每块解完让出
+//    一拍 event loop，IPC / protocol callback 可见即时插入；这只是把"独占"
+//    变"可让出"，不省 CPU、不真并行，根治仍要靠 worker_threads 池。
+// 3. 无 scheduleWithLimit：concurrency.js 当前只串行同 (kind, id)，不同 id
+//    完全并行，瞬时高并发场景下 #2 会放大且无任何节流。
+//
+// ─── 计划升级方向：worker_threads 池（非 child_process） ──────────────────
+// 经横向评估，worker_threads 在所有维度均优于 child_process，故弃 fork 路线：
+//
+//   维度          | worker_threads     | child_process.fork
+//   ------------- | ------------------ | -------------------
+//   启动税        | ~5–10ms            | ~80–200ms（首张延迟一个量级）
+//   单实例内存    | ~5–10MB heap       | ~30MB RSS（满进程）
+//   buffer 通信   | 零拷贝 transferable | structured clone 序列化
+//   API 依赖      | Node 12+ 标准      | Node 12+ 标准
+//   实现复杂度    | 中                 | 中（IPC + 进程生命周期）
+//   崩溃隔离      | 同进程，无          | 子进程 crash 不拖垮 main
+//
+// 唯一短板（崩溃隔离）对纯 JS `crypto.createDecipheriv` 价值为零 —— AES 解密
+// 不会 segfault，子进程级隔离换 fork 启动税不划算。design.md §5.3 历史上写的
+// "child_process 池" 是从旧 `public/worker.js`（Web Worker 模型）直译过来的
+// 次优选型，本次结合"100×2MB 视频/Picture 场景"重审已订正。
+//
+// 计划实现形态（不在本 PR 范围；接 Picture/Poster 时一起做）：
+//   * node/decryptor.worker.js：streaming pipeline
+//     (createReadStream → AES Transform → createWriteStream)，入参只传文件
+//     路径，worker 内部 readFile / writeFile，主进程内存零增长，1GB 文件
+//     峰值 ~2–4MB
+//   * 本文件改为薄 WorkerPool 包装：lazy spawn / idle 30s 超时回收 / max=4
+//     （核数上限），保持 `decrypt({ inPath, outPath, encryptKey, signal })`
+//     签名 1:1 不变，drivePipeline 不感知
+//   * concurrency.js 补全 `scheduleWithLimit`（[预留] 已占位），按 kind 配
+//     全局上限：avatar 8 / picture 4 / poster 2
+//
+// ─── 为什么 Avatar 也要上 worker（虽然当前无瓶颈） ────────────────────────
+// 防御性 + 顺路：
+//   - 消除"100 张 + 单张偶发偏大"等边缘 case 下 main loop 几百 ms 冻结的
+//     可能；现在没观察到不代表不会发生（业务历史 OSS 上的老群头像出现过
+//     >1MB 的样本）
+//   - 接 Picture/Poster 时本来就要做 worker pool，Avatar 顺路接入零额外
+//     代码成本，避免 base 流水线里"avatar 走 inline / picture 走 worker"
+//     两套分支
+//   - 用户预期：聊天软件主窗口任何时刻都应即时响应，解密 50KB 头像哪怕
+//     只占 main loop 4ms 也不应发生
+//
+// ─── 与发送侧（public/worker.js）协议必须 1:1 对齐（design.md §5.4.1） ────
 //   - AES-128-ECB + PKCS7
 //   - 16 字节 key = encryptKey 的前 16 字节 UTF-8（业务侧 fileKey 截断）
 //   - 文件按 102416 字节切块；每块独立 PKCS7 padding。最后一块可短，但 16 对齐
@@ -50,6 +104,23 @@ const _decryptBlock = (cipherBlock, key) => {
     decipher.setAutoPadding(true); // PKCS7（Node `aes-*-ecb` 默认）
     return Buffer.concat([decipher.update(cipherBlock), decipher.final()]);
 };
+
+/**
+ * 把当前同步执行栈切回 event loop 跑一拍。
+ *
+ * 用途见下方 decrypt() 主循环：每解完一块 AES 让出 main thread，
+ * 避免多张 Avatar / 偶发大文件场景下连续 _decryptBlock 把 IPC handler /
+ * `native-image://` protocol / 渲染进程帧投递排队几十～几百 ms。
+ *
+ * 用 setImmediate 而非 Promise.resolve()/queueMicrotask：后者是微任务，
+ * 解析完会立刻在同一 tick 继续跑，根本没让出；setImmediate 排在 I/O / timer
+ * 之后的 check 阶段，能保证一拍内 pending IPC / fs callback 先跑完。
+ *
+ * 单次开销 ~0.1–0.3ms，远低于一块 AES 的 ~4ms，加 yield 后单张 Avatar 总耗时
+ * 上限 +几 ms 但 main loop 不再被独占；属于"让性能不变差到能感知，但抢回可
+ * 中断性"的便宜方案。worker_threads 池上线后此函数与 yield 点一并移除。
+ */
+const yieldToLoop = () => new Promise((r) => setImmediate(r));
 
 /**
  * 默认实现（in-process AES-128-ECB + PKCS7，匹配 public/worker.js）。
@@ -114,6 +185,10 @@ export const decrypt = async ({ inPath, outPath, encryptKey, signal }) => {
                 throw new Error(`block at offset ${offset} not 16-aligned (size=${block.length})`);
             }
             parts.push(_decryptBlock(block, key));
+            // 让出 main loop：见 yieldToLoop 注释。yield 后立刻补 abort 检查，
+            // 避免 setImmediate 这一拍里 onAbort 被触发但本轮还多解一块的窗口。
+            await yieldToLoop();
+            if (aborted) failAbort();
         }
 
         if (aborted) failAbort();

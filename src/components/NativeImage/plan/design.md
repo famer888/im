@@ -76,7 +76,7 @@ src/components/NativeImage/
 └── node/                   # 主进程逻辑（[本期] 仅 Avatar 链路必需）
     ├── index.js            # ipcMain.handle 注册入口
     ├── downloader.js       # 重写下载（拿到 statusCode、headers）（[本期]）
-    ├── decryptor.js        # 解密器（默认 child_process 池；可降级 in-process）（[本期]）
+    ├── decryptor.js        # 解密器（[规划] worker_threads 池；[当前] in-process 同步，见文件注释）（[本期]）
     ├── headerCheck.js      # 加密文件头部预检（[本期]）
     ├── paths.js            # 工作目录 / 结果目录管理（[本期]）
     └── concurrency.js      # 并发控制 / 文件锁（[预留]，本期仅做"单 key 串行"）
@@ -105,7 +105,7 @@ props:
   resultDir:     String?              // [本期] 覆盖默认结果目录（Avatar 用 'images/avatar'）
   persistAdapter: PersistAdapter?     // [扩展] 落库策略，缺省 Noop；Picture/Poster/MediaCaption 各自注入；见 §14.3
   domainAdapter:  DomainAdapter?      // [扩展] 域名选择策略，缺省"replace host with ossDefaultUrl"；见 §14.4
-  decryptAdapter: DecryptAdapter?     // [扩展] 替换解密实现（child_process 池 / 原生 addon / wasm），见 §14.5
+  decryptAdapter: DecryptAdapter?     // [扩展] 替换解密实现（worker_threads 池 / 原生 addon / wasm），见 §14.5
   smPlugins:      Array<SmPlugin>?    // [扩展] 状态机插件：注册新状态/事件/守卫，见 §14.1
   wrapper:        Boolean | String | Component = true
                                       // 外层是否包 <span class="native-image" data-state="...">
@@ -327,12 +327,58 @@ state=ready，返回 fs.createReadStream(resultPath)
   - 支持 cancelToken：派生组件卸载时主动 abort（落 description #7）。
   - 进度事件挂着但 Avatar 不订阅（[预留] description #2）。
 
-### 5.3 decryptor（child_process 池）
+### 5.3 decryptor（worker_threads 池）
 
-- 默认实现：维护一个 `min=1, max=2` 的 worker 进程池（`child_process.fork('node/decryptor.worker.js')`），跑等价于现 `public/worker.js` 的 AES-128-ECB 解密逻辑。
-- 协议：父子之间走 `process.send({ inPath, outPath, key })`，子端读流→分片解密→写流→ack；不在 main 进程做大块同步 CPU。
-- **关键改动**：不再"原地覆写"。子进程写到 `tmpPath = workPath + '.dec'`，父进程收到 ack 后 `fs.rename(tmpPath, resultPath)`（这一步是 §5.6 描述的原子性根本来源）。
-- 若性能不达标（Avatar 通常很小，估计单次 < 200ms），打印一次 `console.warn('[NativeImage] decrypt > 500ms, consider native')`，符合 description #6「有性能问题的话提醒下」。
+> 选型订正记录：本节早期版本写的是 "child_process 池"，沿用旧 `public/worker.js` Web Worker 模型直译；
+> 结合 100×2MB Picture / 1GB Video 场景重审后，**确认 worker_threads 在各维度均优于 child_process**，
+> 故弃 fork 路线。当前实现降级为 in-process 同步（见 `node/decryptor.js` 头部 "已知不足 + 计划升级方向"），
+> 完整 worker pool 形态接 Picture/Poster 时落地。本节描述的是规划终态。
+
+#### 5.3.1 选型：worker_threads vs child_process
+
+| 维度 | `worker_threads`（采用） | `child_process.fork`（弃用） |
+|---|---|---|
+| 启动税 | ~5–10ms | ~80–200ms（首张延迟差一个量级） |
+| 单实例内存 | ~5–10MB heap | ~30MB RSS（满进程） |
+| Buffer 通信 | 零拷贝 transferable | structured clone 序列化 |
+| API 依赖 | Node 12+ 标准 | Node 12+ 标准 |
+| 崩溃隔离 | 同进程，无 | 子进程 crash 不拖垮 main |
+
+唯一短板（崩溃隔离）对纯 JS `crypto.createDecipheriv` 价值为零——AES 解密不会 segfault，
+不值得为之付 fork 启动税与每进程 30MB RSS 常驻。
+
+#### 5.3.2 规划实现形态
+
+- **`node/decryptor.worker.js`**：streaming pipeline（`createReadStream` → AES `Transform` → `createWriteStream`），
+  入参只传 `{ inPath, outPath, encryptKey }` 文件路径，worker 内部读写，主进程内存零增长。
+  1GB 视频峰值 ~2–4MB（read HWM + 一块缓冲 + write 缓冲），不再有"全文件读进 V8 Buffer" 的 OOM 风险。
+- **`node/decryptor.js`**：薄 `WorkerPool` 包装：lazy spawn / idle 30s 超时回收 / `max = 4`（CPU 核数上限）。
+  保持 `decrypt({ inPath, outPath, encryptKey, signal })` 签名 1:1 不变，drivePipeline 完全无感知。
+- **协议**：主线程 `postMessage({ inPath, outPath, encryptKey })`；worker 完成后 `postMessage({ ok, result | error })`。
+  payload 仅几十字节，IPC 序列化开销 ~0.1ms。abort 信号通过 `postMessage({ cancel: true })` + worker 端检查标志位实现。
+- **关键不变**：worker 写到 `tmpPath = .work/decrypt/<random>.dec`，主进程收到 ack 后 `fs.rename(tmpPath, resultPath)` —— 仍是 §5.6 描述的原子性根本来源。worker 内部不直接写结果目录。
+- **性能告警**：单次解密超 `SLOW_THRESHOLD_MS = 500ms` 时打印一次 `console.warn('[NativeImage] decrypt > 500ms, consider native')`，符合 description #6「有性能问题的话提醒下」。
+- **配合 `concurrency.scheduleWithLimit`**（§5.5 [预留] 同步补齐）：按 kind 配全局并发上限（`avatar 8 / picture 4 / poster 2`），避免突发 100+ 任务全部进 worker pool 队列排队。
+
+#### 5.3.3 为什么 Avatar 也要上 worker（虽然当前 in-process 无可观察瓶颈）
+
+- **防御性**：消除"100 张 + 单张偶发偏大"等边缘 case 下 main loop 几百 ms 冻结的可能。
+  现网历史上出现过 >1MB 的老群头像样本；同屏 100+ 头像在 chat 列表 / 成员页一次性 mount 时，
+  in-process 同步路径累计阻塞 main loop 可达 ~700ms，IPC handler / `native-image://` protocol /
+  其他窗口全部排队。
+- **顺路接入**：接 Picture/Poster 必然要做 worker pool，Avatar 顺路接入零额外代码成本，
+  避免 base 流水线里"avatar 走 inline / picture 走 worker" 分两套实现。
+- **用户预期**：IM 主窗口任何时刻都应即时响应；解密 50KB 头像哪怕只占 main loop 4ms 也不应发生。
+
+#### 5.3.4 关于视频等大文件的额外约束
+
+worker 化只解决 "main loop 阻塞 + 单实例内存"。视频（>500MB）场景还需考虑：
+
+- **磁盘 2× 占用**：cipher + plain 双份；需要后台 LRU 清理 `result/poster/` 目录。
+- **首帧延迟**：方案 A（流式预解密到磁盘后播）需等全量 decrypt 完成，1GB ~2s；
+  对短视频可接受。长视频 / 频繁 seek 场景可考虑方案 C（虚拟挂载，protocol handler
+  按 Range 请求即时解密对应 cipher chunk，不落明文磁盘），但实现复杂度高，本期不规划。
+- worker pool 大小：视频一次只放一个，pool 实际并发用不到 4，配 `max=2` 即够；CPU 并行收益小，主要靠 worker "挡 main loop"。
 
 ### 5.4 headerCheck（description #4，加密文件头部预检）
 
