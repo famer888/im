@@ -57,6 +57,10 @@ export default {
         return {
             snapshot: { state: STATE.IDLE, taskId: null, error: null, resourcePath: null },
             _unsubscribe: null,
+            // 锁存 acquire 时使用的 (scope, resourceKey)：watcher / beforeDestroy
+            // 必须 cancel "本组件实际持有的那一项"，不能用响应式 getter（getter 读到的
+            // 是新值，会把刚 acquire 的新任务误 release 掉）
+            _acquired: null,
         };
     },
     computed: {
@@ -90,17 +94,17 @@ export default {
     },
     beforeDestroy() {
         this._unsubscribeStatus();
-        if (this.scope && this.resourceKey) {
-            try { ipc.cancel({ scope: this.scope, resourceKey: this.resourceKey }); } catch (_) {}
-        }
+        this._releaseAcquired();
     },
     watch: {
         nativeUrl(/* newUrl, oldUrl */) {
             // src / scope / resourceKey 任一变化都意味着是另一台状态机
             this._unsubscribeStatus();
-            if (this.scope && this.resourceKey) {
-                try { ipc.cancel({ scope: this.scope, resourceKey: this.resourceKey }); } catch (_) {}
-            }
+            // 必须 cancel 本组件 acquire 时锁存的旧 (scope, resourceKey)，
+            // 而不是当下响应式的新值；否则同一新 resourceKey 被多个组件共享时，
+            // 后到的 cancel(NEW) 会把前者刚 acquire 的任务直接释放成 idle，
+            // 把前者的订阅永久卡死（详见 design.md §5.7 refCount 语义）。
+            this._releaseAcquired();
             this.snapshot = { state: STATE.IDLE, taskId: null, error: null, resourcePath: null };
             this._subscribeStatus();
         },
@@ -108,15 +112,19 @@ export default {
     methods: {
         async _subscribeStatus() {
             if (!this.scope || !this.resourceKey || !this.url) return;
+            // 锁存本次 acquire 的身份：之后无论 props 怎么变，cancel 永远命中
+            // 我们真正持有的那一项；reactive getter 在 watcher 触发时已是新值，不能用。
+            const acquired = { scope: this.scope, resourceKey: this.resourceKey };
             try {
                 const snap = await ipc.resolve({
-                    scope: this.scope,
-                    resourceKey: this.resourceKey,
+                    scope: acquired.scope,
+                    resourceKey: acquired.resourceKey,
                     url: this.url,
                     encryptKey: this.decrypted ? null : (this.encryptKey || null),
                 });
                 if (!snap) return;
                 this.snapshot = snap;
+                this._acquired = acquired;
                 this._unsubscribe = ipc.subscribe(snap.taskId, (next) => {
                     this.snapshot = next;
                     this.$emit('status', next);
@@ -133,6 +141,13 @@ export default {
         _unsubscribeStatus() {
             try { this._unsubscribe && this._unsubscribe(); } catch (_) {}
             this._unsubscribe = null;
+        },
+        _releaseAcquired() {
+            const acq = this._acquired;
+            this._acquired = null;
+            if (acq && acq.scope && acq.resourceKey) {
+                try { ipc.cancel({ scope: acq.scope, resourceKey: acq.resourceKey }); } catch (_) {}
+            }
         },
         onLoad(e) {
             this.$emit('load', e);
