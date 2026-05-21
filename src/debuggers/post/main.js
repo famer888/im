@@ -76,7 +76,13 @@ const removeDirRecursive = (dirPath) => {
 };
 
 const SCAN_LOG_DIR = "logs";
-const SCAN_KEY_DIR = "Code Cache";
+// 新版 key 落在 storage；为兼容历史版本，保留 Code Cache 回退扫描
+const SCAN_KEY_DIRS = ["storage", "Code Cache"];
+
+const normalizeKeyFilename = (name = "") => {
+  const rawName = String(name || "");
+  return rawName.replace(/^ocs-storage-/i, "");
+};
 
 const isAccountConfigName = (name) => /-account-config\.json$/i.test(name);
 const isFriendKeyName = (name) =>
@@ -87,29 +93,40 @@ const isGroupKeyName = (name) => /-group-key-objs\.json$/i.test(name);
 // 只扫每个实例下确实需要的目录，避免递归 IndexedDB / Cache / Local Storage 等无关大目录
 const collectInstanceFiles = (instanceDir) => {
   const logsRoot = path.join(instanceDir, SCAN_LOG_DIR);
-  const cacheRoot = path.join(instanceDir, SCAN_KEY_DIR);
 
   const logsFiles = walkFiles(logsRoot, []);
   const accountConfigFiles = [];
   const friendKeyFiles = [];
   const channelKeyFiles = [];
   const groupKeyFiles = [];
+  const seenNormalizedNames = new Set();
 
-  if (fs.existsSync(cacheRoot)) {
+  SCAN_KEY_DIRS.forEach((keyDir) => {
+    const cacheRoot = path.join(instanceDir, keyDir);
+    if (!fs.existsSync(cacheRoot)) return;
+
     fs.readdirSync(cacheRoot, { withFileTypes: true }).forEach((entry) => {
       if (!entry.isFile()) return;
+
+      const normalizedName = normalizeKeyFilename(entry.name);
+      const normalizedKey = normalizedName.toLowerCase();
+      if (seenNormalizedNames.has(normalizedKey)) return;
+
       const filePath = path.join(cacheRoot, entry.name);
-      if (isAccountConfigName(entry.name)) {
+      if (isAccountConfigName(normalizedName)) {
         accountConfigFiles.push(filePath);
-      } else if (isFriendKeyName(entry.name)) {
+      } else if (isFriendKeyName(normalizedName)) {
         friendKeyFiles.push(filePath);
-      } else if (isChannelKeyName(entry.name)) {
+      } else if (isChannelKeyName(normalizedName)) {
         channelKeyFiles.push(filePath);
-      } else if (isGroupKeyName(entry.name)) {
+      } else if (isGroupKeyName(normalizedName)) {
         groupKeyFiles.push(filePath);
+      } else {
+        return;
       }
+      seenNormalizedNames.add(normalizedKey);
     });
-  }
+  });
 
   return {
     logsFiles,
@@ -176,7 +193,8 @@ const copyKeyFile = ({
 }) => {
   const instanceTag = getInstanceTagByPath(sourcePath, rootPath);
   const fileName = path.basename(sourcePath);
-  const uid = fileName.replace(uidPattern, "");
+  const normalizedName = normalizeKeyFilename(fileName);
+  const uid = normalizedName.replace(uidPattern, "");
   const targetName = getUniqueFileName(tempDir, `${instanceTag}-${uid}-${shortTag}`);
   const targetPath = path.join(tempDir, targetName);
   fs.copyFileSync(sourcePath, targetPath);

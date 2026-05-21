@@ -1084,7 +1084,7 @@ export default {
               ...item,
               values: {
                 ...item.values,
-                atUids: atUsers.map((item) => item.id),
+                atUids: atUsers.map((item) => item.uid),
                 atUsers,
                 groupName: this.chatContent.name,
               },

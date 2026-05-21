@@ -177,15 +177,16 @@ export const fnTextGetAt = (str, atList, isLeader) => {
             }),
     ];
 
-    // 返回被@的成员id列表
+    // 返回被@的成员列表，统一为对象数组，字段对齐 proto AtUser (uid + nickName)
+    // name 字段为本地备注名，仅供 UI 使用；发往协议层之前会被剔除
     return names.includes(-1) && isLeader
-        ? [-1]
+        ? [{ uid: -1, nickName: "全体成员", name: "" }]
         : atList
               .filter((item) =>
                   names.some((n) => n.indexOf(item.name || item.nickName) === 0)
               )
               .map((item) => {
-                  return { id: item.id.toString(), nickName: item.nickName, name: item.name };
+                  return { uid: item.id.toString(), nickName: item.nickName, name: item.name };
               });
 };
 

@@ -1435,6 +1435,19 @@ export const fnFormartMsgParams = async ({ data, customMsgId, id, type }) => {
         mediasCaptionSlots,
     });
 
+    // 协议规范化：AtUser 只保留 proto 定义的字段（uid + nickName）
+    // 兼容历史/视图层用 id 命名的情况；name（本地备注名）等非协议字段不会被发到服务端
+    const normalizedAtUsers = Array.isArray(atUsers)
+        ? atUsers
+              .map((u) => {
+                  const uid = u && (u.uid ?? u.id);
+                  if (uid === undefined || uid === null || uid === "") return null;
+                  return { uid, nickName: u.nickName || "" };
+              })
+              .filter(Boolean)
+        : [];
+    const normalizedAtUids = normalizedAtUsers.map((u) => u.uid);
+
     const params = {
         msgId: null, // 消息ID
         sendUid: null, // 发送人uid
@@ -1447,7 +1460,8 @@ export const fnFormartMsgParams = async ({ data, customMsgId, id, type }) => {
         snapchatTime: 0, // 阅后即焚设置时间 5秒， 10秒
         source: 1, // 消息来源 add v1.2.0
         customMsgId,
-        atUsers,
+        atUsers: normalizedAtUsers,
+        atUids: normalizedAtUids,
     };
 
     // 如果为骰子或者官方，则不加密
