@@ -43,7 +43,7 @@ export const download = (url, opts = {}) => {
 
         const cleanup = () => {
             if (timeoutId) { clearTimeout(timeoutId); timeoutId = null; }
-            if (ws) { try { ws.end(); } catch (_) {} ws = null; }
+            if (ws) { try { ws.destroy(); } catch (_) {} ws = null; }
         };
 
         const fail = (errCode, detail = {}) => settle(() => {
@@ -84,13 +84,20 @@ export const download = (url, opts = {}) => {
                 }
             });
             response.on('end', () => {
-                cleanup();
-                settle(() => resolve({
-                    statusCode: status,
-                    headers,
-                    workPath,
-                    bytes: receivedBytes,
-                }));
+                if (timeoutId) { clearTimeout(timeoutId); timeoutId = null; }
+                // 必须 await 写流 flush 完成才能让下游（headerCheck.verify）正确 stat 文件。
+                // 旧实现：cleanup 里 ws.end() 不等 'finish' 就 resolve，导致 fs.stat() 时
+                // 文件还在缓冲中，size=0 → headerCheck tooSmall → decryptError（间歇性表现：
+                // 同一张图每次可能成功也可能失败，取决于下游读时刻 flush 是否完成）。
+                const localWs = ws;
+                ws = null;
+                if (!localWs) {
+                    settle(() => resolve({ statusCode: status, headers, workPath, bytes: receivedBytes }));
+                    return;
+                }
+                localWs.end(() => {
+                    settle(() => resolve({ statusCode: status, headers, workPath, bytes: receivedBytes }));
+                });
             });
             response.on('error', (e) => fail(ERROR_CODE.NETWORK, { stage: 'response', message: e.message }));
         });
