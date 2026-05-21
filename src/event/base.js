@@ -298,7 +298,7 @@ const fnCommunicationProcessing = (values) => {
         }
         case "atClick": {
             // 点击at
-            eventCommon.fnAtClick(data.text, data.groupId);
+            eventCommon.fnAtClick(data.text, data.groupId, data.possibleUid);
             return false;
         }
         default:

@@ -603,8 +603,11 @@ const fnConfigRU = (values) => {
 
 /**
  * at 点击
+ * @param {string} text 文本（不含 @）
+ * @param {string|number} currentGuoupId 当前会话 id（群/频道）
+ * @param {string|number} [possibleUid] 低可信度的推测 uid，名字接口未命中时用于本地兜底
  */
-const fnAtClick = async (text, currentGuoupId) => {
+const fnAtClick = async (text, currentGuoupId, possibleUid) => {
   // 登录id
   const loginId = commonInfo.loginId;
 
@@ -668,7 +671,7 @@ const fnAtClick = async (text, currentGuoupId) => {
   }
 
   // 判断是否是当前已有的群
-  Cache(`${loginId}-GroupList`).then((res) => {
+  Cache(`${loginId}-GroupList`).then(async (res) => {
     if (res) {
       const groupInfo = (res || []).find((item) => item.groupAliasName === text);
 
@@ -686,15 +689,48 @@ const fnAtClick = async (text, currentGuoupId) => {
             comType: "chat",
           },
         });
-      } else {
-        // 判断打开新的好友或者群
-        eventBase.fnCommunicationSendMsg({
-          operator: "openDialogNewFriendOrGroup",
-          data: {
-            text,
-          },
-        });
+        return;
       }
+
+      // 低可信度兜底：名字找不到时，用 possibleUid 在本地（联系人 + 群成员）再查一次
+      if (possibleUid != null) {
+        const targetUid = String(possibleUid);
+
+        // 1) 联系人列表
+        const friendByUid = friendList.find(
+          (f) => String(f.id) === targetUid
+        );
+        if (friendByUid) {
+          eventBase.fnCommunicationSendMsg({
+            operator: "memberDialogShow",
+            data: { values: friendByUid },
+          });
+          return;
+        }
+
+        // 2) 当前群成员缓存
+        if (currentGuoupId) {
+          const groupMemberList = (await Cache(`${loginId}_${currentGuoupId}_groupMemberList`)) || [];
+          const memberByUid = groupMemberList.find(
+            (m) => String(m.id) === targetUid
+          );
+          if (memberByUid) {
+            eventBase.fnCommunicationSendMsg({
+              operator: "memberDialogShow",
+              data: { values: memberByUid },
+            });
+            return;
+          }
+        }
+      }
+
+      // 最后兜底：打开"新的好友/群"搜索框
+      eventBase.fnCommunicationSendMsg({
+        operator: "openDialogNewFriendOrGroup",
+        data: {
+          text,
+        },
+      });
     }
   });
 };

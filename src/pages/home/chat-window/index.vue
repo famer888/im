@@ -701,7 +701,56 @@ export default {
           // 显示成员会话框
           if (info.values) {
             this.memberDialogInfo = info.values;
-          } else if (info.atName && this.chatContent.type === "friend") {
+            break;
+          }
+
+          // 高可信度：优先按 uid 查（注意 string/number/Long 类型不对等，统一 String 比较）
+          // 查询顺序按 chatContent.type 分流，与原 atName 各分支构造结构保持一致
+          if (info.atUid != null) {
+            const targetUid = String(info.atUid);
+            let found = null;
+
+            if (this.chatContent.type === 'channel') {
+              // 频道场景：优先 channelUserList，并按原 atName 频道分支构造（带 channelId / notShowAddButton 等）
+              const user = channelUserList.find(u => String(u.userInfoDTO?.uid) === targetUid);
+              const friend = friendList.find(f => String(f.id) === targetUid);
+
+              if (user || friend) {
+                const uid = user ? user.userInfoDTO.uid : friend.id;
+                const icon = user ? user.userInfoDTO.icon : friend.pic;
+                const name = user ? user.userInfoDTO.name : friend.name;
+                const nickName = user ? user.userInfoDTO.nickName : friend.nickName;
+                const targetMemberType = user ? user.memberType : 0;
+                const currentMemberType = this.chatContent.memberType;
+                const notShowAddButton = (currentMemberType === 2 && (targetMemberType === 1 || targetMemberType === 2))
+                  || (currentMemberType === 1 && targetMemberType === 2);
+                found = {
+                  id: uid,
+                  icon,
+                  name,
+                  nickName,
+                  bfFriend: !!friend,
+                  channelId: this.chatContent.id,
+                  notShowAddButton,
+                };
+              }
+            } else if (this.chatContent.type === 'friend') {
+              // 好友会话：直接查 friendList
+              found = friendList.find(item => String(item.id) === targetUid);
+            } else {
+              // 群会话（默认）：仅查群成员，与原 atName 群分支查询源保持一致
+              // 未命中则向下走 atName 兜底（同源再查一次 by name）
+              found = memberInfoList.find(item => String(item.id) === targetUid);
+            }
+
+            if (found) {
+              this.memberDialogInfo = found;
+              break;
+            }
+            // uid 没查到，继续向下走 atName 兜底（不直接 toast）
+          }
+
+          if (info.atName && this.chatContent.type === "friend") {
             // 如果是at名，则找到该成员
             this.memberDialogInfo = friendList.find(
               (item) => item.nickName === info.atName || item.name === info.atName

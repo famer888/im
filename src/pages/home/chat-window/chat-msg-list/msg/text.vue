@@ -36,7 +36,7 @@ export default {
   components: {
     ComLableEle,
   },
-  props: ["isSelf", "content", "atUsers", "currentGuoupId", "links", "chatContent"],
+  props: ["isSelf", "content", "atUsers", "currentGuoupId", "links", "chatContent", "atUids"],
   watch: {
     info: {
       handler(newVal, oldVal) {
@@ -58,16 +58,32 @@ export default {
   methods: {
     /**
      * 点击了at的内容
+     * @param {string} text  @ 文本（含 @ 前缀）
+     * @param {object} [info] 来自 lable-ele 的整个节点，可能带 uid / possibleUid
      */
-    handleAtClick(text) {
+    handleAtClick(text, info) {
       const atText = text.replace("@", "");
+      const uid = info?.uid;
+      const possibleUid = info?.possibleUid;
+
+      // 高可信度：有 uid 时直接带 uid 走 memberDialogShow，让下游优先按 uid 查
+      if (uid != null) {
+        eventBase.fnCommunicationSendMsg({
+          operator: "memberDialogShow",
+          data: {
+            atName: atText,
+            atUid: uid,
+          },
+        });
+        return;
+      }
 
       // at的名称列表
       const atNameList = this.atUsers
         ? this.atUsers.map((item) => ("@" + item.nickName + " @" + item.name))
         : [];
 
-      // 如果是打开成员
+      // 名字在 atUsers 范围内，直接打开成员对话框（保持原逻辑）
       if (atNameList.some(i => i.includes(text))) {
         eventBase.fnCommunicationSendMsg({
           operator: "memberDialogShow",
@@ -78,11 +94,13 @@ export default {
         return;
       }
 
+      // 低可信度：把 possibleUid 也带过去，fnAtClick 在按名字查不到时用它兜底
       eventBase.fnCommunicationSendMsg({
         operator: "atClick",
         data: {
           text: atText,
           groupId: this.currentGuoupId,
+          possibleUid,
         },
       });
     },
@@ -161,7 +179,7 @@ export default {
       const atNameList = this.atUsers
         ? this.atUsers.map((item) => "@" + (item.name || item.nickName))
         : [];
-
+        
       // text再进行拆分 把at拆出来
       let tagListNew = [];
       for (const item of tagList) {
@@ -196,7 +214,73 @@ export default {
       }
       // console.log('tagListNew ------>', tagListNew)
       tagListNew = tagListNew.filter(item => item.type !== 'break')
+
+      // 高可信度：按 atUsers 中的名字（显示名 与 原始 nickName）匹配 uid
+      tagListNew = this.assignAtUidByName(tagListNew);
+
+      // 低可信度兜底：atUsers 缺失但 atUids 存在时，按 @ 出现顺序与 atUids 位置对齐
+      if (!this.atUsers?.length && this.atUids?.length) {
+        tagListNew = this.assignAtUidByOrder(tagListNew);
+      }
       this.tagList = tagListNew;
+    },
+    /**
+     * 高可信度：按 atUsers 中的名字匹配 uid。
+     * 同时比对「显示名（备注优先 name || nickName）」与「原始 nickName」两路，
+     * 兼容备注替换失败/缺失的场景。命中后写入 item.uid（与 possibleUid 互斥）。
+     */
+    assignAtUidByName(tagList) {
+      if (!this.atUsers?.length) return tagList;
+      const nameToUid = new Map();
+      for (const user of this.atUsers) {
+        // 兼容两种字段命名：有的来源用 uid，有的（如 editor 走出去/回来）用 id
+        const uid = user?.uid ?? user?.id;
+        if (uid == null) continue;
+        // 显示名：与上文 atNameList 口径一致
+        const displayName = user.name || user.nickName;
+        if (displayName) {
+          nameToUid.set('@' + displayName, uid);
+        }
+        // 原始 nickName 兜底（应对备注替换失败/缺失的场景）
+        if (user.nickName) {
+          const key = '@' + user.nickName;
+          if (!nameToUid.has(key)) nameToUid.set(key, uid);
+        }
+      }
+      for (const item of tagList) {
+        if (item.type !== 'text') continue;
+        if (!item.content || item.content[0] !== '@' || item.content === '@') continue;
+        if (item.uid != null) continue;
+        const uid = nameToUid.get(item.content);
+        if (uid != null) {
+          item.uid = uid;
+          // 与 possibleUid 互斥
+          if (item.possibleUid != null) delete item.possibleUid;
+        }
+      }
+      return tagList;
+    },
+    /**
+     * 低可信度：atUsers 缺失而 atUids 存在时，按 @ 标签出现顺序与 atUids 位置对齐推测 uid。
+     * 写入 item.possibleUid（uid 值，非布尔），与 item.uid 互斥。
+     */
+    assignAtUidByOrder(tagList) {
+      if (!this.atUids?.length) return tagList;
+      const atItems = tagList.filter(item =>
+        item.type === 'text' &&
+        item.content &&
+        item.content[0] === '@' &&
+        item.content !== '@' &&
+        item.uid == null
+      );
+      if (atItems.length === 0 || atItems.length !== this.atUids.length) {
+        return tagList;
+      }
+      atItems.forEach((item, idx) => {
+        const uid = this.atUids[idx];
+        if (uid != null) item.possibleUid = uid;
+      });
+      return tagList;
     },
   },
 };

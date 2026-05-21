@@ -60,7 +60,7 @@
                     })
                     " />
                 <ComMsgText v-if="n.chatType === 0" :isSelf="n.isSelf" :chatContent="chatContent" :content="n.content"
-                  :atUsers="n.atUsers" :currentGuoupId="chatContent.id" :links="n.links" @rightClick="
+                  :atUsers="n.atUsers" :atUids="n.atUids" :currentGuoupId="chatContent.id" :links="n.links" @rightClick="
                     (e) =>
                       handleEmitInfo({ e, info: n }, 'rightClickMenuDisplay')
                   ">

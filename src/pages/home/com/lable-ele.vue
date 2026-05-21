@@ -86,7 +86,8 @@ export default {
     },
     handleAtClick(e) {
       e.stopPropagation();
-      this.$emit("atClick", this.info.content);
+      // 第二个参数透传整个 info（含 uid / possibleUid），旧消费者仅取第一个参数仍兼容
+      this.$emit("atClick", this.info.content, this.info);
     },
     async validChannelLink(link) {
       try {

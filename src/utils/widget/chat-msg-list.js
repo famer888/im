@@ -128,6 +128,7 @@ export const fnDbMsgListFormat = (list, isGroup) => {
             url: item.url,
             text: item.text,
             atUsers: item.atUsers,
+            atUids: item.atUids,
             thumbUrl: item.thumbUrl,
             width: item.width,
             height: item.height,
