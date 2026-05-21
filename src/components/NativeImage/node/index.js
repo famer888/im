@@ -91,7 +91,7 @@ export const setDomainAdapter = (adapter) => { _domainAdapter = adapter; };
 // ──────────────────────────────────────────────────────────────────────────────
 
 const broadcastStatus = (snap) => {
-    if (!_mainWindow || _mainWindow.isDestroyed?.()) return;
+    if (!_mainWindow || (typeof _mainWindow.isDestroyed === 'function' && _mainWindow.isDestroyed())) return;
     try { _mainWindow.webContents.send(Channels.status, snap); } catch (_) {}
 };
 
@@ -105,7 +105,7 @@ const handleResolveIpc = ({ scope, resourceKey, url, encryptKey }) => {
     drivePipeline({ scope, resourceKey, url, encryptKey }).catch((e) => {
         // 错误已在 pipeline 内派发到状态机；此处仅吞掉 unhandled rejection
         // 写日志便于排查（保持低噪声：只在 main 进程 stderr 上一行）
-        console.warn('[NativeImage node] pipeline rejected', e?.code || e?.message || e);
+        console.warn('[NativeImage node] pipeline rejected', (e && e.code) || (e && e.message) || e);
     });
     return sm.snapshot();
 };
@@ -160,7 +160,7 @@ const handleProtocolRequest = async (request, callback) => {
  */
 const drivePipeline = async ({ scope, resourceKey, url, encryptKey }) => {
     const existing = taskRegistry.peek({ scope, resourceKey });
-    if (existing?.inflight) return existing.inflight;
+    if (existing && existing.inflight) return existing.inflight;
 
     const inflight = concurrency.schedule(scope, async () => {
         const entry = taskRegistry.peek({ scope, resourceKey });
@@ -181,7 +181,7 @@ const drivePipeline = async ({ scope, resourceKey, url, encryptKey }) => {
 
         // 解析最终 URL（§8.1 动态域名 host 替换）
         let finalUrl = url;
-        if (_domainAdapter?.pick) {
+        if (_domainAdapter && _domainAdapter.pick) {
             try { finalUrl = await _domainAdapter.pick(url); } catch (_) { finalUrl = url; }
         }
 
@@ -200,7 +200,7 @@ const drivePipeline = async ({ scope, resourceKey, url, encryptKey }) => {
                 sm.dispatch(EVENT.HTTP_4XX, { error: err });
             } else {
                 sm.dispatch(EVENT.HTTP_FAIL, { error: err });
-                if (_domainAdapter?.report) {
+                if (_domainAdapter && _domainAdapter.report) {
                     try { _domainAdapter.report(hostOf(finalUrl), { reason: code, statusCode: undefined }); } catch (_) {}
                 }
             }
@@ -208,26 +208,36 @@ const drivePipeline = async ({ scope, resourceKey, url, encryptKey }) => {
         }
 
         // 加密：headerCheck → decrypt
+        // 业务现状：同一 encryptKey 下既有"老的已加密头像"，也有"新上传的明文头像"。
+        // 所以即使 caller 传了 encryptKey，也以 headerCheck 实测为准 ——
+        //   ok + plain: true   → 跳过 decryptor，直接把原文件 commit（design.md §5.4.4）
+        //   ok                 → 走 decryptor
+        //   !ok                → VERIFY_FAIL → decryptError
         let toCommit;
         if (encryptKey) {
             sm.dispatch(EVENT.START_VERIFY);
             const v = await headerCheck.verify(dl.workPath, encryptKey).catch((e) => ({
-                ok: false, reason: ERROR_CODE.WORKER_FAILED, detail: { message: e?.message },
+                ok: false, reason: ERROR_CODE.WORKER_FAILED, detail: { message: e && e.message },
             }));
             if (!v.ok) {
                 sm.dispatch(EVENT.VERIFY_FAIL, { error: { code: v.reason, detail: v.detail, at: Date.now() } });
                 try { fs.unlinkSync(dl.workPath); } catch (_) {}
                 throw { code: v.reason, detail: v.detail };
             }
-            sm.dispatch(EVENT.START_DECRYPT);
-            try {
-                const out = await decryptor.decrypt({ inPath: dl.workPath, encryptKey });
-                try { fs.unlinkSync(dl.workPath); } catch (_) {}
-                toCommit = out.outPath;
-            } catch (err) {
-                sm.dispatch(EVENT.DECRYPT_FAIL, { error: err });
-                try { fs.unlinkSync(dl.workPath); } catch (_) {}
-                throw err;
+            if (v.plain) {
+                // 明文头像快路径：VERIFYING --START_COMMIT--> COMMITTING
+                toCommit = dl.workPath;
+            } else {
+                sm.dispatch(EVENT.START_DECRYPT);
+                try {
+                    const out = await decryptor.decrypt({ inPath: dl.workPath, encryptKey });
+                    try { fs.unlinkSync(dl.workPath); } catch (_) {}
+                    toCommit = out.outPath;
+                } catch (err) {
+                    sm.dispatch(EVENT.DECRYPT_FAIL, { error: err });
+                    try { fs.unlinkSync(dl.workPath); } catch (_) {}
+                    throw err;
+                }
             }
         } else {
             toCommit = dl.workPath;
@@ -239,7 +249,7 @@ const drivePipeline = async ({ scope, resourceKey, url, encryptKey }) => {
         try {
             await paths.commit(toCommit, resultPath);
         } catch (err) {
-            sm.dispatch(EVENT.HTTP_FAIL, { error: { code: ERROR_CODE.RENAME_FAILED, detail: { message: err?.message }, at: Date.now() } });
+            sm.dispatch(EVENT.HTTP_FAIL, { error: { code: ERROR_CODE.RENAME_FAILED, detail: { message: err && err.message }, at: Date.now() } });
             try { fs.unlinkSync(toCommit); } catch (_) {}
             throw err;
         }

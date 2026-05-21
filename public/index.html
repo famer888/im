@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://www.googletagmanager.com<%= process.env.NODE_ENV !== 'production' ? " 'unsafe-eval'" : '' %>; style-src 'self' 'unsafe-inline'; img-src 'self' local-resource: http: https: data: blob:; media-src 'self' local-resource: http: https: blob:; connect-src 'self' local-resource: http: https: ws: wss:; font-src 'self' data:; object-src 'none'; base-uri 'self'">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://www.googletagmanager.com<%= process.env.NODE_ENV !== 'production' ? " 'unsafe-eval'" : '' %>; style-src 'self' 'unsafe-inline'; img-src 'self' local-resource: native-image: http: https: data: blob:; media-src 'self' local-resource: native-image: http: https: blob:; connect-src 'self' local-resource: http: https: ws: wss:; font-src 'self' data:; object-src 'none'; base-uri 'self'">
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
     <link rel="icon" href="<%= BASE_URL %>favicon.ico" />
     <title></title>

@@ -4,9 +4,11 @@
         :url="rewrittenSrc"
         :encrypt-key="encryptKey"
         :scope="scopeObj"
+        :decrypted="false"
         :resource-key="resourceKey"
         :fallback="fallbackChain"
         :persist-adapter="persistAdapter"
+        :wrapper="false"
         class="com-native-avatar"
         @onClick="handleClick"
         @onContextmenu="handleContextmenu"
@@ -39,9 +41,15 @@
 //   - 无 loading / 无 failure UI；resolving / *Error 一律走 fallback 链
 //     直接挂到 <img> 或 TextAvatar，不报红
 //   - 动态域名仅做"用 ossDefaultUrl 替换 host"；轮换/降权/上报为 §8.2 [预留]
-//   - 默认 encryptKey = process.env.VUE_APP_HEAD_AES_KEY（头像统一 AES-128-ECB 加密），
-//     业务侧可通过 prop 显式覆盖（如某些不加密的 default 头像源走 defaultUrl fallback）
+//   - 默认 encryptKey = process.env.VUE_APP_HEAD_AES_KEY：业务现状是新老头像并存
+//     （早期上传的走 AES-128-ECB 加密、近期上传的灰度成明文），所以这里**默认下发 key**，
+//     由 node 端 headerCheck 在 §5.4 阶段按文件头实测决定走"解密"还是"跳过解密直 commit"
+//     的快路径（design.md §7.x：VERIFYING --START_COMMIT--> COMMITTING）。
+//     业务侧明确知道是未加密源时可显式传 '' 直接短路 verify 阶段。
 //   - 不入库：persistAdapter = noopPersist（§12.3）
+//   - 不包外层 span：wrapper=false。30+ 调用点的父级 CSS 直接选 <img>（.member-avatar img / .img-head 等），
+//     沿用旧 ComImage 的 DOM 结构最少惊喜；class="com-native-avatar" 由 Vue 自动合并到 <img> 上。
+//     Picture/Poster 需要切换"loading/error slot ↔ 真图"多状态，保留默认 wrapper=true 作稳定容器锚点。
 
 import NativeImage from './NativeImage.vue';
 import TextAvatar from '@/components/text-avatar.vue';
@@ -90,7 +98,8 @@ export default {
         // 可选：仅 TextAvatar fallback 用；旧调用点没传也不影响
         name:       { type: String, default: '' },
         uid:        { type: [Number, String], default: 0 },
-        // 头像 AES key：缺省读 env，业务侧可显式覆盖（如未加密源传 ''）
+        // 头像 AES key：缺省读 env（兼容历史加密头像），未加密源由 node 端
+        // headerCheck 自动识别走 plain 快路径，无需业务侧关心
         encryptKey: { type: String, default: () => process.env.VUE_APP_HEAD_AES_KEY || '' },
     },
     computed: {

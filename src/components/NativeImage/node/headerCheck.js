@@ -51,26 +51,29 @@ const computeShannonEntropy = (buf) => {
  * @param {string} workPath
  * @param {string|null} encryptKey  - 当前未使用；签名稳定供 §5.4.5 增强用
  * @param {{ maxHeadBytes?: number }} opts
- * @returns {Promise<{ ok: true, headBytes: Buffer } | { ok: false, reason: string, detail: object }>}
+ * @returns {Promise<
+ *   { ok: true, plain?: boolean, magic?: string, headBytes?: Buffer } |
+ *   { ok: false, reason: string, detail: object }
+ * >}
+ *
+ * 返回语义：
+ *   - { ok: true, plain: true, magic }          → 明文图，pipeline 跳过解密直 commit
+ *   - { ok: true, headBytes }                    → 形状像密文，pipeline 走 decryptor
+ *   - { ok: false, reason }                      → 确定坏输入（太小等），走 decryptError
+ *
+ * 注意：本文件做的是"形状预检"，不验密钥正确性 ——
+ *   §5.4.5 之前我们容忍"灰度去加密"场景，所以"明文"是合法结果而非错误。
  */
 export const verify = async (workPath, encryptKey, { maxHeadBytes = 32 } = {}) => {
     const stat = await fs.promises.stat(workPath);
     const fileSize = stat.size;
 
-    // 1. fileSize >= 16
+    // 1. fileSize >= 16 —— 任何头像/图片都不可能这么小，必然损坏
     if (fileSize < 16) {
         return { ok: false, reason: ERROR_CODE.TOO_SMALL, detail: { fileSize } };
     }
-    // 2. fileSize >= 32
-    if (fileSize < 32) {
-        return { ok: false, reason: ERROR_CODE.SUSPICIOUS_SIZE, detail: { fileSize } };
-    }
-    // 3. AES block aligned
-    if (fileSize % 16 !== 0) {
-        return { ok: false, reason: ERROR_CODE.NOT_BLOCK_ALIGNED, detail: { fileSize } };
-    }
 
-    // 读前 maxHeadBytes 字节
+    // 读前 maxHeadBytes 字节，用于 magic 探测
     const fh = await fs.promises.open(workPath, 'r');
     const headBytes = Buffer.alloc(maxHeadBytes);
     try {
@@ -79,18 +82,31 @@ export const verify = async (workPath, encryptKey, { maxHeadBytes = 32 } = {}) =
         await fh.close();
     }
 
-    // 4. 明文 magic 命中
+    // 2. 明文 magic 命中：业务现状下"未加密头像"是合法输入 —— 标记 plain，
+    //    pipeline 用此信号走"跳过 decryptor 直接 commit"快路径（design.md §5.4.4）。
     for (const m of PLAIN_MAGICS) {
         if (matchMagic(headBytes, m)) {
             return {
-                ok: false,
-                reason: ERROR_CODE.PLAIN_TEXT,
-                detail: { fileSize, magic: m.name, head: headBytes.slice(0, 16).toString('hex') },
+                ok: true,
+                plain: true,
+                magic: m.name,
+                headBytes,
             };
         }
     }
 
-    // 5. 低熵 warn（不拒绝）
+    // 3. 走加密判定前，先卡形状（这两条只有"形似密文"才有意义）：
+    //    - <32 字节：连一个 AES 块 + 校验都装不下，无法是合法密文
+    //    - 非 16 对齐：AES-128 输出必然 16 字节倍数，非对齐 → 既不是密文也不是已知 magic 明文，
+    //      多半是下载截断/CDN 错包，进 decryptError 让上层 fallback 处理
+    if (fileSize < 32) {
+        return { ok: false, reason: ERROR_CODE.SUSPICIOUS_SIZE, detail: { fileSize } };
+    }
+    if (fileSize % 16 !== 0) {
+        return { ok: false, reason: ERROR_CODE.NOT_BLOCK_ALIGNED, detail: { fileSize } };
+    }
+
+    // 4. 低熵 warn（不拒绝）—— 真密文 Shannon 熵接近 8
     const entropy = computeShannonEntropy(headBytes);
     if (entropy < 7.0) {
         console.warn(`[NativeImage headerCheck] low entropy ${entropy.toFixed(2)} for ${workPath}`);

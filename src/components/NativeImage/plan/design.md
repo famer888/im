@@ -107,6 +107,12 @@ props:
   domainAdapter:  DomainAdapter?      // [扩展] 域名选择策略，缺省"replace host with ossDefaultUrl"；见 §14.4
   decryptAdapter: DecryptAdapter?     // [扩展] 替换解密实现（child_process 池 / 原生 addon / wasm），见 §14.5
   smPlugins:      Array<SmPlugin>?    // [扩展] 状态机插件：注册新状态/事件/守卫，见 §14.1
+  wrapper:        Boolean | String | Component = true
+                                      // 外层是否包 <span class="native-image" data-state="...">
+                                      //   true  默认；span 自身 display:contents，仅作 data-state / CSS 锚点
+                                      //   false 不包；组件根 = 内部 <img>/fallback 节点本身，class/$attrs 直接合并到该根
+                                      //         （Avatar 走该路径，DOM 结构与旧 ComImage 一致）
+                                      //   String / Component：作为自定义包裹标签/组件，同样挂 class + data-state
 
 events:
   @status        ({ state, error?, localPath? })   // 每次状态变更
@@ -347,13 +353,21 @@ state=ready，返回 fs.createReadStream(resultPath)
 
 #### 5.4.2 检查项（按代价从低到高排）
 
+> 业务现状：同一 `encryptKey` 下并存"老的已加密文件"与"灰度去加密后的明文文件"。
+> 所以"明文 magic 命中"是**合法快路径**而非错误 —— `verify()` 返回 `{ ok: true, plain: true }`，
+> pipeline 据此跳过 decryptor 直接 commit（见 §5.4.4 与 §7 状态机新增的
+> `VERIFYING --START_COMMIT--> COMMITTING` 转移）。
+
 | # | 检查 | 命中后判定 | 防的是 |
 |---|---|---|---|
 | 1 | `fileSize >= 16` | `decryptError(reason='tooSmall')` | 空文件 / 极小残片（下载阶段已被 `downloadError` 拦掉一部分） |
-| 2 | `fileSize >= 32`（业务约定：真实图片最小 cipher ≥ 32） | `decryptError(reason='suspiciousSize')` | 上游返回了 0-pad 后凑数的"几乎空文件" |
-| 3 | `fileSize % 16 === 0` | `decryptError(reason='notBlockAligned')` | 文件被截断；或被中间人替换为非 AES 产物 |
-| 4 | 前 16 字节不匹配已知**明文图片 magic**：`\x89PNG\r\n\x1a\n`、`FFD8FF`（JPEG）、`GIF87a/GIF89a`、`RIFF....WEBP`、`II*\0`/`MM\0*`（TIFF）、`BM`（BMP）、`\0\0\0\?\?ftyp`（HEIF/HEIC） | `decryptError(reason='plainText')` | 上游 fileKey 配错 / 转储错文件：原本应是密文，却拿到了未加密的真图 |
+| 2 | 前 16 字节匹配已知**明文图片 magic**：`\x89PNG\r\n\x1a\n`、`FFD8FF`（JPEG）、`GIF87a/GIF89a`、`RIFF....WEBP`、`II*\0`/`MM\0*`（TIFF）、`BM`（BMP）、`\0\0\0\?\?ftyp`（HEIF/HEIC） | `ok: true, plain: true` —— pipeline 跳过 decryptor 直 commit | 区分"未加密源"，避免对明文头像跑一次 AES 浪费 CPU 并误判 `decryptError` |
+| 3 | `fileSize >= 32`（业务约定：真实加密图片最小 cipher ≥ 32） | `decryptError(reason='suspiciousSize')` | 上游返回了 0-pad 后凑数的"几乎空文件"（仅在 #2 未命中时检查，即"既不是已知明文格式又太小"） |
+| 4 | `fileSize % 16 === 0` | `decryptError(reason='notBlockAligned')` | 文件被截断；或被中间人替换为非 AES 产物（同样仅在 #2 未命中时检查 —— 明文 PNG/JPEG 本来就允许任意字节长度） |
 | 5 | 前 16 字节的 Shannon 熵 ≥ 7.0 bits/byte（粗略判 "够随机"） | 不通过则 `warn`（不拒绝），打日志便于排查 | 仅作弱信号，**不**作为终止条件——AES-ECB 头部短样本熵不一定很高，硬卡会误杀 |
+
+> 检查顺序固定为 1 → 2 → 3 → 4 → 5：先卡"绝对损坏"，再判明文（命中即短路返回 plain），
+> 最后才用块对齐 / 熵这些"只对密文成立"的形状约束做剩余兜底。
 
 #### 5.4.3 不在 headerCheck 里做的事（明确边界）
 
@@ -372,18 +386,22 @@ state=ready，返回 fs.createReadStream(resultPath)
 [downloading] ──START_VERIFY──▶ [verifying]
                                      │
                           headerCheck.verify() 内部:
-                              read first 32B → 检查项 1~4
+                              read first 32B → 检查项 1~5
                                      │
-                ┌────────────────────┴────────────────────┐
-                │ ok                                      │ fail
-                ▼                                         ▼
-        START_DECRYPT (event)                      VERIFY_FAIL (event)
-                │                                         │
-                ▼                                         ▼
-        [decrypting]                              [decryptError]
-                                                  error.code ∈ {tooSmall|suspiciousSize|
-                                                                notBlockAligned|plainText}
+        ┌────────────────────────────┼────────────────────────────┐
+        │ ok                         │ ok + plain                 │ fail
+        ▼                            ▼                            ▼
+START_DECRYPT (event)        START_COMMIT (event)          VERIFY_FAIL (event)
+        │                            │                            │
+        ▼                            ▼                            ▼
+[decrypting]                  [committing]                  [decryptError]
+                          (跳过 decryptor，                error.code ∈ {tooSmall|
+                           原文件直接 rename               suspiciousSize|
+                           入结果目录)                     notBlockAligned|
+                                                          workerFailed}
 ```
+
+注：`plainText` 不再是错误码 —— 改走"ok + plain"快路径。原 `error.code` 集合相应剔除。
 
 DB 落库直接体现在 `slots[K].{m}.error.code`，UI 拿到的就是结构化原因，可在 description 提到的"图片文件解密失败" 后期改造为更细颗粒提示。
 
@@ -397,9 +415,10 @@ DB 落库直接体现在 `slots[K].{m}.error.code`，UI 拿到的就是结构化
 ```text
 // src/components/NativeImage/node/headerCheck.js
 async function verify(workPath, encryptKey, { maxHeadBytes = 32 } = {}) =>
-  | { ok: true,  headBytes: Buffer }
-  | { ok: false, reason: 'tooSmall' | 'suspiciousSize' | 'notBlockAligned' | 'plainText',
-                  detail: { fileSize, head?: hexString, magic?: 'PNG'|'JPEG'|... } }
+  | { ok: true,  plain: true, magic: 'PNG'|'JPEG'|..., headBytes: Buffer } // 明文快路径
+  | { ok: true,  headBytes: Buffer }                                       // 形状像密文，走 decryptor
+  | { ok: false, reason: 'tooSmall' | 'suspiciousSize' | 'notBlockAligned',
+                  detail: { fileSize, head?: hexString } }
 ```
 
 - `encryptKey` 当前**不使用**，但留在签名里以便 §5.4.5 任一增强落地时无需改调用方。

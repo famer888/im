@@ -1,30 +1,3 @@
-<template>
-    <span class="native-image" :data-state="snapshot.state">
-        <component
-            v-if="fallbackEntry && fallbackEntry.kind === 'component'"
-            :is="fallbackEntry.value"
-            v-bind="fallbackEntry.props || {}"
-            v-on="$listeners"
-            @click="$emit('onClick', $event)"
-            @contextmenu="$emit('onContextmenu', $event)"
-        />
-        <slot
-            v-else-if="fallbackEntry && fallbackEntry.kind === 'slot'"
-            :name="fallbackEntry.name"
-            :snapshot="snapshot"
-        />
-        <img
-            v-else
-            :src="imgSrc"
-            :draggable="false"
-            @load="onLoad"
-            @error="onError"
-            @click="$emit('onClick', $event)"
-            @contextmenu="$emit('onContextmenu', $event)"
-        />
-    </span>
-</template>
-
 <script>
 // NativeImage 基底（design.md §3.1，本期）
 //
@@ -36,6 +9,11 @@
 //
 // 派生组件（Avatar 本期；Picture/Poster 预留）只通过 props 接入；
 // 不直接 import 'core/' / 'node/'，也不直接发 IPC（design.md §12.2）。
+//
+// 之所以用 render() 而不是 <template>：
+//   wrapper === false 时要求"组件根 = 内部 <img>/fallback 节点本身"，
+//   Vue 2 SFC 单根模板做不到"可选地不包裹"（fragment 仅在 Vue 3）。
+//   render() 让我们对"包不包"完全可控，class / $attrs 由 Vue 自动合并到所选根上。
 
 import { encode as encodeCustomUrl } from './core/customUrl';
 import { evaluate as evalFallback } from './core/fallback';
@@ -61,6 +39,19 @@ export default {
         domainAdapter:  { type: Object, default: null },
         decryptAdapter: { type: Object, default: null },
         smPlugins:      { type: Array, default: null },
+        // 外层容器开关：
+        //   true  (默认)：保留 <span class="native-image" data-state="...">；
+        //                 span 自身 display:contents 在 layout 中不可见，但保留 data-state
+        //                 作为 CSS / 调试探针（Picture/Poster slot 模式必须 true，
+        //                 因为多状态会切换不同子节点，需要稳定的容器锚点）
+        //   false：完全不包；组件根 = 内部 <img> / 组件 fallback / slot 节点本身。
+        //          class / $attrs 由 Vue 自动合并到该根，DOM 扁一层，无 display:contents
+        //          相关的 a11y / inline 兼容性边界。Avatar 默认走这条（30+ 调用点的父级
+        //          CSS 直接选 <img>，少一层 span 反而更贴近旧 ComImage 的 DOM 结构）。
+        //   String / Object / Function：作为自定义包裹标签 / 组件，挂上同样的
+        //          class="native-image" 和 data-state 属性，便于业务侧改写包裹层为
+        //          带样式的容器（如 <div class="avatar-frame">）。
+        wrapper:        { type: [Boolean, String, Object, Function], default: true },
     },
     data() {
         return {
@@ -149,6 +140,58 @@ export default {
         onError(e) {
             this.$emit('error', e);
         },
+        _renderInner(h) {
+            const fe = this.fallbackEntry;
+            const passthroughOn = {
+                ...this.$listeners,
+                click: (e) => this.$emit('onClick', e),
+                contextmenu: (e) => this.$emit('onContextmenu', e),
+            };
+            if (fe && fe.kind === 'component') {
+                const extra = fe.props || {};
+                // 与原模板 v-bind=props 一致：既透传到 props，也兜底落到 attrs，
+                // 兼容"非 props 字段"用法（如 TextAvatar 的 value/id 既可能是 props 也可能是 attrs）
+                return h(fe.value, {
+                    props: extra,
+                    attrs: extra,
+                    on: passthroughOn,
+                });
+            }
+            if (fe && fe.kind === 'slot') {
+                const slotFn = this.$scopedSlots[fe.name];
+                if (slotFn) {
+                    const nodes = slotFn({ snapshot: this.snapshot });
+                    // 单根/多根都兼容；wrapper=false 时多根会被 Vue 2 警告 "component has more than one root"，
+                    // 这是显式契约：业务侧若给 slot 多根，必须保留 wrapper（默认）
+                    return Array.isArray(nodes) && nodes.length === 1 ? nodes[0] : nodes;
+                }
+                return null;
+            }
+            return h('img', {
+                attrs: {
+                    src: this.imgSrc,
+                    draggable: false,
+                },
+                on: {
+                    load: this.onLoad,
+                    error: this.onError,
+                    click: (e) => this.$emit('onClick', e),
+                    contextmenu: (e) => this.$emit('onContextmenu', e),
+                },
+            });
+        },
+    },
+    render(h) {
+        const inner = this._renderInner(h);
+        if (this.wrapper === false) {
+            // inner 可能是 null（slot 缺失）；返回空 vnode 避免 "render returned null" 报错
+            return inner || h();
+        }
+        const tag = this.wrapper === true ? 'span' : this.wrapper;
+        return h(tag, {
+            class: 'native-image',
+            attrs: { 'data-state': this.snapshot.state },
+        }, [inner]);
     },
 };
 </script>
@@ -158,6 +201,9 @@ export default {
  * display: contents 让 <span> 包裹层在 layout 中不可见 ——
  * 30+ 既有 ComImage 调用点都靠"父级 CSS 直接选 <img>"控制大小，
  * 直接套个 inline-block / inline-flex 的 span 会出现 baseline / line-height 漂移。
+ *
+ * 注：wrapper === false 时这条样式不生效（根本没有 .native-image 元素），
+ * Avatar 走该路径，直接以 <img> 作根，DOM 结构与旧 ComImage 一致。
  */
 .native-image {
     display: contents;

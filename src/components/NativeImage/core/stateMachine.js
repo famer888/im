@@ -57,6 +57,8 @@ const CORE_TRANSITIONS = (() => {
 
     add(STATE.VERIFYING,   EVENT.START_DECRYPT, STATE.DECRYPTING);
     add(STATE.VERIFYING,   EVENT.VERIFY_FAIL,   STATE.DECRYPT_ERROR);
+    // headerCheck 判定为明文（业务灰度去加密 / 已知 magic）→ 跳过 decryptor 直 commit
+    add(STATE.VERIFYING,   EVENT.START_COMMIT,  STATE.COMMITTING);
 
     add(STATE.DECRYPTING,  EVENT.START_COMMIT,  STATE.COMMITTING);
     add(STATE.DECRYPTING,  EVENT.DECRYPT_FAIL,  STATE.DECRYPT_ERROR);
@@ -107,7 +109,7 @@ export class StateMachine {
         this._lastResourcePath = null;
 
         for (const p of plugins) {
-            if (typeof p?.install === 'function') p.install(this);
+            if (p && typeof p.install === 'function') p.install(this);
         }
     }
 

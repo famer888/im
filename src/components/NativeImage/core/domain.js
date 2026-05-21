@@ -30,7 +30,7 @@ export const rewriteHost = (originalUrl, eventCommon) => {
     if (!originalUrl) return originalUrl;
     if (!/^https?:\/\//i.test(originalUrl)) return originalUrl;
     try {
-        const { ossDefaultUrl } = (eventCommon?.fnDomainsGet?.() || {});
+        const { ossDefaultUrl } = ((eventCommon && typeof eventCommon.fnDomainsGet === 'function' && eventCommon.fnDomainsGet()) || {});
         if (!ossDefaultUrl) return originalUrl;
         const remaining = getRemainingUrl(originalUrl);
         return String(ossDefaultUrl).replace(/\/$/, '') + remaining;
