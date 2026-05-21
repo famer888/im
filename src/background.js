@@ -37,6 +37,7 @@ import { isDangerousFile } from "@/utils/minecheck";
 import Storage from "@/cache/storage";
 import { initNetworkDiagnostics } from "@/debuggers/netlog";
 import { initPostLogUploadIpc } from "@/debuggers/post/main";
+import nativeImageNode from "@/components/NativeImage/node";
 
 app.on("gpu-process-crashed", (event, kill) => {
     // console.warn("app:gpu-process-crashed", event, kill);
@@ -80,6 +81,9 @@ protocol.registerSchemesAsPrivileged([
         privileges: { secure: true, supportFetchAPI: true, corsEnabled: true, stream: true },
     },
 ]);
+// NativeImage（design.md §4.2 / §14 风险 1）：privileged scheme 必须在 app.ready 之前声明，
+// 漏掉会让 <img src="native-image://..."> 直接 ERR_UNKNOWN_URL_SCHEME。
+nativeImageNode.declareSchemes();
 
 // 监听主进程未捕获的同步异常
 process.on('uncaughtException', (error) => {
@@ -914,6 +918,15 @@ const setMainWin = async () => {
     if (isWin) mainWindow.setMenu(null);
     mainWindow.center();
     require("@electron/remote/main").enable(mainWindow.webContents);
+
+    // NativeImage（design.md §4.2 / §9）：注册 native-image:// streamProtocol +
+    // ipcMain handler；本期 mainWindow 单窗口，broadcastStatus 直接 webContents.send。
+    // 必须在 app.ready 之后；createMainWindow 在 app.on("ready") 内调用，时序安全。
+    try {
+        nativeImageNode.register({ userData, mainWindow });
+    } catch (e) {
+        writeLog("app", "error", "[NativeImage] register failed: " + (e && e.message));
+    }
     if (process.env.WEBPACK_DEV_SERVER_URL) {
         await mainWindow.loadURL(process.env.WEBPACK_DEV_SERVER_URL);
         // mainWindow.openDevTools({ mode: 'detach' });

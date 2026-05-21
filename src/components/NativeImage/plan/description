@@ -1,0 +1,49 @@
+计划：非#为此次更新实现，#为预留功能，需在功能设计时进行可扩展性
+此为新的Image renderer组件，涵盖头像，图片消息，视频消息(poster)
+props: fallback次序，fallback slots, decrypted, encryptKey, url, ... @complete:status
+1. #动态域名，一次性注册所有域名，非404和解密失败时回流host name，给动态域名降权和上报
+2. #进度，上传进度和下载进度
+3. #slotIndex多图视频的支持
+4. 加密文件头部检查
+5. fallback: default slot, loading, decrypt error, expired, download error
+6. 解密，使用node这边进行解密child_process，有性能问题的话提醒下
+7. 状态守卫？cancel token：新旧下载任务
+8. #图片消息，视频消息(poster)
+9. #视界内判定，如不在视界内，则不初始化
+10. #如图片下载失败，404时更新状态为expired, 下载失败为downloadError, 解密失败为descryptError
+11. #初始化重试：非expired均需要重试，图视频消息体是有日期的，match日期匹配本地时间进行4天内检测，4天以上直接expired不进行真实请求
+12. #并发控制? #时序锁 #状态锁 #文件锁？
+13. #还需要考虑落库不？像是多图视频的状态存库，按当前存入消息体的方式是否可以改变：保证原子性，对应slot进行更新，每一个slot的更新时间是不一定的
+14. 下载完成的目录跟解密完成的目录隔离: [工作目录，完成后删除文件，images/download, images/decrypt], [result目录：images/avatar / #images/原消息的保存位置]
+15. #上传时直接copy到本地，然后
+15. 新的custom url pattern
+16. 重写node的下载，不要使用.downloadUrl，因为我需要拿到错误码如404
+17. taskId规则
+18. #点击时打开MediaView
+19. #减数重试
+20. 完整状态机设计，如有多个状态机，以taskId联动
+21. #MediaCaption组件的落库重新设计
+
+此次仅覆盖头像，但扩展性考虑到所有图片
+当前目标：
+实现NativeImage基底组件，拼入custom url触发node的下载解密流程，node返回解密后的response和状态，fallback config, slots, status
+派生Avatar组件，替换原头像组件，拿到地址，下载，解密到/avatar本地目录，default头像读取原实现获取textavatar或channelIcon, groupIcon之类的, 无loading, failure状态，全fallback到defaut
+动态域名：当前仅实现替换host为ossDefaultUrl
+
+后期目标：
+这些都有动态路由，进度，解密，数据库更新，状态机，重试判定
+如有合适方案可以不用有那么多的派生组件，我可以考虑不进行派生，毕竟维护那么多组件挺累的
+派生Poster：状态由视频文件所决定，而非图片文件，所以永远fallback到default overlay，除非触发视频下载后（点击播放或右键打开目录）时下载/解密失败
+派生Pictrue：状态由自身文件所决定
+从Picture&Poster派生MediaCaption, MediaCell
+理解为：
+动态域名轮替，只要有一次下载成功，解密成功，固定结果到本地文件和数据库，下一次直接读取本地文件，无需再次下载解密
+解密失败和下载失败（非过期404）均需重试，预留减数重试机制
+需要考虑并发控制，性能，时序，下载目录，是否需要解密（预检测），状态机与落库数据重新设计
+所有文件需集中在NativeImage文件夹下进行管理，外部仅调用，node部分放入NativeImage/node/
+
+
+# 出现过的问题
+Q: 状态回退：已经下载解密成功，但因为发起多个下载，被竞态关系状态回退：success -> decrypting -> decrypt failed
+Q: 初始化时多次ipc通道注册bug：发起了多个下载，前一下载完成解密完成写入文件返回成功给renderer，此时另一个下载完成进入解密流程，文件写入中，renderer读取到了正在解密中的非法图片，展现为了“解密失败”
+Q: 

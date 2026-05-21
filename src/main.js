@@ -6,13 +6,15 @@ import "./common.scss";
 import axiosApi from "./api/base/axios";
 import i18n from "./assets/lang/i18n";
 import ImeFixPlugin from "@/utils/ime-fix";
-import ComImage from "@/components/image.vue";
+import { Avatar as ComImage } from "@/components/NativeImage";
 import { fnPopUpMountToWindow } from "@/utils/pop-up";
 import infiniteScroll from 'vue-infinite-scroll';
 import { initLogCollectSystem } from "@/utils/logger/renderer";
 
 Vue.use(infiniteScroll);
 Vue.use(VueRouter);
+// design.md §10.2 第 2 条：保持 'ComImage' 全局别名指向新的 Avatar，
+// 30+ 调用点（src/<*>/avatar 类）零改动平迁。
 Vue.component("ComImage", ComImage);
 Vue.use(axiosApi);
 Vue.use(VueContext);
