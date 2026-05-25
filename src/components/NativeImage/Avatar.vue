@@ -14,6 +14,13 @@
         @onClick="handleClick"
         @onContextmenu="handleContextmenu"
     />
+    <img
+        v-else-if="hasLocalSrc"
+        :src="src"
+        class="com-native-avatar"
+        @click.stop="handleClick"
+        @contextmenu.prevent="handleContextmenu"
+    />
     <component
         v-else-if="defaultFallbackEntry.kind === 'component'"
         :is="defaultFallbackEntry.value"
@@ -71,10 +78,12 @@ import { copyToClipboard } from '@/utils/base';
 import eventCommon from '@/event/common';
 import { noopPersist } from './persist/NoopPersist';
 
+// 'channel'（真实频道）默认走 TextAvatar，无静态 icon；
+// 'channel-notice'（聊天列表里那条"频道通知"入口）的身份图是 channel-notice.webp。
 const defaultIconByType = {
-    friend:  friendIcon,
-    group:   groupIcon,
-    channel: channelIcon,
+    friend:           friendIcon,
+    group:            groupIcon,
+    'channel-notice': channelIcon,
 };
 
 // 稳定哈希（design.md §4.1：resourceKey 必须稳定，不能让 OSS 签名变动每次都 cache miss）。
@@ -101,7 +110,7 @@ export default {
     props: {
         // 与 ComImage 1:1 兼容
         src:        { type: String, default: '' },
-        type:       { type: String, default: 'friend' }, // 'friend' | 'group' | 'channel'
+        type:       { type: String, default: 'friend' }, // 'friend' | 'group' | 'channel' | 'channel-notice'
         defaultUrl: { type: String, default: '' },
         // 可选：仅 TextAvatar fallback 用；旧调用点没传也不影响
         name:       { type: String, default: '' },
@@ -112,8 +121,19 @@ export default {
     },
     computed: {
         hasRealSrc() {
-            // 与旧 image.vue 同步："包含 default" 视作没有真实 src
-            return !!this.src && !this.src.includes('default');
+            // 仅 http(s) 远程 URL 走 NativeImage 下载管线（IPC + 解密 + OSS 重写）。
+            // "包含 default" 与旧 image.vue 一致视作无真实 src。
+            if (!this.src || this.src.includes('default')) return false;
+            return /^https?:\/\//i.test(this.src);
+        },
+        hasLocalSrc() {
+            // 业务侧偶尔会用 require('@/assets/...') 把 webpack bundle 资源塞进 src
+            // （比如 src/event/channel.js 给"频道通知"会话的 pic）。这类相对路径
+            // 没法被 NativeImage 当 URL fetch（pipeline 直接 NETWORK rejected），
+            // 转用静态 <img> 直接渲染，跳过整条 IPC 管线。
+            // data: / blob: / file: 也归到这一类，浏览器原生支持，不用走 fetch。
+            if (!this.src || this.src.includes('default')) return false;
+            return !/^https?:\/\//i.test(this.src);
         },
         scopeObj() {
             return { kind: SCOPE_KIND.AVATAR, id: this.uid || 0, sub: this.type };
@@ -144,20 +164,25 @@ export default {
             const chain = [];
             // 1. defaultUrl（上游显式提供时优先）
             if (this.defaultUrl) chain.push(makeUrl(this.defaultUrl));
-            // 2. 错误终态 → defaultIcon（§6 + §3.2"全 fallback 到默认 icon"）
-            const fallbackForError = makeAsset(this.defaultIcon);
+            // 2. 错误终态 → 该 type 的默认兜底（channel 没有静态图，走 TextAvatar）
+            const fallbackForError = this.type === 'channel'
+                ? this.textAvatarEntry
+                : makeAsset(this.defaultIcon);
             chain.push(makeStateEntry(STATE.EXPIRED, fallbackForError));
             chain.push(makeStateEntry(STATE.DOWNLOAD_ERROR, fallbackForError));
             chain.push(makeStateEntry(STATE.DECRYPT_ERROR, fallbackForError));
-            // 3. TextAvatar （name 有效时优先 —— 与现 src/v-old 头像 fallback 习惯一致）
-            if (this.name) chain.push(this.textAvatarEntry);
-            // 4. 兜底 defaultIcon
-            chain.push(makeAsset(this.defaultIcon));
+            // 3. TextAvatar（name 有效时优先 —— 与旧 image.vue 习惯一致）。
+            //    channel-notice 的静态 icon 就是身份，跳过这条规则。
+            if (this.name && this.type !== 'channel-notice') chain.push(this.textAvatarEntry);
+            // 4. 最终兜底
+            chain.push(fallbackForError);
             return chain;
         },
         defaultFallbackEntry() {
             // src 不可用时，组件直接渲染兜底，不挂 <NativeImage>（不发起任何 IPC/下载）
             if (this.defaultUrl) return makeUrl(this.defaultUrl);
+            if (this.type === 'channel') return this.textAvatarEntry;
+            if (this.type === 'channel-notice') return makeAsset(this.defaultIcon);
             if (this.name) return this.textAvatarEntry;
             return makeAsset(this.defaultIcon);
         },

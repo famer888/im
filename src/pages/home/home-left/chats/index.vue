@@ -769,7 +769,8 @@ export default {
             font-family: PingFangSC-Regular, PingFang SC;
           }
 
-          > img {
+          > img,
+          > .com-native-avatar {
             position: absolute;
             left: 16px;
             top: 50%;
