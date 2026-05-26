@@ -13,7 +13,7 @@
 - 引入 `NativeImage` 基底组件：负责"拿到一个语义化 URL → 触发主进程下载+解密 → 拿到本地文件 / 状态 → 按 fallback 链路渲染"。
 - 派生 `Avatar` 组件，替换现有 `ComImage`。
   - 文件落到独立的 `images/avatar/` 目录。
-  - 无 loading、无 failure UI，任何失败一律 fallback 到 `<TextAvatar>` / 群组 / 频道默认 icon。
+  - 中间态（`idle + MID_STATES` 5 态）显示灰色脉动骨架屏 SVG；失败终态（`expired / downloadError / decryptError`）一律 fallback 到 `<TextAvatar>` / 群组 / 频道默认 icon。骨架与兜底共用同一个 `<img>` 标签，调用点父级 CSS（`.member-avatar img / .img-head` 等）继续命中。
   - 动态域名两段式（§8.1）：renderer 算出 `candidateUrls = [原 url, ossDefaultUrl 重写后 url]`，main 端 pipeline 在 fetch 阶段按顺序失败循环，全部失败才 dispatch 错误终态；状态机与 fallback 链对中间错误无感知，对齐旧 `image.vue` 的 `loadUrl → loadErr` 行为。不做轮换/降权。
 - 新建 `src/components/NativeImage/node/`，承接重写后的下载+解密流程（脱离 `webContents.downloadURL`，可拿到 HTTP 状态码）。
 - 引入新的 custom URL pattern（替代 `local-resource://`，用于触发并消费 NativeImage 链路）。
@@ -156,9 +156,10 @@ emits:
 - `resourceKey = sha1(src) || src`
 - `resultDir = '<userData>/images/avatar/'`
 - `encryptKey` 缺省 `process.env.VUE_APP_HEAD_AES_KEY`（与发送侧 AES-128-ECB key 对齐，见 §5.4.1），调用方传空串视为未加密源，直通 rename 落库
-- `fallback = [defaultUrl, <type 默认 icon>, <TextAvatar slot>]`
-- **不显示 loading**：`<NativeImage>` 默认 slot 渲染 `<img>` 即可；resolving/downloading/decrypting 三态阶段 fallback 求值 → 直接挂默认 icon（与现有"未加载完成则用 defaultIcon"行为对齐），下载/解密完成 `@ready` 再切到真图。
+- `fallback = [<skeleton on idle+MID_STATES>, defaultUrl, <错误终态 fallback>, <TextAvatar>, <type 默认 icon>]`（完整数组形态见 §6）
+- **中间态显示骨架屏**：`idle + MID_STATES`（`resolving / downloading / verifying / decrypting / committing`）一律渲染内联 SVG data URL（灰色 `#e0e0e0 ↔ #f0f0f0` 1.2s 脉动），覆盖 `idle` 是为了消除 `mounted → _subscribeStatus async` 之间那一帧默认图闪烁。骨架与最终真图共用同一个 `<img>` 标签，避免根标签切换打乱父级 CSS。
 - **不显示 failure**：`expired / downloadError / decryptError` 一律 fallback 到 `<TextAvatar>` 或 `defaultIcon`，不报红。
+- **[已知边界] IPC 整挂掉时骨架不会停**：若 `ipc.resolve` 在 `NativeImage._subscribeStatus` 的 catch 中 reject（main 进程崩溃 / preload 注入失败 等极端场景），snapshot 永远停在 `idle`，骨架屏不会切到错误终态。现实里这种情况下整个应用已不可用，不专门处理；若未来要兜底，在 `_subscribeStatus` 的 catch 块里推一个假的 `DOWNLOAD_ERROR` snapshot 即可复用现有错误链。
 - 保留 ctrl+click 复制头像地址逻辑（来自现 `image.vue`），平迁过去。
 
 > 替换策略：保持 `Vue.component('ComImage', Avatar)` 全局别名一段时间，便于回滚。新代码直接 `import Avatar from '@/components/NativeImage'`。
@@ -541,16 +542,29 @@ FallbackEntry =
 Avatar 的 fallback（[本期]）：
 ```text
 [
+  // 1. 中间态骨架屏：idle + 5 个 MID_STATES 共 6 条，全部映射到同一个 SKELETON_DATA_URL
+  { kind: 'state',     when: 'idle',         then: { kind: 'url', value: SKELETON_DATA_URL } },
+  { kind: 'state',     when: 'resolving',    then: { kind: 'url', value: SKELETON_DATA_URL } },
+  { kind: 'state',     when: 'downloading',  then: { kind: 'url', value: SKELETON_DATA_URL } },
+  { kind: 'state',     when: 'verifying',    then: { kind: 'url', value: SKELETON_DATA_URL } },
+  { kind: 'state',     when: 'decrypting',   then: { kind: 'url', value: SKELETON_DATA_URL } },
+  { kind: 'state',     when: 'committing',   then: { kind: 'url', value: SKELETON_DATA_URL } },
+  // 2. 业务侧显式提供的默认（非 state 条目；放在错误终态之前 = 错误时优先显示业务默认）
   { kind: 'url',       value: props.defaultUrl, condition: !!defaultUrl },
+  // 3. 三个错误终态 → 该 type 的默认 icon（channel 走 TextAvatar）
   { kind: 'state',     when: 'expired',       then: { kind: 'asset', value: defaultIcon[type] } },
   { kind: 'state',     when: 'downloadError', then: { kind: 'asset', value: defaultIcon[type] } },
   { kind: 'state',     when: 'decryptError',  then: { kind: 'asset', value: defaultIcon[type] } },
+  // 4. TextAvatar（name 有效且非 channel-notice 时优先于纯静态 icon）
   { kind: 'component', value: TextAvatar, props: { value: name, id: uid, ... } },
+  // 5. 最终兜底
   { kind: 'asset',     value: defaultIcon[type] },
 ]
 ```
 
-> description #5 列的 `default slot / loading / decrypt error / expired / download error` 全部对应到这里；本期 Avatar 不需要 loading，所以 `state==='downloading'` 时按"普通条目从头取"，自然命中 `defaultUrl` 或 `defaultIcon`。
+> description #5 列的 `default slot / loading / decrypt error / expired / download error` 全部对应到这里。`loading` 由开头 6 条骨架屏条目承接；错误终态由第 3 组承接；业务侧 `defaultUrl` 在错误时优先，由第 2 条承接（**注意**：因为 evaluate 按数组顺序取第一个匹配项，且 `defaultUrl` 是非 state 条目"总是匹配"，所以错误终态时若 `defaultUrl` 已设则它会赢，这是设计意图——业务默认优先于系统兜底）。
+>
+> 骨架条目选 `kind: 'url'`（data URL）而不是 `kind: 'component'` 的关键原因：`imgSrc` 对 `url / asset` 都输出到 `<img src=>`，复用同一个 `<img>` 标签 → 30+ 调用点的父级 CSS（`.member-avatar img / .img-head` 等）继续命中圆角/尺寸/对齐；若用 `kind: 'component'` 渲染成 `<svg>`，那些后代选择器全部失效。
 
 ---
 
@@ -562,12 +576,12 @@ Avatar 的 fallback（[本期]）：
 
 | 状态 | 性质 | 含义 | 渲染端表现 |
 |---|---|---|---|
-| `idle` | 起始 | 任务未创建 / 已 cancel 释放 | fallback 链路按非 ready 求值 |
-| `resolving` | 中间 | 解析 customUrl、查结果目录缓存、replay 动态域名、taskRegistry 注册 | fallback 链路（同 idle） |
-| `downloading` | 中间 | `net.request` 在飞 | fallback 链路；可订阅 `progress` 事件（本期 Avatar 不订阅） |
-| `verifying` | 中间 | 已下载到 `.work/download/`，跑 headerCheck | fallback 链路 |
-| `decrypting` | 中间 | child_process 解密中，写到 `.work/decrypt/` | fallback 链路 |
-| `committing` | 中间 | 解密/直通完成，正在 `fs.rename` 到结果目录 | fallback 链路 |
+| `idle` | 起始 | 任务未创建 / 已 cancel 释放 | fallback 链路按非 ready 求值（Avatar：骨架屏；其他派生自定） |
+| `resolving` | 中间 | 解析 customUrl、查结果目录缓存、replay 动态域名、taskRegistry 注册 | fallback 链路（Avatar：骨架屏） |
+| `downloading` | 中间 | `net.request` 在飞 | fallback 链路（Avatar：骨架屏）；可订阅 `progress` 事件（本期 Avatar 不订阅） |
+| `verifying` | 中间 | 已下载到 `.work/download/`，跑 headerCheck | fallback 链路（Avatar：骨架屏） |
+| `decrypting` | 中间 | child_process 解密中，写到 `.work/decrypt/` | fallback 链路（Avatar：骨架屏） |
+| `committing` | 中间 | 解密/直通完成，正在 `fs.rename` 到结果目录 | fallback 链路（Avatar：骨架屏） |
 | `ready` | **终态-成功** | 结果文件 ok 落盘 | 直接显示 `<img>` |
 | `expired` | **终态-业务失败** | HTTP 4xx/410/404（含 OSS 签名过期） | 显示 `expired` fallback |
 | `downloadError` | **终态-临时失败** | 其他网络错误 / 超时 | 显示 `downloadError` fallback |

@@ -46,8 +46,10 @@
 // 仍由各自父级 CSS（.member-avatar / .img-head / .avatar 等）控制大小。
 //
 // 行为差异（与旧 ComImage 对齐 §3.2）：
-//   - 无 loading / 无 failure UI；resolving / *Error 一律走 fallback 链
-//     直接挂到 <img> 或 TextAvatar，不报红
+//   - 中间态 (idle + MID_STATES) 显示骨架屏 SVG（见下方 SKELETON_SVG），错误终态
+//     (expired / downloadError / decryptError) 一律走 fallback 链直接挂到 <img>
+//     或 TextAvatar，不报红。骨架屏和兜底用同一个 <img> 标签，30+ 调用点的父级 CSS
+//     在两种状态间无缝切换，圆角/尺寸/对齐都不丢。
 //   - 动态域名两段式（§8.1）：buildAvatarCandidates 算出 [原 url, ossDefaultUrl 重写后 url]
 //     作为 candidateUrls 透传给 NativeImage → ipc.resolve → main 端 drivePipeline；
 //     pipeline 在 fetch 阶段按顺序失败循环，全部失败才 dispatch 错误终态。状态机和
@@ -73,7 +75,7 @@ import friendIcon from '@/assets/images/logo/logo-58.png';
 import channelIcon from '@/assets/images/logo/channel-notice.webp';
 import { makeStateEntry, makeUrl, makeAsset, makeComponent } from './core/fallback';
 import { buildAvatarCandidates } from './core/domain';
-import { SCOPE_KIND, STATE } from './core/constants';
+import { SCOPE_KIND, STATE, MID_STATES } from './core/constants';
 import { copyToClipboard } from '@/utils/base';
 import eventCommon from '@/event/common';
 import { noopPersist } from './persist/NoopPersist';
@@ -85,6 +87,22 @@ const defaultIconByType = {
     group:            groupIcon,
     'channel-notice': channelIcon,
 };
+
+// 中间态骨架屏：内联 SVG data URL，作为同一个 <img> 的 src。
+// 选择 data URL 而不是组件/资源文件的原因：
+//   1. NativeImage 的 imgSrc 对 kind:'url' / kind:'asset' 一律输出到 <img src=>（NativeImage.vue §imgSrc），
+//      继续用同一个 <img> 标签，30+ 调用点的父级 CSS（.member-avatar img / .img-head 等）继续命中，
+//      圆角、尺寸、行内对齐都跟真图一致 —— 而 kind:'component' 会渲染成 <svg>，那些选择器全部失效。
+//   2. <img src=data:image/svg+xml> 在 Chromium 里走 "secure static" 模式：禁脚本、保留 SMIL 与 CSS 动画，
+//      没有 XSS / cookie 上下文泄漏面，比 inline <svg> 节点更安全。
+// 颜色：#e0e0e0 ↔ #f0f0f0 是 Material Design "Shimmer skeleton" 的常见取值，亮度足够浅
+// 不抢前景内容（IM 列表里多数头像在白底/深色侧栏底），1.2s 周期跟主流 UI 库（Ant / element-plus）一致。
+const SKELETON_SVG =
+    "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40' preserveAspectRatio='xMidYMid slice'>" +
+    "<rect width='40' height='40' fill='#e0e0e0'>" +
+    "<animate attributeName='fill' values='#e0e0e0;#f0f0f0;#e0e0e0' dur='1.2s' repeatCount='indefinite'/>" +
+    "</rect></svg>";
+const SKELETON_DATA_URL = `data:image/svg+xml;utf8,${encodeURIComponent(SKELETON_SVG)}`;
 
 // 稳定哈希（design.md §4.1：resourceKey 必须稳定，不能让 OSS 签名变动每次都 cache miss）。
 const stableHash = (str) => {
@@ -162,19 +180,32 @@ export default {
         },
         fallbackChain() {
             const chain = [];
-            // 1. defaultUrl（上游显式提供时优先）
+            // 1. 中间态骨架屏（idle + MID_STATES 5 态）。
+            //    放最前是因为 evaluate 按数组顺序取第一个可用项；state entry 只在 when === 当前态时匹配，
+            //    所以对 ready / 错误终态零干扰。覆盖 IDLE 是为了消除 mounted → _subscribeStatus async 之间
+            //    那一帧 idle 默认图闪烁（详见 NativeImage.vue §_subscribeStatus 注释）。
+            //
+            //    [已知边界] 若 ipc.resolve 在 NativeImage._subscribeStatus 的 catch 中 reject（IPC infra
+            //    整挂、main 进程异常退出等极端场景），snapshot 会永远停在 IDLE → 骨架屏不会停。
+            //    现实里这只在 main 进程崩溃 / preload 注入失败时发生，此时整个应用已不可用，
+            //    骨架长转反而是合理的"系统异常"提示。如果哪天要在 NativeImage 层补救，做法是
+            //    catch 块里推一个假的 DOWNLOAD_ERROR snapshot 出去，让现有错误终态 fallback 兜底。
+            const skeletonEntry = makeUrl(SKELETON_DATA_URL);
+            chain.push(makeStateEntry(STATE.IDLE, skeletonEntry));
+            for (const s of MID_STATES) chain.push(makeStateEntry(s, skeletonEntry));
+            // 2. defaultUrl（上游显式提供时优先）
             if (this.defaultUrl) chain.push(makeUrl(this.defaultUrl));
-            // 2. 错误终态 → 该 type 的默认兜底（channel 没有静态图，走 TextAvatar）
+            // 3. 错误终态 → 该 type 的默认兜底（channel 没有静态图，走 TextAvatar）
             const fallbackForError = this.type === 'channel'
                 ? this.textAvatarEntry
                 : makeAsset(this.defaultIcon);
             chain.push(makeStateEntry(STATE.EXPIRED, fallbackForError));
             chain.push(makeStateEntry(STATE.DOWNLOAD_ERROR, fallbackForError));
             chain.push(makeStateEntry(STATE.DECRYPT_ERROR, fallbackForError));
-            // 3. TextAvatar（name 有效时优先 —— 与旧 image.vue 习惯一致）。
+            // 4. TextAvatar（name 有效时优先 —— 与旧 image.vue 习惯一致）。
             //    channel-notice 的静态 icon 就是身份，跳过这条规则。
             if (this.name && this.type !== 'channel-notice') chain.push(this.textAvatarEntry);
-            // 4. 最终兜底
+            // 5. 最终兜底
             chain.push(fallbackForError);
             return chain;
         },
