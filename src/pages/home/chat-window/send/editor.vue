@@ -98,7 +98,8 @@
   </div>
 </template>
 <script>
-import { isElectron, ipcRenderer, clipboard, toLocalResourceUrl } from "@/platform";
+import { isElectron, ipcRenderer, clipboard } from "@/platform";
+import { getFileInfo } from "@/utils/fileTools";
 // 控件
 import ComActiveIcon from "@/components/active-icon";
 
@@ -1150,12 +1151,8 @@ export default {
      * 获取文件
      */
     async getFile(url) {
-      const response = await fetch(toLocalResourceUrl(url));
-      const blob = await response.blob();
-      blob.lastModifiedDate = new Date();
-      blob.name = url.slice(url.lastIndexOf("/") + 1);
-      blob.path = url;
-      return blob;
+      // 直接读盘成 File；fetch(local-resource://...) 在 CORS 模式下会被 Chromium 按 scheme 限制拒绝。
+      return getFileInfo(url);
     },
     /**
      * 粘贴

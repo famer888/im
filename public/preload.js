@@ -70,6 +70,20 @@ contextBridge.exposeInMainWorld('electronAPI', {
       const img = nativeImage.createFromDataURL(dataURL);
       clipboard.writeImage(img);
     },
+    // 直接读盘 + 写剪贴板，绕开渲染进程 fetch(local-resource://) 的 CORS 限制，
+    // 同时省掉 base64 dataURL 的 ~33% 内存放大。
+    writeImageFromPath: (filePath) => {
+      try {
+        _assertPath(filePath);
+        const { nativeImage } = require('electron');
+        const img = nativeImage.createFromPath(filePath);
+        if (!img || img.isEmpty()) return false;
+        clipboard.writeImage(img);
+        return true;
+      } catch (e) {
+        return false;
+      }
+    },
   },
 
   // ── Window Management (替代 @electron/remote 的窗口操作) ──

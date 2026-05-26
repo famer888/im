@@ -1,4 +1,4 @@
-import { fs } from '@/platform';
+import { fs, clipboard, toFsPathFromDisplayUrl } from '@/platform';
 
 const createImage = (options) => {
     options = options || {};
@@ -36,6 +36,15 @@ const convertToPng = (imgBlob) => {
 };
 
 export const copyImg = async (src) => {
+    // 本地 URL（local-resource:// / file:// / 原始磁盘路径）：fetch 在 CORS 模式下不允许非 http(s) scheme，
+    // 全部走 Electron 原生剪贴板（主进程 nativeImage 读盘 → 写剪贴板，省一次 base64 IPC）。
+    if (src && !/^https?:\/\//i.test(src)) {
+        const fsPath = toFsPathFromDisplayUrl(src);
+        const ok = clipboard.writeImageFromPath && clipboard.writeImageFromPath(fsPath);
+        if (!ok) console.error("copyImg(local) failed:", fsPath);
+        return;
+    }
+
     const img = await fetch(src);
     const imgBlob = await img.blob();
     const extension = src.split(".").pop();

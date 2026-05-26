@@ -91,12 +91,11 @@ export function toFsPathFromDisplayUrl(url) {
     } catch (e) {
         /* ignore */
     }
-    if (
-        typeof process !== 'undefined' &&
-        process.platform === 'win32' &&
-        p.startsWith('/') &&
-        /^\/[A-Za-z]:[\\/]/.test(p)
-    ) {
+    // 渲染进程开了 contextIsolation 后没有全局 process，必须走 preload 桥接的 processInfo；
+    // 否则 Windows 下 "/C:/Users/..." 的前导斜杠剥不掉，fs.readFileSync 会失败。
+    const isWin = (processInfo && processInfo.platform === 'win32')
+        || (typeof process !== 'undefined' && process.platform === 'win32');
+    if (isWin && p.startsWith('/') && /^\/[A-Za-z]:[\\/]/.test(p)) {
         p = p.slice(1);
     }
     if (typeof path.normalize === 'function') {
