@@ -218,8 +218,9 @@ export default {
       // 高可信度：按 atUsers 中的名字（显示名 与 原始 nickName）匹配 uid
       tagListNew = this.assignAtUidByName(tagListNew);
 
-      // 低可信度兜底：atUsers 缺失但 atUids 存在时，按 @ 出现顺序与 atUids 位置对齐
-      if (!this.atUsers?.length && this.atUids?.length) {
+      // 低可信度兜底：有 atUsers 但名字匹配不到 uid（如成员改名后服务端下发最新昵称: A修改名字为A1，B @A, 发出时为A,收到时候是A1
+      // 与正文里的旧 @名 不一致），或无 atUsers 时，按 @ 出现顺序与 atUids 位置对齐推测
+      if (this.atUids?.length) {
         tagListNew = this.assignAtUidByOrder(tagListNew);
       }
       this.tagList = tagListNew;
@@ -261,23 +262,36 @@ export default {
       return tagList;
     },
     /**
-     * 低可信度：atUsers 缺失而 atUids 存在时，按 @ 标签出现顺序与 atUids 位置对齐推测 uid。
-     * 写入 item.possibleUid（uid 值，非布尔），与 item.uid 互斥。
+     * 低可信度：按 @ 标签出现顺序与 atUids 位置对齐推测 uid，写入 item.possibleUid（与 item.uid 互斥）。
+     * 兼容「部分匹配」：name 匹配命中的标签其 uid 已被占用，这里用「剩余未被占用的 uid」
+     * 去对齐「剩余未匹配的 @ 标签」，从而覆盖「多人被 @ 且部分成员改名」的场景。
+     * 仅当 @ 标签总数与 atUids 总数一致、且剩余两侧数量也一致时才兜底，避免错位。
      */
     assignAtUidByOrder(tagList) {
       if (!this.atUids?.length) return tagList;
+      // 所有 @ 标签（按出现顺序，含已匹配与未匹配）
       const atItems = tagList.filter(item =>
         item.type === 'text' &&
         item.content &&
         item.content[0] === '@' &&
-        item.content !== '@' &&
-        item.uid == null
+        item.content !== '@'
       );
       if (atItems.length === 0 || atItems.length !== this.atUids.length) {
         return tagList;
       }
-      atItems.forEach((item, idx) => {
-        const uid = this.atUids[idx];
+      // 已被高可信 name 匹配占用的 uid（按字符串口径比较，规避 number/string 差异）
+      const usedUids = new Set(
+        atItems.filter(item => item.uid != null).map(item => String(item.uid))
+      );
+      // 剩余可用 uid（保持原顺序，排除已占用）
+      const remainingUids = this.atUids.filter(uid => !usedUids.has(String(uid)));
+      // 剩余未匹配的 @ 标签（按出现顺序）
+      const unmatched = atItems.filter(item => item.uid == null);
+      if (unmatched.length === 0 || unmatched.length !== remainingUids.length) {
+        return tagList;
+      }
+      unmatched.forEach((item, idx) => {
+        const uid = remainingUids[idx];
         if (uid != null) item.possibleUid = uid;
       });
       return tagList;
