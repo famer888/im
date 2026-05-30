@@ -2127,13 +2127,16 @@ const fnAlertNotification = async (data, chatList) => {
         !(msgType === 8 && data.isHide)
     ) {
         if (info) {
+            // 富文本消息(chatType 16)与会话列表摘要保持一致：<img>→[图片]、<video>→[视频]、其余标签转纯文本
+            const summaryContent =
+                data.chatType === 16 ? handleRichTextToText(content) : content;
             const params = {
                 id,
                 type,
                 msgType,
                 showReplyIcon,
                 icon: type === "group" ? info.avatar : (avatar || info.avatar || info.pic),
-                content: msgType === 8 ? `[${i18n.t("群简介")}]${content}` : content,
+                content: msgType === 8 ? `[${i18n.t("群简介")}]${content}` : summaryContent,
                 userName: remarkName || nickName || "",
                 name: info.name || info.nickName || info.channelName,
                 loginId,
