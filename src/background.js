@@ -769,7 +769,7 @@ const isExpiredDatedDownloadUrl = (url, urlChain = []) => {
         if (Number.isNaN(urlDate.getTime())) continue;
         // 防御未来日期：仅在本地日期严格晚于 URL 日期且差值超过阈值时拦截
         const diffDays = Math.floor((todayStart - urlDate.getTime()) / 86400000);
-        if (diffDays > EXPIRED_DATED_URL_THRESHOLD_DAYS) {
+        if (diffDays >= EXPIRED_DATED_URL_THRESHOLD_DAYS) {
             return { expired: true, matchedUrl: candidate, diffDays };
         }
     }
