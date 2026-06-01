@@ -5,7 +5,7 @@
   >
     <span>
       <template v-if="msgInfo.content.slice(0, 3) === '!@#'">
-        <strong :class="{'highlight': groupOwner.nickName === msgInfo.content.slice(3, msgInfo.content.lastIndexOf('!@#'))}">
+        <strong :class="{'highlight': groupOwner?.nickName === msgInfo.content.slice(3, msgInfo.content.lastIndexOf('!@#'))}">
           {{ msgInfo.content.slice(3, msgInfo.content.lastIndexOf("!@#")) }}
         </strong>
         {{ msgInfo.content.slice(msgInfo.content.lastIndexOf("!@#") + 3) }}
