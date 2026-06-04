@@ -20,6 +20,7 @@ import { reportErrorDomain } from "@/utils/trendsDomain/manageReport";
 import eventBase from "./base";
 import eventCommon from "./common";
 import progress from "@/utils/progress";
+import { inspectGifDownload, isValidImagePlaintext } from "./gifDownloadPlaintext";
 
 //////////////////  下载解密
 
@@ -169,6 +170,13 @@ const handleDownloadFileDone = (_$, data) => {
     if (_markRequestProcessed(data && data.downloadRequestId)) {
         return;
     }
+    // ── msgType 9（表情 / GIF）短期路径 ─────────────────────────────────────
+    // magic 预检后：明文直出 / 密文走 Worker（与 msgType 1 相同 worker.js）。
+    // [临时] Picture 派生接入 NativeImage 后移除此分支（design.md §3.3 / §10.1）。
+    if (chatType === enumMsgType.gif) {
+        handleGifDownloadFileDone(data);
+        return;
+    }
     if (fileKey) {
         let fileData;
         try {
@@ -272,6 +280,139 @@ const handleDownloadFileDone = (_$, data) => {
             fnDownloadFileInfoUpdate(data);
         }, 10);
     }
+};
+
+/**
+ * [临时 · msgType 9] 解密成功后 Image 探针 + 入库（与 msgType 1 图片路径一致）
+ */
+const commitImageDownload = (data, fileLocalPath, failDetail = {}) => {
+    checkFileCorrect(toLocalResourceUrl(fileLocalPath)).then((exists) => {
+        if (exists) {
+            fnDownloadFileInfoUpdate(data);
+        } else {
+            markDecryptionFailed(data, "imageDecodeFailed", {
+                fileLocalPath,
+                ...failDetail,
+            });
+        }
+    });
+};
+
+/**
+ * [临时 · msgType 9] 按密钥候选依次走 Worker 解密（public/worker.js，不阻塞主线程）
+ */
+const tryGifWorkerDecrypt = (data, fileData, fileLocalPath, decryptKeys, keyIndex = 0, workerErrors = []) => {
+    if (keyIndex >= decryptKeys.length) {
+        markDecryptionFailed(data, "gifDecryptFailed", {
+            triedKeyCount: decryptKeys.length,
+            workerErrors,
+        });
+        return;
+    }
+
+    const fileKey = decryptKeys[keyIndex];
+    const myWorker = new Worker("/worker.js");
+    let settled = false;
+    const finishWorker = () => {
+        try {
+            myWorker.terminate();
+        } catch (e) {
+            // ignore
+        }
+    };
+
+    const tryNextKey = (reason, detail) => {
+        if (settled) return;
+        settled = true;
+        finishWorker();
+        workerErrors.push({ keyIndex, reason, detail });
+        tryGifWorkerDecrypt(data, fileData, fileLocalPath, decryptKeys, keyIndex + 1, workerErrors);
+    };
+
+    myWorker.onmessage = (e) => {
+        if (settled) return;
+        const workerError = e.data && e.data.error;
+        if (workerError) {
+            tryNextKey("workerDecryptFailed", workerError);
+            return;
+        }
+
+        let decrypted;
+        let magic = null;
+        try {
+            if (!e.data || !e.data.decrypted || e.data.decrypted.byteLength === 0) {
+                tryNextKey("decryptResultEmpty", { fileSize: fileData.length });
+                return;
+            }
+            decrypted = new Uint8Array(e.data.decrypted);
+            magic = isValidImagePlaintext(decrypted);
+            if (!magic) {
+                tryNextKey("invalidPlainMagic", { decryptedSize: decrypted.length });
+                return;
+            }
+            fs.writeFileSync(fileLocalPath, decrypted);
+        } catch (error) {
+            tryNextKey("writeDecryptedFileFailed", { error: getErrorMessage(error) });
+            return;
+        }
+
+        settled = true;
+        finishWorker();
+        commitImageDownload(data, fileLocalPath, { decryptedSize: decrypted.length, magic });
+    };
+
+    myWorker.onerror = (error) => {
+        error.preventDefault && error.preventDefault();
+        tryNextKey("workerRuntimeError", {
+            error: getErrorMessage(error),
+            filename: error.filename,
+            lineno: error.lineno,
+            colno: error.colno,
+        });
+    };
+
+    try {
+        myWorker.postMessage({ fileData, fileKey });
+    } catch (error) {
+        tryNextKey("postWorkerMessageFailed", {
+            error: getErrorMessage(error),
+            fileLocalPath,
+        });
+    }
+};
+
+/**
+ * [临时 · msgType 9] 表情图下载成功：magic 预检 → 明文直出 / Worker 解密 → 入库
+ *
+ * 与 msgType 1 共用 ComMsgImage → image.vue → fileDownload IPC、progress、msg.local。
+ * 迁移后由 NativeImage Picture 派生替代。
+ */
+const handleGifDownloadFileDone = (data) => {
+    const { fileLocalPath, fileKey } = data;
+
+    let fileData;
+    try {
+        fileData = fs.readFileSync(fileLocalPath);
+    } catch (error) {
+        markDecryptionFailed(data, "readFileFailed", {
+            error: getErrorMessage(error),
+            fileLocalPath,
+        });
+        return;
+    }
+
+    const inspected = inspectGifDownload(fileData, { fileKey });
+    if (!inspected.ok) {
+        markDecryptionFailed(data, inspected.reason, inspected.detail || {});
+        return;
+    }
+
+    if (inspected.plain) {
+        commitImageDownload(data, fileLocalPath, { magic: inspected.magic });
+        return;
+    }
+
+    tryGifWorkerDecrypt(data, fileData, fileLocalPath, inspected.decryptKeys);
 };
 
 /**
