@@ -743,9 +743,7 @@ const clearDownTimer = (timerName) => {
 // chat/pic/YYYYMM/DD/... 形式的 OSS 资源在服务端默认 4 天后即失效，
 // 若按本地时间已超过阈值，直接判定为过期，不再向 OSS 真正发请求。
 const EXPIRED_DATED_URL_PATTERN = /\/chat\/pic\/(\d{4})(\d{2})\/(\d{2})(?:\/|$|\?)/i;
-const EXPIRED_DATED_URL_THRESHOLD_DAYS = 1;
-// 别忘了改回去！！！！
-// const EXPIRED_DATED_URL_THRESHOLD_DAYS = 4;
+const EXPIRED_DATED_URL_THRESHOLD_DAYS = 4;
 const isExpiredDatedDownloadUrl = (url, urlChain = []) => {
     const candidates = [];
     if (typeof url === "string" && url) candidates.push(url);
