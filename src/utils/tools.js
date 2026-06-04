@@ -35,7 +35,7 @@ const getCachDirectory = ({ GroupID, UserID }) => {
         let tmpPath = os.tmpdir();
         tmpPath = platformPath.join(
             tmpPath,
-            `/68LocalStorage/${
+            `/97LocalStorage/${
                 GroupID ? "group-" + GroupID : "user-" + UserID
             }/`
         );
@@ -64,14 +64,14 @@ const getUserDataDirectory = ({ GroupID, UserID, ChannelID }) => {
 
 const getPublicCacheDirSync = () => {
     let tmpPath = os.tmpdir();
-    tmpPath = platformPath.join(tmpPath, `/68LocalStorage/pbc/`);
+    tmpPath = platformPath.join(tmpPath, `/97LocalStorage/pbc/`);
     return tmpPath;
 };
 
 const getPublicCacheDir = () => {
     return new Promise((resolve) => {
         let tmpPath = os.tmpdir();
-        tmpPath = platformPath.join(tmpPath, `/68LocalStorage/pbc/`);
+        tmpPath = platformPath.join(tmpPath, `/97LocalStorage/pbc/`);
         resolve(tmpPath);
     });
 };

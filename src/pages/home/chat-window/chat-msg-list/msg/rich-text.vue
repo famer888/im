@@ -55,7 +55,7 @@ export default {
       });
         const args = {
           uid: loginId,
-          userId: 9902,
+          userId: 10009,
           chatType: 1,
           fileUrl: imgSrc,
           isOpen: true,

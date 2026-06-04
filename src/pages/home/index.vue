@@ -123,7 +123,7 @@ export default {
       visibleMain: false,
       visibleUpVersion: false,
       visibleSettingDialog: false, // 设置对话框 是否显示
-      url: "ocs.com",
+      url: "97chat.com",
       count: 0,
       infoUpVersion: {},
       infoActive: null,
