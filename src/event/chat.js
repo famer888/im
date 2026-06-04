@@ -30,7 +30,7 @@ const fnChatListSort = (list) => {
                 ...chatList.sort(
                     (a, b) => Number(b.sendTime || 0) - Number(a.sendTime || 0)
                 ),
-            ].filter((item) => !(item.type === "friend" && item.id === 9901)),
+            ].filter((item) => !(item.type === "friend" && item.id === 9701)),
             chatTopSize: chatTopList.length,
         };
     } catch (e) {
@@ -92,12 +92,12 @@ const fnChatWindowUpdate = async (info) => {
         // 如果不存在则获取信息后，再变更
         if (updateInfo.type === "friend") {
             // 如果是 系统账户的消息
-            if ([9902, "channelNotice"].includes(updateInfo.id) || (updateInfo.id === 9900 && !updateInfo.isSelf)) {
+            if ([9702, "channelNotice"].includes(updateInfo.id) || (updateInfo.id === 9700 && !updateInfo.isSelf)) {
                 chatInfo = {
                     pic: _.get(updateInfo, "sendUser.icon"),
                     name:
                         _.get(updateInfo, "sendUser.nickName") ||
-                        (updateInfo.id === 9900 ? "68 Messenger" : "系统助手"),
+                        (updateInfo.id === 9700 ? "45 Messenger" : "系统助手"),
                 };
             } else {
                 // 如果是好友， 在好友中查找

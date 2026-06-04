@@ -339,7 +339,7 @@ export const fnFriendRelKeyGet = async ({
     });
 
     // 如果是助手
-    if (msgEncryptionVersion === -1 && id === 9901) {
+    if (msgEncryptionVersion === -1 && id === 9701) {
         // 同账户的 app 密钥
         try {
             return {
@@ -1419,7 +1419,7 @@ export const fnFormartMsgParams = async ({ data, customMsgId, id, type }) => {
         receiveUid &&
         receiveUid >= 10000 &&
         receiveUid <= 100000 &&
-        receiveUid != 9901;
+        receiveUid != 9701;
 
     const contentCode = fnEncode(text, msgType, {
         width,
@@ -1556,7 +1556,7 @@ export const fnFormartMsgParams = async ({ data, customMsgId, id, type }) => {
 
             const { app, pc, appOwn } = data;
 
-            if (!app && !pc && id !== 9901) {
+            if (!app && !pc && id !== 9701) {
                 console.$collectE2ee('私聊加密-app和pc密钥都为空', {
                     id, customMsgId, ownWebKeyVersion: accountConfig.keyVersion,
                     hasApp: !!app, hasPc: !!pc,

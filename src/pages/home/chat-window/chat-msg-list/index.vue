@@ -284,7 +284,7 @@
                     " />
                   <ComTimeStatusLabel :msgInfo="n" :chatContent="chatContent" />
                 </ComMsgPoker>
-                <ComMsgRichText v-else-if="n.msgType === 16" :content="n.content" :preventPurify="[9900, 9902].includes(chatContent.id)" @rightClick="
+                <ComMsgRichText v-else-if="n.msgType === 16" :content="n.content" :preventPurify="[9700, 9702].includes(chatContent.id)" @rightClick="
                   (e) => handleEmitInfo({ e, info: n }, 'rightClickMenuDisplay')
                 ">
                 </ComMsgRichText>

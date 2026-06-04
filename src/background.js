@@ -374,7 +374,7 @@ function updateTray(unread = 0) {
 
         const contextmenu = Menu.buildFromTemplate([
             {
-                label: "打开ocs",
+                label: "打开45",
                 click() {
                     mainWindow.show();
                 },
@@ -435,7 +435,7 @@ function updateTray(unread = 0) {
                     updateTray(0);
                     mainWindow.show();
                 });
-                tray.setToolTip("【ocs 版本1.7.1】");
+                tray.setToolTip("【45 版本1.7.1】");
             }
 
             if (isOsx) {
@@ -460,10 +460,10 @@ function updateTray(unread = 0) {
 function createMenu() {
     const menu = Menu.buildFromTemplate([
         {
-            label: "ocschat",
+            label: "45chat",
             submenu: [
                 {
-                    label: "打开ocs",
+                    label: "打开45",
                     click() {
                         mainWindow.show();
                     },
@@ -1622,7 +1622,7 @@ app.on("second-instance", (event, argv) => {
 
 // windows上，需要正确设置appUserModelId，才能正常显示通知，不然通知的应用标识会显示为：electron.app.xxx
 app.on("will-finish-launching", (e) => {
-    app.setAppUserModelId("ocs-new");
+    app.setAppUserModelId("45-new");
 });
 
 function registerLocalResourceProtocol(ses) {

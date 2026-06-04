@@ -472,7 +472,7 @@ export default {
             const loginId = eventCommon.fnCommonInfoRU({
               getId: "loginId",
             });
-            const dbName = loginId + "-68-2.0.3"; // 替换为你的数据库名
+            const dbName = loginId + "-45-2.0.3"; // 替换为你的数据库名
             const request = indexedDB.deleteDatabase(dbName);
             request.onsuccess = function(event) {
                 console.log(`数据库 "${dbName}" 删除成功`);

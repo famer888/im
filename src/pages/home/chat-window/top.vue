@@ -1,6 +1,6 @@
 <template>
   <div class="comTop" @contextmenu="clearUnexpectedResizeStyle">
-    <template v-if="chatContent && Number(chatContent.id) !== 9901">
+    <template v-if="chatContent && Number(chatContent.id) !== 9701">
       <picture @click.stop="handleChatRightMenuVisibleChange">
         <ComTextAvatar
           v-if="showChannelTextIcon"
@@ -51,8 +51,8 @@
           />
         </div>
       </div>
-      <img class="icon-search" src="@/assets/images/headNav/icon-search-black.png" @click="serachChat" v-if="chatContent?.id != 9901"/>
-      <div class="more" v-if="![9900, 9902].includes(chatContent.id)" @click.stop="handleChatRightMenuVisibleChange">
+      <img class="icon-search" src="@/assets/images/headNav/icon-search-black.png" @click="serachChat" v-if="chatContent?.id != 9701"/>
+      <div class="more" v-if="![9700, 9702].includes(chatContent.id)" @click.stop="handleChatRightMenuVisibleChange">
         <img src="@/assets/images/system/icon-menu.png" />
       </div>
       <div class="right-menu-place" v-if="rightMenuVisible && sideBarType === 'inner'"></div>

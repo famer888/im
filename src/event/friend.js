@@ -454,7 +454,7 @@ const fnFriendListFormat = (list) => {
  */
 const fnFriendDetailsGet = async (id, { channelId, groupId } = {}) => {
   // 如果是系统账户，则不需要拉详情
-  if (["9901"].includes(String(id))) {
+  if (["9701"].includes(String(id))) {
     return;
   }
   let params = {
