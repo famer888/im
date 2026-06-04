@@ -977,5 +977,9 @@ export default {
     font-size: 12px !important;
     line-height: 20px;
    }
+   a {
+    font-size: 12px;
+    color: #999;
+   }
 }
 </style>
