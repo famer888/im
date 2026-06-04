@@ -27,7 +27,7 @@
       </dd>
     </dl>
     <dl v-if="isExport">
-      <dt>ocs导出</dt>
+      <dt>pc55导出</dt>
       <dd>
         <button @click="handleExpotPc68">导出数据</button>
       </dd>
@@ -109,14 +109,14 @@ export default {
           return;
         }
 
-        window.open("https://ocs.com", "_blank");
+        window.open("https://55chat.com", "_blank");
       });
     },
     handleExpotPc68() {
       window
         .$confirm({
           remark:
-            "此导出功能回导出所有在此设备登录过的ocs数据，并且导出过程中会退出登录",
+            "此导出功能回导出所有在此设备登录过的55数据，并且导出过程中会退出登录",
         })
         .then((isExport) => {
           if (isExport) {
