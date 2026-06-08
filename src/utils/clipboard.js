@@ -9,18 +9,83 @@ const createImage = (options) => {
     return img;
 };
 
-export const copyToClipboard = async (blob) => {
-    try {
-        await navigator.clipboard.write([
-            // eslint-disable-next-line no-undef
-            new ClipboardItem({
-                [blob.type]: blob
-            })
-        ]);
-        console.log("content copied");
-    } catch (error) {
-        console.error(error);
+const blobToDataURL = (blob) => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(reader.error || new Error('read blob failed'));
+        reader.readAsDataURL(blob);
+    });
+};
+
+const copyTextViaExecCommand = (text) => {
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.style.position = "fixed";
+    textarea.style.left = "-999999px";
+    document.body.appendChild(textarea);
+    textarea.select();
+    const ok = document.execCommand("copy");
+    document.body.removeChild(textarea);
+    if (!ok) {
+        throw new Error("execCommand copy failed");
     }
+};
+
+const tryPreloadCopy = async (blob) => {
+    if (blob.type === "text/plain" || blob.type.startsWith("text/")) {
+        if (typeof clipboard.writeText !== "function") {
+            throw new Error("clipboard.writeText unavailable");
+        }
+        clipboard.writeText(await blob.text());
+        return;
+    }
+    if (blob.type.startsWith("image/")) {
+        if (typeof clipboard.writeImage !== "function") {
+            throw new Error("clipboard.writeImage unavailable");
+        }
+        clipboard.writeImage(await blobToDataURL(blob));
+        return;
+    }
+    throw new Error(`unsupported blob type for preload copy: ${blob.type}`);
+};
+
+const tryNavigatorCopy = async (blob) => {
+    if (!navigator.clipboard?.write) {
+        throw new Error("navigator.clipboard.write unavailable");
+    }
+    await navigator.clipboard.write([
+        // eslint-disable-next-line no-undef
+        new ClipboardItem({
+            [blob.type]: blob,
+        }),
+    ]);
+};
+
+const tryExecCommandCopy = async (blob) => {
+    if (blob.type !== "text/plain" && !blob.type.startsWith("text/")) {
+        throw new Error("execCommand only supports text");
+    }
+    copyTextViaExecCommand(await blob.text());
+};
+
+export const copyToClipboard = async (blob) => {
+    const attempts = [
+        () => tryPreloadCopy(blob),
+        () => tryNavigatorCopy(blob),
+        () => tryExecCommandCopy(blob),
+    ];
+    let lastError;
+    for (const attempt of attempts) {
+        try {
+            await attempt();
+            console.log("content copied");
+            return;
+        } catch (error) {
+            lastError = error;
+        }
+    }
+    console.error(lastError);
 };
 
 const convertToPng = (imgBlob) => {
@@ -73,4 +138,3 @@ export const copyText = (text) => {
     const blob = new Blob([text], { type: 'text/plain' })
     copyToClipboard(blob)
 }
-
