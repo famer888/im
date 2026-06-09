@@ -36,3 +36,6 @@ protect/**/*.ssp.bak
 protect/**/*.protected
 protect/**/*.log
 protect/**/.cache/
+
+# 测试用大视频，勿提交（> GitHub 100MB 限制）
+public/media/test.mp4
