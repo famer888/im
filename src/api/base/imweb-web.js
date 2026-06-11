@@ -14644,6 +14644,581 @@ export const PushGroupEventMessage = $root.PushGroupEventMessage = (() => {
     return PushGroupEventMessage;
 })();
 
+export const PushGroupLiveSendGiftMsg = $root.PushGroupLiveSendGiftMsg = (() => {
+
+    /**
+     * Properties of a PushGroupLiveSendGiftMsg.
+     * @exports IPushGroupLiveSendGiftMsg
+     * @interface IPushGroupLiveSendGiftMsg
+     * @property {number|Long|null} [groupId] PushGroupLiveSendGiftMsg groupId
+     * @property {number|Long|null} [liveRoomId] PushGroupLiveSendGiftMsg liveRoomId
+     * @property {number|Long|null} [giftId] PushGroupLiveSendGiftMsg giftId
+     * @property {number|null} [giftType] PushGroupLiveSendGiftMsg giftType
+     * @property {string|null} [animationUrl] PushGroupLiveSendGiftMsg animationUrl
+     * @property {string|null} [soundUrl] PushGroupLiveSendGiftMsg soundUrl
+     * @property {string|null} [giftName] PushGroupLiveSendGiftMsg giftName
+     * @property {number|null} [quantity] PushGroupLiveSendGiftMsg quantity
+     * @property {string|null} [iconUrl] PushGroupLiveSendGiftMsg iconUrl
+     * @property {number|Long|null} [fromUid] PushGroupLiveSendGiftMsg fromUid
+     * @property {number|Long|null} [anchorUid] PushGroupLiveSendGiftMsg anchorUid
+     * @property {string|null} [coinName] PushGroupLiveSendGiftMsg coinName
+     * @property {string|null} [amount] PushGroupLiveSendGiftMsg amount
+     * @property {string|null} [roomSumAmount] PushGroupLiveSendGiftMsg roomSumAmount
+     */
+
+    /**
+     * Constructs a new PushGroupLiveSendGiftMsg.
+     * @exports PushGroupLiveSendGiftMsg
+     * @classdesc Represents a PushGroupLiveSendGiftMsg.
+     * @implements IPushGroupLiveSendGiftMsg
+     * @constructor
+     * @param {IPushGroupLiveSendGiftMsg=} [properties] Properties to set
+     */
+    function PushGroupLiveSendGiftMsg(properties) {
+        if (properties)
+            for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                if (properties[keys[i]] != null)
+                    this[keys[i]] = properties[keys[i]];
+    }
+
+    /**
+     * PushGroupLiveSendGiftMsg groupId.
+     * @member {number|Long} groupId
+     * @memberof PushGroupLiveSendGiftMsg
+     * @instance
+     */
+    PushGroupLiveSendGiftMsg.prototype.groupId = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+
+    /**
+     * PushGroupLiveSendGiftMsg liveRoomId.
+     * @member {number|Long} liveRoomId
+     * @memberof PushGroupLiveSendGiftMsg
+     * @instance
+     */
+    PushGroupLiveSendGiftMsg.prototype.liveRoomId = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+
+    /**
+     * PushGroupLiveSendGiftMsg giftId.
+     * @member {number|Long} giftId
+     * @memberof PushGroupLiveSendGiftMsg
+     * @instance
+     */
+    PushGroupLiveSendGiftMsg.prototype.giftId = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+
+    /**
+     * PushGroupLiveSendGiftMsg giftType.
+     * @member {number} giftType
+     * @memberof PushGroupLiveSendGiftMsg
+     * @instance
+     */
+    PushGroupLiveSendGiftMsg.prototype.giftType = 0;
+
+    /**
+     * PushGroupLiveSendGiftMsg animationUrl.
+     * @member {string} animationUrl
+     * @memberof PushGroupLiveSendGiftMsg
+     * @instance
+     */
+    PushGroupLiveSendGiftMsg.prototype.animationUrl = "";
+
+    /**
+     * PushGroupLiveSendGiftMsg soundUrl.
+     * @member {string} soundUrl
+     * @memberof PushGroupLiveSendGiftMsg
+     * @instance
+     */
+    PushGroupLiveSendGiftMsg.prototype.soundUrl = "";
+
+    /**
+     * PushGroupLiveSendGiftMsg giftName.
+     * @member {string} giftName
+     * @memberof PushGroupLiveSendGiftMsg
+     * @instance
+     */
+    PushGroupLiveSendGiftMsg.prototype.giftName = "";
+
+    /**
+     * PushGroupLiveSendGiftMsg quantity.
+     * @member {number} quantity
+     * @memberof PushGroupLiveSendGiftMsg
+     * @instance
+     */
+    PushGroupLiveSendGiftMsg.prototype.quantity = 0;
+
+    /**
+     * PushGroupLiveSendGiftMsg iconUrl.
+     * @member {string} iconUrl
+     * @memberof PushGroupLiveSendGiftMsg
+     * @instance
+     */
+    PushGroupLiveSendGiftMsg.prototype.iconUrl = "";
+
+    /**
+     * PushGroupLiveSendGiftMsg fromUid.
+     * @member {number|Long} fromUid
+     * @memberof PushGroupLiveSendGiftMsg
+     * @instance
+     */
+    PushGroupLiveSendGiftMsg.prototype.fromUid = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+
+    /**
+     * PushGroupLiveSendGiftMsg anchorUid.
+     * @member {number|Long} anchorUid
+     * @memberof PushGroupLiveSendGiftMsg
+     * @instance
+     */
+    PushGroupLiveSendGiftMsg.prototype.anchorUid = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+
+    /**
+     * PushGroupLiveSendGiftMsg coinName.
+     * @member {string} coinName
+     * @memberof PushGroupLiveSendGiftMsg
+     * @instance
+     */
+    PushGroupLiveSendGiftMsg.prototype.coinName = "";
+
+    /**
+     * PushGroupLiveSendGiftMsg amount.
+     * @member {string} amount
+     * @memberof PushGroupLiveSendGiftMsg
+     * @instance
+     */
+    PushGroupLiveSendGiftMsg.prototype.amount = "";
+
+    /**
+     * PushGroupLiveSendGiftMsg roomSumAmount.
+     * @member {string} roomSumAmount
+     * @memberof PushGroupLiveSendGiftMsg
+     * @instance
+     */
+    PushGroupLiveSendGiftMsg.prototype.roomSumAmount = "";
+
+    /**
+     * Creates a new PushGroupLiveSendGiftMsg instance using the specified properties.
+     * @function create
+     * @memberof PushGroupLiveSendGiftMsg
+     * @static
+     * @param {IPushGroupLiveSendGiftMsg=} [properties] Properties to set
+     * @returns {PushGroupLiveSendGiftMsg} PushGroupLiveSendGiftMsg instance
+     */
+    PushGroupLiveSendGiftMsg.create = function create(properties) {
+        return new PushGroupLiveSendGiftMsg(properties);
+    };
+
+    /**
+     * Encodes the specified PushGroupLiveSendGiftMsg message. Does not implicitly {@link PushGroupLiveSendGiftMsg.verify|verify} messages.
+     * @function encode
+     * @memberof PushGroupLiveSendGiftMsg
+     * @static
+     * @param {IPushGroupLiveSendGiftMsg} message PushGroupLiveSendGiftMsg message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    PushGroupLiveSendGiftMsg.encode = function encode(message, writer) {
+        if (!writer)
+            writer = $Writer.create();
+        if (message.groupId != null && Object.hasOwnProperty.call(message, "groupId"))
+            writer.uint32(/* id 1, wireType 0 =*/8).int64(message.groupId);
+        if (message.liveRoomId != null && Object.hasOwnProperty.call(message, "liveRoomId"))
+            writer.uint32(/* id 2, wireType 0 =*/16).int64(message.liveRoomId);
+        if (message.giftId != null && Object.hasOwnProperty.call(message, "giftId"))
+            writer.uint32(/* id 3, wireType 0 =*/24).int64(message.giftId);
+        if (message.giftType != null && Object.hasOwnProperty.call(message, "giftType"))
+            writer.uint32(/* id 4, wireType 0 =*/32).int32(message.giftType);
+        if (message.animationUrl != null && Object.hasOwnProperty.call(message, "animationUrl"))
+            writer.uint32(/* id 5, wireType 2 =*/42).string(message.animationUrl);
+        if (message.soundUrl != null && Object.hasOwnProperty.call(message, "soundUrl"))
+            writer.uint32(/* id 6, wireType 2 =*/50).string(message.soundUrl);
+        if (message.giftName != null && Object.hasOwnProperty.call(message, "giftName"))
+            writer.uint32(/* id 7, wireType 2 =*/58).string(message.giftName);
+        if (message.quantity != null && Object.hasOwnProperty.call(message, "quantity"))
+            writer.uint32(/* id 8, wireType 0 =*/64).int32(message.quantity);
+        if (message.iconUrl != null && Object.hasOwnProperty.call(message, "iconUrl"))
+            writer.uint32(/* id 9, wireType 2 =*/74).string(message.iconUrl);
+        if (message.fromUid != null && Object.hasOwnProperty.call(message, "fromUid"))
+            writer.uint32(/* id 10, wireType 0 =*/80).int64(message.fromUid);
+        if (message.anchorUid != null && Object.hasOwnProperty.call(message, "anchorUid"))
+            writer.uint32(/* id 11, wireType 0 =*/88).int64(message.anchorUid);
+        if (message.coinName != null && Object.hasOwnProperty.call(message, "coinName"))
+            writer.uint32(/* id 12, wireType 2 =*/98).string(message.coinName);
+        if (message.amount != null && Object.hasOwnProperty.call(message, "amount"))
+            writer.uint32(/* id 13, wireType 2 =*/106).string(message.amount);
+        if (message.roomSumAmount != null && Object.hasOwnProperty.call(message, "roomSumAmount"))
+            writer.uint32(/* id 14, wireType 2 =*/114).string(message.roomSumAmount);
+        return writer;
+    };
+
+    /**
+     * Encodes the specified PushGroupLiveSendGiftMsg message, length delimited. Does not implicitly {@link PushGroupLiveSendGiftMsg.verify|verify} messages.
+     * @function encodeDelimited
+     * @memberof PushGroupLiveSendGiftMsg
+     * @static
+     * @param {IPushGroupLiveSendGiftMsg} message PushGroupLiveSendGiftMsg message or plain object to encode
+     * @param {$protobuf.Writer} [writer] Writer to encode to
+     * @returns {$protobuf.Writer} Writer
+     */
+    PushGroupLiveSendGiftMsg.encodeDelimited = function encodeDelimited(message, writer) {
+        return this.encode(message, writer).ldelim();
+    };
+
+    /**
+     * Decodes a PushGroupLiveSendGiftMsg message from the specified reader or buffer.
+     * @function decode
+     * @memberof PushGroupLiveSendGiftMsg
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @param {number} [length] Message length if known beforehand
+     * @returns {PushGroupLiveSendGiftMsg} PushGroupLiveSendGiftMsg
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    PushGroupLiveSendGiftMsg.decode = function decode(reader, length, error) {
+        if (!(reader instanceof $Reader))
+            reader = $Reader.create(reader);
+        let end = length === undefined ? reader.len : reader.pos + length, message = new $root.PushGroupLiveSendGiftMsg();
+        while (reader.pos < end) {
+            let tag = reader.uint32();
+            if (tag === error)
+                break;
+            switch (tag >>> 3) {
+            case 1: {
+                    message.groupId = reader.int64();
+                    break;
+                }
+            case 2: {
+                    message.liveRoomId = reader.int64();
+                    break;
+                }
+            case 3: {
+                    message.giftId = reader.int64();
+                    break;
+                }
+            case 4: {
+                    message.giftType = reader.int32();
+                    break;
+                }
+            case 5: {
+                    message.animationUrl = reader.string();
+                    break;
+                }
+            case 6: {
+                    message.soundUrl = reader.string();
+                    break;
+                }
+            case 7: {
+                    message.giftName = reader.string();
+                    break;
+                }
+            case 8: {
+                    message.quantity = reader.int32();
+                    break;
+                }
+            case 9: {
+                    message.iconUrl = reader.string();
+                    break;
+                }
+            case 10: {
+                    message.fromUid = reader.int64();
+                    break;
+                }
+            case 11: {
+                    message.anchorUid = reader.int64();
+                    break;
+                }
+            case 12: {
+                    message.coinName = reader.string();
+                    break;
+                }
+            case 13: {
+                    message.amount = reader.string();
+                    break;
+                }
+            case 14: {
+                    message.roomSumAmount = reader.string();
+                    break;
+                }
+            default:
+                reader.skipType(tag & 7);
+                break;
+            }
+        }
+        return message;
+    };
+
+    /**
+     * Decodes a PushGroupLiveSendGiftMsg message from the specified reader or buffer, length delimited.
+     * @function decodeDelimited
+     * @memberof PushGroupLiveSendGiftMsg
+     * @static
+     * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+     * @returns {PushGroupLiveSendGiftMsg} PushGroupLiveSendGiftMsg
+     * @throws {Error} If the payload is not a reader or valid buffer
+     * @throws {$protobuf.util.ProtocolError} If required fields are missing
+     */
+    PushGroupLiveSendGiftMsg.decodeDelimited = function decodeDelimited(reader) {
+        if (!(reader instanceof $Reader))
+            reader = new $Reader(reader);
+        return this.decode(reader, reader.uint32());
+    };
+
+    /**
+     * Verifies a PushGroupLiveSendGiftMsg message.
+     * @function verify
+     * @memberof PushGroupLiveSendGiftMsg
+     * @static
+     * @param {Object.<string,*>} message Plain object to verify
+     * @returns {string|null} `null` if valid, otherwise the reason why it is not
+     */
+    PushGroupLiveSendGiftMsg.verify = function verify(message) {
+        if (typeof message !== "object" || message === null)
+            return "object expected";
+        if (message.groupId != null && message.hasOwnProperty("groupId"))
+            if (!$util.isInteger(message.groupId) && !(message.groupId && $util.isInteger(message.groupId.low) && $util.isInteger(message.groupId.high)))
+                return "groupId: integer|Long expected";
+        if (message.liveRoomId != null && message.hasOwnProperty("liveRoomId"))
+            if (!$util.isInteger(message.liveRoomId) && !(message.liveRoomId && $util.isInteger(message.liveRoomId.low) && $util.isInteger(message.liveRoomId.high)))
+                return "liveRoomId: integer|Long expected";
+        if (message.giftId != null && message.hasOwnProperty("giftId"))
+            if (!$util.isInteger(message.giftId) && !(message.giftId && $util.isInteger(message.giftId.low) && $util.isInteger(message.giftId.high)))
+                return "giftId: integer|Long expected";
+        if (message.giftType != null && message.hasOwnProperty("giftType"))
+            if (!$util.isInteger(message.giftType))
+                return "giftType: integer expected";
+        if (message.animationUrl != null && message.hasOwnProperty("animationUrl"))
+            if (!$util.isString(message.animationUrl))
+                return "animationUrl: string expected";
+        if (message.soundUrl != null && message.hasOwnProperty("soundUrl"))
+            if (!$util.isString(message.soundUrl))
+                return "soundUrl: string expected";
+        if (message.giftName != null && message.hasOwnProperty("giftName"))
+            if (!$util.isString(message.giftName))
+                return "giftName: string expected";
+        if (message.quantity != null && message.hasOwnProperty("quantity"))
+            if (!$util.isInteger(message.quantity))
+                return "quantity: integer expected";
+        if (message.iconUrl != null && message.hasOwnProperty("iconUrl"))
+            if (!$util.isString(message.iconUrl))
+                return "iconUrl: string expected";
+        if (message.fromUid != null && message.hasOwnProperty("fromUid"))
+            if (!$util.isInteger(message.fromUid) && !(message.fromUid && $util.isInteger(message.fromUid.low) && $util.isInteger(message.fromUid.high)))
+                return "fromUid: integer|Long expected";
+        if (message.anchorUid != null && message.hasOwnProperty("anchorUid"))
+            if (!$util.isInteger(message.anchorUid) && !(message.anchorUid && $util.isInteger(message.anchorUid.low) && $util.isInteger(message.anchorUid.high)))
+                return "anchorUid: integer|Long expected";
+        if (message.coinName != null && message.hasOwnProperty("coinName"))
+            if (!$util.isString(message.coinName))
+                return "coinName: string expected";
+        if (message.amount != null && message.hasOwnProperty("amount"))
+            if (!$util.isString(message.amount))
+                return "amount: string expected";
+        if (message.roomSumAmount != null && message.hasOwnProperty("roomSumAmount"))
+            if (!$util.isString(message.roomSumAmount))
+                return "roomSumAmount: string expected";
+        return null;
+    };
+
+    /**
+     * Creates a PushGroupLiveSendGiftMsg message from a plain object. Also converts values to their respective internal types.
+     * @function fromObject
+     * @memberof PushGroupLiveSendGiftMsg
+     * @static
+     * @param {Object.<string,*>} object Plain object
+     * @returns {PushGroupLiveSendGiftMsg} PushGroupLiveSendGiftMsg
+     */
+    PushGroupLiveSendGiftMsg.fromObject = function fromObject(object) {
+        if (object instanceof $root.PushGroupLiveSendGiftMsg)
+            return object;
+        let message = new $root.PushGroupLiveSendGiftMsg();
+        if (object.groupId != null)
+            if ($util.Long)
+                (message.groupId = $util.Long.fromValue(object.groupId)).unsigned = false;
+            else if (typeof object.groupId === "string")
+                message.groupId = parseInt(object.groupId, 10);
+            else if (typeof object.groupId === "number")
+                message.groupId = object.groupId;
+            else if (typeof object.groupId === "object")
+                message.groupId = new $util.LongBits(object.groupId.low >>> 0, object.groupId.high >>> 0).toNumber();
+        if (object.liveRoomId != null)
+            if ($util.Long)
+                (message.liveRoomId = $util.Long.fromValue(object.liveRoomId)).unsigned = false;
+            else if (typeof object.liveRoomId === "string")
+                message.liveRoomId = parseInt(object.liveRoomId, 10);
+            else if (typeof object.liveRoomId === "number")
+                message.liveRoomId = object.liveRoomId;
+            else if (typeof object.liveRoomId === "object")
+                message.liveRoomId = new $util.LongBits(object.liveRoomId.low >>> 0, object.liveRoomId.high >>> 0).toNumber();
+        if (object.giftId != null)
+            if ($util.Long)
+                (message.giftId = $util.Long.fromValue(object.giftId)).unsigned = false;
+            else if (typeof object.giftId === "string")
+                message.giftId = parseInt(object.giftId, 10);
+            else if (typeof object.giftId === "number")
+                message.giftId = object.giftId;
+            else if (typeof object.giftId === "object")
+                message.giftId = new $util.LongBits(object.giftId.low >>> 0, object.giftId.high >>> 0).toNumber();
+        if (object.giftType != null)
+            message.giftType = object.giftType | 0;
+        if (object.animationUrl != null)
+            message.animationUrl = String(object.animationUrl);
+        if (object.soundUrl != null)
+            message.soundUrl = String(object.soundUrl);
+        if (object.giftName != null)
+            message.giftName = String(object.giftName);
+        if (object.quantity != null)
+            message.quantity = object.quantity | 0;
+        if (object.iconUrl != null)
+            message.iconUrl = String(object.iconUrl);
+        if (object.fromUid != null)
+            if ($util.Long)
+                (message.fromUid = $util.Long.fromValue(object.fromUid)).unsigned = false;
+            else if (typeof object.fromUid === "string")
+                message.fromUid = parseInt(object.fromUid, 10);
+            else if (typeof object.fromUid === "number")
+                message.fromUid = object.fromUid;
+            else if (typeof object.fromUid === "object")
+                message.fromUid = new $util.LongBits(object.fromUid.low >>> 0, object.fromUid.high >>> 0).toNumber();
+        if (object.anchorUid != null)
+            if ($util.Long)
+                (message.anchorUid = $util.Long.fromValue(object.anchorUid)).unsigned = false;
+            else if (typeof object.anchorUid === "string")
+                message.anchorUid = parseInt(object.anchorUid, 10);
+            else if (typeof object.anchorUid === "number")
+                message.anchorUid = object.anchorUid;
+            else if (typeof object.anchorUid === "object")
+                message.anchorUid = new $util.LongBits(object.anchorUid.low >>> 0, object.anchorUid.high >>> 0).toNumber();
+        if (object.coinName != null)
+            message.coinName = String(object.coinName);
+        if (object.amount != null)
+            message.amount = String(object.amount);
+        if (object.roomSumAmount != null)
+            message.roomSumAmount = String(object.roomSumAmount);
+        return message;
+    };
+
+    /**
+     * Creates a plain object from a PushGroupLiveSendGiftMsg message. Also converts values to other types if specified.
+     * @function toObject
+     * @memberof PushGroupLiveSendGiftMsg
+     * @static
+     * @param {PushGroupLiveSendGiftMsg} message PushGroupLiveSendGiftMsg
+     * @param {$protobuf.IConversionOptions} [options] Conversion options
+     * @returns {Object.<string,*>} Plain object
+     */
+    PushGroupLiveSendGiftMsg.toObject = function toObject(message, options) {
+        if (!options)
+            options = {};
+        let object = {};
+        if (options.defaults) {
+            if ($util.Long) {
+                let long = new $util.Long(0, 0, false);
+                object.groupId = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+            } else
+                object.groupId = options.longs === String ? "0" : 0;
+            if ($util.Long) {
+                let long = new $util.Long(0, 0, false);
+                object.liveRoomId = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+            } else
+                object.liveRoomId = options.longs === String ? "0" : 0;
+            if ($util.Long) {
+                let long = new $util.Long(0, 0, false);
+                object.giftId = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+            } else
+                object.giftId = options.longs === String ? "0" : 0;
+            object.giftType = 0;
+            object.animationUrl = "";
+            object.soundUrl = "";
+            object.giftName = "";
+            object.quantity = 0;
+            object.iconUrl = "";
+            if ($util.Long) {
+                let long = new $util.Long(0, 0, false);
+                object.fromUid = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+            } else
+                object.fromUid = options.longs === String ? "0" : 0;
+            if ($util.Long) {
+                let long = new $util.Long(0, 0, false);
+                object.anchorUid = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
+            } else
+                object.anchorUid = options.longs === String ? "0" : 0;
+            object.coinName = "";
+            object.amount = "";
+            object.roomSumAmount = "";
+        }
+        if (message.groupId != null && message.hasOwnProperty("groupId"))
+            if (typeof message.groupId === "number")
+                object.groupId = options.longs === String ? String(message.groupId) : message.groupId;
+            else
+                object.groupId = options.longs === String ? $util.Long.prototype.toString.call(message.groupId) : options.longs === Number ? new $util.LongBits(message.groupId.low >>> 0, message.groupId.high >>> 0).toNumber() : message.groupId;
+        if (message.liveRoomId != null && message.hasOwnProperty("liveRoomId"))
+            if (typeof message.liveRoomId === "number")
+                object.liveRoomId = options.longs === String ? String(message.liveRoomId) : message.liveRoomId;
+            else
+                object.liveRoomId = options.longs === String ? $util.Long.prototype.toString.call(message.liveRoomId) : options.longs === Number ? new $util.LongBits(message.liveRoomId.low >>> 0, message.liveRoomId.high >>> 0).toNumber() : message.liveRoomId;
+        if (message.giftId != null && message.hasOwnProperty("giftId"))
+            if (typeof message.giftId === "number")
+                object.giftId = options.longs === String ? String(message.giftId) : message.giftId;
+            else
+                object.giftId = options.longs === String ? $util.Long.prototype.toString.call(message.giftId) : options.longs === Number ? new $util.LongBits(message.giftId.low >>> 0, message.giftId.high >>> 0).toNumber() : message.giftId;
+        if (message.giftType != null && message.hasOwnProperty("giftType"))
+            object.giftType = message.giftType;
+        if (message.animationUrl != null && message.hasOwnProperty("animationUrl"))
+            object.animationUrl = message.animationUrl;
+        if (message.soundUrl != null && message.hasOwnProperty("soundUrl"))
+            object.soundUrl = message.soundUrl;
+        if (message.giftName != null && message.hasOwnProperty("giftName"))
+            object.giftName = message.giftName;
+        if (message.quantity != null && message.hasOwnProperty("quantity"))
+            object.quantity = message.quantity;
+        if (message.iconUrl != null && message.hasOwnProperty("iconUrl"))
+            object.iconUrl = message.iconUrl;
+        if (message.fromUid != null && message.hasOwnProperty("fromUid"))
+            if (typeof message.fromUid === "number")
+                object.fromUid = options.longs === String ? String(message.fromUid) : message.fromUid;
+            else
+                object.fromUid = options.longs === String ? $util.Long.prototype.toString.call(message.fromUid) : options.longs === Number ? new $util.LongBits(message.fromUid.low >>> 0, message.fromUid.high >>> 0).toNumber() : message.fromUid;
+        if (message.anchorUid != null && message.hasOwnProperty("anchorUid"))
+            if (typeof message.anchorUid === "number")
+                object.anchorUid = options.longs === String ? String(message.anchorUid) : message.anchorUid;
+            else
+                object.anchorUid = options.longs === String ? $util.Long.prototype.toString.call(message.anchorUid) : options.longs === Number ? new $util.LongBits(message.anchorUid.low >>> 0, message.anchorUid.high >>> 0).toNumber() : message.anchorUid;
+        if (message.coinName != null && message.hasOwnProperty("coinName"))
+            object.coinName = message.coinName;
+        if (message.amount != null && message.hasOwnProperty("amount"))
+            object.amount = message.amount;
+        if (message.roomSumAmount != null && message.hasOwnProperty("roomSumAmount"))
+            object.roomSumAmount = message.roomSumAmount;
+        return object;
+    };
+
+    /**
+     * Converts this PushGroupLiveSendGiftMsg to JSON.
+     * @function toJSON
+     * @memberof PushGroupLiveSendGiftMsg
+     * @instance
+     * @returns {Object.<string,*>} JSON object
+     */
+    PushGroupLiveSendGiftMsg.prototype.toJSON = function toJSON() {
+        return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+    };
+
+    /**
+     * Gets the default type url for PushGroupLiveSendGiftMsg
+     * @function getTypeUrl
+     * @memberof PushGroupLiveSendGiftMsg
+     * @static
+     * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+     * @returns {string} The default type url
+     */
+    PushGroupLiveSendGiftMsg.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+        if (typeUrlPrefix === undefined) {
+            typeUrlPrefix = "type.googleapis.com";
+        }
+        return typeUrlPrefix + "/PushGroupLiveSendGiftMsg";
+    };
+
+    return PushGroupLiveSendGiftMsg;
+})();
+
 export const PushSendChannelMessageSuccessMessage = $root.PushSendChannelMessageSuccessMessage = (() => {
 
     /**

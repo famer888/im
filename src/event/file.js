@@ -12,7 +12,7 @@ import {
     getVideoPreviewLocal,
 } from "@/utils/upload";
 import { openFile } from "@/utils/server";
-import { getNewFileDownUrl, getOssFirstNormalUrl } from "@/utils/trendsDomain/manageOssDownUpload";
+import { getNewFileDownUrl, getOssFirstNormalUrl, resolveOssChannelType } from "@/utils/trendsDomain/manageOssDownUpload";
 import { reportErrorDomain } from "@/utils/trendsDomain/manageReport";
 
 
@@ -23,6 +23,18 @@ import progress from "@/utils/progress";
 import { inspectGifDownload, isValidImagePlaintext } from "./gifDownloadPlaintext";
 
 //////////////////  下载解密
+
+/** 4xx 表示服务端已响应且资源/权限问题，换 CDN 域名通常无效 */
+const shouldRetryDownloadWithBackupDomain = (data) => {
+    if (data?.expired || data?.reason === "url_dated_expired") {
+        return false;
+    }
+    const code = data?.httpStatusCode;
+    if (typeof code === "number" && code >= 400 && code < 500) {
+        return false;
+    }
+    return true;
+};
 
 const FILE_ERROR_TYPES = ["downloadError", "decryptionError"];
 const latestMediaDownloadRequests = new Map();
@@ -445,19 +457,20 @@ const checkFileCorrect = (url) => {
  */
 const handleDownloadFileFailed = (_$, data) => {
     setTimeout( async() => {
-        let { channelType = 0 } = data || {};
+        if (!shouldRetryDownloadWithBackupDomain(data)) {
+            await fnDownloadFileInfoUpdate(data, "downloadError");
+            return;
+        }
+        const channelType = resolveOssChannelType(data, 1);
         let moduleCode = {0: "ossDefaultUrl", 1: "ossChatUrl", 2: "ossLowRateUrl"}[channelType] || "ossDefaultUrl"
         let url = data.trendsFileUrl || data.fileUrl;
-        // console.log('下载文件失败: ', url)
         reportErrorDomain(url, {errorDesc: "下载失败", moduleCode})
         let downFailNum = data.downFailNum || 0
-        if(downFailNum <=3 ) {
+        if (downFailNum < 3) {
             data.downFailNum = downFailNum + 1
-            data.trendsFileUrl = await getNewFileDownUrl(url, channelType, data.downFailNum-1) || "";
-            // console.error('下载文件失败-替换新域名进行下载-', data.trendsFileUrl)
+            data.trendsFileUrl = await getNewFileDownUrl(url, channelType, data.downFailNum - 1) || "";
             ipcRenderer.send("fileDownload", data)
-        }else {
-            // console.error('下载文件失败-结束-', url)
+        } else {
             await fnDownloadFileInfoUpdate(data, "downloadError");
         }
     }, 100);
@@ -960,6 +973,7 @@ const fnOperatorFile = async ({ id, type, info, openDialog, isDir, taskId }, kee
         msgId: info.MsgID,
         fileKey: info.fileKey,
         chatType: info.chatType,
+        sendTime: info.sendTime,
         customMsgId: info.customMsgId,
         local: info.local,
         localThumbUrl: info.localThumbUrl,
@@ -988,9 +1002,9 @@ const fnOperatorFile = async ({ id, type, info, openDialog, isDir, taskId }, kee
     //     mediaSlotIndex: info.mediaSlotIndex,
     // });
 
-    if(!info.local) {
-        // 优先使用动态域名
-        params.trendsFileUrl = await getOssFirstNormalUrl(fileUrl, 0, 0);
+    if (!info.local) {
+        params.channelType = resolveOssChannelType(info);
+        params.trendsFileUrl = await getOssFirstNormalUrl(fileUrl, params.channelType);
     }
 
     // 图片/视频：通过 localStorage 传递媒体信息给播放器

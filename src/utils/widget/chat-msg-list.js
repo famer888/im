@@ -459,6 +459,21 @@ export const fnMsgListDeleteCalculate = (blockList, idsDelete) => {
     }
 };
 
+/** 媒体下载类更新（local / thumb / percent），不改变消息顺序 */
+const MEDIA_LOCAL_UPDATE_KEY = /^(local|localThumbUrl|thumb_|local_|percent)/;
+
+const isMediaLocalOnlyUpdate = (list = []) =>
+    list.every((item) => {
+        const keys = Object.keys(item.updated || {});
+        return keys.length > 0 && keys.every((k) => MEDIA_LOCAL_UPDATE_KEY.test(k));
+    });
+
+const updateAffectsMessageOrder = (list = []) =>
+    list.some((item) => {
+        const u = item.updated || {};
+        return "sendTime" in u || "MsgID" in u || "msgId" in u;
+    });
+
 /**
  * 修改消息属性
  * 处理状态改变 发送成功，发送超时，已读
@@ -508,22 +523,21 @@ export const fnMsgPropertyUpdate = (info, blockList, pageCount) => {
             }
         }
 
-        const pageNumList = Object.keys(blockListNew).map(
-            (key) => blockListNew[key].pageNum
-        );
+        const pageNumList = blockListNew.map((block) => block.pageNum);
+        const shouldReorder =
+            !isMediaLocalOnlyUpdate(list) && updateAffectsMessageOrder(list);
 
-        // 如果最后一页存在，则最后两页，进行重新排序
-        if (pageNumList.includes(pageCount)) {
-            // 如果只有一页
+        // 仅 sendTime 等顺序字段变更且最后一页已加载时才重排；downloadError 等媒体更新不重排
+        if (shouldReorder && pageNumList.includes(pageCount)) {
             if (pageCount === 1) {
                 blockListNew[0].list = _.sortBy(
                     blockListNew[0].list,
                     "sendTime"
                 );
-            } else {
+            } else if (blockListNew.length >= 2) {
                 const pageSize =
                     blockListNew[blockListNew.length - 2].list.length;
-                const list = _.sortBy(
+                const merged = _.sortBy(
                     [
                         ...blockListNew[blockListNew.length - 2].list,
                         ...blockListNew[blockListNew.length - 1].list,
@@ -531,18 +545,13 @@ export const fnMsgPropertyUpdate = (info, blockList, pageCount) => {
                     "sendTime"
                 );
 
-                blockListNew[blockListNew.length - 2].list = list.slice(
+                blockListNew[blockListNew.length - 2].list = merged.slice(
                     0,
                     pageSize
                 );
                 blockListNew[blockListNew.length - 1].list =
-                    list.slice(pageSize);
+                    merged.slice(pageSize);
             }
-        } else if (pageNumList.includes(pageCount - 1)) {
-            // 如果最后一页不存在，但倒数第二页存在，则清掉倒数第二页
-            // ? 这里会把整个页面清空哦，因为代码把blockListNew改成了Object
-            // blockListNew = blockListNew.pop();
-            blockListNew.pop();
         }
 
         return blockListNew;

@@ -60,8 +60,7 @@ import progress from "@/utils/progress";
 // 工具
 import { getFileSuffix, isMac, stripChatContentMetaSuffix } from "@/utils/base";
 import { checkImageLoad, checkLocalFileExists, isErrorLocalValue } from "@/utils/fileTools";
-import { getFileOssUrls, getNewFileDownUrl } from "@/utils/trendsDomain/manageOssDownUpload";
-import { getOssFirstNormalUrl } from "@/utils/trendsDomain/manageOssDownUpload";
+import { getOssFirstNormalUrl, resolveOssChannelType } from "@/utils/trendsDomain/manageOssDownUpload";
 
 // 事件
 import eventFile from "@/event/file";
@@ -464,10 +463,12 @@ export default {
             // 文件名
             const fileName = fileUrl.slice(fileUrl.lastIndexOf("/") + 1) + suffix;
 
-            // 优先使用动态域名
+            const channelType = resolveOssChannelType(this.msgInfo);
+
+            // 优先使用动态域名（App 聊天图/动图通常走 ossChatUrl）
             let trendsFileUrl = "";
             try {
-                trendsFileUrl = await getOssFirstNormalUrl(fileUrl);
+                trendsFileUrl = await getOssFirstNormalUrl(fileUrl, channelType);
             } catch (e) {
                 this.downloadInFlight = false;
                 this.clearDownloadInFlightTimer();
@@ -507,6 +508,8 @@ export default {
                 fileSize: this.msgInfo.size || this.msgInfo.fileSize || 0,
                 taskId: isPreviewDownload ? this.taskId : null,
                 downloadRequestId,
+                channelType,
+                sendTime: this.msgInfo.sendTime,
             };
             eventFile.fnMediaDownloadRequestRegister(downloadParams);
             ipcRenderer.send("fileDownload", downloadParams);

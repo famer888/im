@@ -268,6 +268,28 @@ const dispatch = (code, data) => {
       eventMsg.fnChannelMsgReadUpdate(data.channelId, data.readChannelMessages);
       break;
     }
+    case 2217: {
+      eventBase.fnCommunicationSendMsg({
+        operator: "groupLiveSendGift",
+        data: {
+          groupId: Number(data.groupId),
+          liveRoomId: Number(data.liveRoomId),
+          giftId: Number(data.giftId || 0),
+          giftType: Number(data.giftType || 0),
+          animationUrl: data.animationUrl || "",
+          soundUrl: data.soundUrl || "",
+          giftName: data.giftName || "",
+          quantity: Number(data.quantity || 0),
+          iconUrl: data.iconUrl || "",
+          fromUid: Number(data.fromUid || 0),
+          anchorUid: Number(data.anchorUid || 0),
+          coinName: data.coinName || "",
+          amount: data.amount || "",
+          roomSumAmount: data.roomSumAmount || "",
+        },
+      });
+      break;
+    }
 
     default:
   }
@@ -297,6 +319,7 @@ const WS_PACKET_STR = {
   4201: "PushSendChannelMessageSuccessMessage", // 频道消息发送成功
   4204: "PushChannelEventMessage", // 频道身份变更
   4206: "PushReadChannelMessage", // 频道已读
+  2217: "PushGroupLiveSendGiftMsg", // 群直播打赏/礼物
 };
 
 /**

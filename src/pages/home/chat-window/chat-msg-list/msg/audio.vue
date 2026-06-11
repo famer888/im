@@ -24,7 +24,7 @@ import { remote, ipcRenderer, toLocalResourceUrl } from "@/platform";
 
 // 工具
 import { getFileSuffix } from "@/utils/base";
-import { getOssFirstNormalUrl } from "@/utils/trendsDomain/manageOssDownUpload";
+import { getOssFirstNormalUrl, resolveOssChannelType } from "@/utils/trendsDomain/manageOssDownUpload";
 
 // 控件
 import ComLoading from "@/components/com-loading";
@@ -67,10 +67,9 @@ export default {
       // 文件名
       const fileName = fileUrl.slice(fileUrl.lastIndexOf("/") + 1) + suffix;
 
-      // 优先使用动态域名    
-      const trendsFileUrl = await getOssFirstNormalUrl(fileUrl, 0, 0);
+      const channelType = resolveOssChannelType(this.msgInfo);
+      const trendsFileUrl = await getOssFirstNormalUrl(fileUrl, channelType);
 
-      // 文件下载
       ipcRenderer.send("fileDownload", {
         fileUrl,
         trendsFileUrl,
@@ -83,7 +82,9 @@ export default {
         msgId: MsgID,
         fileKey,
         chatType,
+        sendTime: this.msgInfo.sendTime,
         customMsgId,
+        channelType,
         isOpen: false,
       });
     },
