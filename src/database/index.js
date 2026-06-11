@@ -934,7 +934,7 @@ export default class dbBase {
     try {
       const count = await this.db[tableName]
         .where("MsgID")
-        .equals(String(msgId))
+        .anyOf([Number(msgId), String(msgId)])
         .count();
 
       return count > 0;

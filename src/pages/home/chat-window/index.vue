@@ -41,6 +41,10 @@
           }
         "
       />
+      <ComGiftTipBubble
+        v-if="chatContent.type === 'group'"
+        :tips="giftTips"
+      />
       <ComSend :chatContent="chatContent" :quoteInfo="quoteInfo" :editInfo="editInfo" />
       <ComDropArea v-if="dropAreaVisible" @close="dropAreaVisible = false" />
       <ComMemberDialog
@@ -341,6 +345,7 @@ import ComTop from "./top";
 import ComSend from "./send";
 import ComChatMsgList from "./chat-msg-list";
 import ComNetworkTips from "./network-tips.vue";
+import ComGiftTipBubble from "./gift-tip-bubble/index.vue";
 
 // 事件
 import eventBase from "@/event/base";
@@ -366,6 +371,7 @@ export default {
     ComSend,
     ComChatMsgList,
     ComNetworkTips,
+    ComGiftTipBubble,
     ComGroupNoticeDialog: () => import("./right-menu/group-notice/dialog.vue"),
     ComChannelNoticeDialog: () => import("./right-menu/channel-notice/dialog.vue"),
     ComDropArea: () => import("./drop-area.vue"),
@@ -426,6 +432,7 @@ export default {
         showHistoryNotice: false,
       },
       isGroupUpdate: false, // 是否群更新
+      giftTips: [], // 群直播打赏气泡
       runTime: 0, // 运行时间
       isRun: null, // 定时器
       readUsersInfo: [], // 消息的已读用户信息
@@ -524,6 +531,7 @@ export default {
         "openChannelDialog", // 打开 频道对话框
         "friendUpdate", // 好友数据更新
         "loginUserInfoUpdate", // 当前用户头像/昵称变更
+        "groupLiveSendGift", // 群直播打赏/礼物
       ],
       this.eventHandling
     );
@@ -543,6 +551,41 @@ export default {
     getEnvType,
     formatTimeStamp,
     setMaxLengthStr,
+    handleGroupLiveSendGift(info) {
+      const fromUid = String(info.fromUid || "");
+      const member = this.memberInfos[fromUid] || {};
+      const userName = member.name || member.nickName || fromUid;
+      const isDirectCoin = !Number(info.giftId);
+      const quantity = Number(info.quantity || 1);
+      const actionText = isDirectCoin
+        ? "打赏"
+        : quantity > 1
+          ? `${info.giftName || "礼物"} x${quantity}`
+          : (info.giftName || "礼物");
+      const displayAmount = isDirectCoin ? (info.amount || "") : String(quantity);
+
+      this.giftTips = [
+        ...this.giftTips,
+        {
+          fromUid: info.fromUid,
+          userName,
+          actionText,
+          iconUrl: info.iconUrl,
+          coinName: info.coinName,
+          displayAmount,
+        },
+      ];
+
+      if (info.soundUrl && [2, 3].includes(Number(info.giftType))) {
+        try {
+          const audio = new Audio(info.soundUrl);
+          audio.volume = 0.6;
+          audio.play().catch(() => {});
+        } catch (_) {
+          //
+        }
+      }
+    },
      /**
      * 复制消息信息，只有测试环境和uat环境可用
      */
@@ -902,6 +945,13 @@ export default {
               }
             }
           }
+          break;
+        }
+
+        case "groupLiveSendGift": {
+          if (this.chatContent?.type !== "group") return;
+          if (String(info.groupId) !== String(this.chatContent.id)) return;
+          this.handleGroupLiveSendGift(info);
           break;
         }
 

@@ -36,6 +36,32 @@ import progress from "@/utils/progress";
 import { CReqChannelMessageReceipt } from "@/socket/api/message";
 import { handleMsgType17Send } from "@/pages/home/chat-window/chat-msg-list/meida-caption/msg-type-17";
 
+/** 正在处理中的消息（DB 写入前），防止并发推送同一 msgId 重复入库 */
+const inflightMsgKeys = new Set();
+const getMsgDedupKey = (id, type, msgId) => `${type}:${id}:${msgId}`;
+
+/**
+ * 推送消息快照：protobuf decode 对象可能被后续推送复用/覆盖，
+ * await 解密期间若不拷贝，连续两条消息会串 msgId/content。
+ */
+const snapshotIncomingMsg = (msg) => {
+    if (!msg || typeof msg !== "object") return msg;
+    return {
+        ...msg,
+        sendMember: msg.sendMember
+            ? {
+                ...msg.sendMember,
+                user: msg.sendMember.user ? { ...msg.sendMember.user } : undefined,
+            }
+            : undefined,
+        sendUser: msg.sendUser ? { ...msg.sendUser } : undefined,
+        appContent: msg.appContent ? { ...msg.appContent } : undefined,
+        webContent: msg.webContent ? { ...msg.webContent } : undefined,
+        myselfWebContent: msg.myselfWebContent ? { ...msg.myselfWebContent } : undefined,
+        myselfAppContent: msg.myselfAppContent ? { ...msg.myselfAppContent } : undefined,
+    };
+};
+
 /**
  * 消息去重检查
  * @param {number} id - 会话ID (friendId/groupId/channelId)
@@ -45,11 +71,26 @@ import { handleMsgType17Send } from "@/pages/home/chat-window/chat-msg-list/meid
  */
 const fnCheckMsgRepeat = async (id, type, msgId) => {
     if (!msgId) return false;
+    const dedupKey = getMsgDedupKey(id, type, msgId);
+    if (inflightMsgKeys.has(dedupKey)) {
+        console.log(`[repeat]${type}MsgAdd in-flight`, id, msgId);
+        return true;
+    }
     const isRepeat = await window.$db.checkRepeat({ id, type, msgId });
     if (isRepeat) {
         console.log(`[repeat]${type}MsgAdd blocked`, id, msgId);
     }
     return isRepeat;
+};
+
+const fnBeginMsgProcessing = (id, type, msgId) => {
+    if (!msgId) return;
+    inflightMsgKeys.add(getMsgDedupKey(id, type, msgId));
+};
+
+const fnEndMsgProcessing = (id, type, msgId) => {
+    if (!msgId) return;
+    inflightMsgKeys.delete(getMsgDedupKey(id, type, msgId));
 };
 
 /**
@@ -289,45 +330,50 @@ export const fnMsgAdd = async ({ msg, contentStr, fileKey, type }) => {
 /**
  * 群消息 添加
  */
-const fnGroupMsgAdd = async (msg) => {
-    // console.log(msg, 'fnGroupMsgAdd --------> 185')
+const fnGroupMsgAdd = async (rawMsg) => {
+    const msg = snapshotIncomingMsg(rawMsg);
     const type = "group";
     const groupId = Number(msg.groupId);
     const msgId = Number(msg.msgId);
 
     if (await fnCheckMsgRepeat(groupId, type, msgId)) return;
-    let { contentStr, fileKey, otherInfo } = await fnMsgDecryption({
-        id: groupId,
-        type,
-        msgType: msg.msgType || 0,
-        msgEncryptionVersion: msg.version ,
-        content: msg.content,
-        attachmentKey: msg.attachmentKey,
-    });
+    fnBeginMsgProcessing(groupId, type, msgId);
+    try {
+        let { contentStr, fileKey, otherInfo } = await fnMsgDecryption({
+            id: groupId,
+            type,
+            msgType: msg.msgType || 0,
+            msgEncryptionVersion: msg.version,
+            content: msg.content,
+            attachmentKey: msg.attachmentKey,
+        });
 
-    // 解密失败（contentStr 为 undefined）终止执行；
-    // 空内容仅群简介允许（清空群简介场景），其他消息类型空内容则跳过
-    if (contentStr == null || (!contentStr && msg.msgType !== enumMsgType.groupNotice)) {
-        return;
-    }
-
-    // 群简介处理：contentStr 已是纯文本（由 fnUtf8ArrayToStr 解码），
-    // 元数据 noticeId/showNotify 由 fnOtherUtf8ArrayToStr 提取到 otherInfo 中。
-    // 处理逻辑与自己发送群简介一致：content 为纯文本，noticeId/showNotify/isHide 为独立字段。
-    if (msg.msgType === enumMsgType.groupNotice && otherInfo) {
-        msg.noticeId = otherInfo.noticeId;
-        msg.showNotify = !!otherInfo.showNotify;
-        if (!otherInfo.showNotify) {
-            msg.isHide = true;
+        // 解密失败（contentStr 为 undefined）终止执行；
+        // 空内容仅群简介允许（清空群简介场景），其他消息类型空内容则跳过
+        if (contentStr == null || (!contentStr && msg.msgType !== enumMsgType.groupNotice)) {
+            return;
         }
-    }
 
-    fnMsgAdd({
-        msg,
-        contentStr,
-        fileKey,
-        type,
-    });
+        // 群简介处理：contentStr 已是纯文本（由 fnUtf8ArrayToStr 解码），
+        // 元数据 noticeId/showNotify 由 fnOtherUtf8ArrayToStr 提取到 otherInfo 中。
+        // 处理逻辑与自己发送群简介一致：content 为纯文本，noticeId/showNotify/isHide 为独立字段。
+        if (msg.msgType === enumMsgType.groupNotice && otherInfo) {
+            msg.noticeId = otherInfo.noticeId;
+            msg.showNotify = !!otherInfo.showNotify;
+            if (!otherInfo.showNotify) {
+                msg.isHide = true;
+            }
+        }
+
+        fnMsgAdd({
+            msg,
+            contentStr,
+            fileKey,
+            type,
+        });
+    } finally {
+        fnEndMsgProcessing(groupId, type, msgId);
+    }
 };
 
 /**

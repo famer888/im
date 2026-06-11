@@ -26,15 +26,52 @@ export const getOssDomain = async () => {
     eventCommon.fnDomainsAttribSet({key : "ossDefaultUrl", value: newDomain});
 }
 
-export const getOssFirstNormalUrl = async (oriUrl) => {
-  let newUrl = "";
-  const { ossDefaultUrl } = eventCommon.fnDomainsGet() || {};
-  let newDomain = ossDefaultUrl || "";
-  if(newDomain) {
-    newUrl = String(newDomain).replace(/\/$/, "") + getRemainingUrl(oriUrl);
-  } 
-  return newUrl
-}
+const OSS_CHANNEL_MODULE_KEY = {
+    0: "ossDefaultUrl",
+    1: "ossChatUrl",
+    2: "ossLowRateUrl",
+};
+
+const OSS_CHANNEL_TYPE_ALIASES = {
+    OSS_DEFAULT: 0,
+    OSS_CHAT: 1,
+    OSS_LOW_RATE: 2,
+};
+
+/** 消息里的 channelType 可能是 1 或 "OSS_CHAT"，统一成数字 */
+export const resolveOssChannelType = (msgInfo, fallback = 1) => {
+    const raw = msgInfo?.channelType;
+    if (raw in OSS_CHANNEL_TYPE_ALIASES) {
+        return OSS_CHANNEL_TYPE_ALIASES[raw];
+    }
+    const ct = Number(raw);
+    if (!Number.isNaN(ct) && ct >= 0) return ct;
+    return fallback;
+};
+
+export const getOssFirstNormalUrl = async (oriUrl, channelType = 0) => {
+    const moduleKey = OSS_CHANNEL_MODULE_KEY[channelType] || "ossDefaultUrl";
+    const domains = eventCommon.fnDomainsGet() || {};
+    let newDomain = domains[moduleKey] || "";
+
+    if (!newDomain) {
+        const pool = await getOssDomains(channelType);
+        if (pool.length) {
+            const sorted = domainListSort(pool);
+            newDomain =
+                (await getDomainListFirstNormal(sorted.map((item) => item.domainUrl))) ||
+                sorted[0]?.domainUrl ||
+                "";
+        }
+    }
+
+    if (!newDomain && channelType !== 0) {
+        newDomain = domains.ossDefaultUrl || "";
+    }
+
+    if (!newDomain) return "";
+    return String(newDomain).replace(/\/$/, "") + getRemainingUrl(oriUrl);
+};
 
 export const getNewFileDownUrl = async (oriUrl, channelType, index) => {
    let newUrls = await getOssDomains(channelType)

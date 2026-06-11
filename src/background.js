@@ -13,6 +13,7 @@ import {
     protocol,
     screen,
     session,
+    net,
     shell,
     Tray,
     clipboard,
@@ -629,9 +630,9 @@ const openFileDialog = async (event, args) => {
                 skipMsgUpdate: true,
             };
 
-            // 过期资源守卫：URL 路径里携带的日期（chat/pic/YYYYMM/DD）若已超过本地阈值天数，
-            // 直接判定下载失败，避免对已过期 OSS 资源发起真实请求。
-            const expireCheck = isExpiredDatedDownloadUrl(url);
+            const expireCheck = shouldApplyUrlDateExpireGuard(requestArgs)
+                ? isExpiredDatedDownloadUrl(trendsFileUrl, fileUrl, url)
+                : { expired: false };
             if (expireCheck.expired) {
                 writeLog("app", "warn", "[openFileDialog] 命中过期资源守卫，跳过下载", {
                     url,
@@ -740,24 +741,54 @@ const clearDownTimer = (timerName) => {
     delete downTimers[timerName];
 }
 
-// chat/pic/YYYYMM/DD/... 形式的 OSS 资源在服务端默认 4 天后即失效，
+// /chat/{bucket}/YYYYMM/DD/... 形式的 OSS 资源在服务端默认 3 天后即失效，
 // 若按本地时间已超过阈值，直接判定为过期，不再向 OSS 真正发请求。
-const EXPIRED_DATED_URL_PATTERN = /\/chat\/pic\/(\d{4})(\d{2})\/(\d{2})(?:\/|$|\?)/i;
-const EXPIRED_DATED_URL_THRESHOLD_DAYS = 4;
-const isExpiredDatedDownloadUrl = (url, urlChain = []) => {
+// bucket 不限于 pic，也可能是其它目录名。
+const EXPIRED_DATED_URL_PATTERN = /\/chat\/[^/]+\/(\d{4})(\d{2})\/(\d{2})(?:\/|$|\?)/i;
+const EXPIRED_DATED_URL_THRESHOLD_DAYS = 3;
+
+const collectExpireCheckUrls = (...inputs) => {
     const candidates = [];
-    if (typeof url === "string" && url) candidates.push(url);
-    if (Array.isArray(urlChain)) {
-        for (const u of urlChain) {
-            if (typeof u === "string" && u && !candidates.includes(u)) {
-                candidates.push(u);
-            }
+    const add = (u) => {
+        if (typeof u === "string" && u && !candidates.includes(u)) {
+            candidates.push(u);
+        }
+    };
+    for (const input of inputs) {
+        if (Array.isArray(input)) {
+            for (const u of input) add(u);
+        } else {
+            add(input);
         }
     }
+    return candidates;
+};
+
+const getExpireCheckPath = (candidate) => {
+    if (!candidate || typeof candidate !== "string") return "";
+    try {
+        if (/^https?:\/\//i.test(candidate)) {
+            return new URL(candidate).pathname || candidate;
+        }
+    } catch (_e) {
+        //
+    }
+    return candidate;
+};
+
+const isExpiredDatedDownloadUrl = (...inputs) => {
+    const candidates = collectExpireCheckUrls(...inputs);
+    // 优先用带日期路径的 URL 判断；CDN 签名地址常无日期，此时才回退到 fileUrl
+    const datedCandidates = candidates.filter((candidate) => {
+        const path = getExpireCheckPath(candidate);
+        return EXPIRED_DATED_URL_PATTERN.test(path);
+    });
+    const toCheck = datedCandidates.length > 0 ? datedCandidates : candidates;
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-    for (const candidate of candidates) {
-        const m = candidate.match(EXPIRED_DATED_URL_PATTERN);
+    for (const candidate of toCheck) {
+        const path = getExpireCheckPath(candidate);
+        const m = path.match(EXPIRED_DATED_URL_PATTERN);
         if (!m) continue;
         const year = Number(m[1]);
         const month = Number(m[2]);
@@ -772,6 +803,75 @@ const isExpiredDatedDownloadUrl = (url, urlChain = []) => {
         }
     }
     return { expired: false };
+};
+
+/**
+ * 是否对本次下载做 URL 路径日期过期拦截。
+ * 动图/表情（chatType 9）URL 常复用历史资源路径，不能只看路径日期；
+ * 新发送的消息也应先尝试真实下载，避免误显示「已过期」。
+ */
+const shouldApplyUrlDateExpireGuard = (data) => {
+    if (!data) return true;
+    const chatType = Number(data.chatType);
+    if (chatType === 9) return false;
+    const sendTime = Number(data.sendTime);
+    if (sendTime > 0) {
+        const ageMs = Date.now() - sendTime;
+        if (ageMs >= 0 && ageMs < EXPIRED_DATED_URL_THRESHOLD_DAYS * 86400000) {
+            return false;
+        }
+    }
+    return true;
+};
+
+const PROBE_HTTP_TIMEOUT_MS = 8000;
+
+const probeHttpStatusOnce = (url, method, headers = {}) =>
+    new Promise((resolve) => {
+        let settled = false;
+        const finish = (code) => {
+            if (settled) return;
+            settled = true;
+            resolve(typeof code === "number" ? code : null);
+        };
+        try {
+            const req = net.request({ method, url });
+            const timer = setTimeout(() => {
+                try {
+                    req.abort();
+                } catch (_e) {
+                    //
+                }
+                finish(null);
+            }, PROBE_HTTP_TIMEOUT_MS);
+            req.on("response", (res) => {
+                clearTimeout(timer);
+                finish(res.statusCode);
+                res.on("data", () => {});
+                res.resume();
+            });
+            req.on("error", () => {
+                clearTimeout(timer);
+                finish(null);
+            });
+            Object.entries(headers).forEach(([k, v]) => req.setHeader(k, v));
+            req.end();
+        } catch (_e) {
+            finish(null);
+        }
+    });
+
+/** 探测 URL 的 HTTP 状态码；网络层失败返回 null（无有效 HTTP 响应） */
+const probeHttpStatus = async (url) => {
+    if (!url || typeof url !== "string" || !/^https?:\/\//i.test(url)) {
+        return null;
+    }
+    let code = await probeHttpStatusOnce(url, "HEAD");
+    // OSS 签名 URL 常对 HEAD 返回 403，需用 GET 再确认
+    if (code == null || code === 403 || code === 405 || code === 501) {
+        code = await probeHttpStatusOnce(url, "GET", { Range: "bytes=0-0" });
+    }
+    return code;
 };
 
 /**
@@ -794,9 +894,14 @@ const downloadHandler = (event, item, webContents) => {
             return;
         }
 
-        // 过期资源守卫：URL 路径里携带的日期（chat/pic/YYYYMM/DD）若超过本地 4 天，
-        // 直接取消下载并通知前端失败，避免对已过期 OSS 资源浪费一次真实请求。
-        const expireCheck = isExpiredDatedDownloadUrl(itemUrl, itemUrlChain);
+        const expireCheck = shouldApplyUrlDateExpireGuard(data)
+            ? isExpiredDatedDownloadUrl(
+                itemUrl,
+                itemUrlChain,
+                data.fileUrl,
+                data.trendsFileUrl
+            )
+            : { expired: false };
         if (expireCheck.expired) {
             writeLog("app", "warn", "[downloadHandler] 命中过期资源守卫，直接判定下载失败", {
                 url: itemUrl,
@@ -840,60 +945,71 @@ const downloadHandler = (event, item, webContents) => {
         }
 
         item.once("done", (event, state) => {
-           clearDownTimer(timerName)
-            if (state !== "completed") {
-                writeLog("app", "error", "[download error]", {
-                    url: data.actualDownloadUrl || data.trendsFileUrl || data.fileUrl || item.getURL(),
-                    fileUrl: data.fileUrl,
-                    trendsFileUrl: data.trendsFileUrl,
+            clearDownTimer(timerName);
+            const finalize = async () => {
+                if (state !== "completed") {
+                    const probeUrl =
+                        itemUrl ||
+                        data.actualDownloadUrl ||
+                        data.trendsFileUrl ||
+                        data.fileUrl;
+                    const httpStatusCode = await probeHttpStatus(probeUrl);
+                    if (httpStatusCode != null) {
+                        data.httpStatusCode = httpStatusCode;
+                    }
+                    writeLog("app", "error", "[download error]", {
+                        url: probeUrl,
+                        fileUrl: data.fileUrl,
+                        trendsFileUrl: data.trendsFileUrl,
+                        msgId: data.msgId,
+                        downloadRequestId: data.downloadRequestId,
+                        state,
+                        httpStatusCode,
+                    });
+                    sendMain("downloadFileFailed", data);
+                    return;
+                }
+
+                // Download completed, perform security check
+                try {
+                    const filePath = item.getSavePath();
+                    const fileName = data.fileName || nodePath.basename(filePath);
+
+                    if (isDangerousFile(filePath, fileName)) {
+                        const dangerousDir = nodePath.join(app.getPath("temp"), "dangerous");
+                        if (!fs.existsSync(dangerousDir)) {
+                            fs.mkdirSync(dangerousDir, { recursive: true });
+                        }
+
+                        const dangerousFileName = fileName + ".dangerous";
+                        const dangerousPath = nodePath.join(dangerousDir, dangerousFileName);
+
+                        fs.renameSync(filePath, dangerousPath);
+
+                        data.fileLocalPath = dangerousPath;
+                        data.isDangerous = true;
+
+                        console.log(`Dangerous file detected and moved: ${fileName} -> ${dangerousPath}`);
+                    }
+                } catch (error) {
+                    writeLog("app", "error", "[downloadHandler] 安全检查失败", {
+                        fileName,
+                        filePath,
+                        error: error.message,
+                        createTime: Date.now(),
+                    });
+                }
+
+                sendMain("downloadFileDone", data);
+            };
+
+            finalize().catch((error) => {
+                writeLog("app", "error", "[downloadHandler] finalize failed", {
+                    error: error && error.message,
                     msgId: data.msgId,
-                    downloadRequestId: data.downloadRequestId,
-                    state,
                 });
-            }
-           
-           if (state === "completed") {
-               // Download completed, perform security check
-               try {
-                   const filePath = item.getSavePath();
-                   const fileName = data.fileName || nodePath.basename(filePath);
-                   
-                   // Perform enhanced security check
-                   if (isDangerousFile(filePath, fileName)) {
-                       // File is dangerous, move to dangerous folder
-                       const dangerousDir = nodePath.join(app.getPath('temp'), 'dangerous');
-                       if (!fs.existsSync(dangerousDir)) {
-                           fs.mkdirSync(dangerousDir, { recursive: true });
-                       }
-                       
-                       const dangerousFileName = fileName + '.dangerous';
-                       const dangerousPath = nodePath.join(dangerousDir, dangerousFileName);
-                       
-                       // Move file to dangerous folder
-                       fs.renameSync(filePath, dangerousPath);
-                       
-                       // Update the file path in data
-                       data.fileLocalPath = dangerousPath;
-                       data.isDangerous = true;
-                       
-                       console.log(`Dangerous file detected and moved: ${fileName} -> ${dangerousPath}`);
-                   }
-               } catch (error) {
-                   writeLog('app', 'error', '[downloadHandler] 安全检查失败', {
-                       fileName,
-                       filePath,
-                       error: error.message,
-                       createTime: Date.now()
-                   });
-               }
-           }
-           
-            sendMain(
-                state === "completed"
-                    ? "downloadFileDone"
-                    : "downloadFileFailed",
-                data
-            );
+                sendMain("downloadFileFailed", data);
+            });
         });
     } catch (error) {
         console.log("downloadHandler-error-", error);
@@ -1205,9 +1321,9 @@ const handleFileDownload = (args) => {
         actualDownloadUrl: url,
     };
 
-    // 过期资源守卫：URL 路径里携带的日期（chat/pic/YYYYMM/DD）若已超过本地阈值天数，
-    // 直接判定下载失败，连超时定时器和 downloadURL 都不再下发。
-    const expireCheck = isExpiredDatedDownloadUrl(url);
+    const expireCheck = shouldApplyUrlDateExpireGuard(requestArgs)
+        ? isExpiredDatedDownloadUrl(trendsFileUrl, fileUrl, url)
+        : { expired: false };
     if (expireCheck.expired) {
         writeLog("app", "warn", "[handleFileDownload] 命中过期资源守卫，跳过下载", {
             url,
