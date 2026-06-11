@@ -13,15 +13,11 @@
             <span class="gift-tip-action">{{ item.actionText }}</span>
           </div>
           <div class="gift-tip-reward">
-            <div class="gift-tip-icon-wrap">
-              <img
-                v-if="item.iconUrl"
-                class="gift-tip-icon"
-                :src="item.iconUrl"
-                alt=""
-              />
-              <span v-else class="gift-tip-coin">{{ item.coinLabel }}</span>
-            </div>
+            <img
+              class="gift-tip-icon"
+              :src="giftRewardCoinIcon"
+              alt=""
+            />
             <span class="gift-tip-amount">{{ item.displayAmount }}</span>
           </div>
         </div>
@@ -31,6 +27,8 @@
 </template>
 
 <script>
+import giftRewardCoinIcon from "@/assets/images/gift-reward-coin.svg";
+
 const MAX_VISIBLE = 3;
 const DISPLAY_MS = 3200;
 const LEAVE_MS = 420;
@@ -47,6 +45,7 @@ export default {
   },
   data() {
     return {
+      giftRewardCoinIcon,
       visibleItems: [],
       timers: {},
     };
@@ -75,8 +74,6 @@ export default {
         id,
         userName: tip.userName || String(tip.fromUid || ""),
         actionText: tip.actionText,
-        iconUrl: tip.iconUrl,
-        coinLabel: (tip.coinName || "C").slice(0, 1).toUpperCase(),
         displayAmount: tip.displayAmount,
         leaving: false,
       };
@@ -186,29 +183,11 @@ export default {
   text-overflow: ellipsis;
 }
 
-.gift-tip-icon-wrap {
-  flex-shrink: 0;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(180deg, #ffd76a 0%, #f2b01e 100%);
-}
-
 .gift-tip-icon {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.gift-tip-coin {
-  color: #8a5a00;
-  font-size: 9px;
-  font-weight: 700;
-  line-height: 1;
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
 }
 
 .gift-tip-amount {

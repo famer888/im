@@ -570,8 +570,6 @@ export default {
           fromUid: info.fromUid,
           userName,
           actionText,
-          iconUrl: info.iconUrl,
-          coinName: info.coinName,
           displayAmount,
         },
       ];
