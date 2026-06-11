@@ -110,17 +110,16 @@ export default {
 .gift-tip-bubble-layer {
   position: absolute;
   right: 16px;
-  bottom: 120px;
-  z-index: 20;
+  bottom: 200px;
+  z-index: 200;
   pointer-events: none;
-  width: 220px;
 }
 
 .gift-tip-list {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 10px;
+  gap: 8px;
 }
 
 .gift-tip-item {
@@ -133,54 +132,64 @@ export default {
 }
 
 .gift-tip-content {
-  display: flex;
+  box-sizing: border-box;
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  min-width: 168px;
-  max-width: 220px;
-  padding: 8px 12px;
-  border-radius: 999px;
-  background: rgba(38, 38, 38, 0.82);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
-  backdrop-filter: blur(6px);
+  gap: 8px;
+  width: max-content;
+  max-width: 280px;
+  height: 34px;
+  padding: 4px 12px;
+  border-radius: 100px;
+  background: rgba(0, 0, 0, 0.3);
+  overflow: hidden;
 }
 
 .gift-tip-text {
   display: flex;
   flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  flex: 0 1 auto;
   min-width: 0;
-  margin-right: 10px;
-}
-
-.gift-tip-name {
-  color: #fff;
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 1.2;
-  white-space: nowrap;
+  height: 26px;
+  gap: 0;
   overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.gift-tip-action {
-  margin-top: 2px;
-  color: rgba(255, 255, 255, 0.78);
-  font-size: 11px;
-  line-height: 1.2;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .gift-tip-reward {
   display: flex;
   align-items: center;
   flex-shrink: 0;
+  gap: 4px;
+}
+
+.gift-tip-name {
+  color: rgba(255, 255, 255, 1);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 14px;
+  height: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gift-tip-action {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 10px;
+  font-weight: 400;
+  line-height: 12px;
+  height: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .gift-tip-icon-wrap {
-  width: 28px;
-  height: 28px;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
   overflow: hidden;
   display: flex;
@@ -197,16 +206,19 @@ export default {
 
 .gift-tip-coin {
   color: #8a5a00;
-  font-size: 14px;
+  font-size: 9px;
   font-weight: 700;
+  line-height: 1;
 }
 
 .gift-tip-amount {
-  margin-left: 6px;
-  color: #ffd76a;
+  flex-shrink: 0;
+  color: rgba(255, 255, 255, 1);
   font-size: 18px;
   font-weight: 700;
-  line-height: 1;
+  font-style: italic;
+  line-height: 18px;
+  height: 18px;
   font-variant-numeric: tabular-nums;
 }
 
