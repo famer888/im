@@ -758,7 +758,7 @@ export default {
       });
     },
     initOssData() {
-      getUploadToken().then((rt) => {
+      getUploadToken({ ossSceneType: 0 }).then((rt) => {
         window.ossData = rt;
       });
     },

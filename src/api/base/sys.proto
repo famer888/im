@@ -23,8 +23,8 @@ import "common.proto";
 // 携带参数安装req [bizUrl/sys/openInstall] add v1.2.0 --携带参数安装
 
 // 根据版本号获取用户密钥对req [bizUrl/sys/getKeyPairOfVer] v1.2.0
-// 获取oss上传token req[loginUrl/sys/getUploadToken] v1.2.0
-// 获取上传文件路径req[loginUrl/sys/getUploadUrl] v1.2.0
+// 获取oss上传token req[/sys/unauthorized/uploadConfig/getUploadToken] v1.2.0
+// 获取上传文件路径req[/sys/unauthorized/uploadConfig/getUploadUrl] v1.2.0
 
 // 设置账号清除时间req[loginUrl/sys/setClearTime] v1.3.0
 
@@ -320,9 +320,10 @@ message OpenInstallResp {
     CommonResult commonResult = 1; // 结果信息
 }
 
-// 获取oss上传token req[loginUrl/sys/getUploadToken] v1.2.0
+// 获取oss上传token req[/sys/unauthorized/uploadConfig/getUploadToken] v1.2.0
 message GetUploadTokenReq {
     ClientInfo          clientInfo             = 1; // 客户端信息
+    int32               ossSceneType           = 2; // OSS上传场景 0:通用OSS 1:聊天OSS（聊天图片，不包含表情包）
 }
 
 // 获取oss上传token resp
@@ -336,13 +337,14 @@ message GetUploadTokenResp {
     string              ossBucket           = 7; // oss 存储空间
 }
 
-// 获取上传文件路径req[loginUrl/sys/getUploadUrl] v1.2.0
+// 获取上传文件路径req[/sys/unauthorized/uploadConfig/getUploadUrl] v1.2.0
 message GetUploadUrlReq {
     ClientInfo          clientInfo              = 1; // 客户端信息
     AttachWorkSpaceType attachWorkspaceType     = 2; // 附件存储空间类型
     AttachType          attachType              = 3; // 附件类型
     string              suffix                  = 4; // 后缀名，后缀不包含.  如: jpg, png...
     int64               fileSize                = 5; // 文件大小  单位B
+    int32               ossSceneType            = 6; // OSS上传场景 0:通用OSS 1:聊天OSS（聊天图片，不包含表情包）
 }
 
 // 获取上传文件路径resp
@@ -350,6 +352,7 @@ message GetUploadUrlResp {
     CommonResult       commonResult = 1; // 结果信息
     string             fileId       = 2; // 文件相对路径
     string             url          = 3; // 文件完整路径
+    int32              channelType  = 4; // OSS上传通道类型，0-上传下载默认通道，1-聊天上传下载专属通道，2-上传下载低费率通道
 }
 
 // 获取邀请链接req [bizUrl/sys/getInviteLink] add v1.4.0

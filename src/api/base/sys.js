@@ -10358,6 +10358,7 @@ export const GetUploadTokenReq = $root.GetUploadTokenReq = (() => {
      * @exports IGetUploadTokenReq
      * @interface IGetUploadTokenReq
      * @property {IClientInfo|null} [clientInfo] GetUploadTokenReq clientInfo
+     * @property {number|null} [ossSceneType] GetUploadTokenReq ossSceneType
      */
 
     /**
@@ -10382,6 +10383,14 @@ export const GetUploadTokenReq = $root.GetUploadTokenReq = (() => {
      * @instance
      */
     GetUploadTokenReq.prototype.clientInfo = null;
+
+    /**
+     * GetUploadTokenReq ossSceneType.
+     * @member {number} ossSceneType
+     * @memberof GetUploadTokenReq
+     * @instance
+     */
+    GetUploadTokenReq.prototype.ossSceneType = 0;
 
     /**
      * Creates a new GetUploadTokenReq instance using the specified properties.
@@ -10409,6 +10418,8 @@ export const GetUploadTokenReq = $root.GetUploadTokenReq = (() => {
             writer = $Writer.create();
         if (message.clientInfo != null && Object.hasOwnProperty.call(message, "clientInfo"))
             $root.ClientInfo.encode(message.clientInfo, writer.uint32(/* id 1, wireType 2 =*/10).fork()).ldelim();
+        if (message.ossSceneType != null && Object.hasOwnProperty.call(message, "ossSceneType"))
+            writer.uint32(/* id 2, wireType 0 =*/16).int32(message.ossSceneType);
         return writer;
     };
 
@@ -10447,6 +10458,10 @@ export const GetUploadTokenReq = $root.GetUploadTokenReq = (() => {
             switch (tag >>> 3) {
             case 1: {
                     message.clientInfo = $root.ClientInfo.decode(reader, reader.uint32());
+                    break;
+                }
+            case 2: {
+                    message.ossSceneType = reader.int32();
                     break;
                 }
             default:
@@ -10489,6 +10504,9 @@ export const GetUploadTokenReq = $root.GetUploadTokenReq = (() => {
             if (error)
                 return "clientInfo." + error;
         }
+        if (message.ossSceneType != null && message.hasOwnProperty("ossSceneType"))
+            if (!$util.isInteger(message.ossSceneType))
+                return "ossSceneType: integer expected";
         return null;
     };
 
@@ -10509,6 +10527,8 @@ export const GetUploadTokenReq = $root.GetUploadTokenReq = (() => {
                 throw TypeError(".GetUploadTokenReq.clientInfo: object expected");
             message.clientInfo = $root.ClientInfo.fromObject(object.clientInfo);
         }
+        if (object.ossSceneType != null)
+            message.ossSceneType = object.ossSceneType | 0;
         return message;
     };
 
@@ -10525,10 +10545,14 @@ export const GetUploadTokenReq = $root.GetUploadTokenReq = (() => {
         if (!options)
             options = {};
         let object = {};
-        if (options.defaults)
+        if (options.defaults) {
             object.clientInfo = null;
+            object.ossSceneType = 0;
+        }
         if (message.clientInfo != null && message.hasOwnProperty("clientInfo"))
             object.clientInfo = $root.ClientInfo.toObject(message.clientInfo, options);
+        if (message.ossSceneType != null && message.hasOwnProperty("ossSceneType"))
+            object.ossSceneType = message.ossSceneType;
         return object;
     };
 
@@ -10935,6 +10959,7 @@ export const GetUploadUrlReq = $root.GetUploadUrlReq = (() => {
      * @property {AttachType|null} [attachType] GetUploadUrlReq attachType
      * @property {string|null} [suffix] GetUploadUrlReq suffix
      * @property {number|Long|null} [fileSize] GetUploadUrlReq fileSize
+     * @property {number|null} [ossSceneType] GetUploadUrlReq ossSceneType
      */
 
     /**
@@ -10993,6 +11018,14 @@ export const GetUploadUrlReq = $root.GetUploadUrlReq = (() => {
     GetUploadUrlReq.prototype.fileSize = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
 
     /**
+     * GetUploadUrlReq ossSceneType.
+     * @member {number} ossSceneType
+     * @memberof GetUploadUrlReq
+     * @instance
+     */
+    GetUploadUrlReq.prototype.ossSceneType = 0;
+
+    /**
      * Creates a new GetUploadUrlReq instance using the specified properties.
      * @function create
      * @memberof GetUploadUrlReq
@@ -11026,6 +11059,8 @@ export const GetUploadUrlReq = $root.GetUploadUrlReq = (() => {
             writer.uint32(/* id 4, wireType 2 =*/34).string(message.suffix);
         if (message.fileSize != null && Object.hasOwnProperty.call(message, "fileSize"))
             writer.uint32(/* id 5, wireType 0 =*/40).int64(message.fileSize);
+        if (message.ossSceneType != null && Object.hasOwnProperty.call(message, "ossSceneType"))
+            writer.uint32(/* id 6, wireType 0 =*/48).int32(message.ossSceneType);
         return writer;
     };
 
@@ -11080,6 +11115,10 @@ export const GetUploadUrlReq = $root.GetUploadUrlReq = (() => {
                 }
             case 5: {
                     message.fileSize = reader.int64();
+                    break;
+                }
+            case 6: {
+                    message.ossSceneType = reader.int32();
                     break;
                 }
             default:
@@ -11148,6 +11187,9 @@ export const GetUploadUrlReq = $root.GetUploadUrlReq = (() => {
         if (message.fileSize != null && message.hasOwnProperty("fileSize"))
             if (!$util.isInteger(message.fileSize) && !(message.fileSize && $util.isInteger(message.fileSize.low) && $util.isInteger(message.fileSize.high)))
                 return "fileSize: integer|Long expected";
+        if (message.ossSceneType != null && message.hasOwnProperty("ossSceneType"))
+            if (!$util.isInteger(message.ossSceneType))
+                return "ossSceneType: integer expected";
         return null;
     };
 
@@ -11227,6 +11269,8 @@ export const GetUploadUrlReq = $root.GetUploadUrlReq = (() => {
                 message.fileSize = object.fileSize;
             else if (typeof object.fileSize === "object")
                 message.fileSize = new $util.LongBits(object.fileSize.low >>> 0, object.fileSize.high >>> 0).toNumber();
+        if (object.ossSceneType != null)
+            message.ossSceneType = object.ossSceneType | 0;
         return message;
     };
 
@@ -11253,6 +11297,7 @@ export const GetUploadUrlReq = $root.GetUploadUrlReq = (() => {
                 object.fileSize = options.longs === String ? long.toString() : options.longs === Number ? long.toNumber() : long;
             } else
                 object.fileSize = options.longs === String ? "0" : 0;
+            object.ossSceneType = 0;
         }
         if (message.clientInfo != null && message.hasOwnProperty("clientInfo"))
             object.clientInfo = $root.ClientInfo.toObject(message.clientInfo, options);
@@ -11267,6 +11312,8 @@ export const GetUploadUrlReq = $root.GetUploadUrlReq = (() => {
                 object.fileSize = options.longs === String ? String(message.fileSize) : message.fileSize;
             else
                 object.fileSize = options.longs === String ? $util.Long.prototype.toString.call(message.fileSize) : options.longs === Number ? new $util.LongBits(message.fileSize.low >>> 0, message.fileSize.high >>> 0).toNumber() : message.fileSize;
+        if (message.ossSceneType != null && message.hasOwnProperty("ossSceneType"))
+            object.ossSceneType = message.ossSceneType;
         return object;
     };
 
@@ -11308,6 +11355,7 @@ export const GetUploadUrlResp = $root.GetUploadUrlResp = (() => {
      * @property {ICommonResult|null} [commonResult] GetUploadUrlResp commonResult
      * @property {string|null} [fileId] GetUploadUrlResp fileId
      * @property {string|null} [url] GetUploadUrlResp url
+     * @property {number|null} [channelType] GetUploadUrlResp channelType
      */
 
     /**
@@ -11350,6 +11398,14 @@ export const GetUploadUrlResp = $root.GetUploadUrlResp = (() => {
     GetUploadUrlResp.prototype.url = "";
 
     /**
+     * GetUploadUrlResp channelType.
+     * @member {number} channelType
+     * @memberof GetUploadUrlResp
+     * @instance
+     */
+    GetUploadUrlResp.prototype.channelType = 0;
+
+    /**
      * Creates a new GetUploadUrlResp instance using the specified properties.
      * @function create
      * @memberof GetUploadUrlResp
@@ -11379,6 +11435,8 @@ export const GetUploadUrlResp = $root.GetUploadUrlResp = (() => {
             writer.uint32(/* id 2, wireType 2 =*/18).string(message.fileId);
         if (message.url != null && Object.hasOwnProperty.call(message, "url"))
             writer.uint32(/* id 3, wireType 2 =*/26).string(message.url);
+        if (message.channelType != null && Object.hasOwnProperty.call(message, "channelType"))
+            writer.uint32(/* id 4, wireType 0 =*/32).int32(message.channelType);
         return writer;
     };
 
@@ -11427,6 +11485,10 @@ export const GetUploadUrlResp = $root.GetUploadUrlResp = (() => {
                     message.url = reader.string();
                     break;
                 }
+            case 4: {
+                    message.channelType = reader.int32();
+                    break;
+                }
             default:
                 reader.skipType(tag & 7);
                 break;
@@ -11473,6 +11535,9 @@ export const GetUploadUrlResp = $root.GetUploadUrlResp = (() => {
         if (message.url != null && message.hasOwnProperty("url"))
             if (!$util.isString(message.url))
                 return "url: string expected";
+        if (message.channelType != null && message.hasOwnProperty("channelType"))
+            if (!$util.isInteger(message.channelType))
+                return "channelType: integer expected";
         return null;
     };
 
@@ -11497,6 +11562,8 @@ export const GetUploadUrlResp = $root.GetUploadUrlResp = (() => {
             message.fileId = String(object.fileId);
         if (object.url != null)
             message.url = String(object.url);
+        if (object.channelType != null)
+            message.channelType = object.channelType | 0;
         return message;
     };
 
@@ -11517,6 +11584,7 @@ export const GetUploadUrlResp = $root.GetUploadUrlResp = (() => {
             object.commonResult = null;
             object.fileId = "";
             object.url = "";
+            object.channelType = 0;
         }
         if (message.commonResult != null && message.hasOwnProperty("commonResult"))
             object.commonResult = $root.CommonResult.toObject(message.commonResult, options);
@@ -11524,6 +11592,8 @@ export const GetUploadUrlResp = $root.GetUploadUrlResp = (() => {
             object.fileId = message.fileId;
         if (message.url != null && message.hasOwnProperty("url"))
             object.url = message.url;
+        if (message.channelType != null && message.hasOwnProperty("channelType"))
+            object.channelType = message.channelType;
         return object;
     };
 

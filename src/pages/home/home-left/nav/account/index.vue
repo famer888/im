@@ -1,7 +1,12 @@
 <template>
   <div class="comAccount">
-    <picture @click="handleAccountDialogVisibleSet"  @contextmenu.prevent="handleRightClick">
-      <ComImage v-if="icon !== ''" :src="icon" type="friend" />
+    <picture @click="handleAccountDialogVisibleSet" @contextmenu.prevent="handleRightClick">
+      <ComImage
+        v-if="icon !== ''"
+        :src="icon"
+        type="friend"
+        @onClick="handleAccountDialogVisibleSet"
+      />
     </picture>
     <vue-context ref="menu" class="menu" :lazy="true">
       <ComAccountDialog @changeIcon="handleIconChange" />

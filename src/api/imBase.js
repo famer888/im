@@ -5,6 +5,7 @@
  *版本：v1.3.0
  * */
 import { getUrl, baseBuildUrl, baseUrl, getSignHeader, FairGuard } from "./base/unit";
+import { getUploadTokenAPI, getUploadUrlAPI } from "./imGroup";
 import axios from "axios";
 const crypto = require('crypto');
 import eventCommon from "@/event/common.js";
@@ -41,19 +42,23 @@ export const UpdateContacts = (data) =>
         url: `${baseUrl()}/contacts/updateContacts`,
         data,
     });
+const unwrapOpenChatUploadResp = async (promise) => {
+    try {
+        const res = await promise;
+        if (res && res.code === 200) {
+            return res.data || {};
+        }
+        return res || {};
+    } catch (error) {
+        console.error("upload config api error:", error);
+        return {};
+    }
+};
+
 export const getUploadToken = (data) =>
-    getUrl({
-        type: "GetUploadToken",
-        url: `${baseUrl()}/sys/getUploadToken`,
-        data,
-    });
+    unwrapOpenChatUploadResp(getUploadTokenAPI(data));
 export const getUploadUrl = (data) =>
-    getUrl({
-        protoType: "sys",
-        type: "GetUploadUrl",
-        url: `${baseUrl()}/sys/getUploadUrl`,
-        data,
-    });
+    unwrapOpenChatUploadResp(getUploadUrlAPI(data));
 export const checkVersion = (data) =>
     getUrl({
         type: "CheckVersion",

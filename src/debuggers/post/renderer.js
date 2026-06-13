@@ -1,5 +1,5 @@
 import { fs, ipcRenderer } from "@/platform";
-import { getUploadUrl } from "@/api/imBase";
+import { getUploadUrl, getUploadToken } from "@/api/imBase";
 
 const POST_LOG_UPLOAD_CHANNEL = "debug:post:prepare-log-upload";
 const POST_LOG_UPLOAD_CLEANUP_CHANNEL = "debug:post:cleanup-log-upload-temp";
@@ -38,6 +38,7 @@ export const uploadPackagedLog = async ({ loginId, onProgress }) => {
   try {
     const suffix = "zip";
     const bootstrapKeyData = await getUploadUrl({
+      ossSceneType: 0,
       attachType: 4,
       attachWorkspaceType: 0,
       fileSize: 0,
@@ -79,6 +80,7 @@ export const uploadPackagedLog = async ({ loginId, onProgress }) => {
     const file = new File([fileBuffer], filename, { type: "application/zip" });
 
     const keyData = await getUploadUrl({
+      ossSceneType: 0,
       attachType: 4,
       attachWorkspaceType: 0,
       fileSize: file.size,
@@ -92,7 +94,10 @@ export const uploadPackagedLog = async ({ loginId, onProgress }) => {
       };
     }
 
-    const ossData = window.ossData;
+    let ossData = await getUploadToken({ ossSceneType: 0 });
+    if (!ossData || !ossData.securityToken) {
+      ossData = window.ossData;
+    }
     if (!ossData || !ossData.securityToken) {
       return {
         success: false,

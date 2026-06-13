@@ -270,6 +270,22 @@ export const groupGlobalConfigAPI = (data) => {
     });
 };
 
+// OSS 上传 token（gateway 域名，与 globalConfig 一致）
+export const getUploadTokenAPI = (data = {}) =>
+    requestAxios(`/sys/unauthorized/uploadConfig/getUploadToken`, data, {
+        headers: {
+            ...getSignHeader(),
+        },
+    });
+
+// OSS 上传 url（gateway 域名，与 globalConfig 一致）
+export const getUploadUrlAPI = (data = {}) =>
+    requestAxios(`/sys/unauthorized/uploadConfig/getUploadUrl`, data, {
+        headers: {
+            ...getSignHeader(),
+        },
+    });
+
 // 查询群申请UID列表
 export const checkUidList = (data) => {
     return requestAxios(`/group/groupReq/checkUidList`, data, {

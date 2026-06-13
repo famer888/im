@@ -14,7 +14,7 @@ import {
     FileObj,
     NameCardObj,
 } from "@/api/base/imweb-web";
-import { getUploadUrl } from "@/api/imBase";
+import { getUploadUrl, getUploadToken } from "@/api/imBase";
 
 // 工具
 import { fileToBuffer, saveFileToDirectory } from "./fileTools";
@@ -326,6 +326,9 @@ export const uploadFileByLocalPath = (filePath, suffix, options) => {
     });
 };
 
+/** OSS上传场景：0 通用，1 聊天图片（不含表情包） */
+export const resolveOssSceneType = (chatType) => (Number(chatType) === 1 ? 1 : 0);
+
 export const uploadFile = async (file, { chatType, fileKey, taskId }, suffix) => {
     if (!checkFileSize(file, chatType)) {
         return;
@@ -341,21 +344,26 @@ export const uploadFile = async (file, { chatType, fileKey, taskId }, suffix) =>
         9: 4,
     };
     const attachType = obj[chatType];
+    const ossSceneType = resolveOssSceneType(chatType);
     const keyData = await getUploadUrl({
+        ossSceneType,
         attachType,
         attachWorkspaceType: 1,
         fileSize: fileNew.size,
         suffix,
     });
-    // const channelType = keyData.channelType || 0;
+    const channelType = keyData.channelType ?? 0;
 
     if (!keyData || !keyData.fileId) {
         // Failed to get data
         return;
     }
 
-    // Check oss's info
-    const ossData = window.ossData;
+    // 按场景获取 OSS 临时凭证
+    let ossData = await getUploadToken({ ossSceneType });
+    if (!ossData || !ossData.securityToken) {
+        ossData = window.ossData;
+    }
     if (!ossData || !ossData.securityToken) {
         return;
     }
@@ -363,7 +371,7 @@ export const uploadFile = async (file, { chatType, fileKey, taskId }, suffix) =>
     const encodeFile = fileKey ? await fileEncode(fileNew, fileKey) : fileNew;
 
     // 优先使用动态域名上传
-    let trendsOssDomains = await getOssDomains(9);
+    let trendsOssDomains = await getOssDomains(channelType === 0 ? 9 : channelType);
     // 预检：先过滤掉明显不可用的 CNAME，避免直接交给 ali-oss 触发 CORS 预检失败
     try {
         trendsOssDomains = await getDomainListAllNormal(trendsOssDomains || [], {
@@ -383,7 +391,8 @@ export const uploadFile = async (file, { chatType, fileKey, taskId }, suffix) =>
                 keyData.fileId,
                 encodeFile,
                 item.domainUrl,
-                taskId
+                taskId,
+                ossData
             );
             if (result) {
                 res = result;
@@ -419,7 +428,7 @@ export const uploadFile = async (file, { chatType, fileKey, taskId }, suffix) =>
 
     // 使用getUploadUrl反url上传
     try {
-        res = await ossUpload(keyData.fileId, encodeFile, undefined, taskId)
+        res = await ossUpload(keyData.fileId, encodeFile, undefined, taskId, ossData)
         url = _.get(res, "res.requestUrls[0]");
     } catch (error) {
         console.error(error, '捕获上传异常 --3------------> 371')
@@ -427,9 +436,9 @@ export const uploadFile = async (file, { chatType, fileKey, taskId }, suffix) =>
     return handleUrl(url);
 };
 
-const ossUpload = async (fileId, File, endpoint, taskId) => {
+const ossUpload = async (fileId, File, endpoint, taskId, ossDataOverride) => {
     // Check oss's info
-    const ossData = window.ossData;
+    const ossData = ossDataOverride || window.ossData;
     if (!ossData || !ossData.securityToken) {
         return;
     }
