@@ -747,6 +747,23 @@ const clearDownTimer = (timerName) => {
 const EXPIRED_DATED_URL_PATTERN = /\/chat\/[^/]+\/(\d{4})(\d{2})\/(\d{2})(?:\/|$|\?)/i;
 const EXPIRED_DATED_URL_THRESHOLD_DAYS = 3;
 
+// 部分资源虽然路径里带日期，但属于「长期复用」资源，服务端不会按 3 天过期：
+//   1. 表情包（/chat/emoticon/...）：表情资源持久有效，路径日期只是上传时间。
+//   2. 历史复用 CDN 域名（zhenyoumei.top 等老 host）：老资源仍可访问，按日期误判会直接显示「已过期」。
+// 命中以下规则的 URL 一律跳过日期过期守卫，交由真实下载决定成败。
+const NON_EXPIRING_URL_PATTERNS = [
+    /\/chat\/emoticon\//i,
+    /\bzhenyoumei\.top\b/i,
+];
+
+const isNonExpiringResourceUrl = (...inputs) => {
+    const candidates = collectExpireCheckUrls(...inputs);
+    return candidates.some((candidate) =>
+        typeof candidate === "string" &&
+        NON_EXPIRING_URL_PATTERNS.some((re) => re.test(candidate))
+    );
+};
+
 const collectExpireCheckUrls = (...inputs) => {
     const candidates = [];
     const add = (u) => {
@@ -778,6 +795,10 @@ const getExpireCheckPath = (candidate) => {
 
 const isExpiredDatedDownloadUrl = (...inputs) => {
     const candidates = collectExpireCheckUrls(...inputs);
+    // 长期复用资源（表情包、历史 CDN 域名）不按日期过期，直接放行交给真实下载
+    if (isNonExpiringResourceUrl(...candidates)) {
+        return { expired: false };
+    }
     // 优先用带日期路径的 URL 判断；CDN 签名地址常无日期，此时才回退到 fileUrl
     const datedCandidates = candidates.filter((candidate) => {
         const path = getExpireCheckPath(candidate);
