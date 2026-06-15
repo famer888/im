@@ -76,7 +76,8 @@ import crypto from 'crypto';
 import { allocWorkFile } from './paths';
 import { ERROR_CODE } from '../core/constants';
 
-/** 与 public/worker.js 一致：每 102416 字节为一个独立 PKCS7 加密块。 */
+/** 与 public/worker.js 一致：每块明文 102400 字节 → 密文 102416 字节（含 16 字节 PKCS7 整填充块）。 */
+const PLAIN_CHUNK = 102400;
 const BLOCK_SIZE = 102416;
 
 /** 性能告警阈值（design.md §5.3 末段：> 500ms 提示考虑 native）。 */
@@ -103,6 +104,36 @@ const _decryptBlock = (cipherBlock, key) => {
     const decipher = crypto.createDecipheriv('aes-128-ecb', key, null);
     decipher.setAutoPadding(true); // PKCS7（Node `aes-*-ecb` 默认）
     return Buffer.concat([decipher.update(cipherBlock), decipher.final()]);
+};
+
+/** ECB 解密但不去填充（用于探测加密方案）。 */
+const _decryptBlockNoPad = (cipherBlock, key) => {
+    const decipher = crypto.createDecipheriv('aes-128-ecb', key, null);
+    decipher.setAutoPadding(false);
+    return Buffer.concat([decipher.update(cipherBlock), decipher.final()]);
+};
+
+/**
+ * 判定是否为 PC 端「102400 明文分块 + 逐块 PKCS7」加密方案。
+ *   - PC 分块：第 0 块 = encrypt(102400 明文 + 16 字节 0x10 填充块)，
+ *     故密文 [102400,102416) 这一块（ECB 独立）解密(不去填充)应为 16 个 0x10。
+ *   - 安卓/整文件：该位置是真实图像数据，几乎不可能恰为 16 个 0x10。
+ *   - 体积 <= BLOCK_SIZE 时两种方案等价（单块），统一整文件解密，无需区分。
+ * 与 public/worker.js 的 isPcChunkedScheme 一致。
+ */
+const isPcChunkedScheme = (cipherBuf, key) => {
+    if (cipherBuf.length <= BLOCK_SIZE) return false;
+    try {
+        const padCipher = cipherBuf.slice(PLAIN_CHUNK, BLOCK_SIZE);
+        const padPlain = _decryptBlockNoPad(padCipher, key);
+        if (!padPlain || padPlain.length < 16) return false;
+        for (let i = 0; i < 16; i++) {
+            if (padPlain[i] !== 0x10) return false;
+        }
+        return true;
+    } catch (_e) {
+        return false;
+    }
 };
 
 /**
@@ -172,23 +203,32 @@ export const decrypt = async ({ inPath, outPath, encryptKey, signal }) => {
             throw new Error(`cipher size ${cipherBuf.length} not 16-aligned`);
         }
 
+        // 探测加密方案：PC 分块（102416 密文块逐块去填充）vs 安卓整文件（单次 ECB/PKCS7）。
+        // 安卓大头像若按 PC 分块去填充会在每个块边界剥掉真实数据 → 错位花屏/解密失败。
+        const chunked = isPcChunkedScheme(cipherBuf, key);
+
         const parts = [];
-        for (let offset = 0; offset < cipherBuf.length; offset += BLOCK_SIZE) {
-            if (aborted) failAbort();
-            const end = Math.min(offset + BLOCK_SIZE, cipherBuf.length);
-            // public/worker.js 在文件大小恰好为 BLOCK_SIZE 整数倍时会多走一轮空 slice（CryptoJS
-            // 对空输入返回空，无副作用）。Node crypto 对空输入会在 final() 抛 PKCS7 unpad 错；
-            // 这里直接 break，与原 worker 语义一致。
-            if (end === offset) break;
-            const block = cipherBuf.slice(offset, end);
-            if (block.length % 16 !== 0) {
-                throw new Error(`block at offset ${offset} not 16-aligned (size=${block.length})`);
+        if (chunked) {
+            for (let offset = 0; offset < cipherBuf.length; offset += BLOCK_SIZE) {
+                if (aborted) failAbort();
+                const end = Math.min(offset + BLOCK_SIZE, cipherBuf.length);
+                // public/worker.js 在文件大小恰好为 BLOCK_SIZE 整数倍时会多走一轮空 slice（CryptoJS
+                // 对空输入返回空，无副作用）。Node crypto 对空输入会在 final() 抛 PKCS7 unpad 错；
+                // 这里直接 break，与原 worker 语义一致。
+                if (end === offset) break;
+                const block = cipherBuf.slice(offset, end);
+                if (block.length % 16 !== 0) {
+                    throw new Error(`block at offset ${offset} not 16-aligned (size=${block.length})`);
+                }
+                parts.push(_decryptBlock(block, key));
+                // 让出 main loop：见 yieldToLoop 注释。yield 后立刻补 abort 检查，
+                // 避免 setImmediate 这一拍里 onAbort 被触发但本轮还多解一块的窗口。
+                await yieldToLoop();
+                if (aborted) failAbort();
             }
-            parts.push(_decryptBlock(block, key));
-            // 让出 main loop：见 yieldToLoop 注释。yield 后立刻补 abort 检查，
-            // 避免 setImmediate 这一拍里 onAbort 被触发但本轮还多解一块的窗口。
-            await yieldToLoop();
-            if (aborted) failAbort();
+        } else {
+            // 安卓 / 整文件方案：整体单次 ECB/PKCS7 解密（修复大图分块去填充导致的错位花屏）
+            parts.push(_decryptBlock(cipherBuf, key));
         }
 
         if (aborted) failAbort();

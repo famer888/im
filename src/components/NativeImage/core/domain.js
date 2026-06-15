@@ -90,10 +90,27 @@ export const wouldRewrite = (originalUrl, eventCommon) => {
  * 不返回 null / 空数组：调用方拿到的一定是至少 1 个候选；空 src 由 Avatar.hasRealSrc 在
  * 挂 NativeImage 前就拦掉，不会走到这里。
  */
+// 历史 CDN 域名：旧版 ComImage 对这些域名是「直接改写成 ossDefaultUrl 再加载」的
+// （src/components/image.vue loadUrl）。这些老域名在 PC 端常已不可达，若仍按原 url 先试，
+// 会白等一个 20s 下载超时才回退到 oss → 头像加载非常慢。故对历史域名优先用改写后的 oss 域名。
+const LEGACY_AVATAR_HOST_RE = /(?:^|\.)(zhenyoumei\.top|aiolet\.xyz)$/i;
+
+const isLegacyAvatarHost = (url) => {
+    try {
+        if (!url || !/^https?:\/\//i.test(url)) return false;
+        return LEGACY_AVATAR_HOST_RE.test(new URL(url).hostname);
+    } catch (_e) {
+        return false;
+    }
+};
+
 export const buildAvatarCandidates = (originalUrl, eventCommon) => {
     if (!originalUrl) return [];
     if (!wouldRewrite(originalUrl, eventCommon)) return [originalUrl];
-    return [originalUrl, rewriteHost(originalUrl, eventCommon)];
+    const rewritten = rewriteHost(originalUrl, eventCommon);
+    // 历史域名：改写后的 oss 域名优先，原 url 退为兜底（恢复旧版加载速度）。
+    if (isLegacyAvatarHost(originalUrl)) return [rewritten, originalUrl];
+    return [originalUrl, rewritten];
 };
 
 /**

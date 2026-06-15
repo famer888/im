@@ -167,7 +167,12 @@ const drivePipeline = async ({ scope, resourceKey, url, encryptKey, candidateUrl
     const existing = taskRegistry.peek({ scope, resourceKey });
     if (existing && existing.inflight) return existing.inflight;
 
-    const inflight = concurrency.schedule(scope, async () => {
+    // 多数 Avatar 调用点不传 uid → scope.id 恒为 0，若仅按 (kind,id) 调度会把所有头像
+    // 挤进同一队列串行（群成员列表头像奇慢）。把 resourceKey 并进调度 id，使不同头像
+    // 各自独立队列、可并行（受 concurrency 全局上限约束）。相同头像的在途去重已由
+    // taskRegistry.peek(inflight) 在上面完成，这里不影响合并语义。
+    const schedulingScope = { kind: scope.kind, id: `${scope.id}|${resourceKey}` };
+    const inflight = concurrency.schedule(schedulingScope, async () => {
         const entry = taskRegistry.peek({ scope, resourceKey });
         if (!entry) {
             // 极端情况：在 schedule 排队期间被 release 掉了；直接退出
@@ -224,9 +229,12 @@ const drivePipeline = async ({ scope, resourceKey, url, encryptKey, candidateUrl
                 catch (_) { finalUrl = candidates[attempt]; }
             }
             try {
+                // 非最后一个候选用更短超时快速失败回退，避免某个不可达/慢域名白等满 20s
+                // 导致头像迟迟不显示；最后一个候选给足 20s 尽量成功。
+                const isLastCandidate = attempt === candidates.length - 1;
                 dl = await download(finalUrl, {
                     cancelToken, // downloader 内会装上 abort 回调到 cancelToken.abort
-                    timeoutMs: 20000,
+                    timeoutMs: isLastCandidate ? 20000 : 8000,
                 });
                 lastErr = null;
                 break;
